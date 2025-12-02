@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minh Họa Thuật Toán Tìm Kiếm Tuần Tự</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 { color: #0084ff; margin-bottom: 10px; }
+        h2 { color: #64748b; font-size: 1.1rem; margin-bottom: 30px; font-weight: 400; }
+
+        /* Visualization Area */
+        .array-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 40px 0;
+            position: relative;
+            flex-wrap: wrap;
+        }
+
+        .array-box {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #cbd5e1;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334155;
+            position: relative;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .array-box.active {
+            border-color: #f59e0b; /* Orange for checking */
+            background-color: #fff7ed;
+            transform: scale(1.1);
+        }
+
+        .array-box.checked {
+            background-color: #e2e8f0; /* Gray for passed */
+            color: #94a3b8;
+            border-color: #cbd5e1;
+        }
+
+        .array-box.found {
+            background-color: #dcfce7; /* Green for found */
+            border-color: #10b981;
+            color: #15803d;
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .index-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Pointer/Character */
+        .pointer {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            width: 60px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.5s ease;
+            opacity: 0; 
+        }
+
+        .pointer-icon {
+            font-size: 2rem;
+            animation: bounce 1s infinite;
+        }
+        
+        .pointer-text {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #0084ff;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Controls & Info */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-find-44 { background-color: #10b981; color: white; }
+        .btn-find-44:hover { background-color: #059669; }
+
+        .btn-find-30 { background-color: #ef4444; color: white; }
+        .btn-find-30:hover { background-color: #dc2626; }
+
+        .btn-reset { background-color: #94a3b8; color: white; }
+        .btn-reset:hover { background-color: #64748b; }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-box {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            border-left: 5px solid #0084ff;
+        }
+
+        .target-display {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .target-val { color: #ef4444; font-size: 1.5rem; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mô Phỏng Tìm Kiếm Tuần Tự (Linear Search)</h1>
+        <h2>Thuật toán duyệt từng phần tử từ đầu đến cuối dãy</h2>
+
+        <div class="target-display" id="target-display">
+            Chọn một kịch bản bên dưới để bắt đầu
+        </div>
+
+        <div class="array-container" id="array-container">
+            <!-- Boxes will be injected here -->
+            <div class="pointer" id="pointer">
+                <div class="pointer-text">Đang xét</div>
+                <div class="pointer-icon">⬇️</div>
+            </div>
+        </div>
+
+        <div class="status-box" id="status-text">
+            Sẵn sàng mô phỏng...
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-find-44" onclick="startSearch(44)" id="btn-44">Kịch bản 1: Tìm x = 44</button>
+            <button class="btn btn-find-30" onclick="startSearch(30)" id="btn-30">Kịch bản 2: Tìm x = 30</button>
+            <button class="btn btn-reset" onclick="resetArray()" id="btn-reset">Làm mới</button>
+        </div>
+    </div>
+
+    <script>
+        const data = [18, 94, 42, 44, 06, 55, 12, 67];
+        const container = document.getElementById('array-container');
+        const pointer = document.getElementById('pointer');
+        const statusText = document.getElementById('status-text');
+        const targetDisplay = document.getElementById('target-display');
+        
+        let isRunning = false;
+
+        function initArray() {
+            // Keep the pointer, remove boxes
+            const existingBoxes = document.querySelectorAll('.array-box');
+            existingBoxes.forEach(box => box.remove());
+
+            data.forEach((num, index) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `box-${index}`;
+                box.innerHTML = `
+                    ${num}
+                    <div class="index-label">a${index+1}</div>
+                `;
+                container.insertBefore(box, pointer);
+            });
+            pointer.style.opacity = '0';
+        }
+
+        function resetArray() {
+            if (isRunning) return; // Prevent reset while running (simple lock)
+            initArray();
+            statusText.textContent = "Sẵn sàng mô phỏng...";
+            targetDisplay.innerHTML = "Chọn một kịch bản bên dưới để bắt đầu";
+            pointer.style.opacity = '0';
+            enableButtons(true);
+        }
+
+        function enableButtons(enable) {
+            document.getElementById('btn-44').disabled = !enable;
+            document.getElementById('btn-30').disabled = !enable;
+            document.getElementById('btn-reset').disabled = !enable;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function startSearch(target) {
+            if (isRunning) return;
+            isRunning = true;
+            enableButtons(false);
+            initArray(); // Clear previous states
+
+            targetDisplay.innerHTML = `Đang tìm giá trị: <span class="target-val">${target}</span>`;
+            statusText.textContent = `Chúng ta cần tìm số ${target} trong dãy số này.`;
+            
+            pointer.style.opacity = '1';
+            
+            // Initial delay for setup reading
+            await sleep(2000);
+
+            for (let i = 0; i < data.length; i++) {
+                const currentBox = document.getElementById(`box-${i}`);
+                
+                // Move pointer visually
+                // We calculate offset based on box width (60) + gap (10)
+                // Or simply align center to the box
+                const boxRect = currentBox.offsetLeft;
+                pointer.style.left = `${boxRect}px`;
+
+                // Highlight current
+                currentBox.classList.add('active');
+                
+                // Script Logic
+                statusText.textContent = `Bước ${i+1}: So sánh phần tử thứ ${i+1} (a${i+1}=${data[i]}) với ${target}.`;
+                await sleep(1500);
+
+                if (data[i] === target) {
+                    // FOUND CASE
+                    currentBox.classList.remove('active');
+                    currentBox.classList.add('found');
+                    statusText.textContent = `${data[i]} bằng ${target}. Tìm thấy! Thuật toán kết thúc ở vị trí thứ ${i+1}.`;
+                    isRunning = false;
+                    enableButtons(true);
+                    return; // Stop function
+                } else {
+                    // NOT FOUND CASE
+                    statusText.textContent += ` ${data[i]} khác ${target}. Ta chuyển sang xét số tiếp theo.`;
+                    await sleep(1500);
+                    currentBox.classList.remove('active');
+                    currentBox.classList.add('checked');
+                }
+            }
+
+            // End of loop - Not Found
+            statusText.textContent = `Đã duyệt hết dãy số. Kết luận: Không tìm thấy số ${target} trong dãy này.`;
+            pointer.style.opacity = '0';
+            isRunning = false;
+            enableButtons(true);
+        }
+
+        // Initialize on load
+        initArray();
+
+    </script>
+</body>
+</html>
