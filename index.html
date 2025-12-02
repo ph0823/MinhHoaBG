@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI miễn phí cho học tập, âm thanh, video</title>
+  <style>
+    :root{
+      --bg:#f7f9fc;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#64748b;
+      --primary:#2563eb;
+      --accent:#10b981;
+      --chip:#e5f0ff;
+      --shadow:0 8px 24px rgba(31,41,55,.08);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{text-decoration:none;color:var(--primary)}
+    header{
+      padding:48px 24px;
+      background:linear-gradient(135deg,#e0f2fe 0%, #f0f9ff 40%, #ecfeff 100%);
+      border-bottom:1px solid #e5e7eb;
+    }
+    .wrap{max-width:1080px;margin:0 auto}
+    .brand{
+      display:flex;align-items:center;gap:14px;margin-bottom:16px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:12px;
+      background:conic-gradient(from 180deg at 50% 50%, #2563eb, #10b981, #f59e0b, #2563eb);
+      box-shadow:var(--shadow);
+    }
+    h1{margin:0;font-size:32px;line-height:1.15}
+    p.lead{margin:10px 0 0;color:var(--muted);font-size:16px}
+    .nav{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:18px
+    }
+    .nav a{
+      padding:10px 14px;border-radius:999px;background:#fff;border:1px solid #e5e7eb;color:#0f172a;
+      transition:.2s box-shadow;
+    }
+    .nav a:hover{box-shadow:var(--shadow)}
+    section{padding:36px 24px}
+    .grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:16px
+    }
+    @media (max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}}
+    .card{
+      background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);
+      display:flex;flex-direction:column;gap:12px;min-height:210px
+    }
+    .card h3{margin:0 0 4px;font-size:18px}
+    .card p{margin:0;color:var(--muted);font-size:14px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      background:var(--chip);color:#0f172a;border:1px solid #dbe7ff;padding:6px 10px;border-radius:999px;font-size:12px
+    }
+    .actions{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#0f172a;font-weight:600;transition:.2s box-shadow, .2s transform
+    }
+    .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+    .btn:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+    .section-title{
+      display:flex;align-items:center;gap:10px;margin-bottom:6px
+    }
+    .section-title .dot{
+      width:10px;height:10px;border-radius:999px;background:var(--primary)
+    }
+    footer{
+      padding:28px 24px;border-top:1px solid #e5e7eb;color:var(--muted);text-align:center
+    }
+    .note{
+      background:#fff;border:1px dashed #d1d5db;border-radius:12px;padding:12px;color:#475569;margin-top:12px
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>AI miễn phí phổ biến cho học tập, tạo âm thanh, tạo video</h1>
+          <p class="lead">Danh sách các công cụ có gói miễn phí hoặc miễn phí một phần, phù hợp cho học sinh – giáo viên – người tự học.</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#hoc-tap">Học tập</a>
+        <a href="#am-thanh">Âm thanh</a>
+        <a href="#video">Video</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="hoc-tap">
+      <div class="section-title">
+        <span class="dot"></span>
+        <h2>AI cho học tập</h2>
+      </div>
+      <p class="note">Mẹo: Dùng câu hỏi rõ ràng, cung cấp ngữ cảnh và yêu cầu ví dụ để nhận câu trả lời chất lượng.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Microsoft Copilot</h3>
+          <p>Trợ lý AI miễn phí, hỗ trợ trả lời câu hỏi, tóm tắt tài liệu, viết nội dung, sinh mã, và gợi ý học tập.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Tìm kiếm</span><span class="chip">Viết/tóm tắt</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://copilot.microsoft.com" target="_blank" rel="noopener">Mở</a>
+            <a class="btn" href="https://learn.microsoft.com/" target="_blank" rel="noopener">Tài liệu</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Google Gemini (gói miễn phí)</h3>
+          <p>AI đối thoại và sáng tạo nội dung với khả năng đa phương thức; phù hợp tra cứu, học ngoại ngữ, giải thích khái niệm.</p>
+          <div class="chips">
+            <span class="chip">Free tier</span><span class="chip">Đa phương thức</span><span class="chip">Học tập</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://gemini.google.com" target="_blank" rel="noopener">Mở</a>
+            <a class="btn" href="https://ai.google.dev/" target="_blank" rel="noopener">Dev/Docs</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Perplexity AI</h3>
+          <p>Công cụ hỏi–đáp dựa trên tìm kiếm, đưa ra câu trả lời kèm nguồn, phù hợp cho nghiên cứu và học nhanh.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Nguồn tham khảo</span><span class="chip">Nghiên cứu</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://www.perplexity.ai" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Hugging Face Spaces</h3>
+          <p>Kho ứng dụng AI cộng đồng chạy trực tiếp trên web: tóm tắt, dịch, tạo ảnh, âm thanh… nhiều lựa chọn miễn phí.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Cộng đồng</span><span class="chip">Học thử</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://huggingface.co/spaces" target="_blank" rel="noopener">Khám phá</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Khan Academy & Khanmigo (giới thiệu)</h3>
+          <p>Tài nguyên học miễn phí; trợ lý AI hỗ trợ giải thích từng bước (Khanmigo có gói thử/giảm phí tùy khu vực).</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Toán/Khoa học</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://www.khanacademy.org" target="_blank" rel="noopener">Khan Academy</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="am-thanh">
+      <div class="section-title">
+        <span class="dot" style="background:var(--accent)"></span>
+        <h2>AI cho âm thanh</h2>
+      </div>
+      <p class="note">Lưu ý bản quyền giọng nói và âm nhạc khi dùng AI tạo âm thanh.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>VocalRemover.org</h3>
+          <p>Tách vocal/nhạc nền bằng AI ngay trên web, hữu ích cho học nhạc, làm karaoke hoặc phân tích bài hát.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Tách giọng</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://vocalremover.org/" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Coqui TTS</h3>
+          <p>Nền tảng chuyển văn bản thành giọng nói; có dự án mã nguồn mở để thực nghiệm và học tập.</p>
+          <div class="chips">
+            <span class="chip">Free/Open</span><span class="chip">TTS</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://tts.coqui.ai/" target="_blank" rel="noopener">Studio</a>
+            <a class="btn" href="https://github.com/coqui-ai/TTS" target="_blank" rel="noopener">Mã nguồn</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Bark (TTS mô phỏng giọng)</h3>
+          <p>Mô hình TTS cộng đồng cho nghiên cứu/học tập, tạo giọng nói từ văn bản (cần thử nghiệm kỹ thuật).</p>
+          <div class="chips">
+            <span class="chip">Open</span><span class="chip">TTS</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/suno-ai/bark" target="_blank" rel="noopener">Mã nguồn</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>OpenVoice (giả giọng)</h3>
+          <p>Công cụ mã nguồn mở giả giọng linh hoạt cho mục đích nghiên cứu – cần tuân thủ đạo đức sử dụng.</p>
+          <div class="chips">
+            <span class="chip">Open</span><span class="chip">Voice clone</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/myshell-ai/OpenVoice" target="_blank" rel="noopener">Mã nguồn</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="video">
+      <div class="section-title">
+        <span class="dot" style="background:#f59e0b"></span>
+        <h2>AI cho video</h2>
+      </div>
+      <p class="note">Các nền tảng thường có giới hạn miễn phí (watermark, thời lượng). Dùng để học và thử nghiệm trước khi nâng cấp.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Pika</h3>
+          <p>Tạo và chỉnh sửa video bằng AI từ mô tả, có gói miễn phí để thử nghiệm ý tưởng nhanh.</p>
+          <div class="chips">
+            <span class="chip">Free tier</span><span class="chip">Text-to-Video</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://pika.art/" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>CapCut (AI tools)</h3>
+          <p>Bộ công cụ chỉnh video dễ dùng, có tính năng AI: xóa nền, phụ đề tự động, tạo mẫu video.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Edit + AI</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://www.capcut.com/" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Canva (Magic tools)</h3>
+          <p>Nền tảng thiết kế với công cụ AI hỗ trợ dựng video ngắn, thêm hiệu ứng, phụ đề, và nội dung đồ họa.</p>
+          <div class="chips">
+            <span class="chip">Miễn phí</span><span class="chip">Thiết kế + Video</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://www.canva.com/" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Runway (giới thiệu)</h3>
+          <p>Công cụ AI cho video: gen-2, xóa nền, motion blur… có giới hạn miễn phí để học và thử nghiệm.</p>
+          <div class="chips">
+            <span class="chip">Free tier</span><span class="chip">Video AI</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://runwayml.com/" target="_blank" rel="noopener">Mở</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <span class="dot" style="background:#a855f7"></span>
+        <h2>Mẹo sử dụng hiệu quả</h2>
+      </div>
+      <ul>
+        <li><strong>Rõ ràng mục tiêu:</strong> Viết yêu cầu cụ thể (mốc thời gian, độ dài, phong cách).</li>
+        <li><strong>Đưa ví dụ:</strong> Cung cấp mẫu tham chiếu để AI học theo.</li>
+        <li><strong>Lặp – tinh chỉnh:</strong> Sửa yêu cầu theo kết quả để đạt chất lượng.</li>
+        <li><strong>Tôn trọng bản quyền:</strong> Kiểm tra nguồn và giấy phép khi chia sẻ.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>Danh sách mang tính tham khảo. Một số nền tảng có hạn mức miễn phí hoặc watermark.</p>
+    </div>
+  </footer>
+</body>
+</html>
