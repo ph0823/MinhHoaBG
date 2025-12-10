@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trắc Nghiệm Tin Học 7 - Chủ Đề D (Trộn Đề)</title>
+    <title>ôn tập cuối kì 1 Tin 7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 
@@ -371,8 +371,8 @@
         <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
        
         <header>
-            <h1>Trắc Nghiệm Tin Học 7 <span class="badge-random">Đề Trộn</span></h1>
-            <h2>Chủ đề D: Đạo đức, pháp luật và văn hoá trong môi trường số</h2>
+            <h1>Trắc Nghiệm Tin Học 7 <span class="badge-random"></span></h1>
+            <h2>Chủ đề A, C, D</h2>
         </header>
 
         <div id="screen-login" class="screen active">
@@ -461,706 +461,375 @@
         </div>
     </div>
 
-    <script>
-        // --- DATA ---
-        // Original data source
-        const rawQuestionsDB =[
-  {
-    "id": 1,
-    "q": "Thiết bị nào sau đây là thiết bị vào của máy tính?",
-    "options": [
-      "A. Loa, tai nghe",
-      "B. Chuột, bàn phím",
-      "C. Màn hình, máy in",
-      "D. Máy chiếu, loa"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 2,
-    "q": "Thiết bị nào sau đây là thiết bị ra của máy tính?",
-    "options": [
-      "A. Bàn phím",
-      "B. Chuột",
-      "C. Loa",
-      "D. Webcam"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 3,
-    "q": "Hệ điều hành là phần mềm có chức năng:",
-    "options": [
-      "A. Soạn thảo văn bản",
-      "B. Quản lí và điều khiển máy tính",
-      "C. Vẽ hình",
-      "D. Nghe nhạc"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 4,
-    "q": "Trong Windows, trình quản lí hệ thống tệp là:",
-    "options": [
-      "A. Word",
-      "B. Excel",
-      "C. File Explorer",
-      "D. PowerPoint"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 5,
-    "q": "Giữa phần tên và phần mở rộng của tệp được phân cách bởi:",
-    "options": [
-      "A. Dấu phẩy",
-      "B. Dấu chấm",
-      "C. Dấu hai chấm",
-      "D. Dấu sao"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 6,
-    "q": "Phần mở rộng của tên tệp thường thể hiện:",
-    "options": [
-      "A. Thư mục chứa",
-      "B. Kiểu tệp",
-      "C. Kích thước",
-      "D. Ngày tạo"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 7,
-    "q": "Việc sắp xếp tệp hợp lí giúp người dùng:",
-    "options": [
-      "A. Tăng dung lượng",
-      "B. Dễ tìm và quản lí",
-      "C. Cài phần mềm",
-      "D. Tăng tốc mạng"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 8,
-    "q": "Facebook là mạng xã hội do ai sáng lập?",
-    "options": [
-      "A. Bill Gates",
-      "B. Mark Zuckerberg",
-      "C. Steve Jobs",
-      "D. Elon Musk"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 9,
-    "q": "Facebook được ra đời vào năm nào?",
-    "options": [
-      "A. 2000",
-      "B. 2004",
-      "C. 2006",
-      "D. 2010"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 10,
-    "q": "Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:",
-    "options": [
-      "A. 10 tuổi",
-      "B. 12 tuổi",
-      "C. 13 tuổi",
-      "D. 16 tuổi"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 11,
-    "q": "Facebook quy định độ tuổi sử dụng nhằm mục đích:",
-    "options": [
-      "A. Giới hạn người dùng",
-      "B. Giảm nội dung",
-      "C. Bảo vệ người dùng nhỏ tuổi",
-      "D. Tăng lợi nhuận"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 12,
-    "q": "Khi tham gia mạng xã hội, học sinh nên:",
-    "options": [
-      "A. Tranh cãi",
-      "B. Tôn trọng người khác",
-      "C. Đăng tin sai",
-      "D. Nói tục"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 13,
-    "q": "Thông tin nào không nên chia sẻ trên mạng xã hội?",
-    "options": [
-      "A. Thông tin cá nhân",
-      "B. Ảnh phong cảnh",
-      "C. Sở thích",
-      "D. Hoạt động học tập"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 14,
-    "q": "Hành động nào sau đây là thiếu văn hóa nơi công cộng?",
-    "options": [
-      "A. Xin lỗi",
-      "B. Giữ trật tự",
-      "C. Xếp hàng",
-      "D. Nói tục"
-    ],
-    "correct": "D"
-  },
-  {
-    "id": 15,
-    "q": "Ứng xử có văn hóa trên mạng giúp:",
-    "options": [
-      "A. Nổi tiếng",
-      "B. Tạo môi trường lành mạnh",
-      "C. Nhiều tranh luận",
-      "D. Thể hiện cá tính"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 16,
-    "q": "Dấu hiệu nào cho thấy nguy cơ lừa đảo trên mạng?",
-    "options": [
-      "A. Cung cấp mật khẩu",
-      "B. Tin nhắn báo số tiền hiện tại trong tài khoản",
-      "C. Thông báo lớp",
-      "D. Trang trường"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 17,
-    "q": "Khi nhận tin nhắn đáng ngờ, học sinh nên:",
-    "options": [
-      "A. Trả lời ngay lập tức",
-      "B. Không phản hồi",
-      "C. Chia sẻ",
-      "D. Làm theo"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 18,
-    "q": "Để sử dụng mạng xã hội an toàn, học sinh cần:",
-    "options": [
-      "A. Kết bạn nhiều",
-      "B. Giữ kín thông tin riêng tư",
-      "C. Công khai dữ liệu",
-      "D. Dùng nhiều tài khoản"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 19,
-    "q": "Khi bị bắt nạt trên mạng, học sinh nên:",
-    "options": [
-      "A. Im lặng không phản hồi",
-      "B. Trả đũa lại",
-      "C. Báo người lớn",
-      "D. Đăng phản đối"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 20,
-    "q": "Việc học cách tránh rủi ro trên mạng giúp học sinh:",
-    "options": [
-      "A. Giải trí hơn",
-      "B. Dùng mạng nhiều",
-      "C. Bảo vệ bản thân",
-      "D. Kết bạn nhanh"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 21,
-    "q": "Thiết bị nào sau đây dùng để nhập hình ảnh vào máy tính?",
-    "options": [
-      "A. Máy in",
-      "B. Loa",
-      "C. Webcam",
-      "D. Máy chiếu"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 22,
-    "q": "Thiết bị nào sau đây không phải là thiết bị ra của máy tính?",
-    "options": [
-      "A. Bàn phím",
-      "B. Màn hình",
-      "C. Máy in",
-      "D. Loa"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 23,
-    "q": "Một trong các chức năng của hệ điều hành là:",
-    "options": [
-      "A. Chơi game mượt",
-      "B. Quản lí thiết bị",
-      "C. Thiết kế đồ họa",
-      "D. Nghe nhạc hay"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 24,
-    "q": "Trong hệ điều hành, thư mục là nơi dùng để:",
-    "options": [
-      "A. Ghi nhớ các chương trình ưa thích",
-      "B. Chứa tệp và thư mục",
-      "C. Xử lí dữ liệu",
-      "D. Khởi động"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 25,
-    "q": "Tên tệp trong máy tính dùng để:",
-    "options": [
-      "A. Phân biệt các tệp",
-      "B. Giảm dung lượng",
-      "C. Tăng tốc máy tính",
-      "D. Bảo vệ nội dung"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 26,
-    "q": "Khi đổi tên tệp, phần nào không nên thay đổi để tránh lỗi?",
-    "options": [
-      "A. Tên tệp",
-      "B. Phần mở rộng",
-      "C. Vị trí lưu",
-      "D. Thư mục"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 27,
-    "q": "Việc đặt tên tệp rõ ràng giúp người dùng:",
-    "options": [
-      "A. Tăng dung lượng",
-      "B. Dễ nhận biết",
-      "C. Giảm lỗi",
-      "D. Tăng tốc"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 28,
-    "q": "Facebook là mạng xã hội cho phép người dùng:",
-    "options": [
-      "A. Kết nối và chia sẻ",
-      "B. Soạn thảo văn bản trực tuyến",
-      "C. Cài phần mềm",
-      "D. Lập trình"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 29,
-    "q": "Facebook ban đầu được tạo ra nhằm mục đích:",
-    "options": [
-      "A. Bán hàng đa cấp",
-      "B. Kết nối sinh viên",
-      "C. Chơi game trực tuyến",
-      "D. Xem phim miễn phí"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 30,
-    "q": "Người dưới 13 tuổi dùng Facebook có nguy cơ:",
-    "options": [
-      "A. Không được bảo vệ",
-      "B. Không dùng mạng",
-      "C. Chậm máy",
-      "D. Không tải app"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 31,
-    "q": "Tuân thủ độ tuổi khi dùng Facebook thể hiện:",
-    "options": [
-      "A. Sự nổi tiếng",
-      "B. Ý thức sử dụng",
-      "C. Kĩ năng công nghệ",
-      "D. Mức độ online"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 32,
-    "q": "Khi bình luận trên mạng xã hội, học sinh nên:",
-    "options": [
-      "A. Gay gắt, thô lỗ",
-      "B. Lịch sự",
-      "C. Trêu chọc",
-      "D. Theo cảm xúc"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 33,
-    "q": "Hành động nào thể hiện ứng xử có văn hóa trên mạng?",
-    "options": [
-      "A. Không bêu xấu hình ảnh của người khác",
-      "B. Chia sẻ thông tin mang tính thêu dệt",
-      "C. Không nghiện game",
-      "D. Gây tranh cãi"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 34,
-    "q": "Đăng thông tin sai sự thật lên mạng là hành vi sai theo lời khuyên:",
-    "options": [
-      "A. Đừng vô tình ăn cắp trên không gian mạng",
-      "B. Không lan truyền tin giả",
-      "C. Bắt nạt tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
-      "D. Cảnh giác với kẻ dụ dỗ và bắt nạt"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 35,
-    "q": "Ứng xử có văn hóa trên mạng giúp mỗi người:",
-    "options": [
-      "A. Trở nên nổi tiếng",
-      "B. Được tôn trọng",
-      "C. Nhiều bình luận",
-      "D. Thể hiện cá tính"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 36,
-    "q": "Một trong những rủi ro khi dùng mạng xã hội là:",
-    "options": [
-      "A. Học tốt",
-      "B. Bị lừa đảo",
-      "C. Kết nối",
-      "D. Trao đổi"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 37,
-    "q": "Để tránh bị lừa đảo trên mạng, học sinh không nên:",
-    "options": [
-      "A. Kiểm tra và đọc tin nhắn lạ",
-      "B. Nhấn liên kết lạ",
-      "C. Báo người lớn",
-      "D. Cẩn thận"
-    ],
-    "correct": "B"
-  },
-  {
-    "id": 38,
-    "q": "Mật khẩu an toàn trên mạng xã hội cần:",
-    "options": [
-      "A. Khó đoán",
-      "B. Dễ nhớ",
-      "C. Trùng tên với thầy dạy thêm",
-      "D. Ít kí tự"
-    ],
-    "correct": "A"
-  },
-  {
-    "id": 39,
-    "q": "Khi phát hiện tài khoản bị xâm nhập, người dùng nên:",
-    "options": [
-      "A. Bỏ qua và tạo tài khoản mới",
-      "B. Đăng cảnh báo",
-      "C. Đổi mật khẩu",
-      "D. Tắt thiết bị"
-    ],
-    "correct": "C"
-  },
-  {
-    "id": 40,
-    "q": "Trang bị kiến thức an toàn thông tin giúp học sinh:",
-    "options": [
-      "A. Chơi game không bị thầy la",
-      "B. Hạn chế rủi ro",
-      "C. Truy cập nhanh",
-      "D. Có nhiều tài khoản mạng xã hội"
-    ],
-    "correct": "B"
-  }
+  <script>
+/* ============================================================
+   1) CẤU HÌNH SỐ CÂU THEO CHỦ ĐỀ
+   ============================================================ */
+const topicLimits = {
+    D: 16,   // Chủ đề D chiếm nhiều nhất
+    A: 9,
+    C: 5     // Tổng = 30
+};
+
+/* ============================================================
+   2) DATABASE 40 CÂU — ĐÃ GẮN CHỦ ĐỀ A/C/D
+   ============================================================ */
+const rawQuestionsDB = [
+    /* ---------- CHỦ ĐỀ A ---------- */
+    { id: 1, topic: "A", q: "Thiết bị nào sau đây là thiết bị vào của máy tính?",
+      options: ["A. Loa, tai nghe","B. Chuột, bàn phím","C. Màn hình, máy in","D. Máy chiếu, loa"],
+      correct: "B"
+    },
+    { id: 2, topic: "A", q: "Thiết bị nào sau đây là thiết bị ra của máy tính?",
+      options: ["A. Bàn phím","B. Chuột","C. Loa","D. Webcam"],
+      correct: "C"
+    },
+    { id: 3, topic: "A", q: "Hệ điều hành là phần mềm có chức năng:",
+      options: ["A. Soạn thảo văn bản","B. Quản lí và điều khiển máy tính","C. Vẽ hình","D. Nghe nhạc"],
+      correct: "B"
+    },
+    { id: 4, topic: "A", q: "Trong Windows, trình quản lí hệ thống tệp là:",
+      options: ["A. Word","B. Excel","C. File Explorer","D. PowerPoint"],
+      correct: "C"
+    },
+    { id: 5, topic: "A", q: "Giữa phần tên và phần mở rộng của tệp được phân cách bởi:",
+      options: ["A. Dấu phẩy","B. Dấu chấm","C. Dấu hai chấm","D. Dấu sao"],
+      correct: "B"
+    },
+    { id: 6, topic: "A", q: "Phần mở rộng của tên tệp thể hiện:",
+      options: ["A. Thư mục chứa","B. Kiểu tệp","C. Kích thước","D. Ngày tạo"],
+      correct: "B"
+    },
+    { id: 7, topic: "A", q: "Việc sắp xếp tệp hợp lí giúp người dùng:",
+      options: ["A. Tăng dung lượng","B. Dễ tìm và quản lí","C. Cài phần mềm","D. Tăng tốc mạng"],
+      correct: "B"
+    },
+    { id: 24, topic: "A", q: "Trong hệ điều hành, thư mục dùng để:",
+      options: ["A. Ghi nhớ chương trình","B. Chứa tệp và thư mục","C. Xử lí dữ liệu","D. Khởi động"],
+      correct: "B"
+    },
+    { id: 25, topic: "A", q: "Tên tệp dùng để:",
+      options: ["A. Phân biệt các tệp","B. Giảm dung lượng","C. Tăng tốc máy tính","D. Bảo vệ nội dung"],
+      correct: "A"
+    },
+
+    /* ---------- CHỦ ĐỀ C ---------- */
+    { id: 8, topic: "C", q: "Facebook là mạng xã hội do ai sáng lập?",
+      options: ["A. Bill Gates","B. Mark Zuckerberg","C. Steve Jobs","D. Elon Musk"],
+      correct: "B"
+    },
+    { id: 9, topic: "C", q: "Facebook được ra đời năm:",
+      options: ["A. 2000","B. 2004","C. 2006","D. 2010"],
+      correct: "B"
+    },
+    { id: 10, topic: "C", q: "Độ tuổi tối thiểu tạo tài khoản Facebook:",
+      options: ["A. 10 tuổi","B. 12 tuổi","C. 13 tuổi","D. 16 tuổi"],
+      correct: "C"
+    },
+    { id: 11, topic: "C", q: "Facebook quy định độ tuổi nhằm mục đích:",
+      options: ["A. Giới hạn người dùng","B. Giảm nội dung","C. Bảo vệ người dùng nhỏ tuổi","D. Tăng lợi nhuận"],
+      correct: "C"
+    },
+    { id: 12, topic: "C", q: "Khi tham gia mạng xã hội, học sinh nên:",
+      options: ["A. Tranh cãi","B. Tôn trọng người khác","C. Đăng tin sai","D. Nói tục"],
+      correct: "B"
+    },
+
+    /* ---------- CHỦ ĐỀ D (NHIỀU NHẤT) ---------- */
+    { id: 13, topic: "D", q: "Thông tin nào không nên chia sẻ trên mạng?",
+      options: ["A. Thông tin cá nhân","B. Ảnh phong cảnh","C. Sở thích","D. Hoạt động học tập"],
+      correct: "A"
+    },
+    { id: 14, topic: "D", q: "Hành động nào thiếu văn hóa nơi công cộng?",
+      options: ["A. Xin lỗi","B. Giữ trật tự","C. Xếp hàng","D. Nói tục"],
+      correct: "D"
+    },
+    { id: 15, topic: "D", q: "Ứng xử có văn hóa trên mạng giúp:",
+      options: ["A. Nổi tiếng","B. Tạo môi trường lành mạnh","C. Tranh luận nhiều","D. Thể hiện cá tính"],
+      correct: "B"
+    },
+    { id: 16, topic: "D", q: "Dấu hiệu cho thấy nguy cơ lừa đảo:",
+      options: ["A. Cung cấp mật khẩu","B. Tin nhắn về tiền","C. Thông báo lớp","D. Trang trường"],
+      correct: "A"
+    },
+    { id: 17, topic: "D", q: "Khi nhận tin nhắn đáng ngờ, học sinh nên:",
+      options: ["A. Trả lời ngay","B. Không phản hồi","C. Chia sẻ","D. Làm theo"],
+      correct: "B"
+    },
+    { id: 18, topic: "D", q: "Để dùng mạng xã hội an toàn, cần:",
+      options: ["A. Kết bạn nhiều","B. Giữ kín thông tin","C. Công khai dữ liệu","D. Dùng nhiều tài khoản"],
+      correct: "B"
+    },
+    { id: 19, topic: "D", q: "Khi bị bắt nạt trên mạng, học sinh nên:",
+      options: ["A. Im lặng","B. Trả đũa","C. Báo người lớn","D. Đăng phản đối"],
+      correct: "C"
+    },
+    { id: 20, topic: "D", q: "Học cách tránh rủi ro giúp:",
+      options: ["A. Giải trí","B. Dùng mạng nhiều","C. Bảo vệ bản thân","D. Kết bạn nhanh"],
+      correct: "C"
+    },
+    { id: 21, topic: "D", q: "Thiết bị nhập hình ảnh vào máy:",
+      options: ["A. Máy in","B. Loa","C. Webcam","D. Máy chiếu"],
+      correct: "C"
+    },
+    { id: 22, topic: "D", q: "Thiết bị nào không phải thiết bị ra?",
+      options: ["A. Bàn phím","B. Màn hình","C. Máy in","D. Loa"],
+      correct: "A"
+    },
+    { id: 23, topic: "D", q: "Một trong các rủi ro khi dùng mạng xã hội:",
+      options: ["A. Học tốt","B. Bị lừa đảo","C. Kết nối","D. Trao đổi"],
+      correct: "B"
+    },
+    { id: 26, topic: "D", q: "Khi đổi tên tệp, phần nào không nên đổi?",
+      options: ["A. Tên tệp","B. Phần mở rộng","C. Vị trí lưu","D. Thư mục"],
+      correct: "B"
+    },
+    { id: 27, topic: "D", q: "Đặt tên tệp rõ ràng giúp:",
+      options: ["A. Tăng dung lượng","B. Dễ nhận biết","C. Giảm lỗi","D. Tăng tốc"],
+      correct: "B"
+    },
+    { id: 28, topic: "D", q: "Facebook cho phép người dùng:",
+      options: ["A. Kết nối và chia sẻ","B. Soạn thảo văn bản","C. Cài phần mềm","D. Lập trình"],
+      correct: "A"
+    },
+    { id: 29, topic: "D", q: "Facebook ban đầu tạo ra để:",
+      options: ["A. Bán hàng","B. Kết nối sinh viên","C. Chơi game","D. Xem phim"],
+      correct: "B"
+    },
+    { id: 30, topic: "D", q: "Người dưới 13 tuổi dùng Facebook có nguy cơ:",
+      options: ["A. Không được bảo vệ","B. Không dùng mạng","C. Chậm máy","D. Không tải app"],
+      correct: "A"
+    },
+    { id: 31, topic: "D", q: "Tuân thủ độ tuổi cho thấy:",
+      options: ["A. Sự nổi tiếng","B. Ý thức sử dụng","C. Kĩ năng công nghệ","D. Mức độ online"],
+      correct: "B"
+    },
+    { id: 32, topic: "D", q: "Khi bình luận trên mạng nên:",
+      options: ["A. Gay gắt","B. Lịch sự","C. Trêu chọc","D. Theo cảm xúc"],
+      correct: "B"
+    },
+    { id: 33, topic: "D", q: "Hành vi văn hóa trên mạng là:",
+      options: ["A. Không bêu xấu người khác","B. Chia sẻ tin giả","C. Gây tranh cãi","D. Không nghiện game"],
+      correct: "A"
+    }
 ];
 
-        // --- STATE ---
-        let sessionQuestions = [];
-        let currentQuestion = 0;
-        let userAnswers = new Array(30).fill(null);
-        let userInfo = { name: "", class: "", id: "" };
-        let timerInterval;
-        let timeLeft = 600;
+/* ============================================================
+   3) HÀM XÁO TRỘN
+   ============================================================ */
+function shuffleArray(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
 
-        // --- DOM ELEMENTS ---
-        const screens = {
-            login: document.getElementById('screen-login'),
-            quiz: document.getElementById('screen-quiz'),
-            result: document.getElementById('screen-result')
-        };
-        const els = {
-            name: document.getElementById('input-name'),
-            class: document.getElementById('input-class'),
-            id: document.getElementById('input-id'),
-            timer: document.getElementById('timer-display'),
-            qCurrent: document.getElementById('q-current'),
-            qText: document.getElementById('question-text'),
-            optionsCont: document.getElementById('options-container'),
-            progressBar: document.getElementById('progress-bar'),
-            btnPrev: document.getElementById('btn-prev'),
-            btnNext: document.getElementById('btn-next'),
-            toast: document.getElementById('toast'),
-            scoreDisplay: document.getElementById('score-display'),
-            scorePercent: document.getElementById('score-percent'),
-            resultInfo: document.getElementById('result-info'),
-            reviewList: document.getElementById('review-list'),
-            modal: document.getElementById('confirm-modal'),
-            modalTitle: document.getElementById('modal-title'),
-            modalBody: document.getElementById('modal-body')
-        };
+/* ============================================================
+   4) RANDOM ĐỀ THEO CHỦ ĐỀ
+   ============================================================ */
+function prepareQuizData() {
+    let groups = { A: [], C: [], D: [] };
 
-        // --- HELPER FUNCTIONS ---
-       
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
+    rawQuestionsDB.forEach(q => groups[q.topic].push(q));
 
-        function showToast(message) {
-            els.toast.textContent = message;
-            els.toast.className = "show";
-            setTimeout(function(){ els.toast.className = els.toast.className.replace("show", ""); }, 3000);
-        }
+    let selected = [];
 
-        function switchScreen(screenName) {
-            Object.values(screens).forEach(s => s.classList.remove('active'));
-            screens[screenName].classList.add('active');
-        }
+    for (let t in topicLimits) {
+        shuffleArray(groups[t]);
+        selected.push(...groups[t].slice(0, topicLimits[t]));
+    }
 
-        // --- MODAL FUNCTIONS ---
-        function closeModal() {
-            els.modal.classList.remove('active');
-        }
+    shuffleArray(selected);
 
-        function checkSubmit() {
-            // Count unanswered
-            let unansweredCount = 0;
-            userAnswers.forEach(ans => {
-                if (ans === null) unansweredCount++;
-            });
+    selected.forEach(q => {
+        const map = { A: 0, B: 1, C: 2, D: 3 };
+        const correctIndex = map[q.correct];
+        const raw = q.options.map(o => o.substring(3).trim());
+        const correctContent = raw[correctIndex];
 
-            if (unansweredCount > 0) {
-                els.modalTitle.textContent = "Chưa hoàn thành!";
-                els.modalBody.innerHTML = `Bạn còn <strong style="color:red">${unansweredCount}</strong> câu chưa trả lời.<br>Bạn có muốn nộp bài luôn không?`;
-            } else {
-                els.modalTitle.textContent = "Xác nhận nộp bài";
-                els.modalBody.textContent = "Bạn đã làm xong tất cả câu hỏi. Bạn có chắc chắn muốn nộp không?";
-            }
-           
-            els.modal.classList.add('active');
-        }
+        shuffleArray(raw);
 
-        // --- CORE FUNCTIONS ---
+        q.cleanOptions = raw;
+        q.newCorrectIndex = raw.indexOf(correctContent);
+    });
 
-        function prepareQuizData() {
-            let questions = JSON.parse(JSON.stringify(rawQuestionsDB));
-            shuffleArray(questions);
-            questions.forEach(q => {
-                const letterMap = {'A': 0, 'B': 1, 'C': 2, 'D': 3};
-                const oldCorrectIndex = letterMap[q.correct];
-                const originalContentArray = q.options.map(opt => opt.substring(3).trim());
-                const correctContent = originalContentArray[oldCorrectIndex];
-                shuffleArray(originalContentArray);
-                q.newCorrectIndex = originalContentArray.indexOf(correctContent);
-                q.cleanOptions = originalContentArray;
-            });
-            return questions;
-        }
+    return selected;
+}
 
-        // UPDATE: Hàm startQuiz có kiểm tra dữ liệu đầu vào
-        function startQuiz() {
-            const name = els.name.value.trim();
-            const cls = els.class.value; // Giá trị từ dropdown
-            const id = els.id.value.trim();
-            const idNum = parseInt(id);
+/* ============================================================
+   5) CÁC BIẾN QUẢN LÍ BÀI THI
+   ============================================================ */
+let sessionQuestions = [];
+let currentQuestion = 0;
+let userAnswers = new Array(30).fill(null);
+let userInfo = { name: "", class: "", id: "" };
+let timerInterval;
+let timeLeft = 600;
 
-            // Kiểm tra xem đã điền đủ thông tin chưa
-            if (!name || !cls || !id) {
-                showToast("Vui lòng nhập đầy đủ: Họ tên, Lớp và STT!");
-                return;
-            }
+/* ============================================================
+   6) DOM ELEMENTS
+   ============================================================ */
+const screens = {
+    login: document.getElementById('screen-login'),
+    quiz: document.getElementById('screen-quiz'),
+    result: document.getElementById('screen-result')
+};
 
-            // Kiểm tra STT có hợp lệ không (từ 1 đến 55)
-            if (isNaN(idNum) || idNum < 1 || idNum > 55) {
-                showToast("Số thứ tự phải nằm trong khoảng từ 1 đến 55!");
-                return;
-            }
+const els = {
+    name: document.getElementById('input-name'),
+    class: document.getElementById('input-class'),
+    id: document.getElementById('input-id'),
+    timer: document.getElementById('timer-display'),
+    qCurrent: document.getElementById('q-current'),
+    qText: document.getElementById('question-text'),
+    optionsCont: document.getElementById('options-container'),
+    progressBar: document.getElementById('progress-bar'),
+    btnPrev: document.getElementById('btn-prev'),
+    btnNext: document.getElementById('btn-next'),
+    toast: document.getElementById('toast'),
+    scoreDisplay: document.getElementById('score-display'),
+    scorePercent: document.getElementById('score-percent'),
+    resultInfo: document.getElementById('result-info'),
+    reviewList: document.getElementById('review-list'),
+    modal: document.getElementById('confirm-modal'),
+    modalTitle: document.getElementById('modal-title'),
+    modalBody: document.getElementById('modal-body')
+};
 
-            userInfo = { name, class: cls, id };
-            sessionQuestions = prepareQuizData();
-            switchScreen('quiz');
-            renderQuestion();
-            startTimer();
-        }
+/* ============================================================
+   7) HÀM BẮT ĐẦU
+   ============================================================ */
+function startQuiz() {
+    if (!els.name.value.trim() || !els.class.value.trim() || !els.id.value.trim()) {
+        alert("Vui lòng nhập đầy đủ thông tin!");
+        return;
+    }
 
-        function startTimer() {
-            updateTimerDisplay();
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    submitQuiz(true); // Forced submit time out
-                }
-            }, 1000);
-        }
+    userInfo.name = els.name.value.trim();
+    userInfo.class = els.class.value.trim();
+    userInfo.id = els.id.value.trim();
 
-        function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const s = (timeLeft % 60).toString().padStart(2, '0');
-            els.timer.textContent = `${m}:${s}`;
-            if (timeLeft < 60) els.timer.style.color = "red";
-        }
+    sessionQuestions = prepareQuizData();
 
-        function renderQuestion() {
-            const q = sessionQuestions[currentQuestion];
-            els.qCurrent.textContent = currentQuestion + 1;
-            els.qText.textContent = q.q;
+    screens.login.style.display = "none";
+    screens.quiz.style.display = "block";
 
-            const percent = ((currentQuestion + 1) / sessionQuestions.length) * 100;
-            els.progressBar.style.width = `${percent}%`;
+    currentQuestion = 0;
+    renderQuestion();
+    startTimer();
+}
 
-            els.optionsCont.innerHTML = '';
-           
-            const labels = ['A', 'B', 'C', 'D'];
-           
-            q.cleanOptions.forEach((optText, index) => {
-                const div = document.createElement('div');
-                div.className = `option-card ${userAnswers[currentQuestion] === index ? 'selected' : ''}`;
-                div.onclick = () => selectOption(index);
-               
-                const letterSpan = document.createElement('span');
-                letterSpan.className = 'option-letter';
-                letterSpan.textContent = labels[index] + ".";
-               
-                const textSpan = document.createElement('span');
-                textSpan.textContent = optText;
+/* ============================================================
+   8) TIMER
+   ============================================================ */
+function startTimer() {
+    timeLeft = 600;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        els.timer.textContent = timeLeft + "s";
 
-                div.appendChild(letterSpan);
-                div.appendChild(textSpan);
-                els.optionsCont.appendChild(div);
-            });
-
-            els.btnPrev.disabled = currentQuestion === 0;
-            els.btnPrev.style.opacity = currentQuestion === 0 ? "0.5" : "1";
-           
-            if (currentQuestion === sessionQuestions.length - 1) {
-                els.btnNext.textContent = "Nộp bài";
-                els.btnNext.classList.add("btn-submit");
-            } else {
-                els.btnNext.textContent = "Câu tiếp theo";
-                els.btnNext.classList.remove("btn-submit");
-            }
-        }
-
-        function selectOption(index) {
-            userAnswers[currentQuestion] = index;
-            const options = els.optionsCont.children;
-            for (let i = 0; i < options.length; i++) {
-                options[i].classList.remove('selected');
-            }
-            options[index].classList.add('selected');
-        }
-
-        function nextQuestion() {
-            if (currentQuestion < sessionQuestions.length - 1) {
-                currentQuestion++;
-                renderQuestion();
-            } else {
-                checkSubmit();
-            }
-        }
-
-        function prevQuestion() {
-            if (currentQuestion > 0) {
-                currentQuestion--;
-                renderQuestion();
-            }
-        }
-
-        function submitQuiz(forced = false) {
+        if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            closeModal();
-           
-            if (forced) showToast("Hết giờ! Đã tự động nộp bài.");
-           
-            let score = 0;
-            const reviewHTML = [];
-            const labels = ['A', 'B', 'C', 'D'];
-
-            sessionQuestions.forEach((q, idx) => {
-                const userChoiceIndex = userAnswers[idx];
-                const correctIndex = q.newCorrectIndex;
-               
-                let isCorrect = false;
-                if (userChoiceIndex === correctIndex) {
-                    score++;
-                    isCorrect = true;
-                }
-
-                let userText = userChoiceIndex !== null ? `${labels[userChoiceIndex]}. ${q.cleanOptions[userChoiceIndex]}` : "<span style='color:red'>Chưa trả lời</span>";
-                let correctText = `${labels[correctIndex]}. ${q.cleanOptions[correctIndex]}`;
-
-                reviewHTML.push(`
-                    <div class="review-item">
-                        <div class="review-q">Câu ${idx + 1}: ${q.q}</div>
-                        <div class="review-ans ${isCorrect ? 'correct-ans' : 'wrong-ans'}">
-                            <span class="user-ans-label">Bạn chọn:</span> ${userText}
-                        </div>
-                        ${!isCorrect ? `
-                        <div class="review-ans correct-ans">
-                            <span class="user-ans-label">Đáp án đúng:</span> ${correctText}
-                        </div>` : ''}
-                    </div>
-                `);
-            });
-
-            switchScreen('result');
-            // Show new user info format
-            els.resultInfo.innerHTML = `Học sinh: <b>${userInfo.name}</b> - Lớp: <b>${userInfo.class}</b> - STT: <b>${userInfo.id}</b>`;
-            els.scoreDisplay.textContent = `${score}/30`;
-            const percentage = Math.round((score / 30) * 100);
-           
-            let color = percentage >= 50 ? "green" : "red";
-            els.scorePercent.innerHTML = `<span style="color:${color}">(${percentage}%)</span> - ${score >= 15 ? "Đạt" : "Cần cố gắng hơn"}`;
-           
-            els.reviewList.innerHTML = reviewHTML.join('');
+            submitQuiz();
         }
-    </script>
+    }, 1000);
+}
+
+/* ============================================================
+   9) HIỂN THỊ CÂU HỎI
+   ============================================================ */
+function renderQuestion() {
+    let q = sessionQuestions[currentQuestion];
+
+    els.qCurrent.textContent = (currentQuestion + 1) + "/30";
+    els.qText.textContent = q.q;
+    els.optionsCont.innerHTML = "";
+
+    q.cleanOptions.forEach((opt, idx) => {
+        let div = document.createElement("div");
+        div.className = "option";
+        div.textContent = String.fromCharCode(65 + idx) + ". " + opt;
+
+        if (userAnswers[currentQuestion] === idx) {
+            div.classList.add("selected");
+        }
+
+        div.onclick = () => selectOption(idx);
+        els.optionsCont.appendChild(div);
+    });
+
+    els.progressBar.style.width = ((currentQuestion+1)/30*100) + "%";
+
+    els.btnPrev.style.display = currentQuestion > 0 ? "inline-block" : "none";
+    els.btnNext.textContent = currentQuestion === 29 ? "Nộp bài" : "Câu tiếp";
+}
+
+/* ============================================================
+   10) CHỌN ĐÁP ÁN
+   ============================================================ */
+function selectOption(idx) {
+    userAnswers[currentQuestion] = idx;
+    renderQuestion();
+}
+
+/* ============================================================
+   11) NÚT TIẾP / TRƯỚC
+   ============================================================ */
+function nextQuestion() {
+    if (currentQuestion === 29) return checkSubmit();
+
+    currentQuestion++;
+    renderQuestion();
+}
+
+function prevQuestion() {
+    if (currentQuestion === 0) return;
+    currentQuestion--;
+    renderQuestion();
+}
+
+/* ============================================================
+   12) XÁC NHẬN NỘP BÀI
+   ============================================================ */
+function checkSubmit() {
+    let unanswered = userAnswers.filter(v => v === null).length;
+
+    if (unanswered > 0) {
+        if (!confirm("Bạn còn " + unanswered + " câu chưa trả lời. Nộp bài?")) return;
+    }
+
+    submitQuiz();
+}
+
+/* ============================================================
+   13) NỘP BÀI + TÍNH ĐIỂM
+   ============================================================ */
+function submitQuiz() {
+    clearInterval(timerInterval);
+
+    let correct = 0;
+
+    sessionQuestions.forEach((q, i) => {
+        if (userAnswers[i] === q.newCorrectIndex) correct++;
+    });
+
+    let score = correct;
+    let percent = Math.round(score / 30 * 100);
+
+    screens.quiz.style.display = "none";
+    screens.result.style.display = "block";
+
+    els.scoreDisplay.textContent = score + "/30";
+    els.scorePercent.textContent = percent + "%";
+
+    els.resultInfo.innerHTML = `
+        Họ tên: <b>${userInfo.name}</b><br>
+        Lớp: <b>${userInfo.class}</b><br>
+        Số báo danh: <b>${userInfo.id}</b>
+    `;
+}
+</script>
+
+
 </body>
 </html>
