@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trắc Nghiệm Tin Học 7 - Chủ Đề D (Trộn Đề)</title>
+    <title>Trắc Nghiệm HÀ HUY TẬP</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 
@@ -420,6 +420,13 @@
                 <div class="timer">⏱ <span id="timer-display">10:00</span></div>
             </div>
 
+            <div id="user-info-bar" style="font-size: 0.9rem;
+                color: #475569;
+                margin-bottom: 15px;
+                text-align: center;
+            ">
+                <!-- Info sẽ được JS cập nhật -->
+            </div>
             <div class="question-text" id="question-text">Loading...</div>
            
             <div class="options-grid" id="options-container">
@@ -565,21 +572,19 @@
 
         function checkSubmit() {
             // Count unanswered
-            let unansweredCount = 0;
-            userAnswers.forEach(ans => {
-                if (ans === null) unansweredCount++;
-            });
+            let unansweredCount = userAnswers.filter(x => x === null).length;
 
             if (unansweredCount > 0) {
-                els.modalTitle.textContent = "Chưa hoàn thành!";
-                els.modalBody.innerHTML = `Bạn còn <strong style="color:red">${unansweredCount}</strong> câu chưa trả lời.<br>Bạn có muốn nộp bài luôn không?`;
-            } else {
-                els.modalTitle.textContent = "Xác nhận nộp bài";
-                els.modalBody.textContent = "Bạn đã làm xong tất cả câu hỏi. Bạn có chắc chắn muốn nộp không?";
+                showToast(`Bạn còn ${unansweredCount} câu chưa trả lời!`);
+                return; // ❗ CHẶN KHÔNG CHO NỘP
             }
-           
+
+            // Đã làm hết → mở modal xác nhận nộp
+            els.modalTitle.textContent = "Xác nhận nộp bài";
+            els.modalBody.textContent = "Bạn đã hoàn thành tất cả câu hỏi. Bạn có chắc muốn nộp bài không?";
             els.modal.classList.add('active');
         }
+
 
         // --- CORE FUNCTIONS ---
 
@@ -642,6 +647,10 @@
 
             sessionQuestions = prepareQuizData();
 
+            // Cập nhật thông tin học sinh trong giao diện làm bài
+            document.getElementById("user-info-bar").innerHTML =
+            `<b>${userInfo.name}</b> - Lớp <b>${userInfo.class}</b>`;
+            
             switchScreen('quiz');
             renderQuestion();
             startTimer();
