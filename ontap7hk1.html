@@ -255,209 +255,49 @@ function shuffleArray(arr) {
 /* (Database giữ nguyên – rút gọn vì dài) */
 const rawQuestionsDB = [
     // --- ĐỀ TRẮC NGHIỆM SỐ 1 – TIN HỌC 7 (CÁNH DIỀU) ---
-    {
-        q: "Thiết bị nào sau đây là thiết bị vào của máy tính?",
-        options: ["Loa, tai nghe", "Chuột, bàn phím", "Màn hình, máy in", "Máy chiếu, loa"],
-        correct: 1 // Chuột, bàn phím
-    },
-    {
-        q: "Thiết bị nào sau đây là thiết bị ra của máy tính?",
-        options: ["Bàn phím", "Chuột", "Loa", "Webcam"],
-        correct: 2 // Loa
-    },
-    {
-        q: "Hệ điều hành là phần mềm có chức năng:",
-        options: ["Soạn thảo văn bản", "Quản lí và điều khiển máy tính", "Vẽ hình", "Nghe nhạc"],
-        correct: 1 // Quản lí và điều khiển máy tính
-    },
-    {
-        q: "Trong Windows, trình quản lí hệ thống tệp là:",
-        options: ["Word", "Excel", "File Explorer", "PowerPoint"],
-        correct: 2 // File Explorer
-    },
-    {
-        q: "Giữa phần tên và phần mở rộng của tệp được phân cách bởi:",
-        options: ["Dấu phẩy", "Dấu chấm", "Dấu hai chấm", "Dấu sao"],
-        correct: 1 // Dấu chấm
-    },
-    {
-        q: "Phần mở rộng của tên tệp thường thể hiện:",
-        options: ["Thư mục chứa", "Kiểu tệp", "Kích thước", "Ngày tạo"],
-        correct: 1 // Kiểu tệp
-    },
-    {
-        q: "Việc sắp xếp tệp hợp lí giúp người dùng:",
-        options: ["Tăng dung lượng", "Dễ tìm và quản lí", "Cài phần mềm", "Tăng tốc mạng"],
-        correct: 1 // Dễ tìm và quản lí
-    },
-    {
-        q: "Facebook là mạng xã hội do ai sáng lập?",
-        options: ["Bill Gates", "Mark Zuckerberg", "Steve Jobs", "Elon Musk"],
-        correct: 1 // Mark Zuckerberg
-    },
-    {
-        q: "Facebook được ra đời vào năm nào?",
-        options: ["2000", "2004", "2006", "2010"],
-        correct: 1 // 2004
-    },
-    {
-        q: "Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:",
-        options: ["10 tuổi", "12 tuổi", "13 tuổi", "16 tuổi"],
-        correct: 2 // 13 tuổi
-    },
-    {
-        q: "Facebook quy định độ tuổi sử dụng nhằm mục đích:",
-        options: ["Giới hạn người dùng", "Giảm nội dung", "Bảo vệ người dùng nhỏ tuổi", "Tăng lợi nhuận"],
-        correct: 2 // Bảo vệ người dùng nhỏ tuổi
-    },
-    {
-        q: "Khi tham gia mạng xã hội, học sinh nên:",
-        options: ["Tranh cãi", "Tôn trọng người khác", "Đăng tin sai", "Nói tục"],
-        correct: 1 // Tôn trọng người khác
-    },
-    {
-        q: "Thông tin nào không nên chia sẻ trên mạng xã hội?",
-        options: ["Thông tin cá nhân", "Ảnh phong cảnh", "Sở thích", "Hoạt động học tập"],
-        correct: 0 // Thông tin cá nhân
-    },
-    {
-        q: "Hành động nào sau đây là thiếu văn hóa nơi công cộng?",
-        options: ["Xin lỗi", "Giữ trật tự", "Xếp hàng", "Nói tục"],
-        correct: 3 // Nói tục
-    },
-    {
-        q: "Ứng xử có văn hóa trên mạng giúp:",
-        options: ["Nổi tiếng", "Tạo môi trường lành mạnh", "Nhiều tranh luận", "Thể hiện cá tính"],
-        correct: 1 // Tạo môi trường lành mạnh
-    },
-    {
-        q: "Dấu hiệu nào cho thấy nguy cơ lừa đảo trên mạng?",
-        options: ["Cung cấp mật khẩu", "Tin nhắn báo số tiền hiện tại trong tài khoản", "Thông báo lớp", "Trang trường"],
-        correct: 0 // Cung cấp mật khẩu
-    },
-    {
-        q: "Khi nhận tin nhắn đáng ngờ, học sinh nên:",
-        options: ["Trả lời ngay lập tức", "Không phản hồi", "Chia sẻ", "Làm theo"],
-        correct: 1 // Không phản hồi
-    },
-    {
-        q: "Để sử dụng mạng xã hội an toàn, học sinh cần:",
-        options: ["Kết bạn nhiều, lập nhóm để bảo vệ mình", "Giữ kín thông tin riêng tư", "Công khai dữ liệu", "Dùng nhiều tài khoản"],
-        correct: 1 // Giữ kín thông tin riêng tư
-    },
-    {
-        q: "Khi bị bắt nạt trên mạng, học sinh nên:",
-        options: ["Im lặng không phản hồi", "Trả đũa lại bằng những tin nhắn công kích", "Báo người lớn", "Đăng phản đối"],
-        correct: 2 // Báo người lớn
-    },
-    {
-        q: "Việc học cách tránh rủi ro trên mạng giúp học sinh:",
-        options: ["Giải trí hơn", "Dùng mạng nhiều", "Bảo vệ bản thân", "Kết bạn nhanh"],
-        correct: 2 // Bảo vệ bản thân
-    },
+    { q: "Thiết bị nào sau đây là thiết bị vào của máy tính?", options: ["Loa, tai nghe", "Chuột, bàn phím", "Màn hình, máy in", "Máy chiếu, loa"], correct: 1 },
+    { q: "Thiết bị nào sau đây là thiết bị ra của máy tính?", options: ["Bàn phím", "Chuột", "Loa", "Webcam"], correct: 2 },
+    { q: "Hệ điều hành là phần mềm có chức năng:", options: ["Soạn thảo văn bản", "Quản lí và điều khiển máy tính", "Vẽ hình", "Nghe nhạc"], correct: 1 },
+    { q: "Trong Windows, trình quản lí hệ thống tệp là:", options: ["Word", "Excel", "File Explorer", "PowerPoint"], correct: 2 },
+    { q: "Giữa phần tên và phần mở rộng của tệp được phân cách bởi:", options: ["Dấu phẩy", "Dấu chấm", "Dấu hai chấm", "Dấu sao"], correct: 1 },
+    { q: "Phần mở rộng của tên tệp thường thể hiện:", options: ["Thư mục chứa", "Kiểu tệp", "Kích thước", "Ngày tạo"], correct: 1 },
+    { q: "Việc sắp xếp tệp hợp lí giúp người dùng:", options: ["Tăng dung lượng", "Dễ tìm và quản lí", "Cài phần mềm", "Tăng tốc mạng"], correct: 1 },
+    { q: "Facebook là mạng xã hội do ai sáng lập?", options: ["Bill Gates", "Mark Zuckerberg", "Steve Jobs", "Elon Musk"], correct: 1 },
+    { q: "Facebook được ra đời vào năm nào?", options: ["2000", "2004", "2006", "2010"], correct: 1 },
+    { q: "Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:", options: ["10 tuổi", "12 tuổi", "13 tuổi", "16 tuổi"], correct: 2 },
+    { q: "Facebook quy định độ tuổi sử dụng nhằm mục đích:", options: ["Giới hạn người dùng", "Giảm nội dung", "Bảo vệ người dùng nhỏ tuổi", "Tăng lợi nhuận"], correct: 2 },
+    { q: "Khi tham gia mạng xã hội, học sinh nên:", options: ["Tranh cãi", "Tôn trọng người khác", "Đăng tin sai", "Nói tục"], correct: 1 },
+    { q: "Thông tin nào không nên chia sẻ trên mạng xã hội?", options: ["Thông tin cá nhân", "Ảnh phong cảnh", "Sở thích", "Hoạt động học tập"], correct: 0 },
+    { q: "Hành động nào sau đây là thiếu văn hóa nơi công cộng?", options: ["Xin lỗi", "Giữ trật tự", "Xếp hàng", "Nói tục"], correct: 3 },
+    { q: "Ứng xử có văn hóa trên mạng giúp:", options: ["Nổi tiếng", "Tạo môi trường lành mạnh", "Nhiều tranh luận", "Thể hiện cá tính"], correct: 1 },
+    { q: "Dấu hiệu nào cho thấy nguy cơ lừa đảo trên mạng?", options: ["Cung cấp mật khẩu", "Tin nhắn báo số tiền hiện tại trong tài khoản", "Thông báo lớp", "Trang trường"], correct: 0 },
+    { q: "Khi nhận tin nhắn đáng ngờ, học sinh nên:", options: ["Trả lời ngay", "Không phản hồi", "Chia sẻ", "Làm theo"], correct: 1 },
+    { q: "Để sử dụng mạng xã hội an toàn, học sinh cần:", options: ["Kết bạn nhiều", "Giữ kín thông tin riêng tư", "Công khai dữ liệu", "Dùng nhiều tài khoản"], correct: 1 },
+    { q: "Khi bị bắt nạt trên mạng, học sinh nên:", options: ["Im lặng", "Trả đũa lại", "Báo người lớn", "Đăng phản đối"], correct: 2 },
+    { q: "Việc học cách tránh rủi ro trên mạng giúp học sinh:", options: ["Giải trí hơn", "Dùng mạng nhiều", "Bảo vệ bản thân", "Kết bạn nhanh"], correct: 2 },
 
     // --- ĐỀ TRẮC NGHIỆM SỐ 2 – TIN HỌC 7 (CÁNH DIỀU) ---
-    {
-        q: "Thiết bị nào sau đây dùng để nhập hình ảnh vào máy tính?",
-        options: ["Máy in", "Loa", "Webcam", "Máy chiếu"],
-        correct: 2 // Webcam
-    },
-    {
-        q: "Thiết bị nào sau đây không phải là thiết bị ra của máy tính?",
-        options: ["Bàn phím", "Màn hình", "Máy in", "Loa"],
-        correct: 0 // Bàn phím
-    },
-    {
-        q: "Một trong các chức năng của hệ điều hành là:",
-        options: ["Chơi game mượt", "Quản lí thiết bị", "Thiết kế đồ họa", "Nghe nhạc hay"],
-        correct: 1 // Quản lí thiết bị
-    },
-    {
-        q: "Trong hệ điều hành, thư mục là nơi dùng để:",
-        options: ["Ghi nhớ những chương trình ưa thích", "Chứa tệp và thư mục", "Xử lí dữ liệu", "Khởi động"],
-        correct: 1 // Chứa tệp và thư mục
-    },
-    {
-        q: "Tên tệp trong máy tính dùng để:",
-        options: ["Phân biệt các tệp", "Giảm dung lượng", "Tăng tốc máy tính", "Bảo vệ nội dung"],
-        correct: 0 // Phân biệt các tệp
-    },
-    {
-        q: "Khi đổi tên tệp, phần nào không nên thay đổi để tránh lỗi?",
-        options: ["Tên tệp", "Phần mở rộng", "Vị trí lưu", "Thư mục"],
-        correct: 1 // Phần mở rộng
-    },
-    {
-        q: "Việc đặt tên tệp rõ ràng giúp người dùng:",
-        options: ["Tăng dung lượng", "Dễ nhận biết", "Giảm lỗi", "Tăng tốc"],
-        correct: 1 // Dễ nhận biết
-    },
-    {
-        q: "Facebook là mạng xã hội cho phép người dùng:",
-        options: ["Kết nối và chia sẻ", "Soạn thảo văn bản trực tuyến", "Cài phần mềm", "Lập trình"],
-        correct: 0 // Kết nối và chia sẻ
-    },
-    {
-        q: "Facebook ban đầu được tạo ra nhằm mục đích:",
-        options: ["Bán hàng đa cấp", "Kết nối sinh viên", "Chơi game trực tuyến", "Xem phim miễn phí"],
-        correct: 1 // Kết nối sinh viên
-    },
-    {
-        q: "Người dưới 13 tuổi dùng Facebook có nguy cơ:",
-        options: ["Không được bảo vệ", "Không dùng mạng", "Chậm máy", "Không tải app"],
-        correct: 0 // Không được bảo vệ
-    },
-    {
-        q: "Tuân thủ độ tuổi khi dùng Facebook thể hiện:",
-        options: ["Sự nổi tiếng", "Ý thức sử dụng", "Kĩ năng công nghệ", "Mức độ online"],
-        correct: 1 // Ý thức sử dụng
-    },
-    {
-        q: "Khi bình luận trên mạng xã hội, học sinh nên:",
-        options: ["Gay gắt, thô lỗ", "Lịch sự", "Trêu chọc", "Theo cảm xúc"],
-        correct: 1 // Lịch sự
-    },
-    {
-        q: "Hành động nào thể hiện ứng xử có văn hóa trên mạng?",
-        options: ["Không bêu xấu hình ảnh của người khác", "Chia sẻ thông tin mang tính chất thêu dệt về một sự kiện", "Không nghiện game", "Gây tranh cãi"],
-        correct: 0 // Không bêu xấu hình ảnh của người khác
-    },
-    {
-        q: "Đăng thông tin sai sự thật lên mạng là hành vi sai theo lời khuyên:",
-        options: ["Đừng vô tình ăn cắp trên không gian mạng", "Không lan truyền tin giả", "Bắt nạt tiếp tay cho kẻ bắt nạt là vi phạm pháp luật", "Cảnh giác với kẻ dụ dỗ và bắt nạt"],
-        correct: 1 // Không lan truyền tin giả
-    },
-    {
-        q: "Ứng xử có văn hóa trên mạng giúp mỗi người:",
-        options: ["Trở nên nổi tiếng", "Được tôn trọng", "Nhiều bình luận", "Thể hiện cá tính"],
-        correct: 1 // Được tôn trọng
-    },
-    {
-        q: "Một trong những rủi ro khi dùng mạng xã hội là:",
-        options: ["Học tốt", "Bị lừa đảo", "Kết nối", "Trao đổi"],
-        correct: 1 // Bị lừa đảo
-    },
-    {
-        q: "Để tránh bị lừa đảo trên mạng, học sinh không nên:",
-        options: ["Kiểm tra đọc tin nhắn lạ", "Nhấn liên kết lạ", "Báo người lớn", "Cẩn thận"],
-        correct: 1 // Nhấn liên kết lạ
-    },
-    {
-        q: "Mật khẩu an toàn trên mạng xã hội cần:",
-        options: ["Khó đoán", "Dễ nhớ", "Trùng tên với thầy dạy thêm", "Ít kí tự"],
-        correct: 0 // Khó đoán
-    },
-    {
-        q: "Khi phát hiện tài khoản bị xâm nhập, người dùng nên:",
-        options: ["Bỏ qua và tạo tài khoản mới", "Đăng cảnh báo", "Đổi mật khẩu", "Tắt thiết bị"],
-        correct: 2 // Đổi mật khẩu
-    },
-    {
-        q: "Trang bị kiến thức an toàn thông tin giúp học sinh:",
-        options: ["Chơi game không bị thầy la", "Hạn chế rủi ro", "Truy cập nhanh", "Nhiều tài khoản trên mạng xã hội"],
-        correct: 1 // Hạn chế rủi ro
-    }
+    { q: "Thiết bị nào sau đây dùng để nhập hình ảnh vào máy tính?", options: ["Máy in", "Loa", "Webcam", "Máy chiếu"], correct: 2 },
+    { q: "Thiết bị nào sau đây không phải là thiết bị ra của máy tính?", options: ["Bàn phím", "Màn hình", "Máy in", "Loa"], correct: 0 },
+    { q: "Một trong các chức năng của hệ điều hành là:", options: ["Chơi game mượt", "Quản lí thiết bị", "Thiết kế đồ họa", "Nghe nhạc hay"], correct: 1 },
+    { q: "Trong hệ điều hành, thư mục là nơi dùng để:", options: ["Ghi nhớ chương trình ưa thích", "Chứa tệp và thư mục", "Xử lí dữ liệu", "Khởi động"], correct: 1 },
+    { q: "Tên tệp trong máy tính dùng để:", options: ["Phân biệt các tệp", "Giảm dung lượng", "Tăng tốc máy tính", "Bảo vệ nội dung"], correct: 0 },
+    { q: "Khi đổi tên tệp, phần nào không nên thay đổi để tránh lỗi?", options: ["Tên tệp", "Phần mở rộng", "Vị trí lưu", "Thư mục"], correct: 1 },
+    { q: "Việc đặt tên tệp rõ ràng giúp người dùng:", options: ["Tăng dung lượng", "Dễ nhận biết", "Giảm lỗi", "Tăng tốc"], correct: 1 },
+    { q: "Facebook là mạng xã hội cho phép người dùng:", options: ["Kết nối và chia sẻ", "Soạn thảo văn bản", "Cài phần mềm", "Lập trình"], correct: 0 },
+    { q: "Facebook ban đầu được tạo ra nhằm mục đích:", options: ["Bán hàng đa cấp", "Kết nối sinh viên", "Chơi game", "Xem phim miễn phí"], correct: 1 },
+    { q: "Người dưới 13 tuổi dùng Facebook có nguy cơ:", options: ["Không được bảo vệ", "Không dùng mạng", "Chậm máy", "Không tải app"], correct: 0 },
+    { q: "Tuân thủ độ tuổi khi dùng Facebook thể hiện:", options: ["Sự nổi tiếng", "Ý thức sử dụng", "Kĩ năng công nghệ", "Mức độ online"], correct: 1 },
+    { q: "Khi bình luận trên mạng xã hội, học sinh nên:", options: ["Gay gắt", "Lịch sự", "Trêu chọc", "Theo cảm xúc"], correct: 1 },
+    { q: "Hành động nào thể hiện ứng xử có văn hóa trên mạng?", options: ["Không bêu xấu người khác", "Chia sẻ tin thất thiệt", "Spam bình luận", "Gây tranh cãi"], correct: 0 },
+    { q: "Đăng thông tin sai sự thật là vi phạm lời khuyên nào?", options: ["Đừng ăn cắp trên mạng", "Không lan truyền tin giả", "Không nghiện game", "Không spam"], correct: 1 },
+    { q: "Một trong những rủi ro khi dùng mạng xã hội là:", options: ["Học tốt", "Bị lừa đảo", "Trao đổi học tập", "Kết bạn"], correct: 1 },
+    { q: "Để tránh bị lừa đảo, học sinh không nên:", options: ["Kiểm tra tin nhắn lạ", "Nhấn liên kết lạ", "Báo người lớn", "Cẩn thận"], correct: 1 },
+    { q: "Mật khẩu an toàn cần:", options: ["Khó đoán", "Dễ nhớ", "Trùng tên bạn bè", "Ít kí tự"], correct: 0 },
+    { q: "Khi phát hiện tài khoản bị xâm nhập, người dùng nên:", options: ["Bỏ qua", "Đăng cảnh báo", "Đổi mật khẩu", "Tắt thiết bị"], correct: 2 },
+    { q: "Trang bị kiến thức an toàn thông tin giúp học sinh:", options: ["Chơi game không bị la", "Hạn chế rủi ro", "Tăng tốc Internet", "Có nhiều tài khoản"], correct: 1 }
 ];
+
 
 function prepareQuizData() {
     // Sao chép toàn bộ câu hỏi
