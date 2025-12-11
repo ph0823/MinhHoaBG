@@ -729,29 +729,31 @@
             sessionQuestions.forEach((q, idx) => {
                 const userChoiceIndex = userAnswers[idx];
                 const correctIndex = q.newCorrectIndex;
-               
-                let isCorrect = false;
-                if (userChoiceIndex === correctIndex) {
-                    score++;
-                    isCorrect = true;
-                }
 
-                let userText = userChoiceIndex !== null ? `${labels[userChoiceIndex]}. ${q.cleanOptions[userChoiceIndex]}` : "<span style='color:red'>Chưa trả lời</span>";
+                // Bỏ qua câu đúng → Chỉ hiển thị câu sai
+                if (userChoiceIndex === correctIndex) return;
+
+                let userText = userChoiceIndex !== null
+                    ? `${labels[userChoiceIndex]}. ${q.cleanOptions[userChoiceIndex]}`
+                    : "<span style='color:red'>Chưa trả lời</span>";
+
                 let correctText = `${labels[correctIndex]}. ${q.cleanOptions[correctIndex]}`;
 
                 reviewHTML.push(`
                     <div class="review-item">
                         <div class="review-q">Câu ${idx + 1}: ${q.q}</div>
-                        <div class="review-ans ${isCorrect ? 'correct-ans' : 'wrong-ans'}">
+
+                        <div class="review-ans wrong-ans">
                             <span class="user-ans-label">Bạn chọn:</span> ${userText}
                         </div>
-                        ${!isCorrect ? `
+
                         <div class="review-ans correct-ans">
                             <span class="user-ans-label">Đáp án đúng:</span> ${correctText}
-                        </div>` : ''}
+                        </div>
                     </div>
                 `);
             });
+
 
             switchScreen('result');
             // Show new user info format
