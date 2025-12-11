@@ -1,0 +1,332 @@
+[
+                               {
+                                   "id": 1,
+                                   "q": "Bạn đang ăn cơm tối cùng gia đình nhưng vẫn dán mắt vào điện thoại để chat với bạn bè. Hành động này vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "B. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "C. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "D. Lời khuyên 5: Hãy lịch sự sớm trả lời email, tin nhắn"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 2,
+                                   "q": "Khi đang giao tiếp trực tiếp với người khác, bạn nhận được một tin nhắn. Bạn xin lỗi vì đã bị tách ra để trả lời tin nhắn một cách nhanh chóng. Việc này thể hiện sự tuân thủ lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "B. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng",
+                                   "C. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "D. Lời khuyên 1: Tôn trọng những người xung quanh"
+                                   ],
+                                   "correct": "D"
+                               },
+                               {
+                                   "id": 3,
+                                   "q": "Tại nơi công cộng như rạp chiếu phim hay phòng học, việc cần chú ý không gây phiền nhiễu cho người khác bằng thiết bị điện tử của mình thuộc về lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "B. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "C. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "D. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ"
+                                   ],
+                                   "correct": "A"
+                               },
+                               {
+                                   "id": 4,
+                                   "q": "Bạn đăng tải một bài viết bày tỏ thái độ thiếu tôn trọng hoặc sử dụng ngôn ngữ khiếm nhã trên trang cá nhân của mình. Hành động này vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "B. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "C. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "D. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 5,
+                                   "q": "Bạn luôn cân nhắc kỹ lưỡng nội dung trước khi đăng tải trên mạng vì biết rằng những gì đã đưa lên mạng sẽ rất khó thu hồi được. Bạn đang thực hiện lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng",
+                                   "B. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "C. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "D. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 6,
+                                   "q": "Hình ảnh cá nhân được xây dựng trên mạng xã hội có thể ảnh hưởng đến cuộc sống thực và các mối quan hệ xã hội của bạn. Điều này nhấn mạnh tầm quan trọng của lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 5: Hãy lịch sự sớm trả lời email, tin nhắn",
+                                   "B. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "C. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "D. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 7,
+                                   "q": "Quy tắc chung trong ứng xử là: \"Đừng làm với người khác những gì mà chính mình không muốn phải nhận\". Quy tắc này liên quan đến lời khuyên nào khi giao tiếp qua mạng?",
+                                   "options": [
+                                   "A. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "B. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "C. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "D. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 8,
+                                   "q": "Bạn nhận thấy một người bạn mắc lỗi nào đó trên mạng. Thay vì công khai chỉ trích, bạn gửi tin nhắn riêng để góp ý. Bạn đang thực hiện lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt",
+                                   "B. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "C. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "D. Lời khuyên 1: Tôn trọng những người xung quanh"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 9,
+                                   "q": "Hành vi tùy tiện đưa ra các phán xét xúc phạm một người trên mạng, ngay cả khi người đó không có mặt để đáp trả, vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "B. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "C. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "D. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 10,
+                                   "q": "Bạn bè tin tưởng chia sẻ một số chuyện riêng tư qua cuộc trò chuyện cá nhân. Bạn không nên chuyển tiếp nội dung này khi chưa được sự đồng ý của họ, theo lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "B. Lời khuyên 5: Hãy lịch sự sớm trả lời email, tin nhắn",
+                                   "C. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "D. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 11,
+                                   "q": "Việc bạn vô tư công khai số điện thoại và địa chỉ nhà của một người bạn lên mạng xã hội là vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "B. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "C. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "D. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 12,
+                                   "q": "Những \"bí mật\" chỉ giữa hai người rất dễ bị chuyển tiếp tới nhiều người khác nếu bạn không tôn trọng điều gì?",
+                                   "options": [
+                                   "A. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "B. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "C. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "D. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 13,
+                                   "q": "Nếu đã kết bạn qua mạng hay cho ai đó thông tin để liên lạc với mình (như địa chỉ email, số điện thoại), bạn cần làm gì khi nhận tin nhắn hoặc email?",
+                                   "options": [
+                                   "A. Lịch sự trả lời một cách nhanh chóng",
+                                   "B. Có thể bỏ qua nếu tin nhắn không quan trọng",
+                                   "C. Chỉ cần đọc mà không cần trả lời",
+                                   "D. Chuyển tiếp tin nhắn cho người khác xem"
+                                   ],
+                                   "correct": "A"
+                               },
+                               {
+                                   "id": 14,
+                                   "q": "Nếu bạn nhận được email hoặc tin nhắn quan trọng nhưng không thể sớm trả lời, bạn nên làm gì để thể hiện phép lịch sự?",
+                                   "options": [
+                                   "A. Bỏ qua và chờ đến khi có thời gian trả lời chi tiết",
+                                   "B. Gửi email từ chối nhã nhặn ngay lập tức",
+                                   "C. Nên báo đã nhận và hẹn trả lời sau",
+                                   "D. Đăng câu hỏi này lên mạng xã hội để xin ý kiến"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 15,
+                                   "q": "Nếu không muốn trả lời một email/tin nhắn, để tránh bị coi là bỏ qua quá lâu, lời khuyên là bạn nên làm gì?",
+                                   "options": [
+                                   "A. Gửi email từ chối nhã nhặn",
+                                   "B. Đánh dấu thư đó là spam",
+                                   "C. Không trả lời và chặn người gửi",
+                                   "D. Hỏi ý kiến một người bạn thân"
+                                   ],
+                                   "correct": "A"
+                               },
+                               {
+                                   "id": 16,
+                                   "q": "Hành vi sống ảo, lạm dụng quá nhiều các giao tiếp trực tuyến và mạng xã hội có thể dẫn đến hậu quả gì?",
+                                   "options": [
+                                   "A. Cải thiện kỹ năng giao tiếp xã hội",
+                                   "B. Giúp tìm kiếm thông tin hiệu quả hơn",
+                                   "C. Ảnh hưởng đến học tập và làm việc",
+                                   "D. Tôn trọng quyền riêng tư của người khác"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 17,
+                                   "q": "Việc chơi game liên tục nhiều ngày, dẫn đến kiệt sức khỏe và thậm chí tử vong, vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "B. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "C. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt",
+                                   "D. Lời khuyên 1: Tôn trọng những người xung quanh"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 18,
+                                   "q": "Để phòng tránh tác hại của Internet và đảm bảo sử dụng có kiểm soát, bạn nên tuân theo quy định hạn chế của bố mẹ hoặc tự đặt ra khung giờ sử dụng mỗi ngày. Việc này thuộc lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 5: Hãy lịch sự sớm trả lời email, tin nhắn",
+                                   "B. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng",
+                                   "C. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "D. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 19,
+                                   "q": "Kẻ dụ dỗ trên mạng thường lợi dụng sự nhẹ dạ, cả tin của lứa tuổi học sinh để thực hiện hành vi xấu. Khi nhận diện kẻ xấu, bạn cần thực hiện lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 1: Tôn trọng những người xung quanh",
+                                   "B. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt",
+                                   "C. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "D. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 20,
+                                   "q": "Một người quen trên mạng dụ dỗ bạn làm những việc \"thân mật\" hoặc hẹn gặp riêng để tặng quà mà không có sự kiểm soát của người lớn. Bạn nên làm gì để tự bảo vệ mình?",
+                                   "options": [
+                                   "A. Đồng ý hẹn gặp nếu người đó có vẻ tử tế",
+                                   "B. Từ chối và báo với ba mẹ",
+                                   "C. Chụp ảnh người đó để đe dọa lại",
+                                   "D. Chia sẻ nội dung cuộc trò chuyện với bạn bè"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 21,
+                                   "q": "Nếu bạn bị đe dọa hoặc bị bắt nạt trên không gian mạng, lời khuyên là bạn cần làm gì?",
+                                   "options": [
+                                   "A. Tự mình giải quyết bằng cách trả đũa",
+                                   "B. Nhờ người lớn giúp đỡ, tư vấn",
+                                   "C. Im lặng để mọi việc qua đi",
+                                   "D. Chặn tài khoản người đó và xóa mọi bằng chứng"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 22,
+                                   "q": "Nếu bạn lan truyền những nội dung có tính bịa đặt, thất thiệt hay hình ảnh kín đáo riêng tư của nạn nhân, bạn đã vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "B. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "C. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "D. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 23,
+                                   "q": "Hành vi đe dọa, xúc phạm, làm nhục, hoặc quấy rối nạn nhân bằng cách gửi tin nhắn trên mạng xã hội được nêu trong lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "B. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "C. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "D. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 24,
+                                   "q": "Một nhóm học sinh lập nhóm chế giễu và công kích một bạn học khác. Hành vi này vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "B. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "C. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "D. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 25,
+                                   "q": "Để tránh gây ra hậu quả nghiêm trọng trên mạng, khi đọc tin, bạn cần phải chọn lọc thông tin từ những nguồn đáng tin cậy. Điều này liên quan đến lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt",
+                                   "B. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "C. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "D. Lời khuyên 5: Hãy lịch sự sớm trả lời email, tin nhắn"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 26,
+                                   "q": "Việc tung tin giật gân, thông tin không đáng tin cậy để gây chú ý hoặc \"câu like\" trên mạng xã hội vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 3: Hãy tử tế với người khác trên không gian mạng",
+                                   "B. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "C. Lời khuyên 2: Giữ gìn hình ảnh bản thân trên không gian mạng",
+                                   "D. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 27,
+                                   "q": "Việc đăng tải hoặc lan truyền các video mang nội dung xấu có tính bạo lực vi phạm lời khuyên nào, đồng thời là hành vi bị cấm theo pháp luật?",
+                                   "options": [
+                                   "A. Lời khuyên 8: Bắt nạt, tiếp tay cho kẻ bắt nạt là vi phạm pháp luật",
+                                   "B. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng",
+                                   "C. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ",
+                                   "D. Lời khuyên 7: Cảnh giác với kẻ dụ dỗ và bắt nạt"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 28,
+                                   "q": "Bạn lấy những hình ảnh đẹp, bài văn hay của người khác trên mạng và sử dụng nguyên gốc mà không ghi rõ nguồn, coi như của mình. Hành vi này được gọi là gì, theo lời khuyên trong sách?",
+                                   "options": [
+                                   "A. Bắt nạt qua mạng",
+                                   "B. Đạo văn",
+                                   "C. Sử dụng thông tin sai mục đích",
+                                   "D. Vi phạm quyền riêng tư"
+                                   ],
+                                   "correct": "B"
+                               },
+                               {
+                                   "id": 29,
+                                   "q": "Hành vi sử dụng mật khẩu của người khác mà không được phép. Hành vi này vi phạm lời khuyên nào?",
+                                   "options": [
+                                   "A. Lời khuyên 6: Đừng để game, mạng xã hội biến mình thành nô lệ",
+                                   "B. Lời khuyên 4: Tôn trọng quyền riêng tư của người khác",
+                                   "C. Lời khuyên 10: Đừng vô tình \"ăn cắp\" trên không gian mạng",
+                                   "D. Lời khuyên 9: Không lan truyền tin giả, bài viết xuyên tạc sự thật, hình ảnh đồi truỵ"
+                                   ],
+                                   "correct": "C"
+                               },
+                               {
+                                   "id": 30,
+                                   "q": "Nếu bạn muốn dùng một tấm ảnh đẹp, một đoạn văn hay trên Internet, bạn cần làm gì để tránh vi phạm bản quyền?",
+                                   "options": [
+                                   "A. Chia sẻ cho nhiều người cùng xem",
+                                   "B. Ghi rõ nguồn hoặc xin phép nếu cần",
+                                   "C. Thay đổi một chút nội dung rồi đăng lại",
+                                   "D. Chỉ nên sử dụng cho mục đích cá nhân"
+                                   ],
+                                   "correct": "B"
+                               }
+                               ]
