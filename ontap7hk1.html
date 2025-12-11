@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ôn tập cuối kì 1 Tin 7 - Hà Huy Tập</title>
+    <title>ôn tập cuối kì 1 Tin 7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 
@@ -70,25 +70,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-            background-color: white;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
         .btn {
             background: var(--primary-color);
             color: white;
@@ -98,20 +79,10 @@
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: transform 0.1s, background 0.3s;
-            display: inline-block;
-            text-align: center;
-            user-select: none;
         }
 
-        .btn:hover { background: #0066cc; }
-        .btn:active { transform: scale(0.98); }
-        .btn-secondary { background: #94a3b8; }
-        .btn-secondary:hover { background: #64748b; }
-
-        .options-grid {
-            display: grid;
-            gap: 15px;
+        .btn-secondary {
+            background: #94a3b8;
         }
 
         .option-card {
@@ -120,302 +91,285 @@
             padding: 15px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .option-card:hover {
-            border-color: var(--primary-color);
-            background: var(--secondary-color);
+            transition: 0.2s;
         }
 
         .option-card.selected {
-            border-color: var(--primary-color);
             background: var(--secondary-color);
-            position: relative;
+            border-color: var(--primary-color);
         }
 
-        .option-card.selected::after {
-            content: '✓';
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--primary-color);
+        .review-item {
+            border: 2px solid #e5e7eb;
+            padding: 12px;
+            border-radius: 10px;
+            background: #f9fafb;
+        }
+
+        .answer-wrong {
+            color: var(--error-color);
             font-weight: bold;
         }
 
-        .progress-container {
-            height: 6px;
-            background: #e2e8f0;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: var(--success-color);
-            width: 0%;
-            transition: width 0.3s;
+        .answer-correct {
+            color: var(--success-color);
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
-
 <div class="container">
-    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
 
-    <header>
-        <h1>Trắc Nghiệm Tin Học 7</h1>
-        <h2>Chủ đề A, C, D</h2>
-    </header>
+<header>
+    <h1>Trắc Nghiệm Tin Học 7</h1>
+    <h2>Chủ đề A, C, D</h2>
+</header>
 
-    <!-- SCREEN LOGIN -->
-    <div id="screen-login" class="screen active">
-        <div class="form-group">
-            <label>Họ và tên học sinh:</label>
-            <input type="text" id="input-name">
-        </div>
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="screen active">
 
-        <div style="display: flex; gap: 20px;">
-            <div class="form-group" style="flex: 1;">
-                <label>Lớp:</label>
-                <select id="input-class">
-                    <option value="" disabled selected>Chọn lớp</option>
-                    <option value="7.1">7.1</option>
-                    <option value="7.2">7.2</option>
-                    <option value="7.3">7.3</option>
-                    <option value="7.4">7.4</option>
-                    <option value="7.5">7.5</option>
-                    <option value="7.6">7.6</option>
-                    <option value="7.7">7.7</option>
-                    <option value="7.8">7.8</option>
-                    <option value="7.9">7.9</option>
-                    <option value="7.10">7.10</option>
-                     <option value="7.11">7.11</option>
-                </select>
-            </div>
+    <label>Họ và tên:</label>
+    <input type="text" id="input-name">
 
-            <div class="form-group" style="flex: 1;">
-                <label>STT:</label>
-                <input type="number" id="input-id" min="1" max="55">
-            </div>
-        </div>
+    <label>Lớp:</label>
+    <select id="input-class">
+        <option value="" disabled selected>Chọn lớp</option>
+        <option>7.1</option><option>7.2</option><option>7.3</option>
+        <option>7.4</option><option>7.5</option><option>7.6</option>
+        <option>7.7</option><option>7.8</option><option>7.9</option><option>7.10</option>
+    </select>
 
-        <button class="btn" onclick="startQuiz()" style="width:100%;">Bắt đầu làm bài</button>
+    <label>Số thứ tự:</label>
+    <input type="number" id="input-id" min="1" max="55">
+
+    <button class="btn" onclick="startQuiz()" style="margin-top:20px;">Bắt đầu làm bài</button>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="screen-quiz" class="screen">
+
+    <div class="question-number">
+        Câu hỏi <span id="q-current">1</span>/30
     </div>
 
-    <!-- SCREEN QUIZ -->
-    <div id="screen-quiz" class="screen">
-        <div class="quiz-header">
-            <div class="question-number">Câu hỏi <span id="q-current">1</span>/30</div>
-            <div class="timer">⏱ <span id="timer-display">600s</span></div>
-        </div>
+    <div class="timer">⏱ <span id="timer-display">600s</span></div>
 
-        <div class="question-text" id="question-text">Loading...</div>
+    <div id="question-text" style="margin:20px 0; font-weight:700;"></div>
 
-        <div class="options-grid" id="options-container"></div>
+    <div id="options-container" class="options-grid"></div>
 
-        <div class="nav-buttons" style="margin-top:auto; display:flex; justify-content:space-between;">
-            <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()">Quay lại</button>
-            <button class="btn" id="btn-next" onclick="nextQuestion()">Câu tiếp</button>
-        </div>
-    </div>
-
-    <!-- SCREEN RESULT -->
-    <div id="screen-result" class="screen">
-        <div id="result-info"></div>
-
-        <div class="score-box">
-            <div>Điểm số của bạn</div>
-            <div class="score-number" id="score-display">0/30</div>
-            <div id="score-percent"></div>
-        </div>
-
-        <button class="btn" onclick="location.reload()" style="width:100%;">Làm bài mới</button>
+    <div style="margin-top:auto; display:flex; justify-content:space-between;">
+        <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()">Quay lại</button>
+        <button class="btn" id="btn-next" onclick="nextQuestion()">Câu tiếp</button>
     </div>
 </div>
 
-<script>
-/* ====== NHƯ BẢN CŨ – GIỮ NGUYÊN TOÀN BỘ CODE ====== */
-/* Chỉ sửa 1 dòng ở renderQuestion(): đổi option -> option-card */
+<!-- RESULT SCREEN -->
+<div id="screen-result" class="screen">
+    <h2>Kết quả</h2>
 
-function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    <div>
+        <div style="font-size:20px;">Điểm số:</div>
+        <div id="score-display" style="font-size:32px; font-weight:700;">0/30</div>
+        <div id="score-percent"></div>
+    </div>
+
+    <button class="btn" onclick="location.reload()" style="margin-top:20px;">Làm bài mới</button>
+
+    <button class="btn" id="btn-review" style="margin-top:15px;" onclick="showReview()">Xem lại câu sai</button>
+
+    <div id="review-panel" style="margin-top:20px; display:none;">
+        <h3>Các câu bạn trả lời sai</h3>
+        <div id="review-content" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+</div>
+
+</div>
+
+<script>
+
+/* ============================
+   CƠ SỞ DỮ LIỆU CÂU HỎI (30 câu random mỗi lần)
+============================ */
+
+const rawQuestionsDB = [
+    { q:"Thiết bị nào là thiết bị vào?", options:["Loa","Chuột, bàn phím","Màn hình","Máy chiếu"], correct:1 },
+    { q:"Thiết bị nào là thiết bị ra?", options:["Bàn phím","Chuột","Loa","Webcam"], correct:2 },
+    { q:"Hệ điều hành có chức năng gì?", options:["Soạn thảo","Quản lí máy tính","Vẽ","Nghe nhạc"], correct:1 },
+    { q:"Trình quản lí tệp là:", options:["Word","Excel","File Explorer","PowerPoint"], correct:2 },
+    { q:"Tên và phần mở rộng tệp cách nhau bằng:", options:["Dấu phẩy","Dấu chấm","Dấu hai chấm","Dấu sao"], correct:1 },
+    { q:"Mở rộng tệp thể hiện:", options:["Kích thước","Kiểu tệp","Ngày tạo","Ổ đĩa"], correct:1 },
+    { q:"Sắp xếp tệp hợp lí giúp:", options:["Tăng dung lượng","Dễ tìm","Cài phần mềm","Tăng tốc"], correct:1 },
+    { q:"Ai sáng lập Facebook?", options:["Bill Gates","Mark Zuckerberg","Steve Jobs","Elon Musk"], correct:1 },
+    { q:"Facebook ra đời năm nào?", options:["2000","2004","2006","2010"], correct:1 },
+    { q:"Độ tuổi tối thiểu dùng Facebook?", options:["10","12","13","16"], correct:2 },
+    { q:"Quy định độ tuổi nhằm:", options:["Giới hạn","Bảo vệ trẻ nhỏ","Tăng lợi nhuận","Kiểm soát Internet"], correct:1 },
+    { q:"Học sinh nên làm gì trên mạng?", options:["Cãi nhau","Tôn trọng","Đăng tin sai","Chửi bậy"], correct:1 },
+    { q:"Thông tin không nên chia sẻ:", options:["Ảnh phong cảnh","Thông tin cá nhân","Sở thích","Hoạt động học"], correct:1 },
+    { q:"Hành vi thiếu văn hóa:", options:["Xin lỗi","Giữ trật tự","Xếp hàng","Nói tục"], correct:3 },
+    { q:"Ứng xử có văn hóa giúp:", options:["Nổi tiếng","Môi trường lành mạnh","Nhiều tranh cãi","Thể hiện cá tính"], correct:1 },
+    { q:"Dấu hiệu lừa đảo:", options:["Cung cấp mật khẩu","Tin nhắn trường","Thông báo lớp","Trang trường"], correct:0 },
+    { q:"Khi nhận tin nhắn lạ:", options:["Trả lời","Không phản hồi","Chia sẻ","Làm theo"], correct:1 },
+    { q:"Sử dụng mạng an toàn cần:", options:["Công khai dữ liệu","Giữ kín thông tin","Nhiều bạn lạ","Dùng nhiều tài khoản"], correct:1 },
+    { q:"Bị bắt nạt nên:", options:["Im lặng","Trả đũa","Báo người lớn","Chửi lại"], correct:2 },
+    { q:"Tránh rủi ro mạng giúp:", options:["Giải trí","Bảo vệ bản thân","Tăng tốc","Nhiều bạn"], correct:1 },
+    { q:"Thiết bị nhập hình ảnh:", options:["Máy in","Loa","Webcam","Máy chiếu"], correct:2 },
+    { q:"Thiết bị không phải đầu ra:", options:["Bàn phím","Màn hình","Máy in","Loa"], correct:0 },
+    { q:"Hệ điều hành làm gì?", options:["Chơi game","Quản lí thiết bị","Đồ họa","Nghe nhạc"], correct:1 },
+    { q:"Thư mục dùng để:", options:["Ghi nhớ app","Chứa tệp","Xử lí dữ liệu","Bảo mật"], correct:1 },
+    { q:"Tên tệp dùng để:", options:["Giảm dung lượng","Phân biệt tệp","Tăng tốc","Bảo vệ"], correct:1 },
+    { q:"Không nên đổi phần nào của tên tệp?", options:["Tên","Phần mở rộng","Thư mục","Ổ đĩa"], correct:1 },
+    { q:"Đặt tên rõ ràng giúp:", options:["Tăng dung lượng","Dễ nhận biết","Giảm lỗi","Nhanh máy"], correct:1 },
+    { q:"Facebook cho phép:", options:["Kết nối","Soạn thảo","Cài đặt","Lập trình"], correct:0 },
+    { q:"Facebook ban đầu để:", options:["Bán hàng","Kết nối sinh viên","Chơi game","Xem phim"], correct:1 },
+    { q:"Nguy cơ trẻ dưới 13 tuổi:", options:["Không bảo vệ","Không dùng","Chậm máy","Lỗi app"], correct:0 }
+];
+
+/* ============================
+   CODE CHẠY BÀI TEST
+============================ */
+
+function shuffleArray(arr){
+    for(let i=arr.length-1;i>0;i--){
+        let j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
     }
 }
 
-/* (Database giữ nguyên – rút gọn vì dài) */
-const rawQuestionsDB = [
-    // --- ĐỀ TRẮC NGHIỆM SỐ 1 – TIN HỌC 7 (CÁNH DIỀU) ---
-    { q: "Thiết bị nào sau đây là thiết bị vào của máy tính?", options: ["Loa, tai nghe", "Chuột, bàn phím", "Màn hình, máy in", "Máy chiếu, loa"], correct: 1 },
-    { q: "Thiết bị nào sau đây là thiết bị ra của máy tính?", options: ["Bàn phím", "Chuột", "Loa", "Webcam"], correct: 2 },
-    { q: "Hệ điều hành là phần mềm có chức năng:", options: ["Soạn thảo văn bản", "Quản lí và điều khiển máy tính", "Vẽ hình", "Nghe nhạc"], correct: 1 },
-    { q: "Trong Windows, trình quản lí hệ thống tệp là:", options: ["Word", "Excel", "File Explorer", "PowerPoint"], correct: 2 },
-    { q: "Giữa phần tên và phần mở rộng của tệp được phân cách bởi:", options: ["Dấu phẩy", "Dấu chấm", "Dấu hai chấm", "Dấu sao"], correct: 1 },
-    { q: "Phần mở rộng của tên tệp thường thể hiện:", options: ["Thư mục chứa", "Kiểu tệp", "Kích thước", "Ngày tạo"], correct: 1 },
-    { q: "Việc sắp xếp tệp hợp lí giúp người dùng:", options: ["Tăng dung lượng", "Dễ tìm và quản lí", "Cài phần mềm", "Tăng tốc mạng"], correct: 1 },
-    { q: "Facebook là mạng xã hội do ai sáng lập?", options: ["Bill Gates", "Mark Zuckerberg", "Steve Jobs", "Elon Musk"], correct: 1 },
-    { q: "Facebook được ra đời vào năm nào?", options: ["2000", "2004", "2006", "2010"], correct: 1 },
-    { q: "Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:", options: ["10 tuổi", "12 tuổi", "13 tuổi", "16 tuổi"], correct: 2 },
-    { q: "Facebook quy định độ tuổi sử dụng nhằm mục đích:", options: ["Giới hạn người dùng", "Giảm nội dung", "Bảo vệ người dùng nhỏ tuổi", "Tăng lợi nhuận"], correct: 2 },
-    { q: "Khi tham gia mạng xã hội, học sinh nên:", options: ["Tranh cãi", "Tôn trọng người khác", "Đăng tin sai", "Nói tục"], correct: 1 },
-    { q: "Thông tin nào không nên chia sẻ trên mạng xã hội?", options: ["Thông tin cá nhân", "Ảnh phong cảnh", "Sở thích", "Hoạt động học tập"], correct: 0 },
-    { q: "Hành động nào sau đây là thiếu văn hóa nơi công cộng?", options: ["Xin lỗi", "Giữ trật tự", "Xếp hàng", "Nói tục"], correct: 3 },
-    { q: "Ứng xử có văn hóa trên mạng giúp:", options: ["Nổi tiếng", "Tạo môi trường lành mạnh", "Nhiều tranh luận", "Thể hiện cá tính"], correct: 1 },
-    { q: "Dấu hiệu nào cho thấy nguy cơ lừa đảo trên mạng?", options: ["Cung cấp mật khẩu", "Tin nhắn báo số tiền hiện tại trong tài khoản", "Thông báo lớp", "Trang trường"], correct: 0 },
-    { q: "Khi nhận tin nhắn đáng ngờ, học sinh nên:", options: ["Trả lời ngay", "Không phản hồi", "Chia sẻ", "Làm theo"], correct: 1 },
-    { q: "Để sử dụng mạng xã hội an toàn, học sinh cần:", options: ["Kết bạn nhiều", "Giữ kín thông tin riêng tư", "Công khai dữ liệu", "Dùng nhiều tài khoản"], correct: 1 },
-    { q: "Khi bị bắt nạt trên mạng, học sinh nên:", options: ["Im lặng", "Trả đũa lại", "Báo người lớn", "Đăng phản đối"], correct: 2 },
-    { q: "Việc học cách tránh rủi ro trên mạng giúp học sinh:", options: ["Giải trí hơn", "Dùng mạng nhiều", "Bảo vệ bản thân", "Kết bạn nhanh"], correct: 2 },
-
-    // --- ĐỀ TRẮC NGHIỆM SỐ 2 – TIN HỌC 7 (CÁNH DIỀU) ---
-    { q: "Thiết bị nào sau đây dùng để nhập hình ảnh vào máy tính?", options: ["Máy in", "Loa", "Webcam", "Máy chiếu"], correct: 2 },
-    { q: "Thiết bị nào sau đây không phải là thiết bị ra của máy tính?", options: ["Bàn phím", "Màn hình", "Máy in", "Loa"], correct: 0 },
-    { q: "Một trong các chức năng của hệ điều hành là:", options: ["Chơi game mượt", "Quản lí thiết bị", "Thiết kế đồ họa", "Nghe nhạc hay"], correct: 1 },
-    { q: "Trong hệ điều hành, thư mục là nơi dùng để:", options: ["Ghi nhớ chương trình ưa thích", "Chứa tệp và thư mục", "Xử lí dữ liệu", "Khởi động"], correct: 1 },
-    { q: "Tên tệp trong máy tính dùng để:", options: ["Phân biệt các tệp", "Giảm dung lượng", "Tăng tốc máy tính", "Bảo vệ nội dung"], correct: 0 },
-    { q: "Khi đổi tên tệp, phần nào không nên thay đổi để tránh lỗi?", options: ["Tên tệp", "Phần mở rộng", "Vị trí lưu", "Thư mục"], correct: 1 },
-    { q: "Việc đặt tên tệp rõ ràng giúp người dùng:", options: ["Tăng dung lượng", "Dễ nhận biết", "Giảm lỗi", "Tăng tốc"], correct: 1 },
-    { q: "Facebook là mạng xã hội cho phép người dùng:", options: ["Kết nối và chia sẻ", "Soạn thảo văn bản", "Cài phần mềm", "Lập trình"], correct: 0 },
-    { q: "Facebook ban đầu được tạo ra nhằm mục đích:", options: ["Bán hàng đa cấp", "Kết nối sinh viên", "Chơi game", "Xem phim miễn phí"], correct: 1 },
-    { q: "Người dưới 13 tuổi dùng Facebook có nguy cơ:", options: ["Không được bảo vệ", "Không dùng mạng", "Chậm máy", "Không tải app"], correct: 0 },
-    { q: "Tuân thủ độ tuổi khi dùng Facebook thể hiện:", options: ["Sự nổi tiếng", "Ý thức sử dụng", "Kĩ năng công nghệ", "Mức độ online"], correct: 1 },
-    { q: "Khi bình luận trên mạng xã hội, học sinh nên:", options: ["Gay gắt", "Lịch sự", "Trêu chọc", "Theo cảm xúc"], correct: 1 },
-    { q: "Hành động nào thể hiện ứng xử có văn hóa trên mạng?", options: ["Không bêu xấu người khác", "Chia sẻ tin thất thiệt", "Spam bình luận", "Gây tranh cãi"], correct: 0 },
-    { q: "Đăng thông tin sai sự thật là vi phạm lời khuyên nào?", options: ["Đừng ăn cắp trên mạng", "Không lan truyền tin giả", "Không nghiện game", "Không spam"], correct: 1 },
-    { q: "Một trong những rủi ro khi dùng mạng xã hội là:", options: ["Học tốt", "Bị lừa đảo", "Trao đổi học tập", "Kết bạn"], correct: 1 },
-    { q: "Để tránh bị lừa đảo, học sinh không nên:", options: ["Kiểm tra tin nhắn lạ", "Nhấn liên kết lạ", "Báo người lớn", "Cẩn thận"], correct: 1 },
-    { q: "Mật khẩu an toàn cần:", options: ["Khó đoán", "Dễ nhớ", "Trùng tên bạn bè", "Ít kí tự"], correct: 0 },
-    { q: "Khi phát hiện tài khoản bị xâm nhập, người dùng nên:", options: ["Bỏ qua", "Đăng cảnh báo", "Đổi mật khẩu", "Tắt thiết bị"], correct: 2 },
-    { q: "Trang bị kiến thức an toàn thông tin giúp học sinh:", options: ["Chơi game không bị la", "Hạn chế rủi ro", "Tăng tốc Internet", "Có nhiều tài khoản"], correct: 1 }
-];
-
-
 function prepareQuizData() {
-    // Sao chép toàn bộ câu hỏi
     let arr = JSON.parse(JSON.stringify(rawQuestionsDB));
 
-    // Xử lý cleanOptions và newCorrectIndex
-    arr.forEach(q => {
-        q.cleanOptions = [...q.options];
-        q.newCorrectIndex = q.correct;
+    arr.forEach(q=>{
+        q.cleanOptions=[...q.options];
+        q.newCorrectIndex=q.correct;
     });
 
-    // Xáo trộn câu hỏi
     shuffleArray(arr);
-
-    // Lấy đúng 30 câu
-    return arr.slice(0, 30);
+    return arr.slice(0,30);
 }
 
-
-let sessionQuestions = [];
-let currentQuestion = 0;
-let userAnswers = new Array(30).fill(null);
+let sessionQuestions=[];
+let currentQuestion=0;
+let userAnswers=new Array(30).fill(null);
 let timerInterval;
-let timeLeft = 600;
+let timeLeft=600;
 
-const screens = {
-    login: document.getElementById("screen-login"),
-    quiz: document.getElementById("screen-quiz"),
-    result: document.getElementById("screen-result"),
+const screens={
+    login:document.getElementById("screen-login"),
+    quiz:document.getElementById("screen-quiz"),
+    result:document.getElementById("screen-result")
 };
 
-const els = {
-    name: document.getElementById("input-name"),
-    class: document.getElementById("input-class"),
-    id: document.getElementById("input-id"),
-    timer: document.getElementById("timer-display"),
-    qCurrent: document.getElementById("q-current"),
-    qText: document.getElementById("question-text"),
-    optionsCont: document.getElementById("options-container"),
-    progressBar: document.getElementById("progress-bar"),
-    scoreDisplay: document.getElementById("score-display"),
-    scorePercent: document.getElementById("score-percent"),
-    resultInfo: document.getElementById("result-info"),
-};
+function startQuiz(){
+    screens.login.style.display="none";
+    screens.quiz.style.display="flex";
 
-function startQuiz() {
-    screens.login.style.display = "none";
-    screens.quiz.style.display = "block";
-
-    sessionQuestions = prepareQuizData();
+    sessionQuestions=prepareQuizData();
     renderQuestion();
     startTimer();
 }
 
-function startTimer() {
-    timeLeft = 600;
-    timerInterval = setInterval(() => {
+function startTimer(){
+    timerInterval=setInterval(()=>{
         timeLeft--;
-        els.timer.textContent = timeLeft + "s";
-        if (timeLeft <= 0) submitQuiz();
-    }, 1000);
+        document.getElementById("timer-display").textContent=timeLeft+"s";
+        if(timeLeft<=0) submitQuiz();
+    },1000);
 }
 
-function renderQuestion() {
-    let q = sessionQuestions[currentQuestion];
+function renderQuestion(){
+    let q=sessionQuestions[currentQuestion];
 
-    els.qCurrent.textContent = (currentQuestion + 1);
-    els.qText.textContent = q.q;
-    els.optionsCont.innerHTML = "";
+    document.getElementById("q-current").textContent=currentQuestion+1;
+    document.getElementById("question-text").textContent=q.q;
 
-    q.cleanOptions.forEach((opt, idx) => {
-        let div = document.createElement("div");
-        div.className = "option-card";  /* ✔ FIX TẠI ĐÂY */
-        div.textContent = String.fromCharCode(65 + idx) + ". " + opt;
+    let cont=document.getElementById("options-container");
+    cont.innerHTML="";
 
-        if (userAnswers[currentQuestion] === idx) {
+    q.cleanOptions.forEach((opt,idx)=>{
+        let div=document.createElement("div");
+        div.className="option-card";
+        div.textContent=String.fromCharCode(65+idx)+". "+opt;
+
+        if(userAnswers[currentQuestion]===idx)
             div.classList.add("selected");
-        }
 
-        div.onclick = () => selectOption(idx);
-        els.optionsCont.appendChild(div);
+        div.onclick=()=>selectOption(idx);
+        cont.appendChild(div);
     });
 
-    els.progressBar.style.width = ((currentQuestion+1)/30*100) + "%";
-    document.getElementById("btn-prev").style.display = currentQuestion > 0 ? "block" : "none";
-    document.getElementById("btn-next").textContent = currentQuestion === 29 ? "Nộp bài" : "Câu tiếp";
+    document.getElementById("btn-prev").style.display=currentQuestion>0?"block":"none";
+    document.getElementById("btn-next").textContent=currentQuestion===29?"Nộp bài":"Câu tiếp";
 }
 
-function selectOption(idx) {
-    userAnswers[currentQuestion] = idx;
+function selectOption(idx){
+    userAnswers[currentQuestion]=idx;
     renderQuestion();
 }
 
-function nextQuestion() {
-    if (currentQuestion === 29) return submitQuiz();
+function nextQuestion(){
+    if(currentQuestion===29) return submitQuiz();
     currentQuestion++;
     renderQuestion();
 }
 
-function prevQuestion() {
+function prevQuestion(){
     currentQuestion--;
     renderQuestion();
 }
 
-function submitQuiz() {
+function submitQuiz(){
     clearInterval(timerInterval);
 
-    let correct = 0;
-    sessionQuestions.forEach((q, i) => {
-        if (userAnswers[i] === q.newCorrectIndex) correct++;
+    let correct=0;
+    sessionQuestions.forEach((q,i)=>{
+        if(userAnswers[i]===q.newCorrectIndex) correct++;
     });
 
-    screens.quiz.style.display = "none";
-    screens.result.style.display = "block";
+    screens.quiz.style.display="none";
+    screens.result.style.display="flex";
 
-    els.scoreDisplay.textContent = correct;
-    els.scorePercent.textContent = Math.round(correct / 30 * 100) + "%";
+    document.getElementById("score-display").textContent=`${correct}/30`;
+    document.getElementById("score-percent").textContent=Math.round(correct/30*100)+"%";
 }
+
+/* ============================
+   TÍNH NĂNG XEM LẠI CÂU SAI
+============================ */
+
+function showReview(){
+    let box=document.getElementById("review-panel");
+    let area=document.getElementById("review-content");
+
+    box.style.display="block";
+    area.innerHTML="";
+
+    sessionQuestions.forEach((q,i)=>{
+        let user=userAnswers[i];
+        let correct=q.newCorrectIndex;
+
+        if(user!==correct){
+            let div=document.createElement("div");
+            div.className="review-item";
+
+            div.innerHTML=`
+                <div><strong>Câu ${i+1}:</strong> ${q.q}</div>
+                <div>• Bạn chọn: <span class="answer-wrong">${q.cleanOptions[user] ?? "Không chọn"}</span></div>
+                <div>• Đáp án đúng: <span class="answer-correct">${q.cleanOptions[correct]}</span></div>
+            `;
+
+            area.appendChild(div);
+        }
+    });
+
+    if(area.innerHTML.trim()===""){
+        area.innerHTML=`<div style="color:green; font-weight:700;">Tuyệt vời! Bạn không sai câu nào 🎉</div>`;
+    }
+
+    setTimeout(()=>box.scrollIntoView({behavior:"smooth"}),200);
+}
+
 </script>
 
 </body>
