@@ -364,7 +364,7 @@ function startTimer() {
 function renderQuestion() {
     let q = sessionQuestions[currentQuestion];
 
-    els.qCurrent.textContent = (currentQuestion + 1) + "/30";
+    els.qCurrent.textContent = (currentQuestion + 1);
     els.qText.textContent = q.q;
     els.optionsCont.innerHTML = "";
 
@@ -413,7 +413,7 @@ function submitQuiz() {
     screens.quiz.style.display = "none";
     screens.result.style.display = "block";
 
-    els.scoreDisplay.textContent = correct + "/30";
+    els.scoreDisplay.textContent = correct;
     els.scorePercent.textContent = Math.round(correct / 30 * 100) + "%";
 }
 </script>
