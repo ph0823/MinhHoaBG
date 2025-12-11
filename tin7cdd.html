@@ -588,12 +588,28 @@
             shuffleArray(questions);
             questions.forEach(q => {
                 const letterMap = {'A': 0, 'B': 1, 'C': 2, 'D': 3};
+
                 const oldCorrectIndex = letterMap[q.correct];
-                const originalContentArray = q.options.map(opt => opt.substring(3).trim());
-                const correctContent = originalContentArray[oldCorrectIndex];
-                shuffleArray(originalContentArray);
-                q.newCorrectIndex = originalContentArray.indexOf(correctContent);
-                q.cleanOptions = originalContentArray;
+
+                // Tách phần nội dung (bỏ "A. ", "B. ", ...)
+                const original = q.options.map(opt => ({
+                    letter: opt.charAt(0),
+                    text: opt.substring(3).trim()
+                }));
+
+                const correctText = original[oldCorrectIndex].text;
+
+                // Tạo danh sách chỉ gồm nội dung
+                let shuffled = original.map(o => o.text);
+
+                // Trộn nội dung
+                shuffleArray(shuffled);
+
+                // Tìm vị trí mới của đáp án đúng
+                q.newCorrectIndex = shuffled.indexOf(correctText);
+
+                // Lưu vào cleanOptions để render
+                q.cleanOptions = shuffled;
             });
             return questions;
         }
@@ -730,29 +746,33 @@
                 const userChoiceIndex = userAnswers[idx];
                 const correctIndex = q.newCorrectIndex;
 
-                // Bỏ qua câu đúng → Chỉ hiển thị câu sai
-                if (userChoiceIndex === correctIndex) return;
+                // TÍNH ĐIỂM (không ảnh hưởng hiển thị câu sai)
+                if (userChoiceIndex === correctIndex) {
+                    score++;
+                } else {
+                    // TẠO REVIEW CHỈ CÂU SAI
+                    let userText = userChoiceIndex !== null
+                        ? `${labels[userChoiceIndex]}. ${q.cleanOptions[userChoiceIndex]}`
+                        : "<span style='color:red'>Chưa trả lời</span>";
 
-                let userText = userChoiceIndex !== null
-                    ? `${labels[userChoiceIndex]}. ${q.cleanOptions[userChoiceIndex]}`
-                    : "<span style='color:red'>Chưa trả lời</span>";
+                    let correctText = `${labels[correctIndex]}. ${q.cleanOptions[correctIndex]}`;
 
-                let correctText = `${labels[correctIndex]}. ${q.cleanOptions[correctIndex]}`;
+                    reviewHTML.push(`
+                        <div class="review-item">
+                            <div class="review-q">Câu ${idx + 1}: ${q.q}</div>
 
-                reviewHTML.push(`
-                    <div class="review-item">
-                        <div class="review-q">Câu ${idx + 1}: ${q.q}</div>
+                            <div class="review-ans wrong-ans">
+                                <span class="user-ans-label">Bạn chọn:</span> ${userText}
+                            </div>
 
-                        <div class="review-ans wrong-ans">
-                            <span class="user-ans-label">Bạn chọn:</span> ${userText}
+                            <div class="review-ans correct-ans">
+                                <span class="user-ans-label">Đáp án đúng:</span> ${correctText}
+                            </div>
                         </div>
-
-                        <div class="review-ans correct-ans">
-                            <span class="user-ans-label">Đáp án đúng:</span> ${correctText}
-                        </div>
-                    </div>
-                `);
+                    `);
+                }
             });
+
 
 
             switchScreen('result');
