@@ -1,0 +1,2060 @@
+{
+  "7.1": [
+    {
+      "stt": 1,
+      "ten": "ĐOÀN PHẠM KHÁNH AN"
+    },
+    {
+      "stt": 2,
+      "ten": "NGUYỄN MAI TRÂM ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "PHAN NGỌC VÂN ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "TRẦN GIA BẢO"
+    },
+    {
+      "stt": 5,
+      "ten": "ĐẶNG HUỲNH GIA BẢO"
+    },
+    {
+      "stt": 6,
+      "ten": "NGUYỄN NGỌC BẢO CHÂU"
+    },
+    {
+      "stt": 7,
+      "ten": "NGUYỄN NGỌC BẢO CHI"
+    },
+    {
+      "stt": 8,
+      "ten": "ĐỖ DUY CƯỜNG"
+    },
+    {
+      "stt": 9,
+      "ten": "NGUYỄN ĐÀO BÁCH DƯƠNG"
+    },
+    {
+      "stt": 10,
+      "ten": "PHẠM ĐỨC DƯƠNG"
+    },
+    {
+      "stt": 11,
+      "ten": "VÕ NGUYỄN QUỲNH DƯƠNG"
+    },
+    {
+      "stt": 12,
+      "ten": "NGUYỄN NHẬT ĐÔNG"
+    },
+    {
+      "stt": 13,
+      "ten": "NGUYỄN HOÀNG GIA"
+    },
+    {
+      "stt": 14,
+      "ten": "NGUYỄN ĐÀO KHẢ HÂN"
+    },
+    {
+      "stt": 15,
+      "ten": "NGUYỄN KHÁNH HƯNG"
+    },
+    {
+      "stt": 16,
+      "ten": "NGUYỄN DUY KHANG"
+    },
+    {
+      "stt": 17,
+      "ten": "TRẦN QUÁCH THIÊN KIM"
+    },
+    {
+      "stt": 18,
+      "ten": "ÔN NGỌC GIA LINH"
+    },
+    {
+      "stt": 19,
+      "ten": "VŨ NGUYỄN GIA LINH"
+    },
+    {
+      "stt": 20,
+      "ten": "NGUYỄN HỮU NHẬT MINH"
+    },
+    {
+      "stt": 21,
+      "ten": "BÙI NGUYỆT MINH"
+    },
+    {
+      "stt": 22,
+      "ten": "ĐẶNG PHẠM SÔNG MY"
+    },
+    {
+      "stt": 23,
+      "ten": "VŨ HUY NAM"
+    },
+    {
+      "stt": 24,
+      "ten": "LÊ VÕ THÀNH NAM"
+    },
+    {
+      "stt": 25,
+      "ten": "MAI KHÁNH NGỌC"
+    },
+    {
+      "stt": 26,
+      "ten": "LÊ KIM OANH"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN NGỌC PHÁT"
+    },
+    {
+      "stt": 28,
+      "ten": "HUỲNH TẤN PHÁT"
+    },
+    {
+      "stt": 29,
+      "ten": "TRẦN NGỌC PHONG"
+    },
+    {
+      "stt": 30,
+      "ten": "NGÔ ANH PHƯƠNG"
+    },
+    {
+      "stt": 31,
+      "ten": "VŨ HỮU SANG"
+    },
+    {
+      "stt": 32,
+      "ten": "NGUYỄN ĐÌNH NHẬT THIÊN"
+    },
+    {
+      "stt": 33,
+      "ten": "NGUYỄN QUANG THUẬN"
+    },
+    {
+      "stt": 34,
+      "ten": "TRANG THÀNH TIẾN"
+    },
+    {
+      "stt": 35,
+      "ten": "TRỊNH PHƯƠNG BẢO TRÂM"
+    },
+    {
+      "stt": 36,
+      "ten": "LÊ NHƯ MINH TRÍ"
+    },
+    {
+      "stt": 37,
+      "ten": "MAI HOÀNG NHÃ UYÊN"
+    },
+    {
+      "stt": 38,
+      "ten": "NGUYỄN UY VŨ"
+    },
+    {
+      "stt": 39,
+      "ten": "NGUYỄN VIẾT NHẬT VY"
+    }
+  ],
+  "7.2": [
+    {
+      "stt": 1,
+      "ten": "NGUYỄN THỊ THỦY ANH"
+    },
+    {
+      "stt": 2,
+      "ten": "LÝ THÙY ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "LÊ GIA ÂN"
+    },
+    {
+      "stt": 4,
+      "ten": "PHẠM GIA BẢO"
+    },
+    {
+      "stt": 5,
+      "ten": "TRẦN QUỐC BẢO"
+    },
+    {
+      "stt": 6,
+      "ten": "ĐẶNG MINH CHÂU"
+    },
+    {
+      "stt": 7,
+      "ten": "HỒ QUỲNH CHI"
+    },
+    {
+      "stt": 8,
+      "ten": "NGUYỄN HẠNH DUNG"
+    },
+    {
+      "stt": 9,
+      "ten": "VŨ TIẾN DŨNG"
+    },
+    {
+      "stt": 10,
+      "ten": "TRẦN TÂN ĐẠI DƯƠNG"
+    },
+    {
+      "stt": 11,
+      "ten": "NGUYỄN TÙNG DƯƠNG"
+    },
+    {
+      "stt": 12,
+      "ten": "NGUYỄN ĐỨC PHÚC ĐIỀN"
+    },
+    {
+      "stt": 13,
+      "ten": "VÕ HOÀNG GIA HÂN"
+    },
+    {
+      "stt": 14,
+      "ten": "LÊ NGUYỄN THANH HƯƠNG"
+    },
+    {
+      "stt": 15,
+      "ten": "BÙI BẢO KHANG"
+    },
+    {
+      "stt": 16,
+      "ten": "CAO HOÀNG KIM"
+    },
+    {
+      "stt": 17,
+      "ten": "TRƯƠNG HOÀNG LÂM"
+    },
+    {
+      "stt": 18,
+      "ten": "TRẦN ĐẶNG KHÁNH LINH"
+    },
+    {
+      "stt": 19,
+      "ten": "NGUYỄN TRÚC MAI"
+    },
+    {
+      "stt": 20,
+      "ten": "NGUYỄN HOÀNG MINH"
+    },
+    {
+      "stt": 21,
+      "ten": "TRẦN QUANG THIÊN MINH"
+    },
+    {
+      "stt": 22,
+      "ten": "NGUYỄN HÀO NAM"
+    },
+    {
+      "stt": 23,
+      "ten": "Bùi Vũ Bảo Nam"
+    },
+    {
+      "stt": 24,
+      "ten": "NGUYỄN TẤN DUY NGHĨA"
+    },
+    {
+      "stt": 25,
+      "ten": "ĐÀO ĐÌNH NGUYÊN"
+    },
+    {
+      "stt": 26,
+      "ten": "LÊ DUY PHÁT"
+    },
+    {
+      "stt": 27,
+      "ten": "VÕ HOÀNG GIA PHÁT"
+    },
+    {
+      "stt": 28,
+      "ten": "HÀ NGỌC PHÁT"
+    },
+    {
+      "stt": 29,
+      "ten": "NGUYỄN HOÀNG PHÚC"
+    },
+    {
+      "stt": 30,
+      "ten": "VÕ LÊ NHÃ PHƯƠNG"
+    },
+    {
+      "stt": 31,
+      "ten": "TRẦN ANH THƠ"
+    },
+    {
+      "stt": 32,
+      "ten": "NGUYỄN BẢO KHÁNH THY"
+    },
+    {
+      "stt": 33,
+      "ten": "ĐÀO THỦY TIÊN"
+    },
+    {
+      "stt": 34,
+      "ten": "NGUYỄN LÂM TOÀN"
+    },
+    {
+      "stt": 35,
+      "ten": "NGÔ BẢO TRÂN"
+    },
+    {
+      "stt": 36,
+      "ten": "NGUYỄN THÀNH TRUNG"
+    },
+    {
+      "stt": 37,
+      "ten": "HUỲNH HOA CÁT TƯỜNG"
+    },
+    {
+      "stt": 38,
+      "ten": "TRẦN KIẾN VĂN"
+    },
+    {
+      "stt": 39,
+      "ten": "LÊ NGỌC BẢO VY"
+    },
+    {
+      "stt": 40,
+      "ten": "NGUYỄN NGỌC NHƯ Ý"
+    }
+  ],
+  "7.3": [
+    {
+      "stt": 1,
+      "ten": "NGUYỄN THÁI AN"
+    },
+    {
+      "stt": 2,
+      "ten": "NGUYỄN NGỌC MAI ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "MAI VŨ KỲ ÂN"
+    },
+    {
+      "stt": 4,
+      "ten": "BÙI HOÀNG GIA BẢO"
+    },
+    {
+      "stt": 5,
+      "ten": "DƯƠNG NGỌC DIỄM"
+    },
+    {
+      "stt": 6,
+      "ten": "NGUYỄN LINH ĐAN"
+    },
+    {
+      "stt": 7,
+      "ten": "TẠ HỒNG ĐỨC"
+    },
+    {
+      "stt": 8,
+      "ten": "HUỲNH MINH ĐỨC"
+    },
+    {
+      "stt": 9,
+      "ten": "PHẠM NGỌC LAM HÀ"
+    },
+    {
+      "stt": 10,
+      "ten": "TRẦN NGỌC HÂN"
+    },
+    {
+      "stt": 11,
+      "ten": "NGUYỄN ĐỨC HIẾU"
+    },
+    {
+      "stt": 12,
+      "ten": "NGUYỄN XUÂN HOÀNG"
+    },
+    {
+      "stt": 13,
+      "ten": "LÊ NGUYỄN QUỐC HUY"
+    },
+    {
+      "stt": 14,
+      "ten": "NGUYỄN PHAN KIM HUYỀN"
+    },
+    {
+      "stt": 15,
+      "ten": "TRẦN NGUYÊN KHANG"
+    },
+    {
+      "stt": 16,
+      "ten": "ĐOÀN NGUYỄN MINH KHANG"
+    },
+    {
+      "stt": 17,
+      "ten": "NGUYỄN TRUNG KIÊN"
+    },
+    {
+      "stt": 18,
+      "ten": "TRẦN BẢO KIM"
+    },
+    {
+      "stt": 19,
+      "ten": "ĐÀO NGUYÊN KIM"
+    },
+    {
+      "stt": 20,
+      "ten": "LÊ NGỌC LINH"
+    },
+    {
+      "stt": 21,
+      "ten": "LÊ TƯỜNG MAI"
+    },
+    {
+      "stt": 22,
+      "ten": "PHAN BẢO NGỌC"
+    },
+    {
+      "stt": 23,
+      "ten": "PHẠM HÀ BÍCH NGỌC"
+    },
+    {
+      "stt": 24,
+      "ten": "Nguyễn Đình Thanh Nguyên"
+    },
+    {
+      "stt": 25,
+      "ten": "TRẦN PHÚC NGUYÊN"
+    },
+    {
+      "stt": 26,
+      "ten": "HUỲNH NGUYỄN Ý NHI"
+    },
+    {
+      "stt": 27,
+      "ten": "TRẦN PHẠM AN NHIÊN"
+    },
+    {
+      "stt": 28,
+      "ten": "NGUYỄN HỒNG XUÂN PHÚ"
+    },
+    {
+      "stt": 29,
+      "ten": "TRƯƠNG MINH QUANG"
+    },
+    {
+      "stt": 30,
+      "ten": "BÙI ĐÔNG QUÂN"
+    },
+    {
+      "stt": 31,
+      "ten": "ĐỖ NGỌC BẢO QUYÊN"
+    },
+    {
+      "stt": 32,
+      "ten": "LÊ VĂN SANG"
+    },
+    {
+      "stt": 33,
+      "ten": "HOÀNG QUỐC THÁI"
+    },
+    {
+      "stt": 34,
+      "ten": "NGUYỄN NGỌC MINH TIỀN"
+    },
+    {
+      "stt": 35,
+      "ten": "DƯƠNG NGUYỄN QUẾ TRÂN"
+    },
+    {
+      "stt": 36,
+      "ten": "NGUYỄN HOÀNG THANH TRÚC"
+    },
+    {
+      "stt": 37,
+      "ten": "NGUYỄN MINH TÚ"
+    },
+    {
+      "stt": 38,
+      "ten": "NGUYỄN THẾ VINH"
+    }
+  ],
+  "7.4": [
+    {
+      "stt": 1,
+      "ten": "LÊ HOÀNG AN"
+    },
+    {
+      "stt": 2,
+      "ten": "TRẦN PHƯƠNG AN"
+    },
+    {
+      "stt": 3,
+      "ten": "HÀ MINH ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "NGUYỄN NGỌC THU ANH"
+    },
+    {
+      "stt": 5,
+      "ten": "DOÃN QUỲNH ÂN"
+    },
+    {
+      "stt": 6,
+      "ten": "NGUYỄN QUỐC GIA BẢO"
+    },
+    {
+      "stt": 7,
+      "ten": "TRƯƠNG NGUYỄN NGỌC BÍCH"
+    },
+    {
+      "stt": 8,
+      "ten": "NGUYỄN MINH BẢO CHÂU"
+    },
+    {
+      "stt": 9,
+      "ten": "LÊ MINH DUNG"
+    },
+    {
+      "stt": 10,
+      "ten": "NGUYỄN XUÂN ĐẠT"
+    },
+    {
+      "stt": 11,
+      "ten": "LÊ THỊ THANH GIANG"
+    },
+    {
+      "stt": 12,
+      "ten": "NGUYỄN THIÊN HẠO"
+    },
+    {
+      "stt": 13,
+      "ten": "TÔ THANH HIỀN"
+    },
+    {
+      "stt": 14,
+      "ten": "PHẠM GIA HUY"
+    },
+    {
+      "stt": 15,
+      "ten": "LÂM NGỌC NHƯ HUỲNH"
+    },
+    {
+      "stt": 16,
+      "ten": "NGUYỄN VIỆT HƯNG"
+    },
+    {
+      "stt": 17,
+      "ten": "BÙI DUY KHA"
+    },
+    {
+      "stt": 18,
+      "ten": "ĐẶNG MINH KHANG"
+    },
+    {
+      "stt": 19,
+      "ten": "Phạm Phan Vĩnh Khang"
+    },
+    {
+      "stt": 20,
+      "ten": "LÊ ANH KHOA"
+    },
+    {
+      "stt": 21,
+      "ten": "ĐÀM TUẤN KIỆT"
+    },
+    {
+      "stt": 22,
+      "ten": "ĐẶNG VÕ MAI LÂM"
+    },
+    {
+      "stt": 23,
+      "ten": "Nguyễn Thị Hải Linh"
+    },
+    {
+      "stt": 24,
+      "ten": "TRẦN DƯƠNG LỘC"
+    },
+    {
+      "stt": 25,
+      "ten": "NGUYỄN VÕ KHÁNH MINH"
+    },
+    {
+      "stt": 26,
+      "ten": "HOÀNG HẠO NAM"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN KIM BẢO NGÂN"
+    },
+    {
+      "stt": 28,
+      "ten": "NGUYỄN NGỌC KIM NGÂN"
+    },
+    {
+      "stt": 29,
+      "ten": "ĐỖ NHƯ BẢO NGỌC"
+    },
+    {
+      "stt": 30,
+      "ten": "VÕ TRUNG NGỌC"
+    },
+    {
+      "stt": 31,
+      "ten": "NGUYỄN TRỌNG NHÂN"
+    },
+    {
+      "stt": 32,
+      "ten": "VŨ NGỌC BẢO NHI"
+    },
+    {
+      "stt": 33,
+      "ten": "LÊ LONG PHÁT"
+    },
+    {
+      "stt": 34,
+      "ten": "LÊ XUÂN PHÚ"
+    },
+    {
+      "stt": 35,
+      "ten": "LÊ ĐẠI PHÚC"
+    },
+    {
+      "stt": 36,
+      "ten": "ĐẶNG UYÊN PHƯƠNG"
+    },
+    {
+      "stt": 37,
+      "ten": "TRƯƠNG NGUYỄN ĐÔNG QUÂN"
+    },
+    {
+      "stt": 38,
+      "ten": "Trần Nguyễn Trúc Quỳnh"
+    },
+    {
+      "stt": 39,
+      "ten": "NGUYỄN THÁI SƠN"
+    },
+    {
+      "stt": 40,
+      "ten": "HỒ LÂM MINH TÂM"
+    },
+    {
+      "stt": 41,
+      "ten": "Trần Duy Tân"
+    },
+    {
+      "stt": 42,
+      "ten": "NGUYỄN THỊ THANH THẢO"
+    },
+    {
+      "stt": 43,
+      "ten": "THI PHÚC THỊNH"
+    },
+    {
+      "stt": 44,
+      "ten": "TRẦN NGỌC BẢO THÙY"
+    },
+    {
+      "stt": 45,
+      "ten": "HỒ QUỲNH THƯ"
+    },
+    {
+      "stt": 46,
+      "ten": "NGUYỄN NGỌC PHƯƠNG TRINH"
+    },
+    {
+      "stt": 47,
+      "ten": "NGUYỄN THANH TRÚC"
+    },
+    {
+      "stt": 48,
+      "ten": "Trần Lê Minh Tuệ"
+    },
+    {
+      "stt": 49,
+      "ten": "LÊ NGUYỄN HẢI VY"
+    },
+    {
+      "stt": 50,
+      "ten": "CAO BÁ VỸ"
+    },
+    {
+      "stt": 51,
+      "ten": "ĐỖ TRẦN HẢI YẾN"
+    }
+  ],
+  "7.5": [
+    {
+      "stt": 1,
+      "ten": "VÕ KHÁNH AN"
+    },
+    {
+      "stt": 2,
+      "ten": "LÊ NGUYỄN BẢO AN"
+    },
+    {
+      "stt": 3,
+      "ten": "LÊ ĐỖ QUẾ ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "LƯU HIỂU ÂN"
+    },
+    {
+      "stt": 5,
+      "ten": "PHẠM LƯƠNG GIA BẢO"
+    },
+    {
+      "stt": 6,
+      "ten": "TRỊNH AN BÌNH"
+    },
+    {
+      "stt": 7,
+      "ten": "NGUYỄN VŨ MINH CHÂU"
+    },
+    {
+      "stt": 8,
+      "ten": "VÕ HOÀNG PHƯƠNG DUNG"
+    },
+    {
+      "stt": 9,
+      "ten": "HUỲNH GIA HÂN"
+    },
+    {
+      "stt": 10,
+      "ten": "PHẠM VINH HIỂN"
+    },
+    {
+      "stt": 11,
+      "ten": "NGUYỄN VŨ VIỆT HOÀNG"
+    },
+    {
+      "stt": 12,
+      "ten": "TÔ GIA HUY"
+    },
+    {
+      "stt": 13,
+      "ten": "NGUYỄN GIA HƯNG"
+    },
+    {
+      "stt": 14,
+      "ten": "TRẦN LÊ TRỌNG KHA"
+    },
+    {
+      "stt": 15,
+      "ten": "ĐOÀN GIA KHANG"
+    },
+    {
+      "stt": 16,
+      "ten": "THÁI MINH KHANG"
+    },
+    {
+      "stt": 17,
+      "ten": "NGUYỄN ĐĂNG KHÔI"
+    },
+    {
+      "stt": 18,
+      "ten": "NGUYỄN DUY KHƯƠNG"
+    },
+    {
+      "stt": 19,
+      "ten": "NGUYỄN LÊ TUẤN KIỆT"
+    },
+    {
+      "stt": 20,
+      "ten": "PHẠM CÔNG HẢI LÂM"
+    },
+    {
+      "stt": 21,
+      "ten": "TRẦN HOÀNG KHÁNH LINH"
+    },
+    {
+      "stt": 22,
+      "ten": "Nguyễn Mai Linh"
+    },
+    {
+      "stt": 23,
+      "ten": "TRẦN THÀNH LỘC"
+    },
+    {
+      "stt": 24,
+      "ten": "LÊ ĐĂNG MINH"
+    },
+    {
+      "stt": 25,
+      "ten": "Trần Trương Phú Minh"
+    },
+    {
+      "stt": 26,
+      "ten": "ĐỖ NGUYỄN HÀ MY"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN VŨ NAM"
+    },
+    {
+      "stt": 28,
+      "ten": "LU NGỌC BẢO NGHI"
+    },
+    {
+      "stt": 29,
+      "ten": "LƯU NGUYỄN HỒNG NGỌC"
+    },
+    {
+      "stt": 30,
+      "ten": "LÊ NỮ BẢO NGỌC"
+    },
+    {
+      "stt": 31,
+      "ten": "NGUYỄN TĂNG HOÀNG NGUYÊN"
+    },
+    {
+      "stt": 32,
+      "ten": "NGUYỄN HUỲNH THANH NHI"
+    },
+    {
+      "stt": 33,
+      "ten": "NGÔ HÀ NHIÊN"
+    },
+    {
+      "stt": 34,
+      "ten": "NGUYỄN TẤN PHÁT"
+    },
+    {
+      "stt": 35,
+      "ten": "Mai An Phú"
+    },
+    {
+      "stt": 36,
+      "ten": "TRẦN GIA PHÚC"
+    },
+    {
+      "stt": 37,
+      "ten": "PHAN NGUYỄN HOÀI PHƯƠNG"
+    },
+    {
+      "stt": 38,
+      "ten": "PHÙNG PHÚ QUÝ"
+    },
+    {
+      "stt": 39,
+      "ten": "VŨ NGUYỄN ÁI QUỲNH"
+    },
+    {
+      "stt": 40,
+      "ten": "HOÀNG MẠNH THẮNG"
+    },
+    {
+      "stt": 41,
+      "ten": "HUỲNH THANH THÙY"
+    },
+    {
+      "stt": 42,
+      "ten": "NGUYỄN BẢO ANH THƯ"
+    },
+    {
+      "stt": 43,
+      "ten": "HOÀNG THỊ PHƯƠNG TRÂM"
+    },
+    {
+      "stt": 44,
+      "ten": "Vũ Huỳnh Bảo Trân"
+    },
+    {
+      "stt": 45,
+      "ten": "NGUYỄN NGỌC BẢO TRÂN"
+    },
+    {
+      "stt": 46,
+      "ten": "NGUYỄN KIM TƯỚC"
+    },
+    {
+      "stt": 47,
+      "ten": "NGUYỄN NGỌC NHÃ UYÊN"
+    },
+    {
+      "stt": 48,
+      "ten": "LÊ NGUYỄN PHƯƠNG VY"
+    },
+    {
+      "stt": 49,
+      "ten": "PHAN TƯỜNG VY"
+    },
+    {
+      "stt": 50,
+      "ten": "NGUYỄN BÁ NGUYÊN VỸ"
+    }
+  ],
+  "7.6": [
+    {
+      "stt": 1,
+      "ten": "TRẦN PHƯƠNG ANH"
+    },
+    {
+      "stt": 2,
+      "ten": "TRẦN GIA BẢO"
+    },
+    {
+      "stt": 3,
+      "ten": "ĐỖ HOÀNG BẢO"
+    },
+    {
+      "stt": 4,
+      "ten": "CAO BÁ CHÍ"
+    },
+    {
+      "stt": 5,
+      "ten": "ĐỖ QUỐC CƯỜNG"
+    },
+    {
+      "stt": 6,
+      "ten": "TRẦN HỮU ĐỊNH"
+    },
+    {
+      "stt": 7,
+      "ten": "Trần Văn Quang Hải"
+    },
+    {
+      "stt": 8,
+      "ten": "LẠI VŨ GIA HÂN"
+    },
+    {
+      "stt": 9,
+      "ten": "BÙI NGUYỄN MINH HIẾU"
+    },
+    {
+      "stt": 10,
+      "ten": "NGUYỄN VÕ THÁI HOÀNG"
+    },
+    {
+      "stt": 11,
+      "ten": "TRẦN VÕ MẠNH HÙNG"
+    },
+    {
+      "stt": 12,
+      "ten": "TRẦN QUỐC HUY"
+    },
+    {
+      "stt": 13,
+      "ten": "NGUYỄN THIÊN HƯNG"
+    },
+    {
+      "stt": 14,
+      "ten": "TRẦN HOÀNG KHANG"
+    },
+    {
+      "stt": 15,
+      "ten": "HÀ NGUYỄN DUY KHANG"
+    },
+    {
+      "stt": 16,
+      "ten": "VŨ PHƯỚC LÂM"
+    },
+    {
+      "stt": 17,
+      "ten": "TRẦN PHƯƠNG LINH"
+    },
+    {
+      "stt": 18,
+      "ten": "LÊ ĐỨC LỢI"
+    },
+    {
+      "stt": 19,
+      "ten": "HUỲNH MINH MINH"
+    },
+    {
+      "stt": 20,
+      "ten": "NGÔ VĂN MINH"
+    },
+    {
+      "stt": 21,
+      "ten": "NGÔ LÝ PHƯƠNG MY"
+    },
+    {
+      "stt": 22,
+      "ten": "TRẦN ĐĂNG NHẬT NAM"
+    },
+    {
+      "stt": 23,
+      "ten": "TRẦN HOÀNG BẢO NGỌC"
+    },
+    {
+      "stt": 24,
+      "ten": "LÊ NGUYỄN NHƯ NGỌC"
+    },
+    {
+      "stt": 25,
+      "ten": "NGUYỄN THỊ THẢO NGUYÊN"
+    },
+    {
+      "stt": 26,
+      "ten": "PHẠM HOÀNG YẾN NHI"
+    },
+    {
+      "stt": 27,
+      "ten": "TRẦN HẠO NHIÊN"
+    },
+    {
+      "stt": 28,
+      "ten": "LÊ NGUYỄN LONG PHI"
+    },
+    {
+      "stt": 29,
+      "ten": "NGUYỄN THÁI PHÚ"
+    },
+    {
+      "stt": 30,
+      "ten": "TRẦN PHẠM KHÁNH PHƯƠNG"
+    },
+    {
+      "stt": 31,
+      "ten": "PHẠM NGUYỄN PHÚ QUANG"
+    },
+    {
+      "stt": 32,
+      "ten": "NGUYỄN THỊ BẢO QUYÊN"
+    },
+    {
+      "stt": 33,
+      "ten": "BÙI NGỌC THIÊN THIÊN"
+    },
+    {
+      "stt": 34,
+      "ten": "TRẦN THỊ THANH THỦY"
+    },
+    {
+      "stt": 35,
+      "ten": "NGUYỄN NGỌC ANH THƯ"
+    },
+    {
+      "stt": 36,
+      "ten": "PHAN NGỌC ANH THƯ"
+    },
+    {
+      "stt": 37,
+      "ten": "LÊ NGỌC MỸ TIÊN"
+    },
+    {
+      "stt": 38,
+      "ten": "DƯƠNG LƯU THÙY TRANG"
+    },
+    {
+      "stt": 39,
+      "ten": "HUỲNH THỊ THÙY TRÂM"
+    },
+    {
+      "stt": 40,
+      "ten": "TRẦN NGỌC BẢO TRÂN"
+    },
+    {
+      "stt": 41,
+      "ten": "LÊ THỊ BẢO TRÂN"
+    },
+    {
+      "stt": 42,
+      "ten": "HỒ HOÀNG TRÍ"
+    },
+    {
+      "stt": 43,
+      "ten": "LÊ MINH TRỤ"
+    },
+    {
+      "stt": 44,
+      "ten": "NGUYỄN THANH TRÚC"
+    },
+    {
+      "stt": 45,
+      "ten": "ĐỖ THANH VÂN"
+    },
+    {
+      "stt": 46,
+      "ten": "PHAN NGUYỄN YẾN VY"
+    },
+    {
+      "stt": 47,
+      "ten": "TRỊNH TUẤN VỸ"
+    },
+    {
+      "stt": 48,
+      "ten": "NGUYỄN NGỌC YẾN"
+    }
+  ],
+  "7.7": [
+    {
+      "stt": 1,
+      "ten": "PHẠM THỊ NHƯ AN"
+    },
+    {
+      "stt": 2,
+      "ten": "NGUYỄN HOÀNG ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "TRẦN VĂN QUỐC ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "Nguyễn Hà Gia Bảo"
+    },
+    {
+      "stt": 5,
+      "ten": "VÕ QUÝ BẰNG"
+    },
+    {
+      "stt": 6,
+      "ten": "TẰNG CHÍ CƯỜNG"
+    },
+    {
+      "stt": 7,
+      "ten": "KHƯU TẤN DI"
+    },
+    {
+      "stt": 8,
+      "ten": "VÕ ANH DŨNG"
+    },
+    {
+      "stt": 9,
+      "ten": "HÀ TRẦN HOÀNG DUY"
+    },
+    {
+      "stt": 10,
+      "ten": "NGUYỄN TRẦN MINH ĐÔ"
+    },
+    {
+      "stt": 11,
+      "ten": "ĐÀM CHUNG HIẾU"
+    },
+    {
+      "stt": 12,
+      "ten": "CAO GIA HUY"
+    },
+    {
+      "stt": 13,
+      "ten": "TRỊNH GIA HUY"
+    },
+    {
+      "stt": 14,
+      "ten": "PHẠM GIA HƯNG"
+    },
+    {
+      "stt": 15,
+      "ten": "TRIỆU TẤN KHẢI"
+    },
+    {
+      "stt": 16,
+      "ten": "ĐOÀN DUY KHANG"
+    },
+    {
+      "stt": 17,
+      "ten": "LÊ PHÚC KHANG"
+    },
+    {
+      "stt": 18,
+      "ten": "HỒNG NGUYỄN LAN KHANH"
+    },
+    {
+      "stt": 19,
+      "ten": "Vương Phạm Đăng Khoa"
+    },
+    {
+      "stt": 20,
+      "ten": "Phan Tấn Khôi"
+    },
+    {
+      "stt": 21,
+      "ten": "Vương Phạm Tuấn Kiệt"
+    },
+    {
+      "stt": 22,
+      "ten": "NGUYỄN TUẤN KIỆT"
+    },
+    {
+      "stt": 23,
+      "ten": "NGUYỄN PHƯƠNG LAN"
+    },
+    {
+      "stt": 24,
+      "ten": "NGUYỄN VĨNH LÂN"
+    },
+    {
+      "stt": 25,
+      "ten": "NGUYỄN HOÀNG LONG"
+    },
+    {
+      "stt": 26,
+      "ten": "HỒ NGUYỄN CHI MAI"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN HỮU HỒNG MINH"
+    },
+    {
+      "stt": 28,
+      "ten": "NGUYỄN THỊ TRÀ MY"
+    },
+    {
+      "stt": 29,
+      "ten": "VŨ THỊ THÚY NGA"
+    },
+    {
+      "stt": 30,
+      "ten": "PHAN TRỌNG NGHĨA"
+    },
+    {
+      "stt": 31,
+      "ten": "NGUYỄN HUỲNH THIỆN NGÔN"
+    },
+    {
+      "stt": 32,
+      "ten": "TRẦN HOÀNG YẾN NHI"
+    },
+    {
+      "stt": 33,
+      "ten": "TRẦN NGỌC AN NHIÊN"
+    },
+    {
+      "stt": 34,
+      "ten": "TRẦN YẾN PHI"
+    },
+    {
+      "stt": 35,
+      "ten": "VÕ NGỌC HỒNG PHÚC"
+    },
+    {
+      "stt": 36,
+      "ten": "NGUYỄN ĐÌNH ANH QUÂN"
+    },
+    {
+      "stt": 37,
+      "ten": "NGUYỄN NGỌC NHƯ QUỲNH"
+    },
+    {
+      "stt": 38,
+      "ten": "ĐOÀN NGỌC TRÚC QUỲNH"
+    },
+    {
+      "stt": 39,
+      "ten": "ĐẶNG THÀNH TÀI"
+    },
+    {
+      "stt": 40,
+      "ten": "NGUYỄN HỮU QUANG THÁI"
+    },
+    {
+      "stt": 41,
+      "ten": "NGUYỄN BẢO THIÊN"
+    },
+    {
+      "stt": 42,
+      "ten": "DƯƠNG NGUYỄN ANH THƯ"
+    },
+    {
+      "stt": 43,
+      "ten": "PHAN HOÀNG THƯƠNG"
+    },
+    {
+      "stt": 44,
+      "ten": "LÊ HOÀNG BẢO TRÂN"
+    },
+    {
+      "stt": 45,
+      "ten": "NGÔ MINH TRÍ"
+    },
+    {
+      "stt": 46,
+      "ten": "NGUYỄN NGỌC THANH TRÚC"
+    },
+    {
+      "stt": 47,
+      "ten": "TRƯƠNG NGỌC KHÁNH VÂN"
+    },
+    {
+      "stt": 48,
+      "ten": "PHẠM HOÀNG THÚY VY"
+    },
+    {
+      "stt": 49,
+      "ten": "HUỲNH NGỌC BẢO XUÂN"
+    }
+  ],
+  "7.8": [
+    {
+      "stt": 1,
+      "ten": "PHAN NGỌC KHÁNH AN"
+    },
+    {
+      "stt": 2,
+      "ten": "NGUYỄN MINH ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "VÕ NGỌC ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "TRẦN GIA BẢO"
+    },
+    {
+      "stt": 5,
+      "ten": "NGUYỄN QUỐC BẢO"
+    },
+    {
+      "stt": 6,
+      "ten": "NGUYỄN NGỌC BÍCH"
+    },
+    {
+      "stt": 7,
+      "ten": "TRẦN TRIỀU CƯỜNG"
+    },
+    {
+      "stt": 8,
+      "ten": "ĐOÀN NGỌC DIỆP"
+    },
+    {
+      "stt": 9,
+      "ten": "PHẠM NGỌC TRUNG DŨNG"
+    },
+    {
+      "stt": 10,
+      "ten": "LÊ VŨ DUY"
+    },
+    {
+      "stt": 11,
+      "ten": "NGUYỄN MAI LINH ĐAN"
+    },
+    {
+      "stt": 12,
+      "ten": "TRẦN NGỌC TRÚC GIANG"
+    },
+    {
+      "stt": 13,
+      "ten": "VŨ MẠNH HIẾU"
+    },
+    {
+      "stt": 14,
+      "ten": "LÊ GIA HUY"
+    },
+    {
+      "stt": 15,
+      "ten": "LÊ NGỌC HUYỀN"
+    },
+    {
+      "stt": 16,
+      "ten": "LÊ TRẦN GIA HƯƠNG"
+    },
+    {
+      "stt": 17,
+      "ten": "TRẦN QUANG KHẢI"
+    },
+    {
+      "stt": 18,
+      "ten": "ĐẶNG HỮU KHANG"
+    },
+    {
+      "stt": 19,
+      "ten": "NGÔ KIỆN KHANG"
+    },
+    {
+      "stt": 20,
+      "ten": "NGUYỄN XUÂN QUỐC KHÁNH"
+    },
+    {
+      "stt": 21,
+      "ten": "TRẦN QUANG THẾ KIỆT"
+    },
+    {
+      "stt": 22,
+      "ten": "TRỊNH HOÀNG LAM"
+    },
+    {
+      "stt": 23,
+      "ten": "LÊ HỒNG NHẬT LINH"
+    },
+    {
+      "stt": 24,
+      "ten": "NGUYỄN BẢO LỘC"
+    },
+    {
+      "stt": 25,
+      "ten": "BÙI ĐOÀN ANH MINH"
+    },
+    {
+      "stt": 26,
+      "ten": "NGUYỄN QUANG MINH"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN TRÀ MY"
+    },
+    {
+      "stt": 28,
+      "ten": "ĐÀO NGỌC NGÂN"
+    },
+    {
+      "stt": 29,
+      "ten": "PHẠM MAI TRUNG NGHĨA"
+    },
+    {
+      "stt": 30,
+      "ten": "BÙI VŨ HỒNG NGỌC"
+    },
+    {
+      "stt": 31,
+      "ten": "PHAN ĐOÀN KHÔI NGUYÊN"
+    },
+    {
+      "stt": 32,
+      "ten": "LÊ NGUYỄN THIỆN NHÂN"
+    },
+    {
+      "stt": 33,
+      "ten": "BÙI TÀI PHÁT"
+    },
+    {
+      "stt": 34,
+      "ten": "NGUYỄN UY PHONG"
+    },
+    {
+      "stt": 35,
+      "ten": "VŨ BẢO PHÚC"
+    },
+    {
+      "stt": 36,
+      "ten": "HỒ PHẠM THIÊN PHÚC"
+    },
+    {
+      "stt": 37,
+      "ten": "NGUYỄN THỊ DIỄM QUỲNH"
+    },
+    {
+      "stt": 38,
+      "ten": "Mai Thành Tài"
+    },
+    {
+      "stt": 39,
+      "ten": "ĐỖ TUẤN THÀNH"
+    },
+    {
+      "stt": 40,
+      "ten": "ĐẶNG NGỌC THIỆN"
+    },
+    {
+      "stt": 41,
+      "ten": "PHẠM ANH THƯ"
+    },
+    {
+      "stt": 42,
+      "ten": "ĐINH THANH THƯ"
+    },
+    {
+      "stt": 43,
+      "ten": "Ngô Bảo Nhật Thy"
+    },
+    {
+      "stt": 44,
+      "ten": "Lê Nguyễn Trân Trân"
+    },
+    {
+      "stt": 45,
+      "ten": "TRẦN VŨ MINH TRÍ"
+    },
+    {
+      "stt": 46,
+      "ten": "Đinh Đông Triều"
+    },
+    {
+      "stt": 47,
+      "ten": "Trần Ngọc Anh Trường"
+    },
+    {
+      "stt": 48,
+      "ten": "HỒ VĂN VINH"
+    },
+    {
+      "stt": 49,
+      "ten": "TRẦN ĐÀO LAN VY"
+    },
+    {
+      "stt": 50,
+      "ten": "ĐÀO NGỌC NHƯ Ý"
+    }
+  ],
+  "7.9": [
+    {
+      "stt": 1,
+      "ten": "BÙI CÔNG THIÊN AN"
+    },
+    {
+      "stt": 2,
+      "ten": "PHAN THỊ KIỀU AN"
+    },
+    {
+      "stt": 3,
+      "ten": "NGUYỄN HOÀNG ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "TRẦN TÚ ANH"
+    },
+    {
+      "stt": 5,
+      "ten": "TRỊNH HOÀI ÂN"
+    },
+    {
+      "stt": 6,
+      "ten": "TRẦN ĐẶNG GIA BẢO"
+    },
+    {
+      "stt": 7,
+      "ten": "KHƯU QUỐC BẢO"
+    },
+    {
+      "stt": 8,
+      "ten": "NGUYỄN HOÀNG BẢO CHÂU"
+    },
+    {
+      "stt": 9,
+      "ten": "NGUYỄN TẤN DANH"
+    },
+    {
+      "stt": 10,
+      "ten": "PHẠM DUY"
+    },
+    {
+      "stt": 11,
+      "ten": "ĐỖ TRUNG THÀNH ĐẠT"
+    },
+    {
+      "stt": 12,
+      "ten": "PHẠM THẾ ĐOÀN"
+    },
+    {
+      "stt": 13,
+      "ten": "LÊ HOÀNG GIA HÂN"
+    },
+    {
+      "stt": 14,
+      "ten": "TRẦN NGỌC NHÃ HÂN"
+    },
+    {
+      "stt": 15,
+      "ten": "HÀ THANH HOÀNG"
+    },
+    {
+      "stt": 16,
+      "ten": "ĐINH NGỌC HUY"
+    },
+    {
+      "stt": 17,
+      "ten": "Huỳnh Phước Gia Hưng"
+    },
+    {
+      "stt": 18,
+      "ten": "ĐINH NGỌC QUỲNH HƯƠNG"
+    },
+    {
+      "stt": 19,
+      "ten": "HUỲNH PHÚC KHANG"
+    },
+    {
+      "stt": 20,
+      "ten": "Nguyễn Trần Phúc Khang"
+    },
+    {
+      "stt": 21,
+      "ten": "LÂM GIA KHÁNH"
+    },
+    {
+      "stt": 22,
+      "ten": "BÙI THIÊN KIM"
+    },
+    {
+      "stt": 23,
+      "ten": "LƯ GIAI LINH"
+    },
+    {
+      "stt": 24,
+      "ten": "Trần Đình Long"
+    },
+    {
+      "stt": 25,
+      "ten": "NGUYỄN TIẾN MINH"
+    },
+    {
+      "stt": 26,
+      "ten": "TRẦN HOÀNG NAM"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN NHƯ BẢO NGỌC"
+    },
+    {
+      "stt": 28,
+      "ten": "ĐÀO THỊ QUÝ NGỌC"
+    },
+    {
+      "stt": 29,
+      "ten": "NGUYỄN KHANG NGUYÊN"
+    },
+    {
+      "stt": 30,
+      "ten": "NGUYỄN BÙI THANH NHÂN"
+    },
+    {
+      "stt": 31,
+      "ten": "NGUYỄN NHI"
+    },
+    {
+      "stt": 32,
+      "ten": "NGUYỄN QUỲNH NHƯ"
+    },
+    {
+      "stt": 33,
+      "ten": "THÁI HOÀNG PHONG"
+    },
+    {
+      "stt": 34,
+      "ten": "PHẠM HOÀNG PHÚC"
+    },
+    {
+      "stt": 35,
+      "ten": "PHAN HOÀNG THIÊN QUÂN"
+    },
+    {
+      "stt": 36,
+      "ten": "NGUYỄN THỊ NHƯ QUỲNH"
+    },
+    {
+      "stt": 37,
+      "ten": "HUỲNH THẠCH TÂM"
+    },
+    {
+      "stt": 38,
+      "ten": "LƯU THANH THẢO"
+    },
+    {
+      "stt": 39,
+      "ten": "TRẦN NGỌC THIÊN THIÊN"
+    },
+    {
+      "stt": 40,
+      "ten": "VŨ ĐỨC THỊNH"
+    },
+    {
+      "stt": 41,
+      "ten": "NGUYỄN HOÀNG ANH THƯ"
+    },
+    {
+      "stt": 42,
+      "ten": "THÂN NGỌC MAI THY"
+    },
+    {
+      "stt": 43,
+      "ten": "TRẦN MINH TOÀN"
+    },
+    {
+      "stt": 44,
+      "ten": "NGUYỄN THỊ BÍCH TRÂM"
+    },
+    {
+      "stt": 45,
+      "ten": "ĐẶNG MINH TRÍ"
+    },
+    {
+      "stt": 46,
+      "ten": "DƯƠNG MINH TRỌNG"
+    },
+    {
+      "stt": 47,
+      "ten": "NGUYỄN HOÀNG NHẬT UYÊN"
+    },
+    {
+      "stt": 48,
+      "ten": "PHAN ANH VŨ"
+    },
+    {
+      "stt": 49,
+      "ten": "NGUYỄN NHẬT VY"
+    },
+    {
+      "stt": 50,
+      "ten": "NGUYỄN NGỌC NHƯ Ý"
+    }
+  ],
+  "7.10": [
+    {
+      "stt": 1,
+      "ten": "ĐINH PHẠM BÌNH AN"
+    },
+    {
+      "stt": 2,
+      "ten": "VÕ HUỲNH ĐÔNG ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "NGUYỄN LÂM ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "HỒ NGỌC PHƯƠNG ANH"
+    },
+    {
+      "stt": 5,
+      "ten": "Nguyễn Thị Lan Anh"
+    },
+    {
+      "stt": 6,
+      "ten": "TRƯƠNG THIÊN ÂN"
+    },
+    {
+      "stt": 7,
+      "ten": "LÊ CHÍ BẢO"
+    },
+    {
+      "stt": 8,
+      "ten": "NGUYỄN ĐÌNH GIA BẢO"
+    },
+    {
+      "stt": 9,
+      "ten": "NGUYỄN NGỌC BẢO CHÂU"
+    },
+    {
+      "stt": 10,
+      "ten": "Hà Thiên Di"
+    },
+    {
+      "stt": 11,
+      "ten": "TRẦN BẢO DUY"
+    },
+    {
+      "stt": 12,
+      "ten": "LÊ TẤN ĐẠT"
+    },
+    {
+      "stt": 13,
+      "ten": "TRẦN HOÀNG ĐÔN"
+    },
+    {
+      "stt": 14,
+      "ten": "NGUYỄN GIA BẢO HÂN"
+    },
+    {
+      "stt": 15,
+      "ten": "TRẦN NGUYỄN NGỌC HÂN"
+    },
+    {
+      "stt": 16,
+      "ten": "NGÔ HUY HOÀNG"
+    },
+    {
+      "stt": 17,
+      "ten": "PHẠM ĐẶNG QUỲNH HƯƠNG"
+    },
+    {
+      "stt": 18,
+      "ten": "Ngô Chí Khang"
+    },
+    {
+      "stt": 19,
+      "ten": "VŨ ĐĂNG KHOA"
+    },
+    {
+      "stt": 20,
+      "ten": "LÊ NGUYỄN THIÊN KIM"
+    },
+    {
+      "stt": 21,
+      "ten": "NGUYỄN NGỌC TƯỜNG LAM"
+    },
+    {
+      "stt": 22,
+      "ten": "NGUYỄN ĐỖ BẢO LINH"
+    },
+    {
+      "stt": 23,
+      "ten": "ĐỒNG PHÁT TÀI LỘC"
+    },
+    {
+      "stt": 24,
+      "ten": "PHẠM NGỌC CÁT MINH"
+    },
+    {
+      "stt": 25,
+      "ten": "TRẦN PHƯƠNG HÀ NAM"
+    },
+    {
+      "stt": 26,
+      "ten": "HUỲNH BẢO NGỌC"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN THÁI BẢO NGỌC"
+    },
+    {
+      "stt": 28,
+      "ten": "PHẠM HỒNG NGUYÊN"
+    },
+    {
+      "stt": 29,
+      "ten": "NGUYỄN THÀNH NHÂN"
+    },
+    {
+      "stt": 30,
+      "ten": "NGUYỄN NGỌC YẾN NHI"
+    },
+    {
+      "stt": 31,
+      "ten": "TÔ QUỲNH NHƯ"
+    },
+    {
+      "stt": 32,
+      "ten": "TRẦN QUỐC PHONG"
+    },
+    {
+      "stt": 33,
+      "ten": "TRẦN BẢO THIÊN PHÚC"
+    },
+    {
+      "stt": 34,
+      "ten": "TRẦN THẾ ANH QUÂN"
+    },
+    {
+      "stt": 35,
+      "ten": "TRẦN TUỆ SAN"
+    },
+    {
+      "stt": 36,
+      "ten": "PHAN GIA KHIẾT TÂM"
+    },
+    {
+      "stt": 37,
+      "ten": "Hoàng Minh Thái"
+    },
+    {
+      "stt": 38,
+      "ten": "NGUYỄN CAO PHƯƠNG THẢO"
+    },
+    {
+      "stt": 39,
+      "ten": "ĐỒNG LÊ GIA THIỆN"
+    },
+    {
+      "stt": 40,
+      "ten": "TRƯƠNG NGUYỄN KHÁNH THY"
+    },
+    {
+      "stt": 41,
+      "ten": "NGUYỄN THỊ MỸ TRÂM"
+    },
+    {
+      "stt": 42,
+      "ten": "NGUYỄN ANH TRÍ"
+    },
+    {
+      "stt": 43,
+      "ten": "NGUYỄN NGỌC PHƯƠNG UYÊN"
+    },
+    {
+      "stt": 44,
+      "ten": "TRẦN THIÊN VŨ"
+    },
+    {
+      "stt": 45,
+      "ten": "NGUYỄN PHƯƠNG VY"
+    },
+    {
+      "stt": 46,
+      "ten": "PHẠM NHƯ Ý"
+    }
+  ],
+  "7.11": [
+    {
+      "stt": 1,
+      "ten": "ĐINH THÙY AN"
+    },
+    {
+      "stt": 2,
+      "ten": "NGUYỄN NGỌC MINH ANH"
+    },
+    {
+      "stt": 3,
+      "ten": "VÕ PHẠM HOÀNG ANH"
+    },
+    {
+      "stt": 4,
+      "ten": "ĐINH TỐ TÂM ANH"
+    },
+    {
+      "stt": 5,
+      "ten": "VŨ GIA BÁCH"
+    },
+    {
+      "stt": 6,
+      "ten": "Nguyễn Gia Bảo"
+    },
+    {
+      "stt": 7,
+      "ten": "TRẦN THIÊN BẢO"
+    },
+    {
+      "stt": 8,
+      "ten": "NGÔ TRẦN GIA BẢO"
+    },
+    {
+      "stt": 9,
+      "ten": "NGUYỄN NGỌC BẢO CHÂU"
+    },
+    {
+      "stt": 10,
+      "ten": "VÕ K HỒNG DUYÊN"
+    },
+    {
+      "stt": 11,
+      "ten": "TỐNG NGHĨA DANH ĐẠT"
+    },
+    {
+      "stt": 12,
+      "ten": "LÊ NAM ĐÔNG"
+    },
+    {
+      "stt": 13,
+      "ten": "NGUYỄN HÀ NGỌC HÂN"
+    },
+    {
+      "stt": 14,
+      "ten": "VŨ NGỌC GIA HÂN"
+    },
+    {
+      "stt": 15,
+      "ten": "NGUYỄN VŨ HOÀNG"
+    },
+    {
+      "stt": 16,
+      "ten": "NGUYỄN KHÁNH HƯNG"
+    },
+    {
+      "stt": 17,
+      "ten": "TRÀ MINH KEN"
+    },
+    {
+      "stt": 18,
+      "ten": "NGUYỄN ĐỨC DUY KHANG"
+    },
+    {
+      "stt": 19,
+      "ten": "NGUYỄN QUỐC KIỆT"
+    },
+    {
+      "stt": 20,
+      "ten": "LÊ THIÊN KIM"
+    },
+    {
+      "stt": 21,
+      "ten": "TRẦN HOÀNG LAM"
+    },
+    {
+      "stt": 22,
+      "ten": "NGUYỄN NGỌC UYÊN LINH"
+    },
+    {
+      "stt": 23,
+      "ten": "DƯƠNG THÁI LUÂN"
+    },
+    {
+      "stt": 24,
+      "ten": "HUỲNH LÊ THẢO NGÂN"
+    },
+    {
+      "stt": 25,
+      "ten": "LÊ KIM KHÁNH NGỌC"
+    },
+    {
+      "stt": 26,
+      "ten": "PHẠM THẢO NGUYÊN"
+    },
+    {
+      "stt": 27,
+      "ten": "NGUYỄN THÀNH NHÂN"
+    },
+    {
+      "stt": 28,
+      "ten": "TRẦN NGỌC NHI"
+    },
+    {
+      "stt": 29,
+      "ten": "Nguyễn Thị Thảo Nhi"
+    },
+    {
+      "stt": 30,
+      "ten": "TRẦN TUẤN PHONG"
+    },
+    {
+      "stt": 31,
+      "ten": "VÕ GIA PHÚC"
+    },
+    {
+      "stt": 32,
+      "ten": "VŨ HỒNG QUÂN"
+    },
+    {
+      "stt": 33,
+      "ten": "NGUYỄN LÊ TẤN SANG"
+    },
+    {
+      "stt": 34,
+      "ten": "PHAN HỒNG NỮ HUỆ TÂM"
+    },
+    {
+      "stt": 35,
+      "ten": "NGUYỄN XUÂN THẢO"
+    },
+    {
+      "stt": 36,
+      "ten": "TRẦN VŨ ANH THƠ"
+    },
+    {
+      "stt": 37,
+      "ten": "PHẠM MINH THƯ"
+    },
+    {
+      "stt": 38,
+      "ten": "PHẠM NGỌC ANH THƯ"
+    },
+    {
+      "stt": 39,
+      "ten": "VŨ NGUYỄN QUỲNH THY"
+    },
+    {
+      "stt": 40,
+      "ten": "TRẦN NGUYỄN NGỌC TRÂM"
+    },
+    {
+      "stt": 41,
+      "ten": "NGUYỄN HOÀNG MINH TRÍ"
+    },
+    {
+      "stt": 42,
+      "ten": "NGUYỄN THANH TRÚC"
+    },
+    {
+      "stt": 43,
+      "ten": "NGUYỄN ĐẠI TUẤN"
+    },
+    {
+      "stt": 44,
+      "ten": "Nguyễn Văn Thanh Tùng"
+    },
+    {
+      "stt": 45,
+      "ten": "TRẦN PHƯƠNG UYÊN"
+    },
+    {
+      "stt": 46,
+      "ten": "TRIỆU THIÊN VƯƠNG"
+    },
+    {
+      "stt": 47,
+      "ten": "NGUYỄN THANH TƯỜNG VY"
+    },
+    {
+      "stt": 48,
+      "ten": "PHẠM VÕ THIÊN Ý"
+    }
+  ]
+}

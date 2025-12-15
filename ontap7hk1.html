@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ôn tập cuối kì 1 Tin 7</title>
+    <title>Ôn tập cuối kì 1 Tin 7 - Hà Huy Tập</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 
@@ -127,26 +127,32 @@
     <h2>Chủ đề A, C, D</h2>
 </header>
 
+
 <!-- LOGIN SCREEN -->
 <div id="screen-login" class="screen active">
 
-    <label>Họ và tên:</label>
-    <input type="text" id="input-name">
-
     <label>Lớp:</label>
-    <select id="input-class">
-        <option value="" disabled selected>Chọn lớp</option>
+    <select id="input-class" onchange="onClassChange()">
+        <option value="">-- Chọn lớp --</option>
         <option>7.1</option><option>7.2</option><option>7.3</option>
         <option>7.4</option><option>7.5</option><option>7.6</option>
-        <option>7.7</option><option>7.8</option><option>7.9</option><option>7.10</option>
-        <option>7.11</option>
+        <option>7.7</option><option>7.8</option><option>7.9</option>
+        <option>7.10</option><option>7.11</option>
     </select>
 
     <label>Số thứ tự:</label>
-    <input type="number" id="input-id" min="1" max="55">
+    <select id="input-id" onchange="onIdChange()" disabled>
+        <option value="">-- Chọn STT --</option>
+    </select>
 
-    <button class="btn" onclick="startQuiz()" style="margin-top:20px;">Bắt đầu làm bài</button>
+    <label>Họ và tên:</label>
+    <input type="text" id="input-name" readonly placeholder="Tự động hiển thị">
+
+    <button class="btn" id="btn-start" onclick="startQuiz()" disabled style="margin-top:20px;">
+        Làm bài
+    </button>
 </div>
+
 
 <!-- QUIZ SCREEN -->
 <div id="screen-quiz" class="screen">
@@ -215,6 +221,61 @@ async function loadQuestionsFromJSON() {
     }
 }
 
+//--------------- xử lý lớp – STT – tên
+let studentsData = {};
+
+// load students.json
+fetch("students.json")
+    .then(res => res.json())
+    .then(data => studentsData = data)
+    .catch(err => alert("❌ Không tải được danh sách học sinh"));
+
+function onClassChange() {
+    const classSelect = document.getElementById("input-class");
+    const idSelect = document.getElementById("input-id");
+    const nameInput = document.getElementById("input-name");
+    const btn = document.getElementById("btn-start");
+
+    idSelect.innerHTML = '<option value="">-- Chọn STT --</option>';
+    nameInput.value = "";
+    btn.disabled = true;
+
+    const lop = classSelect.value;
+    if (!lop) {
+        idSelect.disabled = true;
+        return;
+    }
+
+    studentsData[lop].forEach(hs => {
+        const opt = document.createElement("option");
+        opt.value = hs.stt;
+        opt.textContent = hs.stt;
+        idSelect.appendChild(opt);
+    });
+
+    idSelect.disabled = false;
+}
+
+function onIdChange() {
+    const lop = document.getElementById("input-class").value;
+    const stt = document.getElementById("input-id").value;
+    const nameInput = document.getElementById("input-name");
+    const btn = document.getElementById("btn-start");
+
+    if (!lop || !stt) {
+        nameInput.value = "";
+        btn.disabled = true;
+        return;
+    }
+
+    const hs = studentsData[lop].find(s => s.stt == stt);
+    if (hs) {
+        nameInput.value = hs.ten;
+        btn.disabled = false;
+    }
+}
+
+//---------------------------------------------------------------
 
 function shuffleArray(arr){
     for(let i=arr.length-1;i>0;i--){
@@ -236,6 +297,7 @@ function prepareQuizData() {
 }
 
 let sessionQuestions=[];
+let studentInfo = {};
 let currentQuestion=0;
 let userAnswers=new Array(30).fill(null);
 let timerInterval;
@@ -248,6 +310,22 @@ const screens={
 };
 
 async function startQuiz(){
+    const name = document.getElementById("input-name").value;
+    const lop = document.getElementById("input-class").value;
+    const stt = document.getElementById("input-id").value;
+
+    
+    if (!name || !lop || !stt) {
+        alert("⚠️ Vui lòng chọn đầy đủ lớp và số thứ tự");
+        return;
+    }
+    
+    studentInfo = {
+        lop: document.getElementById("input-class").value,
+        stt: document.getElementById("input-id").value,
+        ten: document.getElementById("input-name").value
+    };
+
     await loadQuestionsFromJSON();   // ⬅️ LOAD JSON TRƯỚC
 
     if(rawQuestionsDB.length === 0){
@@ -316,17 +394,36 @@ function prevQuestion(){
 function submitQuiz(){
     clearInterval(timerInterval);
 
-    let correct=0;
+    let correct = 0;
     sessionQuestions.forEach((q,i)=>{
-        if(userAnswers[i]===q.newCorrectIndex) correct++;
+        if(userAnswers[i] === q.newCorrectIndex) correct++;
     });
 
+    const percent = Math.round(correct / 30 * 100);
+    const timeUsed = 600 - timeLeft;
+
+    // GỬI GOOGLE SHEET
+    fetch("https://script.google.com/macros/s/AKfycbyfkr70qrqHZDGE91yeKAIyaLnkfSKUAV1yiesooCP7S74Zmq7Gm9UKY66MMwwNesDNcg/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            lop: studentInfo.lop,
+            stt: studentInfo.stt,
+            ten: studentInfo.ten,
+            diem: `${correct}/30`,
+            phantram: percent,
+            thoigian: timeUsed
+        })
+    }).catch(err => console.error("Lỗi gửi Sheet:", err));
+
+    // HIỂN THỊ KẾT QUẢ
     screens.quiz.style.display="none";
     screens.result.style.display="flex";
 
-    document.getElementById("score-display").textContent=`${correct}/30`;
-    document.getElementById("score-percent").textContent=Math.round(correct/30*100)+"%";
+    document.getElementById("score-display").textContent = `${correct}/30`;
+    document.getElementById("score-percent").textContent = percent + "%";
 }
+
 
 /* ============================
    TÍNH NĂNG XEM LẠI CÂU SAI
