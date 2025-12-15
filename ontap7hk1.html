@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -138,6 +139,7 @@
         <option>7.1</option><option>7.2</option><option>7.3</option>
         <option>7.4</option><option>7.5</option><option>7.6</option>
         <option>7.7</option><option>7.8</option><option>7.9</option><option>7.10</option>
+        <option>7.11</option>
     </select>
 
     <label>Số thứ tự:</label>
@@ -191,55 +193,28 @@
 
 /* ============================
    CƠ SỞ DỮ LIỆU CÂU HỎI (30 câu random mỗi lần)
-============================ */
+
 
 const rawQuestionsDB = [
     { q:"Thiết bị nào là thiết bị vào?", options:["Loa","Chuột, bàn phím","Màn hình","Máy chiếu"], correct:1 },
     { q:"Thiết bị nào là thiết bị ra?", options:["Bàn phím","Chuột","Loa","Webcam"], correct:2 },
-    { q:"Hệ điều hành có chức năng gì?", options:["Soạn thảo","Quản lí máy tính","Vẽ","Nghe nhạc"], correct:1 },
-    { q:"Trình quản lí tệp là:", options:["Word","Excel","File Explorer","PowerPoint"], correct:2 },
-    { q:"Tên và phần mở rộng tệp cách nhau bằng:", options:["Dấu phẩy","Dấu chấm","Dấu hai chấm","Dấu sao"], correct:1 },
-    { q:"Mở rộng tệp thể hiện:", options:["Kích thước","Kiểu tệp","Ngày tạo","Ổ đĩa"], correct:1 },
-    { q:"Sắp xếp tệp hợp lí giúp:", options:["Tăng dung lượng","Dễ tìm","Cài phần mềm","Tăng tốc"], correct:1 },
-    { q:"Ai sáng lập Facebook?", options:["Bill Gates","Mark Zuckerberg","Steve Jobs","Elon Musk"], correct:1 },
-    { q:"Facebook ra đời năm nào?", options:["2000","2004","2006","2010"], correct:1 },
-    { q:"Độ tuổi tối thiểu dùng Facebook?", options:["10","12","13","16"], correct:2 },
-    { q:"Quy định độ tuổi nhằm:", options:["Giới hạn","Bảo vệ trẻ nhỏ","Tăng lợi nhuận","Kiểm soát Internet"], correct:1 },
-    { q:"Học sinh nên làm gì trên mạng?", options:["Cãi nhau","Tôn trọng","Đăng tin sai","Chửi bậy"], correct:1 },
-    { q:"Thông tin không nên chia sẻ:", options:["Ảnh phong cảnh","Thông tin cá nhân","Sở thích","Hoạt động học"], correct:1 },
-    { q:"Hành vi thiếu văn hóa:", options:["Xin lỗi","Giữ trật tự","Xếp hàng","Nói tục"], correct:3 },
-    { q:"Ứng xử có văn hóa giúp:", options:["Nổi tiếng","Môi trường lành mạnh","Nhiều tranh cãi","Thể hiện cá tính"], correct:1 },
-    { q:"Dấu hiệu lừa đảo:", options:["Cung cấp mật khẩu","Tin nhắn trường","Thông báo lớp","Trang trường"], correct:0 },
-    { q:"Khi nhận tin nhắn lạ:", options:["Trả lời","Không phản hồi","Chia sẻ","Làm theo"], correct:1 },
-    { q:"Sử dụng mạng an toàn cần:", options:["Công khai dữ liệu","Giữ kín thông tin","Nhiều bạn lạ","Dùng nhiều tài khoản"], correct:1 },
-    { q:"Bị bắt nạt nên:", options:["Im lặng","Trả đũa","Báo người lớn","Chửi lại"], correct:2 },
-    { q:"Tránh rủi ro mạng giúp:", options:["Giải trí","Bảo vệ bản thân","Tăng tốc","Nhiều bạn"], correct:1 },
-    { q:"Thiết bị nhập hình ảnh:", options:["Máy in","Loa","Webcam","Máy chiếu"], correct:2 },
-    { q:"Thiết bị không phải đầu ra:", options:["Bàn phím","Màn hình","Máy in","Loa"], correct:0 },
-    { q:"Hệ điều hành làm gì?", options:["Chơi game","Quản lí thiết bị","Đồ họa","Nghe nhạc"], correct:1 },
-    { q:"Thư mục dùng để:", options:["Ghi nhớ app","Chứa tệp","Xử lí dữ liệu","Bảo mật"], correct:1 },
-    { q:"Tên tệp dùng để:", options:["Giảm dung lượng","Phân biệt tệp","Tăng tốc","Bảo vệ"], correct:1 },
-    { q:"Không nên đổi phần nào của tên tệp?", options:["Tên","Phần mở rộng","Thư mục","Ổ đĩa"], correct:1 },
-    { q:"Đặt tên rõ ràng giúp:", options:["Tăng dung lượng","Dễ nhận biết","Giảm lỗi","Nhanh máy"], correct:1 },
-    { q:"Facebook cho phép:", options:["Kết nối","Soạn thảo","Cài đặt","Lập trình"], correct:0 },
-    { q:"Facebook ban đầu để:", options:["Bán hàng","Kết nối sinh viên","Chơi game","Xem phim"], correct:1 },
-    { q:"Nguy cơ trẻ dưới 13 tuổi:", options:["Không bảo vệ","Không dùng","Chậm máy","Lỗi app"], correct:0 },
-
-    { q:"Khi tham gia nhóm chat, học sinh nên:", options:["Spam tin nhắn","Tôn trọng mọi người","Gửi link lạ","Chửi bậy"], correct:1 },
-    { q:"Hành động nào là ứng xử có văn hóa?", options:["Lắng nghe, phản hồi lịch sự","Cãi nhau đến cùng","Chế giễu bạn","Đăng ảnh chế xúc phạm"], correct:0 },
-    { q:"Khi không đồng ý ý kiến ai đó, ta nên:", options:["Công kích cá nhân","Giữ bình tĩnh và góp ý","Gọi bạn bè vào chửi","Đăng bài bêu xấu"], correct:1 },
-    { q:"Để tránh rủi ro khi giao tiếp qua mạng, HS nên:", options:["Kết bạn với người lạ","Chia sẻ thông tin riêng tư","Xác minh nguồn gửi","Làm theo mọi yêu cầu"], correct:2 },
-    { q:"Nếu thấy nội dung độc hại, ta nên:", options:["Chia sẻ cho vui","Báo xấu nội dung","Bình luận khiêu khích","Lưu lại đăng tiếp"], correct:1 },
-    { q:"Khi bị người khác xúc phạm trên mạng, ta nên:", options:["Trả đũa ngay","Gửi lời lẽ thô tục","Bỏ qua và báo người lớn","Đăng bài đáp trả"], correct:2 },
-    { q:"Học sinh cần làm gì để bảo vệ tài khoản?", options:["Tiết lộ mật khẩu","Dùng mật khẩu mạnh","Dùng chung tài khoản","Đăng nhập trên mọi thiết bị lạ"], correct:1 },
-    { q:"Thông tin nên kiểm tra trước khi chia sẻ:", options:["Tin giật gân, chưa xác thực","Nguồn uy tín, chính xác","Tin đồn trên mạng","Ảnh chế"], correct:1 },
-    { q:"Một biểu hiện ứng xử thiếu văn minh là:", options:["Tôn trọng người khác","Hiểu sai và xin lỗi","Chửi bới, xúc phạm","Biết lắng nghe"], correct:2 },
-    { q:"Để tránh bị lừa đảo qua mạng, ta nên:", options:["Nhấp mọi đường link","Tin phần thưởng ảo","Không cung cấp mã OTP","Gửi mật khẩu nếu được yêu cầu"], correct:2 }
+    ể tránh bị lừa đảo qua mạng, ta nên:", options:["Nhấp mọi đường link","Tin phần thưởng ảo","Không cung cấp mã OTP","Gửi mật khẩu nếu được yêu cầu"], correct:2 }
 ];
 
 /* ============================
    CODE CHẠY BÀI TEST
 ============================ */
+let rawQuestionsDB = [];
+async function loadQuestionsFromJSON() {
+    try {
+        const response = await fetch("ontap7hk1.json");
+        rawQuestionsDB = await response.json();
+    } catch (err) {
+        alert("❌ Không thể tải dữ liệu câu hỏi!");
+        console.error(err);
+    }
+}
+
 
 function shuffleArray(arr){
     for(let i=arr.length-1;i>0;i--){
@@ -272,14 +247,22 @@ const screens={
     result:document.getElementById("screen-result")
 };
 
-function startQuiz(){
+async function startQuiz(){
+    await loadQuestionsFromJSON();   // ⬅️ LOAD JSON TRƯỚC
+
+    if(rawQuestionsDB.length === 0){
+        alert("Không có câu hỏi!");
+        return;
+    }
+
     screens.login.style.display="none";
     screens.quiz.style.display="flex";
 
-    sessionQuestions=prepareQuizData();
+    sessionQuestions = prepareQuizData();
     renderQuestion();
     startTimer();
 }
+
 
 function startTimer(){
     timerInterval=setInterval(()=>{

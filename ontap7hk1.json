@@ -1,0 +1,120 @@
+[
+  { "q":"Phần mở rộng của tên tệp thường thể hiện:", "options":["Ngày tạo","Kiểu tệp","Kích thước","Thư mục chứa"], "correct":1 },
+  { "q":"Thiết bị nào sau đây là thiết bị vào của máy tính?", "options":["Máy chiếu, loa","Chuột, bàn phím","Loa, tai nghe","Màn hình, máy in"], "correct":1 },
+  { "q":"Khi tham gia mạng xã hội, học sinh nên:", "options":["Đăng tin sai","Tranh cãi","Tôn trọng người khác","Nói tục"], "correct":2 },
+  { "q":"Facebook được ra đời vào năm nào?", "options":["2010","2000","2004","2006"], "correct":2 },
+  { "q":"Để sử dụng mạng xã hội an toàn, học sinh cần:", "options":["Giữ kín thông tin riêng tư","Công khai dữ liệu","Kết bạn nhiều","Dùng nhiều tài khoản"], "correct":0 },
+  { "q":"Việc học cách tránh rủi ro trên mạng giúp học sinh:", "options":["Dùng mạng nhiều","Kết bạn nhanh","Giải trí hơn","Bảo vệ bản thân"], "correct":3 },
+  { "q":"Facebook quy định độ tuổi sử dụng nhằm mục đích:", "options":["Giảm nội dung","Giới hạn người dùng","Tăng lợi nhuận","Bảo vệ người dùng nhỏ tuổi"], "correct":3 },
+  { "q":"Khi nhận tin nhắn đáng ngờ, học sinh nên:", "options":["Trả lời ngay","Không phản hồi","Chia sẻ","Làm theo"], "correct":1 },
+  { "q":"Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:", "options":["10 tuổi","13 tuổi","12 tuổi","16 tuổi"], "correct":1 },
+  { "q":"Khi bị bắt nạt trên mạng, học sinh nên:", "options":["Đăng phản đối","Trả đũa","Im lặng","Báo người lớn"], "correct":3 },
+
+  { "q":"Dấu hiệu nào cho thấy nguy cơ lừa đảo trên mạng?", "options":["Cung cấp mật khẩu","Tin nhắn báo số tiền","Thông báo lớp","Trang trường"], "correct":0 },
+  { "q":"Facebook là mạng xã hội do ai sáng lập?", "options":["Bill Gates","Mark Zuckerberg","Elon Musk","Steve Jobs"], "correct":1 },
+  { "q":"Hành động nào sau đây là thiếu văn hóa nơi công cộng?", "options":["Xin lỗi","Giữ trật tự","Nói tục","Xếp hàng"], "correct":2 },
+  { "q":"Trong Windows, trình quản lí hệ thống tệp là:", "options":["File Explorer","PowerPoint","Word","Excel"], "correct":0 },
+  { "q":"Hệ điều hành là phần mềm có chức năng:", "options":["Nghe nhạc","Soạn thảo văn bản","Vẽ hình","Quản lí và điều khiển máy tính"], "correct":3 },
+  { "q":"Thiết bị nào sau đây là thiết bị ra của máy tính?", "options":["Loa","Webcam","Bàn phím","Chuột"], "correct":0 },
+  { "q":"Ứng xử có văn hóa trên mạng giúp:", "options":["Nhiều tranh luận","Thể hiện cá tính","Tạo môi trường lành mạnh","Nổi tiếng"], "correct":2 },
+  { "q":"Giữa phần tên và phần mở rộng của tệp được phân cách bởi:", "options":["Dấu hai chấm","Dấu sao","Dấu chấm","Dấu phẩy"], "correct":2 },
+  { "q":"Việc sắp xếp tệp hợp lí giúp người dùng:", "options":["Tăng dung lượng","Tăng tốc mạng","Cài phần mềm","Dễ tìm và quản lí"], "correct":3 },
+  { "q":"Thông tin nào không nên chia sẻ trên mạng xã hội?", "options":["Sở thích","Ảnh phong cảnh","Hoạt động học tập","Thông tin cá nhân"], "correct":3 },
+
+  { "q":"Hệ điều hành là phần mềm có chức năng:", "options":["Soạn thảo văn bản","Nghe nhạc","Quản lí và điều khiển máy tính","Vẽ hình"], "correct":2 },
+  { "q":"Facebook quy định độ tuổi sử dụng nhằm mục đích:", "options":["Giảm nội dung","Tăng lợi nhuận","Giới hạn người dùng","Bảo vệ người dùng nhỏ tuổi"], "correct":3 },
+  { "q":"Facebook là mạng xã hội do ai sáng lập?", "options":["Steve Jobs","Elon Musk","Mark Zuckerberg","Bill Gates"], "correct":2 },
+  { "q":"Việc sắp xếp tệp hợp lí giúp người dùng:", "options":["Tăng dung lượng","Dễ tìm và quản lí","Cài phần mềm","Tăng tốc mạng"], "correct":1 },
+  { "q":"Ứng xử có văn hóa trên mạng giúp:", "options":["Thể hiện cá tính","Nhiều tranh luận","Nổi tiếng","Tạo môi trường lành mạnh"], "correct":3 },
+  { "q":"Facebook được ra đời vào năm nào?", "options":["2000","2006","2004","2010"], "correct":2 },
+  { "q":"Phần mở rộng của tên tệp thường thể hiện:", "options":["Kích thước","Thư mục chứa","Kiểu tệp","Ngày tạo"], "correct":2 },
+  { "q":"Khi bị bắt nạt trên mạng, học sinh nên:", "options":["Báo người lớn","Im lặng","Trả đũa","Đăng phản đối"], "correct":0 },
+  
+  {
+  "q":"Hành động nào sau đây được xem là thiếu văn hóa nơi công cộng?",
+  "options":[
+    "Giữ trật tự, tôn trọng người xung quanh",
+    "Xin lỗi khi làm phiền người khác",
+    "Nói tục, sử dụng ngôn ngữ phản cảm",
+    "Xếp hàng đúng quy định"
+  ],
+  "correct":2
+  },
+  
+  { "q":"Trong Windows, trình quản lí hệ thống tệp là:", "options":["Word","PowerPoint","Excel","File Explorer"], "correct":3 },
+
+  { "q":"Thông tin nào không nên chia sẻ trên mạng xã hội?", "options":["Hoạt động học tập","Ảnh phong cảnh","Sở thích","Thông tin cá nhân"], "correct":3 },
+  { "q":"Khi nhận tin nhắn đáng ngờ, học sinh nên:", "options":["Trả lời ngay","Chia sẻ","Làm theo","Không phản hồi"], "correct":3 },
+  { "q":"Khi tham gia mạng xã hội, học sinh nên:", "options":["Nói tục","Tôn trọng người khác","Đăng tin sai","Tranh cãi"], "correct":1 },
+  { "q":"Thiết bị nào sau đây là thiết bị ra của máy tính?", "options":["Webcam","Bàn phím","Loa","Chuột"], "correct":2 },
+  { "q":"Giữa phần tên và phần mở rộng của tệp được phân cách bởi:", "options":["Dấu phẩy","Dấu sao","Dấu chấm","Dấu hai chấm"], "correct":2 },
+  { "q":"Việc học cách tránh rủi ro trên mạng giúp học sinh:", "options":["Giải trí hơn","Bảo vệ bản thân","Dùng mạng nhiều","Kết bạn nhanh"], "correct":1 },
+  { "q":"Thiết bị nào sau đây là thiết bị vào của máy tính?", "options":["Chuột, bàn phím","Loa, tai nghe","Máy chiếu, loa","Màn hình, máy in"], "correct":0 },
+  { "q":"Độ tuổi tối thiểu được phép tạo tài khoản Facebook là:", "options":["16 tuổi","12 tuổi","10 tuổi","13 tuổi"], "correct":3 },
+  {
+  "q":"Dấu hiệu nào sau đây cho thấy nguy cơ lừa đảo trên mạng?",
+  "options":[
+    "Trang thông tin chính thức của nhà trường",
+    "Thông báo học tập từ giáo viên",
+    "Tin nhắn thông báo trúng thưởng hoặc nhận tiền bất thường",
+    "Yêu cầu cung cấp mật khẩu hoặc mã xác thực cá nhân"
+  ],
+  "correct":3
+  }, 
+  
+  { "q":"Để sử dụng mạng xã hội an toàn, học sinh cần:", "options":["Giữ kín thông tin riêng tư","Công khai dữ liệu","Kết bạn nhiều","Dùng nhiều tài khoản"], "correct":0 },
+
+  {
+    "q":"Khi nhận được đường link lạ từ người không quen biết, học sinh nên làm gì?",
+    "options":[
+      "Nhấp vào ngay để xem",
+      "Chia sẻ cho bạn bè",
+      "Không nhấp và xóa tin nhắn",
+      "Hỏi mật khẩu để mở"
+    ],
+    "correct":2
+  },
+  {
+    "q":"Hành động nào giúp bảo vệ tài khoản cá nhân trên mạng?",
+    "options":[
+      "Chia sẻ mật khẩu cho bạn thân",
+      "Đặt mật khẩu dễ nhớ như ngày sinh",
+      "Sử dụng mật khẩu mạnh và không chia sẻ",
+      "Ghi mật khẩu ra giấy và dán lên bàn"
+    ],
+    "correct":2
+  },
+  {
+    "q":"Khi phát hiện thông tin cá nhân của mình bị đăng trái phép trên mạng, học sinh nên:",
+    "options":[
+      "Bỏ qua vì không quan trọng",
+      "Báo cho thầy cô hoặc người lớn",
+      "Trả lời và tranh cãi",
+      "Đăng lại thông tin đó"
+    ],
+    "correct":1
+  },
+
+  {
+    "q":"Hành vi nào sau đây thể hiện ứng xử có văn hóa trên mạng?",
+    "options":[
+      "Bình luận xúc phạm người khác",
+      "Chia sẻ thông tin chưa kiểm chứng",
+      "Sử dụng ngôn ngữ lịch sự, tôn trọng",
+      "Chế giễu bạn bè trên mạng xã hội"
+    ],
+    "correct":2
+  },
+  {
+    "q":"Khi không đồng ý với ý kiến của người khác trên mạng, học sinh nên:",
+    "options":[
+      "Nói lời xúc phạm",
+      "Tranh cãi gay gắt",
+      "Góp ý lịch sự, đúng mực",
+      "Kêu gọi người khác tấn công"
+    ],
+    "correct":2
+  }
+
+
+]
