@@ -405,16 +405,17 @@ function submitQuiz(){
     // GỬI GOOGLE SHEET
     fetch("https://script.google.com/macros/s/AKfycbyfkr70qrqHZDGE91yeKAIyaLnkfSKUAV1yiesooCP7S74Zmq7Gm9UKY66MMwwNesDNcg/exec", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: new URLSearchParams({
             lop: studentInfo.lop,
             stt: studentInfo.stt,
             ten: studentInfo.ten,
-            diem: `${correct}/30`,
-            phantram: percent,
+            diem: `${correct}/30`,            
             thoigian: timeUsed
         })
-    }).catch(err => console.error("Lỗi gửi Sheet:", err));
+    })
+    .then(() => console.log("✅ Đã gửi kết quả"))
+    .catch(err => console.error("❌ Lỗi gửi Sheet:", err));
+
 
     // HIỂN THỊ KẾT QUẢ
     screens.quiz.style.display="none";
