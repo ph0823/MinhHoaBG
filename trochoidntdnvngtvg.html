@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đuổi Hình Bắt Chữ - Danh Nhân Việt Nam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .card {
+            perspective: 1000px;
+        }
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        .correct-flash {
+            animation: flash 0.5s ease-out;
+        }
+        @keyframes flash {
+            0% { background-color: #48bb78; }
+            100% { background-color: white; }
+        }
+        .celebration {
+            position: fixed;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div id="game-container" class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-yellow-400">
+        <!-- Header -->
+        <div class="bg-yellow-400 p-4 flex justify-between items-center shadow-md">
+            <div class="flex items-center space-x-2">
+                <span class="text-3xl">🏆</span>
+                <span id="score" class="font-bold text-xl text-blue-900">Điểm: 0</span>
+            </div>
+            <h1 class="text-xl md:text-2xl font-black text-blue-900 uppercase tracking-tighter">Đuổi Hình Bắt Chữ</h1>
+            <div class="flex items-center space-x-2">
+                <span id="timer" class="font-mono font-bold text-xl bg-white px-3 py-1 rounded-full border-2 border-blue-900">0/10</span>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="p-6">
+            <div id="start-screen" class="text-center py-10">
+                <h2 class="text-3xl font-bold text-purple-800 mb-6">Chủ đề: Ba Nhà Trí Thức & Quân Sự Lỗi Lạc</h2>
+                <p class="text-gray-600 mb-8 px-4 text-lg">Trần Đại Nghĩa - Võ Nguyên Giáp - Trần Văn Giàu</p>
+                <button onclick="startGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-10 rounded-full text-2xl shadow-lg transform transition hover:scale-110 active:scale-95">
+                    BẮT ĐẦU CHƠI!
+                </button>
+            </div>
+
+            <div id="play-screen" class="hidden">
+                <!-- Image Display -->
+                <div class="bg-blue-50 border-4 border-dashed border-blue-200 rounded-2xl p-4 mb-6 flex justify-center items-center relative min-h-[300px]" id="image-container">
+                    <!-- SVG Images will be injected here -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="text-center mb-6">
+                    <div id="answer-slots" class="flex flex-wrap justify-center gap-2 mb-6">
+                        <!-- Slots for letters -->
+                    </div>
+                    
+                    <div id="keyboard" class="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                        <!-- Virtual keyboard -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-4 border-t pt-6">
+                    <button onclick="resetCurrentAnswer()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-xl transition">
+                        Xóa tất cả
+                    </button>
+                    <button id="teacher-mode-btn" onclick="toggleTeacherMode()" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-6 rounded-xl border-2 border-purple-300 transition flex items-center">
+                        👤 Chế độ Giáo viên
+                    </button>
+                </div>
+
+                <!-- Teacher Panel -->
+                <div id="teacher-panel" class="hidden mt-6 p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                    <h3 class="font-bold text-yellow-800 mb-2">Thông tin cho Giáo viên:</h3>
+                    <p id="teacher-answer" class="text-lg font-bold text-red-600 mb-2"></p>
+                    <p id="teacher-hint" class="text-gray-700 italic"></p>
+                </div>
+            </div>
+
+            <!-- Finish Screen -->
+            <div id="finish-screen" class="hidden text-center py-10">
+                <h2 class="text-4xl font-bold text-green-600 mb-4">XUẤT SẮC!</h2>
+                <p id="final-score-text" class="text-2xl mb-8">Bạn đã hoàn thành 10 câu hỏi.</p>
+                <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg">
+                    Chơi lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sound Effects Notification (UI) -->
+    <div id="sound-toast" class="fixed bottom-4 right-4 bg-black/70 text-white p-2 rounded-lg text-xs">
+        Bấm bất kỳ đâu để kích hoạt âm thanh 🔊
+    </div>
+
+    <script>
+        // --- DATA ---
+        const questionsData = [
+            {
+                id: 1,
+                answer: "SÚNG SKZ",
+                hint: "Vũ khí nổi tiếng do Trần Đại Nghĩa chế tạo, có khả năng xuyên thủng xe tăng.",
+                images: `
+                    <svg width="200" height="200" viewBox="0 0 100 100" class="bounce">
+                        <rect x="10" y="40" width="60" height="10" fill="#4B5320" />
+                        <rect x="70" y="35" width="20" height="20" rx="2" fill="#333" />
+                        <circle cx="40" cy="45" r="5" fill="#222" />
+                    </svg>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl font-bold bg-white p-4 rounded shadow">S - K - Z</div>
+                `,
+                explanation: "Giáo sư Trần Đại Nghĩa đã nghiên cứu chế tạo súng không giật (SKZ) và Bazooka trong kháng chiến chống Pháp."
+            },
+            {
+                id: 2,
+                answer: "ĐIỆN BIÊN PHỦ",
+                hint: "Chiến thắng lẫy lừng gắn liền với tên tuổi Đại tướng Võ Nguyên Giáp.",
+                images: `
+                    <div class="text-7xl">⚡</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">🚁</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">⛰️</div>
+                `,
+                explanation: "Đại tướng Võ Nguyên Giáp là tổng tư lệnh chiến dịch Điện Biên Phủ 'lừng lẫy năm châu, chấn động địa cầu'."
+            },
+            {
+                id: 3,
+                answer: "KỸ SƯ TRƯỞNG",
+                hint: "Vị trí cao cấp mà Trần Đại Nghĩa đã từ bỏ ở Pháp để theo Bác Hồ về nước.",
+                images: `
+                    <div class="text-7xl">⚙️</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">🤴</div>
+                `,
+                explanation: "Trước khi về nước, Trần Đại Nghĩa là kỹ sư trưởng tại xưởng nghiên cứu vũ khí của hãng hàng không Pháp."
+            },
+            {
+                id: 4,
+                answer: "NHÀ SỬ HỌC",
+                hint: "Lĩnh vực nghiên cứu uy tín của Giáo sư Trần Văn Giàu.",
+                images: `
+                    <div class="text-7xl">🏠</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">📜</div>
+                `,
+                explanation: "Trần Văn Giàu không chỉ là nhà cách mạng mà còn là một nhà sử học, triết học lớn của Việt Nam."
+            },
+            {
+                id: 5,
+                answer: "ANH CẢ QUÂN ĐỘI",
+                hint: "Tên gọi thân thương mà các chiến sĩ dành cho Đại tướng Võ Nguyên Giáp.",
+                images: `
+                    <div class="text-7xl">👦</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">🎖️</div>
+                `,
+                explanation: "Đại tướng Võ Nguyên Giáp được tôn vinh là 'Người anh cả' của Quân đội Nhân dân Việt Nam."
+            },
+            {
+                id: 6,
+                answer: "TƯỚNG NĂM SAO",
+                hint: "Cấp bậc cao nhất mà một quân nhân đạt được (Ví dụ: Đại tướng Võ Nguyên Giáp).",
+                images: `
+                    <div class="text-7xl">👮</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="flex">
+                        <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+                    </div>
+                `,
+                explanation: "Võ Nguyên Giáp là vị Đại tướng đầu tiên của Quân đội Nhân dân Việt Nam (được phong năm 1948)."
+            },
+            {
+                id: 7,
+                answer: "CÀI MÌN",
+                hint: "Một trong những kỹ thuật chế tạo vũ khí nổ nổi tiếng của Trần Đại Nghĩa.",
+                images: `
+                    <div class="text-7xl">👔</div>
+                    <div class="text-4xl text-blue-900 mx-4">(bỏ đuôi 'V')</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">💣</div>
+                `,
+                explanation: "Ông đã sáng tạo ra các loại mìn, lựu đạn phù hợp với lối đánh du kích của Việt Nam."
+            },
+            {
+                id: 8,
+                answer: "BÁCH KHOA TOÀN THƯ",
+                hint: "Khối lượng kiến thức khổng lồ mà Trần Văn Giàu sở hữu.",
+                images: `
+                    <div class="text-7xl">💯</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">📖</div>
+                `,
+                explanation: "Trần Văn Giàu được coi là một nhà bách khoa toàn thư sống với kiến thức sâu rộng nhiều lĩnh vực."
+            },
+            {
+                id: 9,
+                answer: "QUẢNG BÌNH",
+                hint: "Quê hương của Đại tướng Võ Nguyên Giáp.",
+                images: `
+                    <div class="text-7xl">🍊</div>
+                    <div class="text-4xl text-blue-900 mx-4">('Q' thay 'C')</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">⚖️</div>
+                `,
+                explanation: "Đại tướng Võ Nguyên Giáp sinh ra tại xã Lộc Thủy, huyện Lệ Thủy, tỉnh Quảng Bình."
+            },
+            {
+                id: 10,
+                answer: "ANH HÙNG LAO ĐỘNG",
+                hint: "Danh hiệu cao quý mà Trần Đại Nghĩa và Trần Văn Giàu đều nhận được.",
+                images: `
+                    <div class="text-7xl">🦸</div>
+                    <div class="text-6xl font-black text-blue-900 mx-4">+</div>
+                    <div class="text-7xl">👷</div>
+                `,
+                explanation: "Cả hai ông đều có những đóng góp vĩ đại trong công cuộc xây dựng và bảo vệ đất nước."
+            }
+        ];
+
+        // --- GAME STATE ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let currentInput = [];
+        let shuffledQuestions = [];
+        let isTeacherMode = false;
+
+        // --- AUDIO HELPERS ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            click: () => playTone(600, 'sine', 0.1),
+            correct: () => {
+                playTone(523.25, 'sine', 0.1);
+                setTimeout(() => playTone(659.25, 'sine', 0.1), 100);
+                setTimeout(() => playTone(783.99, 'sine', 0.3), 200);
+            },
+            wrong: () => {
+                playTone(300, 'square', 0.1);
+                setTimeout(() => playTone(200, 'square', 0.2), 150);
+            },
+            finish: () => {
+                const notes = [523, 659, 783, 1046];
+                notes.forEach((n, i) => setTimeout(() => playTone(n, 'triangle', 0.5), i * 150));
+            }
+        };
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            shuffledQuestions = [...questionsData].sort(() => Math.random() - 0.5);
+            currentQuestionIndex = 0;
+            score = 0;
+            updateScoreUI();
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('play-screen').classList.remove('hidden');
+            document.getElementById('sound-toast').classList.add('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            currentInput = [];
+            
+            document.getElementById('timer').innerText = `${currentQuestionIndex + 1}/10`;
+            document.getElementById('image-container').innerHTML = q.images;
+            
+            // Setup Answer Slots (handle spaces)
+            const slotsContainer = document.getElementById('answer-slots');
+            slotsContainer.innerHTML = '';
+            
+            q.answer.split('').forEach((char, idx) => {
+                const slot = document.createElement('div');
+                if (char === ' ') {
+                    slot.className = "w-8 h-10"; // Space
+                    currentInput[idx] = ' ';
+                } else {
+                    slot.className = "w-10 h-12 md:w-12 md:h-14 border-b-4 border-blue-500 text-2xl md:text-3xl font-bold flex items-center justify-center text-blue-900 bg-blue-50 rounded-t-lg";
+                    slot.id = `slot-${idx}`;
+                    currentInput[idx] = null;
+                }
+                slotsContainer.appendChild(slot);
+            });
+
+            // Setup Keyboard
+            setupKeyboard(q.answer);
+
+            // Update Teacher Info
+            document.getElementById('teacher-answer').innerText = "Đáp án: " + q.answer;
+            document.getElementById('teacher-hint').innerText = q.explanation;
+            if (!isTeacherMode) document.getElementById('teacher-panel').classList.add('hidden');
+        }
+
+        function setupKeyboard(answer) {
+            const kbContainer = document.getElementById('keyboard');
+            kbContainer.innerHTML = '';
+            
+            // Lấy các chữ cái từ đáp án và thêm chữ ngẫu nhiên
+            let chars = answer.replace(/\s/g, '').split('');
+            const alphabet = "AĂÂBCDĐEÊGHIKLMNOÔƠPQRSTUƯVXY";
+            while (chars.length < 14) {
+                const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!chars.includes(randomChar)) chars.push(randomChar);
+            }
+            chars.sort(() => Math.random() - 0.5);
+
+            chars.forEach(char => {
+                const btn = document.createElement('button');
+                btn.className = "w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-blue-200 rounded-lg font-bold text-xl shadow-sm hover:bg-blue-500 hover:text-white transition transform active:scale-90";
+                btn.innerText = char;
+                btn.onclick = () => handleKeyClick(char, btn);
+                kbContainer.appendChild(btn);
+            });
+        }
+
+        function handleKeyClick(char, btn) {
+            sounds.click();
+            // Tìm ô trống đầu tiên
+            const emptyIdx = currentInput.findIndex(val => val === null);
+            if (emptyIdx !== -1) {
+                currentInput[emptyIdx] = char;
+                document.getElementById(`slot-${emptyIdx}`).innerText = char;
+                btn.style.visibility = 'hidden';
+                btn.dataset.targetSlot = emptyIdx;
+
+                checkAnswer();
+            }
+        }
+
+        function resetCurrentAnswer() {
+            sounds.click();
+            loadQuestion();
+        }
+
+        function checkAnswer() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            const currentStr = currentInput.join('');
+            
+            if (!currentInput.includes(null)) {
+                if (currentStr === q.answer) {
+                    handleCorrect();
+                } else {
+                    handleWrong();
+                }
+            }
+        }
+
+        function handleCorrect() {
+            sounds.correct();
+            score += 10;
+            updateScoreUI();
+            
+            document.getElementById('image-container').classList.add('correct-flash');
+            
+            setTimeout(() => {
+                document.getElementById('image-container').classList.remove('correct-flash');
+                nextQuestion();
+            }, 1000);
+        }
+
+        function handleWrong() {
+            sounds.wrong();
+            const slots = document.getElementById('answer-slots').children;
+            for (let slot of slots) {
+                if (slot.innerText) slot.classList.add('text-red-500');
+            }
+            
+            setTimeout(() => {
+                resetCurrentAnswer();
+            }, 800);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < shuffledQuestions.length) {
+                loadQuestion();
+            } else {
+                showFinish();
+            }
+        }
+
+        function showFinish() {
+            sounds.finish();
+            document.getElementById('play-screen').classList.add('hidden');
+            document.getElementById('finish-screen').classList.remove('hidden');
+            document.getElementById('final-score-text').innerText = `Chúc mừng bạn đã đạt được ${score} điểm!`;
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score').innerText = `Điểm: ${score}`;
+        }
+
+        function toggleTeacherMode() {
+            isTeacherMode = !isTeacherMode;
+            const panel = document.getElementById('teacher-panel');
+            const btn = document.getElementById('teacher-mode-btn');
+            
+            if (isTeacherMode) {
+                panel.classList.remove('hidden');
+                btn.classList.add('bg-purple-500', 'text-white');
+            } else {
+                panel.classList.add('hidden');
+                btn.classList.remove('bg-purple-500', 'text-white');
+            }
+        }
+
+        // Kích hoạt Audio Context khi tương tác lần đầu
+        window.onclick = () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        };
+    </script>
+</body>
+</html>
