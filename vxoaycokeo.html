@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng xoay may mắn </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 350px 1fr 350px;
+                align-items: start;
+            }
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .wheel-wrapper {
+                width: 480px;
+                height: 480px;
+            }
+        }
+
+        .wheel-outer {
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 50%;
+            box-shadow: 0 0 80px rgba(0,0,0,0.6), inset 0 0 30px rgba(255,215,0,0.1);
+            position: relative;
+            border: 8px solid #334155;
+            transition: all 0.3s ease;
+        }
+
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 6s cubic-bezier(0.1, 0, 0.1, 1);
+            background: #fff;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 55px;
+            background: #f43f5e;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 30;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            transform-origin: 50% 10%;
+        }
+
+        .pointer.ticking {
+            animation: pointerTick 0.1s ease-in-out infinite;
+        }
+
+        @keyframes pointerTick {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            50% { transform: translateX(-50%) rotate(-10deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
+        }
+
+        .center-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: #f8fafc;
+            border-radius: 50%;
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border: 4px solid #fbbf24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #334155;
+            color: #fbbf24;
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideIn 0.4s cubic-bezier(0.2, 1, 0.2, 1);
+            text-align: center;
+        }
+
+        .history-item span:last-child {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        #spinBtn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #spinBtn:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.4);
+        }
+
+        .input-pill {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            color: white;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-pill:focus {
+            border-color: #fbbf24;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .reward-badge {
+            font-size: 1.25rem;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-top: 8px;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="pt-8 pb-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600">
+                VÒNG XOAY MAY MẮN
+            </span>
+        </h1>
+    </header>
+
+    <div class="main-grid">
+        <!-- Cột trái: Cài đặt -->
+        <aside class="glass-card">
+            <div id="numberSettings" class="space-y-4">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Cài đặt số học sinh</h2>
+                <div>
+                    <label class="text-xs text-slate-500 font-bold mb-1 block">SỐ BẮT ĐẦU</label>
+                    <input type="number" id="minRange" value="1" class="input-pill">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-bold mb-1 block">SỐ KẾT THÚC</label>
+                    <input type="number" id="maxRange" value="50" class="input-pill">
+                </div>
+                <div class="pt-4 border-t border-slate-700 mt-6">
+                    <button onclick="updateWheelData()" class="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-3 rounded-xl transition">CẬP NHẬT DANH SÁCH</button>
+                </div>
+            </div>
+            
+            <div class="mt-8 p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                <p class="text-xs text-yellow-500 font-bold uppercase mb-2">Thông tin phần thưởng</p>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    Sau mỗi lượt quay, hệ thống sẽ tự động tặng ngẫu nhiên từ 0 đến 3 viên kẹo cho số may mắn.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Cột giữa: Vòng quay chính -->
+        <main class="flex flex-col items-center">
+            <div class="wheel-wrapper">
+                <div id="pointer" class="pointer"></div>
+                <div class="wheel-outer">
+                    <canvas id="wheelCanvas"></canvas>
+                </div>
+                <div class="center-hub">
+                    <div class="w-2 h-2 bg-slate-900 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center w-full max-w-sm">
+                <button id="spinBtn" class="w-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 p-1 rounded-2xl shadow-2xl">
+                    <div class="bg-slate-900 rounded-xl px-8 py-4 text-2xl font-black text-yellow-500 transition">
+                        QUAY NGAY
+                    </div>
+                </button>
+                
+                <div id="currentResult" class="mt-6 flex flex-col items-center justify-center min-h-[120px]">
+                    <span id="winningNum" class="text-5xl md:text-6xl font-black text-white drop-shadow-2xl">-</span>
+                    <div id="rewardDisplay" class="hidden reward-badge"></div>
+                </div>
+                <p id="statusText" class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Sẵn sàng</p>
+            </div>
+        </main>
+
+        <!-- Cột phải: Lịch sử -->
+        <section class="glass-card">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                LỊCH SỬ TRÚNG THƯỞNG
+            </h2>
+            <div id="historyList" class="history-grid">
+                <div class="col-span-full text-slate-500 text-center py-6 italic text-sm">Chưa có kết quả</div>
+            </div>
+            <button id="clearHistory" class="w-full mt-4 py-2 text-[10px] font-bold text-slate-500 hover:text-red-400 transition uppercase tracking-widest">
+                Xóa lịch sử
+            </button>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const pointer = document.getElementById('pointer');
+        const minInput = document.getElementById('minRange');
+        const maxInput = document.getElementById('maxRange');
+        const winningNumDisplay = document.getElementById('winningNum');
+        const rewardDisplay = document.getElementById('rewardDisplay');
+        const historyList = document.getElementById('historyList');
+        const statusText = document.getElementById('statusText');
+        const clearHistoryBtn = document.getElementById('clearHistory');
+
+        let isSpinning = false;
+        let currentRotation = 0;
+        let items = [];
+
+        const colors = [
+            '#e11d48', '#d97706', '#059669', '#2563eb', 
+            '#7c3aed', '#db2777', '#ea580c', '#16a34a',
+            '#06b6d4', '#84cc16'
+        ];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTickSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function updateWheelData() {
+            items = [];
+            const min = parseInt(minInput.value) || 1;
+            const max = parseInt(maxInput.value) || 10;
+            for (let i = min; i <= max; i++) items.push(i.toString());
+            
+            if (items.length === 0) items = ["1"];
+            drawWheel();
+        }
+
+        function initWheel() {
+            canvas.width = 800;
+            canvas.height = 800;
+            updateWheelData();
+        }
+
+        function drawWheel() {
+            const total = items.length;
+            const angleStep = (2 * Math.PI) / total;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 20;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < total; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, i * angleStep, (i + 1) * angleStep);
+                ctx.fill();
+                
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(i * angleStep + angleStep / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                
+                let fontSize = total > 40 ? 12 : (total > 20 ? 18 : 26);
+                ctx.font = `bold ${fontSize}px Plus Jakarta Sans`;
+                
+                ctx.fillText(items[i], radius - 30, fontSize/3);
+                ctx.restore();
+            }
+        }
+
+        function spin() {
+            if (isSpinning || items.length === 0) return;
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            pointer.classList.add('ticking');
+            statusText.innerText = "Đang quay...";
+            winningNumDisplay.innerText = "...";
+            rewardDisplay.classList.add('hidden');
+
+            const winningIndex = Math.floor(Math.random() * items.length);
+            const resultNum = items[winningIndex];
+            
+            const sliceAngle = 360 / items.length;
+            const targetRotation = 360 - (winningIndex * sliceAngle) - (sliceAngle / 2);
+            
+            const extraSpins = 8 * 360; 
+            currentRotation += extraSpins + (targetRotation - (currentRotation % 360) + 360) % 360;
+            
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            const tickInterval = setInterval(() => {
+                if(isSpinning) playTickSound();
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(tickInterval);
+                isSpinning = false;
+                spinBtn.disabled = false;
+                pointer.classList.remove('ticking');
+                statusText.innerText = "Kết quả";
+                
+                // Random phần thưởng 0-3 viên kẹo
+                const candyCount = Math.floor(Math.random() * 4);
+                const rewardText = candyCount === 0 ? "0 viên kẹo (hết may mắn)" : `${candyCount} viên kẹo`;
+                
+                winningNumDisplay.innerText = `Số ${resultNum}`;
+                rewardDisplay.innerText = `🎁 ${rewardText}`;
+                rewardDisplay.classList.remove('hidden');
+                
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#fbbf24', '#f43f5e', '#2563eb']
+                });
+
+                addToHistory(resultNum, rewardText);
+            }, 6000); 
+        }
+
+        function addToHistory(num, reward) {
+            if (historyList.querySelector('.italic')) {
+                historyList.innerHTML = '';
+            }
+            const item = document.createElement('div');
+            item.className = "history-item";
+            item.innerHTML = `<span>Số ${num}</span><span>${reward}</span>`;
+            historyList.prepend(item);
+        }
+
+        spinBtn.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            spin();
+        });
+
+        clearHistoryBtn.addEventListener('click', () => {
+            historyList.innerHTML = '<div class="col-span-full text-slate-500 text-center py-6 italic text-sm">Chưa có kết quả</div>';
+        });
+
+        window.onload = initWheel;
+    </script>
+</body>
+</html>
