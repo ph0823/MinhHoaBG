@@ -9,335 +9,211 @@
     <style>
         body {
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             min-height: 100vh;
-            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .bounce {
-            animation: bounce 2s infinite;
+        .slot-active { cursor: pointer; transition: all 0.2s; }
+        .slot-active:hover { transform: translateY(-2px); background-color: #fef2f2 !important; border-color: #ef4444 !important; }
+        .question-box { background: #fffbeb; border: 3px solid #fcd34d; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .image-card { background: white; border-radius: 1.5rem; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-10px);}
-            60% {transform: translateY(-5px);}
-        }
-        .correct-flash {
-            animation: flash 0.5s ease-out;
-        }
-        @keyframes flash {
-            0% { background-color: #48bb78; }
-            100% { background-color: white; }
-        }
-        .hint-text {
-            animation: fadeInDown 0.5s ease-out;
-        }
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div id="game-container" class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-yellow-400">
+<body class="p-4">
+    <div id="game-container" class="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-yellow-400">
         <!-- Header -->
-        <div class="bg-yellow-400 p-4 flex justify-between items-center shadow-md">
+        <div class="bg-yellow-400 p-4 flex justify-between items-center border-b-4 border-yellow-500">
             <div class="flex items-center space-x-2">
-                <span class="text-3xl">🏆</span>
-                <span id="score" class="font-bold text-xl text-blue-900">Điểm: 0</span>
+                <span class="text-2xl">⭐</span>
+                <span id="score" class="font-bold text-xl text-blue-900">0</span>
             </div>
-            <h1 class="text-xl md:text-2xl font-black text-blue-900 uppercase tracking-tighter">Đuổi Hình Bắt Chữ</h1>
-            <div class="flex items-center space-x-2">
-                <span id="timer" class="font-mono font-bold text-xl bg-white px-3 py-1 rounded-full border-2 border-blue-900">0/10</span>
-            </div>
+            <h1 class="text-xl font-black text-blue-900 uppercase">Đuổi Hình Bắt Chữ</h1>
+            <div id="timer" class="font-mono font-bold text-lg bg-white px-3 py-1 rounded-full border-2 border-blue-900">0/0</div>
         </div>
 
-        <!-- Main Game Area -->
         <div class="p-6">
-            <div id="start-screen" class="text-center py-10">
-                <h2 class="text-3xl font-bold text-purple-800 mb-6">Chủ đề: Ba Nhà Trí Thức & Quân Sự Lỗi Lạc</h2>
-                <div class="flex justify-center gap-4 mb-8">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">Võ Nguyên Giáp</span>
-                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-bold">Trần Đại Nghĩa</span>
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">Trần Văn Giàu</span>
-                </div>
-                <button onclick="startGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-10 rounded-full text-2xl shadow-lg transform transition hover:scale-110 active:scale-95">
-                    BẮT ĐẦU CHƠI!
+            <!-- Start Screen -->
+            <div id="start-screen" class="text-center py-8">
+                <div class="text-6xl mb-4">🇻🇳</div>
+                <h2 class="text-3xl font-bold text-blue-900 mb-2">DANH NHÂN ĐẤT VIỆT</h2>
+                <p class="text-gray-600 mb-8 italic">Nhìn hình và gợi ý để đoán tên sự nghiệp, sự kiện gắn liền với các bậc tiền nhân.</p>
+                <button onclick="startGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-12 rounded-full text-2xl shadow-xl transform transition hover:scale-105">
+                    CHƠI NGAY
                 </button>
             </div>
 
+            <!-- Play Screen -->
             <div id="play-screen" class="hidden">
-                <!-- Hint Section -->
-                <div class="mb-4 text-center">
-                    <button id="hint-btn" onclick="showHint()" class="bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-1 px-4 rounded-full border border-orange-300 text-sm transition flex items-center mx-auto">
-                        💡 Xem gợi ý
-                    </button>
-                    <div id="hint-display" class="hidden hint-text mt-2 p-2 bg-orange-50 text-orange-800 rounded-lg italic text-sm border border-orange-100">
+                <!-- Question Area -->
+                <div class="mb-6">
+                    <div class="question-box p-4 rounded-2xl text-center">
+                        <span class="text-sm font-bold text-yellow-600 block mb-1 uppercase tracking-widest">Gợi ý câu hỏi:</span>
+                        <p id="question-text" class="text-lg font-bold text-blue-800 leading-tight"></p>
                     </div>
                 </div>
 
-                <!-- Image Display -->
-                <div class="bg-blue-50 border-4 border-dashed border-blue-200 rounded-2xl p-4 mb-6 flex justify-center items-center relative min-h-[250px]" id="image-container">
-                    <!-- SVG/Emoji Content -->
+                <!-- Image Area -->
+                <div id="image-container" class="image-card p-8 mb-6 flex justify-center items-center min-h-[200px] border-4 border-dashed border-gray-100">
+                    <!-- Hình ảnh emoji sẽ hiện ở đây -->
                 </div>
 
-                <!-- Input Area -->
-                <div class="text-center mb-6">
-                    <div id="answer-slots" class="flex flex-wrap justify-center gap-2 mb-6">
-                        <!-- Slots for letters -->
-                    </div>
-                    
-                    <div id="keyboard" class="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
-                        <!-- Virtual keyboard -->
-                    </div>
-                </div>
+                <!-- Answer Slots -->
+                <div id="answer-slots" class="flex flex-wrap justify-center gap-2 mb-8"></div>
 
-                <!-- Action Buttons -->
-                <div class="flex flex-wrap justify-center gap-4 border-t pt-6">
-                    <button onclick="resetCurrentAnswer()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 px-6 rounded-xl transition text-sm">
-                        Xóa tất cả
-                    </button>
-                    <button id="teacher-mode-btn" onclick="toggleTeacherMode()" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-6 rounded-xl border-2 border-purple-300 transition text-sm flex items-center">
-                        👤 Chế độ Giáo viên
-                    </button>
+                <!-- Keyboard -->
+                <div id="keyboard" class="flex flex-wrap justify-center gap-2 mb-8"></div>
+
+                <!-- Controls -->
+                <div class="flex justify-between items-center border-t pt-4">
+                    <button onclick="resetCurrentAnswer()" class="text-gray-500 font-bold hover:text-red-500 transition">🔄 Xóa hết</button>
+                    <button id="teacher-mode-btn" onclick="toggleTeacherMode()" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-bold border border-blue-200">👤 Xem đáp án</button>
+                    <button onclick="skipQuestion()" class="text-gray-500 font-bold hover:text-blue-500 transition">Bỏ qua ⏭️</button>
                 </div>
 
                 <!-- Teacher Panel -->
-                <div id="teacher-panel" class="hidden mt-6 p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
-                    <h3 class="font-bold text-yellow-800 mb-2">Dành cho Giáo viên:</h3>
-                    <p id="teacher-answer" class="text-xl font-bold text-red-600 mb-2"></p>
-                    <p id="teacher-hint" class="text-gray-700 leading-relaxed"></p>
+                <div id="teacher-panel" class="hidden mt-4 p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                    <p id="teacher-answer" class="text-green-700 font-bold"></p>
+                    <p id="teacher-hint" class="text-sm text-green-600 italic"></p>
                 </div>
             </div>
 
             <!-- Finish Screen -->
             <div id="finish-screen" class="hidden text-center py-10">
-                <h2 class="text-4xl font-bold text-green-600 mb-4">TUYỆT VỜI!</h2>
-                <p id="final-score-text" class="text-2xl mb-8 font-semibold"></p>
-                <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg transition transform hover:scale-105">
-                    Chơi lại từ đầu
-                </div>
+                <div class="text-6xl mb-4">🏆</div>
+                <h2 class="text-3xl font-bold text-blue-900 mb-2">XUẤT SẮC!</h2>
+                <p id="final-score-text" class="text-xl mb-8"></p>
+                <button onclick="location.reload()" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg">CHƠI LẠI</button>
             </div>
         </div>
     </div>
 
-    <div id="sound-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-xs animate-pulse pointer-events-none">
-        Nhấn vào màn hình để bật âm thanh 🔊
-    </div>
-
     <script>
         const questionsData = [
-            {
-                id: 1,
-                answer: "SÚNG SKZ",
-                hint: "Đây là loại vũ khí 'không giật' dùng để bắn xuyên thủng xe tăng quân Pháp.",
-                images: `
-                    <div class="flex items-center gap-4">
-                        <svg width="120" height="80" viewBox="0 0 100 100" class="bounce">
-                            <rect x="10" y="45" width="70" height="10" fill="#4B5320" />
-                            <rect x="80" y="40" width="10" height="20" fill="#333" />
-                            <circle cx="30" cy="55" r="4" fill="#222" />
-                        </svg>
-                        <span class="text-5xl font-bold text-blue-900">+</span>
-                        <div class="flex flex-col items-center">
-                           <span class="text-6xl">🇰</span><span class="text-xs font-bold">Bỏ 🔠</span>
-                        </div>
-                        <span class="text-5xl font-bold text-blue-900">+</span>
-                        <span class="text-6xl font-bold">Z</span>
-                    </div>
-                `,
-                explanation: "Giáo sư Trần Đại Nghĩa đã nghiên cứu chế tạo súng SKZ (Súng không giật) giúp quân đội ta tiêu diệt xe tăng và lô cốt địch."
+            { 
+                id: 1, 
+                answer: "SÚNG BAZOOKA", 
+                question: "Đây là loại vũ khí chống tăng nào do GS. Trần Đại Nghĩa chế tạo để đánh quân Pháp?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">Ⅲ</span><span class="text-4xl">+</span><span class="text-7xl">🦁</span><span class="text-4xl">+</span><span class="text-7xl">☕</span></div>`, 
+                explanation: "Giải thích: III (Ba) + Sở thú (Zoo) + Ca (Cái ca) -> BA-ZOO-KA." 
             },
-            {
-                id: 2,
-                answer: "ĐIỆN BIÊN PHỦ",
-                hint: "Tên một thung lũng ở vùng Tây Bắc, nơi diễn ra chiến thắng 'lừng lẫy năm châu'.",
-                images: `
-                    <div class="text-7xl">⚡</div>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🏙️</div>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">⛰️</div>
-                `,
-                explanation: "Đại tướng Võ Nguyên Giáp là vị tổng chỉ huy tài ba trong chiến dịch lịch sử Điện Biên Phủ năm 1954."
+            { 
+                id: 2, 
+                answer: "ĐIỆN BIÊN PHỦ", 
+                question: "Chiến thắng 'lừng lẫy năm châu, chấn động địa cầu' nào gắn liền với tên tuổi Đại tướng Võ Nguyên Giáp?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">⚡</span><span class="text-4xl">+</span><span class="text-7xl">🚧</span><span class="text-4xl">+</span><span class="text-7xl">🏯</span></div>`, 
+                explanation: "Giải thích: Điện (Sét) + Biên (Ranh giới) + Phủ (Phủ thành)." 
             },
-            {
-                id: 3,
-                answer: "ANH CẢ QUÂN ĐỘI",
-                hint: "Cách gọi thể hiện sự kính trọng và gần gũi đối với Đại tướng Võ Nguyên Giáp.",
-                images: `
-                    <div class="text-7xl">👦</div>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🎖️</div>
-                `,
-                explanation: "Đại tướng được tôn vinh là 'Người Anh Cả' vì ông là người đầu tiên đặt nền móng cho Quân đội Nhân dân Việt Nam."
+            { 
+                id: 3, 
+                answer: "TỔNG KHỞI NGHĨA", 
+                question: "GS. Trần Văn Giàu đã lãnh đạo nhân dân Nam Bộ thực hiện sự kiện lịch sử trọng đại nào vào tháng 8 năm 1945?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">➕</span><span class="text-4xl">+</span><span class="text-7xl">🌬️</span><span class="text-4xl">+</span><span class="text-7xl">🤝</span></div>`, 
+                explanation: "Giải thích: Tổng (Cộng) + Khởi (Gió thổi) + Nghĩa (Đoàn kết)." 
             },
-            {
-                id: 4,
-                answer: "NHÀ SỬ HỌC",
-                hint: "Nghề nghiệp của một người chuyên nghiên cứu về các sự kiện trong quá khứ.",
-                images: `
-                    <div class="text-7xl">🏠</div>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">📜</div>
-                `,
-                explanation: "Giáo sư Trần Văn Giàu là một nhà sử học lỗi lạc với bộ tác phẩm 'Lịch sử chống xâm lăng' nổi tiếng."
+            { 
+                id: 4, 
+                answer: "TRIẾT HỌC", 
+                question: "GS. Trần Văn Giàu nổi tiếng với những công trình nghiên cứu về lĩnh vực khoa học xã hội nào?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">🧠</span><span class="text-4xl">+</span><span class="text-7xl">🎓</span></div>`, 
+                explanation: "Giải thích: Triết (Trí óc/Tư duy) + Học (Mũ cử nhân)." 
             },
-            {
-                id: 5,
-                answer: "VŨ KHÍ",
-                hint: "Trần Đại Nghĩa được mệnh danh là 'Ông vua...' của Việt Nam.",
-                images: `
-                    <div class="text-7xl">💃</div>                    
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🪂</div>
-                    
-                `,
-                explanation: "Ông đã dành cả cuộc đời để nghiên cứu các loại vũ khí hiện đại phục vụ kháng chiến."
+            { 
+                id: 5, 
+                answer: "SÚNG KHÔNG GIẬT", 
+                question: "Tên gọi phổ biến của loại súng SKZ do Trần Đại Nghĩa chế tạo là gì?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">🔫</span><span class="text-4xl">+</span><span class="text-7xl">❌</span><span class="text-4xl">+</span><span class="text-7xl">🫨</span></div>`, 
+                explanation: "Giải thích: Súng + Không (X) + Giật (Rung người)." 
             },
-            {
-                id: 6,
-                answer: "QUẢNG BÌNH",
-                hint: "Tỉnh miền Trung có động Phong Nha, là quê hương của Đại tướng Võ Nguyên Giáp.",
-                images: `
-                    <div class="text-7xl">🍊</div>
-                    <span class="text-xs font-bold">C = Q</span>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">⚖️</div>
-                    <span class="text-xs font-bold">Bỏ sắc, thêm huyền</span>
-                `,
-                explanation: "Đại tướng sinh ra tại làng An Xá, xã Lộc Thủy, huyện Lệ Thủy, tỉnh Quảng Bình."
+            { 
+                id: 6, 
+                answer: "ĐẠI TƯỚNG", 
+                question: "Cấp bậc quân hàm cao nhất mà ông Võ Nguyên Giáp được phong tặng vào năm 1948 là gì?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">🐘</span><span class="text-4xl">+</span><span class="text-7xl">🎖️</span></div>`, 
+                explanation: "Giải thích: Đại (Voi to) + Tướng (Quân hàm)." 
             },
-            {
-                id: 7,
-                answer: "GIÁO SƯ",
-                hint: "Học hàm cao quý mà cả ba danh nhân này đều được phong tặng.",
-                images: `
-                    <div class="text-7xl">🥣</div>
-                    <span class="text-xs font-bold">Bỏ Ch, thêm G</span>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🥣</div>
-                    <span class="text-xs font-bold">Ch = S</span>
-                `,
-                explanation: "Họ đều là những bậc trí thức lớn, có đóng góp to lớn cho nền giáo dục và khoa học Việt Nam."
+            { 
+                id: 7, 
+                answer: "ANH HÙNG LAO ĐỘNG", 
+                question: "Trần Đại Nghĩa được Nhà nước phong tặng danh hiệu gì vì những đóng góp cho khoa học quân sự?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">🦸</span><span class="text-4xl">+</span><span class="text-7xl">⛏️</span><span class="text-4xl">+</span><span class="text-7xl">🏭</span></div>`, 
+                explanation: "Giải thích: Anh hùng + Lao + Động (Nhà máy)." 
             },
-            {
-                id: 8,
-                answer: "HÀ NỘI",
-                hint: "Nơi cả ba danh nhân từng sống, làm việc và hiện nay có những con đường mang tên các ông.",
-                images: `
-                    <div class="text-7xl">河</div>
-                    <span class="text-xs font-bold">(Sông - Tiếng Hán)</span>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🥣</div>
-                `,
-                explanation: "Thủ đô Hà Nội là nơi lưu giữ nhiều kỷ niệm và di sản của các danh nhân này."
+            { 
+                id: 8, 
+                answer: "LỊCH SỬ", 
+                question: "Ngoài Triết học, GS. Trần Văn Giàu còn là một bậc thầy trong lĩnh vực khoa học nào?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">📅</span><span class="text-4xl">+</span><span class="text-7xl">🏺</span></div>`, 
+                explanation: "Giải thích: Lịch (Tờ lịch) + Sử (Đồ cổ)." 
             },
-            {
-                id: 9,
-                answer: "KỸ SƯ",
-                hint: "Chuyên môn ban đầu của Trần Đại Nghĩa trước khi trở thành vị tướng ngành quân giới.",
-                images: `
-                    <div class="text-7xl">📏</div>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">🕵️</div>
-                    <span class="text-xs font-bold">Bỏ Th, thêm S</span>
-                `,
-                explanation: "Trần Đại Nghĩa (Phạm Quang Lễ) đã tốt nghiệp nhiều bằng kỹ sư xuất sắc tại Pháp."
+            { 
+                id: 9, 
+                answer: "QUẢNG BÌNH", 
+                question: "Đại tướng Võ Nguyên Giáp sinh ra và lớn lên tại tỉnh nào ở miền Trung?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">📣</span><span class="text-4xl">+</span><span class="text-7xl">⚖️</span></div>`, 
+                explanation: "Giải thích: Quảng (Loa thông báo) + Bình (Cái cân)." 
             },
-            {
-                id: 10,
-                answer: "CHIẾN THẮNG",
-                hint: "Điều mà Đại tướng Võ Nguyên Giáp luôn hướng tới trong mọi trận đánh.",
-                images: `
-                    <div class="text-7xl">🗡️</div>
-                    <span class="text-xs font-bold">Bỏ D, thêm Ch</span>
-                    <span class="text-4xl text-blue-300 mx-2">+</span>
-                    <div class="text-7xl">☀️</div>
-                    <span class="text-xs font-bold">Bỏ r, thêm ng</span>
-                `,
-                explanation: "Các chiến dịch do các danh nhân này chỉ huy hoặc đóng góp đều dẫn đến thắng lợi vẻ vang cho dân tộc."
+            { 
+                id: 10, 
+                answer: "PHÁP", 
+                question: "Quốc gia nào là nơi các danh nhân như Trần Đại Nghĩa, Trần Văn Giàu từng học tập và nghiên cứu?", 
+                images: `<div class="flex items-center gap-4"><span class="text-7xl">🥖</span><span class="text-4xl">+</span><span class="text-7xl">🗼</span></div>`, 
+                explanation: "Giải thích: Bánh mì + Tháp Eiffel đặc trưng của nước Pháp." 
             }
         ];
 
         let currentQuestionIndex = 0;
         let score = 0;
         let currentInput = [];
-        let shuffledQuestions = [];
+        let buttonMapping = [];
         let isTeacherMode = false;
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq, type, duration) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        const sounds = {
-            click: () => playTone(600, 'sine', 0.1),
-            correct: () => {
-                playTone(523.25, 'sine', 0.1);
-                setTimeout(() => playTone(659.25, 'sine', 0.1), 100);
-                setTimeout(() => playTone(783.99, 'sine', 0.3), 200);
-            },
-            wrong: () => {
-                playTone(300, 'square', 0.1);
-                setTimeout(() => playTone(200, 'square', 0.2), 150);
-            },
-            finish: () => {
-                [523, 659, 783, 1046].forEach((n, i) => setTimeout(() => playTone(n, 'triangle', 0.5), i * 150));
-            }
-        };
+        let activeQuestions = [];
 
         function startGame() {
-            shuffledQuestions = [...questionsData].sort(() => Math.random() - 0.5);
+            activeQuestions = [...questionsData].sort(() => Math.random() - 0.5);
             currentQuestionIndex = 0;
             score = 0;
-            updateScoreUI();
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('play-screen').classList.remove('hidden');
-            document.getElementById('sound-toast').classList.add('hidden');
+            updateScoreUI();
             loadQuestion();
         }
 
         function loadQuestion() {
-            const q = shuffledQuestions[currentQuestionIndex];
+            const q = activeQuestions[currentQuestionIndex];
             currentInput = [];
+            buttonMapping = [];
             
-            // UI Reset
-            document.getElementById('timer').innerText = `${currentQuestionIndex + 1}/10`;
+            document.getElementById('timer').innerText = `${currentQuestionIndex + 1}/${activeQuestions.length}`;
+            document.getElementById('question-text').innerText = q.question;
             document.getElementById('image-container').innerHTML = q.images;
-            document.getElementById('hint-display').classList.add('hidden');
-            document.getElementById('hint-display').innerText = q.hint;
             
-            // Slots
             const slotsContainer = document.getElementById('answer-slots');
             slotsContainer.innerHTML = '';
             q.answer.split('').forEach((char, idx) => {
                 const slot = document.createElement('div');
                 if (char === ' ') {
-                    slot.className = "w-6 h-10";
+                    slot.className = "w-4";
                     currentInput[idx] = ' ';
                 } else {
-                    slot.className = "w-10 h-12 border-b-4 border-blue-500 text-2xl font-bold flex items-center justify-center text-blue-900 bg-blue-50 rounded-t-lg shadow-inner";
+                    slot.className = "w-9 h-11 border-b-4 border-blue-400 text-xl font-bold flex items-center justify-center text-blue-900 bg-blue-50 rounded-t-lg shadow-sm";
                     slot.id = `slot-${idx}`;
+                    slot.onclick = () => removeLetter(idx);
                     currentInput[idx] = null;
                 }
                 slotsContainer.appendChild(slot);
             });
 
             setupKeyboard(q.answer);
-
-            // Teacher Data
-            document.getElementById('teacher-answer').innerText = "Đáp án: " + q.answer;
-            document.getElementById('teacher-hint').innerText = q.explanation;
-            if (!isTeacherMode) document.getElementById('teacher-panel').classList.add('hidden');
+            updateTeacherPanel(q);
         }
 
         function setupKeyboard(answer) {
@@ -345,86 +221,101 @@
             kbContainer.innerHTML = '';
             let chars = answer.replace(/\s/g, '').split('');
             const alphabet = "AĂÂBCDĐEÊGHIKLMNOÔƠPQRSTUƯVXY";
-            while (chars.length < 14) {
-                const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
-                if (!chars.includes(randomChar)) chars.push(randomChar);
+            while (chars.length < 16) {
+                const r = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!chars.includes(r)) chars.push(r);
             }
             chars.sort(() => Math.random() - 0.5);
 
-            chars.forEach(char => {
+            chars.forEach((char, btnIdx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-10 h-10 bg-white border-2 border-blue-100 rounded-lg font-bold text-xl shadow-sm hover:bg-blue-500 hover:text-white transition transform active:scale-90 flex items-center justify-center";
+                btn.id = `kb-btn-${btnIdx}`;
+                btn.className = "w-10 h-10 bg-white border-2 border-gray-200 rounded-lg font-bold text-lg shadow hover:bg-yellow-400 hover:border-yellow-500 transition active:scale-90";
                 btn.innerText = char;
-                btn.onclick = () => {
-                    sounds.click();
-                    const emptyIdx = currentInput.findIndex(val => val === null);
-                    if (emptyIdx !== -1) {
-                        currentInput[emptyIdx] = char;
-                        document.getElementById(`slot-${emptyIdx}`).innerText = char;
-                        btn.classList.add('opacity-0', 'pointer-events-none');
-                        btn.dataset.targetSlot = emptyIdx;
-                        checkAnswer();
-                    }
-                };
+                btn.onclick = () => addLetter(char, btnIdx);
                 kbContainer.appendChild(btn);
             });
         }
 
-        function showHint() {
-            sounds.click();
-            document.getElementById('hint-display').classList.toggle('hidden');
+        function addLetter(char, btnIdx) {
+            const emptyIdx = currentInput.findIndex(v => v === null);
+            if (emptyIdx !== -1) {
+                currentInput[emptyIdx] = char;
+                buttonMapping[emptyIdx] = btnIdx;
+                document.getElementById(`kb-btn-${btnIdx}`).classList.add('invisible', 'pointer-events-none');
+                updateSlotsUI();
+                checkAnswer();
+            }
+        }
+
+        function removeLetter(slotIdx) {
+            if (currentInput[slotIdx] && currentInput[slotIdx] !== ' ') {
+                const btnIdx = buttonMapping[slotIdx];
+                document.getElementById(`kb-btn-${btnIdx}`).classList.remove('invisible', 'pointer-events-none');
+                currentInput[slotIdx] = null;
+                updateSlotsUI();
+            }
+        }
+
+        function updateSlotsUI() {
+            currentInput.forEach((char, idx) => {
+                const slot = document.getElementById(`slot-${idx}`);
+                if (slot) {
+                    slot.innerText = char || '';
+                    if (char && char !== ' ') slot.classList.add('bg-blue-100', 'slot-active');
+                    else slot.classList.remove('bg-blue-100', 'slot-active');
+                }
+            });
         }
 
         function checkAnswer() {
-            const q = shuffledQuestions[currentQuestionIndex];
             if (!currentInput.includes(null)) {
-                if (currentInput.join('') === q.answer) {
-                    sounds.correct();
+                const isCorrect = currentInput.join('') === activeQuestions[currentQuestionIndex].answer;
+                if (isCorrect) {
                     score += 10;
                     updateScoreUI();
-                    document.getElementById('image-container').classList.add('correct-flash');
-                    setTimeout(() => {
-                        document.getElementById('image-container').classList.remove('correct-flash');
-                        nextQuestion();
-                    }, 1000);
-                } else {
-                    sounds.wrong();
                     document.querySelectorAll('#answer-slots div').forEach(s => {
-                        if (s.innerText) s.classList.add('text-red-500');
+                        if (s.innerText) s.classList.replace('bg-blue-100', 'bg-green-400');
                     });
-                    setTimeout(loadQuestion, 800);
+                    setTimeout(nextQuestion, 1000);
+                } else {
+                    document.getElementById('answer-slots').classList.add('animate-shake');
+                    setTimeout(() => document.getElementById('answer-slots').classList.remove('animate-shake'), 500);
                 }
             }
         }
 
         function nextQuestion() {
             currentQuestionIndex++;
-            if (currentQuestionIndex < shuffledQuestions.length) loadQuestion();
+            if (currentQuestionIndex < activeQuestions.length) loadQuestion();
             else {
-                sounds.finish();
                 document.getElementById('play-screen').classList.add('hidden');
                 document.getElementById('finish-screen').classList.remove('hidden');
                 document.getElementById('final-score-text').innerText = `Bạn đã đạt được ${score} điểm!`;
             }
         }
 
+        function skipQuestion() {
+            nextQuestion();
+        }
+
         function resetCurrentAnswer() {
-            sounds.click();
             loadQuestion();
         }
 
         function updateScoreUI() {
-            document.getElementById('score').innerText = `Điểm: ${score}`;
+            document.getElementById('score').innerText = score;
+        }
+
+        function updateTeacherPanel(q) {
+            document.getElementById('teacher-answer').innerText = "Đáp án: " + q.answer;
+            document.getElementById('teacher-hint').innerText = q.explanation;
         }
 
         function toggleTeacherMode() {
             isTeacherMode = !isTeacherMode;
             document.getElementById('teacher-panel').classList.toggle('hidden');
-            document.getElementById('teacher-mode-btn').classList.toggle('bg-purple-500');
-            document.getElementById('teacher-mode-btn').classList.toggle('text-white');
         }
-
-        window.onclick = () => { if (audioCtx.state === 'suspended') audioCtx.resume(); };
     </script>
 </body>
 </html>
