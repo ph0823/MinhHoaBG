@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng xoay may mắn </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 350px 1fr 350px;
+                align-items: start;
+            }
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .wheel-wrapper {
+                width: 500px;
+                height: 500px;
+            }
+        }
+
+        .wheel-outer {
+            padding: 20px;
+            background: #1e293b;
+            border-radius: 50%;
+            box-shadow: 0 0 80px rgba(0,0,0,0.6), inset 0 0 30px rgba(255,215,0,0.1);
+            position: relative;
+            border: 8px solid #334155;
+            transition: all 0.3s ease;
+        }
+
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 6s cubic-bezier(0.1, 0, 0.1, 1);
+            background: #fff;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 65px;
+            background: #f43f5e;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 30;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            transform-origin: 50% 10%;
+        }
+
+        .pointer.ticking {
+            animation: pointerTick 0.1s ease-in-out infinite;
+        }
+
+        @keyframes pointerTick {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            50% { transform: translateX(-50%) rotate(-10deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
+        }
+
+        .center-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: #f8fafc;
+            border-radius: 50%;
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border: 5px solid #fbbf24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #334155;
+            color: #fbbf24;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideIn 0.4s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Nút quay kiểu sang trọng */
+        #spinBtn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #spinBtn:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.4);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="pt-10 pb-4 text-center">
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600">
+                VÒNG XOAY CHỌN SỐ THỨ TỰ HỌC SINH
+            </span>
+        </h1>
+        <p class="text-slate-400 mt-2 font-medium tracking-widest text-sm uppercase"></p>
+    </header>
+
+    <div class="main-grid">
+        <!-- Cột trái: Cấu hình -->
+        <aside class="glass-card">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                </svg>
+                CÀI ĐẶT
+            </h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-sm text-slate-400 font-bold mb-2 block uppercase">Số bắt đầu</label>
+                    <input type="number" id="minRange" value="1" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-2xl font-bold text-center focus:border-yellow-500 transition-all outline-none">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-400 font-bold mb-2 block uppercase">Số kết thúc</label>
+                    <input type="number" id="maxRange" value="50" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-2xl font-bold text-center focus:border-yellow-500 transition-all outline-none">
+                </div>
+                <div class="pt-4 border-t border-slate-700 mt-6">
+                    <p class="text-xs text-slate-500 text-center italic leading-relaxed">Dữ liệu sẽ được tự động cập nhật khi bạn thay đổi các giá trị trên.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Cột giữa: Vòng quay chính -->
+        <main class="flex flex-col items-center">
+            <div class="wheel-wrapper">
+                <div id="pointer" class="pointer"></div>
+                <div class="wheel-outer">
+                    <canvas id="wheelCanvas"></canvas>
+                </div>
+                <div class="center-hub">
+                    <div class="w-3 h-3 bg-slate-900 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center w-full max-w-md">
+                <button id="spinBtn" class="w-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 p-1 rounded-2xl shadow-2xl">
+                    <div class="bg-slate-900 rounded-xl px-12 py-5 text-3xl font-black text-yellow-500 group-hover:bg-transparent transition">
+                        QUAY NGAY
+                    </div>
+                </button>
+                
+                <div id="currentResult" class="mt-8 text-8xl font-black text-white drop-shadow-2xl h-24">-</div>
+                <p id="statusText" class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-2">Sẵn sàng quay</p>
+            </div>
+        </main>
+
+        <!-- Cột phải: Lịch sử -->
+        <section class="glass-card">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                LỊCH SỬ
+            </h2>
+            <div id="historyList" class="history-grid">
+                <div class="col-span-full text-slate-500 text-center py-10 italic">Chưa có kết quả quay</div>
+            </div>
+            <button id="clearHistory" class="w-full mt-6 py-2 text-xs font-bold text-slate-500 hover:text-red-400 transition uppercase tracking-tighter">
+                Xóa lịch sử
+            </button>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const pointer = document.getElementById('pointer');
+        const minInput = document.getElementById('minRange');
+        const maxInput = document.getElementById('maxRange');
+        const currentResultDisplay = document.getElementById('currentResult');
+        const historyList = document.getElementById('historyList');
+        const statusText = document.getElementById('statusText');
+        const clearHistoryBtn = document.getElementById('clearHistory');
+
+        let isSpinning = false;
+        let currentRotation = 0;
+        const colors = [
+            '#e11d48', '#d97706', '#059669', '#2563eb', 
+            '#7c3aed', '#db2777', '#ea580c', '#16a34a'
+        ];
+
+        // Âm thanh
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTickSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function initWheel() {
+            const containerWidth = canvas.parentElement.clientWidth;
+            canvas.width = 600; // Resolution cao
+            canvas.height = 600;
+            drawWheel();
+        }
+
+        function drawWheel() {
+            const min = parseInt(minInput.value) || 1;
+            const max = parseInt(maxInput.value) || 50;
+            const total = max - min + 1;
+            
+            const slices = Math.min(total, 40); 
+            const angleStep = (2 * Math.PI) / slices;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 10;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < slices; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, i * angleStep, (i + 1) * angleStep);
+                ctx.fill();
+                
+                ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(i * angleStep + angleStep / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                
+                let fontSize = total > 30 ? 14 : 22;
+                ctx.font = `bold ${fontSize}px Plus Jakarta Sans`;
+                
+                if (total <= 40) {
+                    ctx.fillText(min + i, radius - 40, 10);
+                }
+                ctx.restore();
+            }
+        }
+
+        function spin() {
+            if (isSpinning) return;
+
+            const min = parseInt(minInput.value);
+            const max = parseInt(maxInput.value);
+
+            if (isNaN(min) || isNaN(max) || min >= max) {
+                alert("Vui lòng nhập khoảng số hợp lệ!");
+                return;
+            }
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            pointer.classList.add('ticking');
+            statusText.innerText = "Đang quay...";
+            currentResultDisplay.innerText = "...";
+
+            const result = Math.floor(Math.random() * (max - min + 1)) + min;
+            
+            // Quay 10-12 vòng để tạo độ hồi hộp trên màn hình lớn
+            const extraDegrees = Math.floor(Math.random() * 360);
+            const totalDegrees = 3600 + extraDegrees; 
+            
+            currentRotation += totalDegrees;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            const tickInterval = setInterval(() => {
+                if(isSpinning) playTickSound();
+            }, 120);
+
+            setTimeout(() => {
+                clearInterval(tickInterval);
+                isSpinning = false;
+                spinBtn.disabled = false;
+                pointer.classList.remove('ticking');
+                statusText.innerText = "Chúc mừng!";
+                
+                currentResultDisplay.innerText = result;
+                
+                // Hiệu ứng pháo hoa toàn màn hình
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+                function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+                const interval = setInterval(function() {
+                    const timeLeft = 2000; // 2 seconds
+                    confetti({ ...defaults, particleCount: 40, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                    confetti({ ...defaults, particleCount: 40, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+                }, 250);
+
+                setTimeout(() => clearInterval(interval), 2000);
+
+                addToHistory(result);
+            }, 6000); 
+        }
+
+        function addToHistory(num) {
+            if (historyList.querySelector('.italic')) {
+                historyList.innerHTML = '';
+            }
+            const item = document.createElement('div');
+            item.className = "history-item";
+            item.innerText = num;
+            historyList.prepend(item);
+        }
+
+        spinBtn.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            spin();
+        });
+
+        clearHistoryBtn.addEventListener('click', () => {
+            historyList.innerHTML = '<div class="col-span-full text-slate-500 text-center py-10 italic">Chưa có kết quả quay</div>';
+        });
+        
+        minInput.addEventListener('change', drawWheel);
+        maxInput.addEventListener('change', drawWheel);
+
+        window.addEventListener('resize', initWheel);
+        window.onload = initWheel;
+    </script>
+</body>
+</html>
