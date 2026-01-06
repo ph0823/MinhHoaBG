@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thuật toán Tìm kiếm Nhị phân</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .array-item {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Vùng đang xét: Màu nền xanh lam nhạt rõ rệt */
+        .active-range {
+            background-color: #dbeafe !important;
+            border: 2px solid #3b82f6 !important;
+            color: #1e40af;
+        }
+        /* Ô ở giữa: Nền vàng nổi bật trên nền xanh */
+        .mid-item {
+            background-color: #fbbf24 !important;
+            color: #1e1b4b !important;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.6);
+            border-color: #d97706 !important;
+            z-index: 20;
+        }
+        /* Khi tìm thấy: Màu xanh lá */
+        .found-item {
+            background-color: #10b981 !important;
+            color: white !important;
+            transform: scale(1.15);
+            border-color: #059669 !important;
+            z-index: 30;
+        }
+        /* Các ô ngoài vùng tìm kiếm: Mờ đi */
+        .inactive-item {
+            opacity: 0.25;
+            filter: grayscale(1);
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div id="app" class="max-w-4xl mx-auto">
+        <!-- Màn hình thiết lập -->
+        <div id="setup-screen" class="glass-morphism p-8 md:p-12 text-center">
+            <h1 class="text-3xl font-extrabold text-indigo-700 mb-2 uppercase tracking-tight">Mô phỏng Tìm kiếm nhị phân</h1>
+            <p class="text-gray-500 mb-8 font-medium italic">(Quy ước vị trí trong dãy số bắt đầu từ 1)</p>
+            
+            <div class="space-y-8 text-left max-w-xl mx-auto">
+                <!-- Chọn dãy số -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">1. Chọn dãy số mẫu:</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="selectArray(1)" id="btn-arr-1" class="array-select-btn p-4 rounded-xl border-2 border-indigo-100 hover:border-indigo-400 bg-white text-gray-700 transition-all text-left flex justify-between items-center group">
+                            <span>Dãy 1: [6, 12, 18, 42, 44, 55, 67, 94]</span>
+                            <span class="opacity-0 group-hover:opacity-100 text-indigo-500 text-sm">Chọn</span>
+                        </button>
+                        <button onclick="selectArray(2)" id="btn-arr-2" class="array-select-btn p-4 rounded-xl border-2 border-indigo-100 hover:border-indigo-400 bg-white text-gray-700 transition-all text-left flex justify-between items-center group">
+                            <span>Dãy 2: [5, 11, 18, 39, 41, 52, 63, 70]</span>
+                            <span class="opacity-0 group-hover:opacity-100 text-indigo-500 text-sm">Chọn</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Nhập giá trị cần tìm -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">2. Nhập số cần tìm:</label>
+                    <input type="number" id="target-input" value="44" class="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none transition-all text-xl font-bold text-indigo-600" placeholder="Ví dụ: 44">
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="startSimulation()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-indigo-200 text-lg uppercase tracking-wider">
+                        Bắt đầu mô phỏng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Màn hình mô phỏng -->
+        <div id="sim-screen" class="hidden space-y-6">
+            <div class="glass-morphism p-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-indigo-700">Đang tìm số: <span id="display-target" class="text-2xl">0</span></h2>
+                    <p class="text-gray-500 text-sm">Trạng thái: <span id="status-text" class="font-semibold text-indigo-500">Sẵn sàng</span></p>
+                </div>
+                <button onclick="location.reload()" class="px-5 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Quay lại</button>
+            </div>
+
+            <div class="glass-morphism p-8 text-center overflow-hidden">
+                <!-- Visualization -->
+                <div class="mb-14">
+                    <div id="array-container" class="flex flex-wrap justify-center gap-3">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+
+                <!-- Pointers labels -->
+                <div class="flex flex-wrap justify-center gap-6 md:gap-12 text-sm font-bold mb-10">
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-400 rounded"></div> Vùng đang xét</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-amber-400 rounded"></div> Mid (Vị trí giữa)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-emerald-500 rounded"></div> Đã tìm thấy</div>
+                </div>
+
+                <div class="flex flex-col items-center gap-6">
+                    <div id="step-desc" class="min-h-[60px] p-4 bg-indigo-50 rounded-2xl text-indigo-800 font-bold max-w-2xl w-full flex items-center justify-center text-xl uppercase tracking-wide">
+                        Sẵn sàng bắt đầu...
+                    </div>
+
+                    <button id="next-btn" onclick="stepForward()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 px-12 rounded-2xl transition-all shadow-xl hover:-translate-y-1 active:scale-95 text-xl">
+                        BƯỚC TIẾP THEO →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Log history -->
+            <div class="glass-morphism p-6">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Nhật ký hoạt động (Chi tiết)</h3>
+                <div id="sim-log" class="space-y-2 text-sm max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    <p class="text-gray-400">Chưa có hoạt động nào...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = {
+            1: [6, 12, 18, 42, 44, 55, 67, 94],
+            2: [5, 11, 18, 39, 41, 52, 63, 70]
+        };
+
+        let selectedArrayData = examples[1]; 
+        let targetValue = 44;
+        let state = {
+            left: 0, 
+            right: 0,
+            mid: -1,
+            step: 0,
+            finished: false,
+            found: false
+        };
+
+        function selectArray(id) {
+            selectedArrayData = examples[id];
+            document.querySelectorAll('.array-select-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'ring-2', 'ring-indigo-100');
+            });
+            const selectedBtn = document.getElementById(`btn-arr-${id}`);
+            selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'ring-2', 'ring-indigo-100');
+        }
+
+        window.onload = () => {
+            selectArray(1);
+        };
+
+        function startSimulation() {
+            const inputVal = document.getElementById('target-input').value;
+            if (inputVal === "") {
+                alert("Vui lòng nhập một số để tìm!");
+                return;
+            }
+
+            targetValue = parseInt(inputVal);
+            state.left = 0;
+            state.right = selectedArrayData.length - 1;
+            state.mid = -1;
+            state.step = 0;
+            state.finished = false;
+            state.found = false;
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('sim-screen').classList.remove('hidden');
+            document.getElementById('display-target').innerText = targetValue;
+            
+            renderArray();
+            addLog(`Bắt đầu tìm giá trị ${targetValue}.`);
+        }
+
+        function renderArray() {
+            const container = document.getElementById('array-container');
+            container.innerHTML = '';
+            
+            selectedArrayData.forEach((val, idx) => {
+                const div = document.createElement('div');
+                div.id = `item-${idx}`;
+                div.className = "array-item relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-2xl border-2 font-bold text-lg shadow-sm bg-white border-gray-100";
+                
+                div.innerHTML = `
+                    <span class="text-[10px] text-gray-400 absolute -top-6">Vị trí ${idx + 1}</span>
+                    <span class="z-10">${val}</span>
+                `;
+
+                // Áp dụng lớp hiển thị theo trạng thái
+                if (state.finished && idx === state.mid && state.found) {
+                    div.classList.add('found-item');
+                } else if (idx === state.mid) {
+                    div.classList.add('mid-item');
+                } else if (idx >= state.left && idx <= state.right) {
+                    div.classList.add('active-range');
+                } else {
+                    div.classList.add('inactive-item');
+                }
+
+                // Nhãn chỉ số L, R, M
+                if (!state.finished) {
+                    if (idx === state.left) {
+                        const lLabel = document.createElement('span');
+                        lLabel.className = "absolute -bottom-6 text-blue-600 text-[10px] font-bold";
+                        lLabel.innerText = "L";
+                        div.appendChild(lLabel);
+                    }
+                    if (idx === state.right) {
+                        const rLabel = document.createElement('span');
+                        rLabel.className = "absolute -bottom-10 text-blue-600 text-[10px] font-bold";
+                        rLabel.innerText = "R";
+                        div.appendChild(rLabel);
+                    }
+                    if (idx === state.mid) {
+                        const mLabel = document.createElement('span');
+                        mLabel.className = "absolute -bottom-14 text-amber-600 text-[10px] font-bold";
+                        mLabel.innerText = "M";
+                        div.appendChild(mLabel);
+                    }
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        function stepForward() {
+            if (state.finished) return;
+
+            const array = selectedArrayData;
+            const L = state.left + 1;
+            const R = state.right + 1;
+            const stepNum = Math.floor(state.step / 2) + 1;
+
+            if (state.mid === -1 || state.step % 2 === 0) {
+                const M_display = Math.floor((L + R) / 2);
+                state.mid = M_display - 1; 
+
+                updateStatus(`Đang xét vị trí giữa: ${M_display}`);
+                updateDesc(`Bước ${stepNum}: Tính vị trí giữa`);
+                addLog(`Bước ${stepNum}: Mid = ( ${L} + ${R} ) / 2 = ${M_display} (giá trị ${array[state.mid]})`);
+                state.step++;
+            } 
+            else {
+                const M_display = state.mid + 1;
+                updateDesc(`Bước ${stepNum}: So sánh và thu hẹp vùng tìm kiếm`);
+
+                if (array[state.mid] === targetValue) {
+                    state.finished = true;
+                    state.found = true;
+                    updateStatus("Đã tìm thấy!", "text-emerald-500");
+                    updateDesc("Tìm thấy giá trị!");
+                    addLog(`Kết quả: Tìm thấy ${targetValue} tại vị trí ${M_display}.`);
+                    document.getElementById('next-btn').innerText = "KẾT THÚC";
+                    document.getElementById('next-btn').classList.add('bg-emerald-500');
+                } else if (array[state.mid] < targetValue) {
+                    updateStatus(`${array[state.mid]} < ${targetValue}, tìm sang phải.`);
+                    addLog(`${array[state.mid]} < ${targetValue} -> Cập nhật Left = ${M_display + 1}`);
+                    state.left = state.mid + 1;
+                    // Khi cập nhật Left, reset mid để bước sau tính lại
+                    state.mid = -1;
+                } else {
+                    updateStatus(`${array[state.mid]} > ${targetValue}, tìm sang trái.`);
+                    addLog(`${array[state.mid]} > ${targetValue} -> Cập nhật Right = ${M_display - 1}`);
+                    state.right = state.mid - 1;
+                    // Khi cập nhật Right, reset mid để bước sau tính lại
+                    state.mid = -1;
+                }
+
+                if (state.left > state.right && !state.found) {
+                    state.finished = true;
+                    updateStatus("Không tìm thấy!", "text-red-500");
+                    updateDesc("Không tìm thấy giá trị!");
+                    addLog(`Kết thúc: Không tìm thấy ${targetValue} trong dãy.`);
+                    document.getElementById('next-btn').innerText = "KẾT THÚC";
+                    document.getElementById('next-btn').classList.add('bg-red-500');
+                }
+                state.step++;
+            }
+
+            renderArray();
+        }
+
+        function updateStatus(text, colorClass = "text-indigo-500") {
+            const el = document.getElementById('status-text');
+            el.innerText = text;
+            el.className = `font-semibold ${colorClass}`;
+        }
+
+        function updateDesc(html) {
+            document.getElementById('step-desc').innerHTML = html;
+        }
+
+        function addLog(text) {
+            const log = document.getElementById('sim-log');
+            if (log.innerHTML.includes("Chưa có hoạt động")) log.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = "text-gray-600 border-l-2 border-indigo-200 pl-3 py-1";
+            p.innerHTML = `<span class="font-bold text-indigo-400">#</span> ${text}`;
+            log.prepend(p);
+        }
+    </script>
+</body>
+</html>
