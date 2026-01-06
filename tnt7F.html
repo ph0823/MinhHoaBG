@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Trắc nghiệm Tin học 7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .option-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+        }
+        .option-card:hover {
+            border-color: #667eea;
+            background-color: #f3f4ff;
+        }
+        .option-card.selected {
+            border-color: #667eea;
+            background-color: #e0e7ff;
+            font-weight: 600;
+        }
+        .review-card {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-section" class="glass-morphism p-8 max-w-md w-full">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">BÀI KIỂM TRA</h1>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Họ và Tên</label>
+                <input type="text" id="student-name" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nhập họ tên...">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Lớp</label>
+                    <input type="text" id="student-class" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="7A1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Số thứ tự (STT)</label>
+                    <input type="number" id="student-stt" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="01">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Chọn chủ đề kiểm tra</label>
+                <select id="topic-select" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md bg-white">
+                    <option value="tt">Tìm kiếm tuần tự</option>
+                    <option value="np">Tìm kiếm nhị phân</option>
+                    <option value="sxc">Sắp xếp chọn</option>
+                </select>
+            </div>
+            <button onclick="startQuiz()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition duration-300 mt-4">
+                BẮT ĐẦU LÀM BÀI
+            </button>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="glass-morphism p-8 max-w-3xl w-full hidden">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <div>
+                <h2 id="display-topic" class="text-xl font-bold text-indigo-800">Chủ đề</h2>
+                <p id="display-info" class="text-sm text-gray-600 italic"></p>
+            </div>
+            <div id="timer" class="text-lg font-mono font-bold text-red-600 bg-red-50 px-4 py-1 rounded-full border border-red-200">
+                Câu: <span id="current-idx">1</span>/10
+            </div>
+        </div>
+
+        <div id="question-container" class="space-y-6">
+            </div>
+
+        <div class="mt-8 flex justify-end">
+            <button onclick="submitQuiz()" class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-emerald-700 transition">
+                NỘP BÀI
+            </button>
+        </div>
+    </div>
+
+    <div id="result-section" class="glass-morphism p-8 max-w-2xl w-full hidden">
+        <div class="text-center mb-8">
+            <div id="score-circle" class="w-32 h-32 rounded-full border-8 border-indigo-500 flex items-center justify-center text-3xl font-bold mx-auto mb-4 text-indigo-600">
+                0/10
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">Kết Quả Làm Bài</h2>
+            <p id="result-student-info" class="text-gray-600"></p>
+        </div>
+
+        <div id="wrong-answers-section" class="mt-6 border-t pt-6 hidden">
+            <h3 class="text-lg font-bold text-red-600 mb-4">Các câu cần xem lại:</h3>
+            <div id="wrong-answers-list" class="space-y-4 max-h-60 overflow-y-auto pr-2"></div>
+        </div>
+
+        <button onclick="location.reload()" class="w-full mt-8 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300">
+            LÀM LẠI BÀI KHÁC
+        </button>
+    </div>
+
+    <script>
+    // ĐÃ SỬA LỖI CẤU TRÚC MẢNG
+    const allQuestions = [
+        // --- CHỦ ĐỀ: TÌM KIẾM TUẦN TỰ (tt) ---
+        {
+        "id": 1,
+        "topic": "tt",
+        "question": "Bạn An muốn tìm cuốn sách 'Dế Mèn Phiêu Lưu Ký' trên một ngăn kệ có 20 cuốn sách xếp lộn xộn. An xem tên từng cuốn từ trái sang phải cho đến khi thấy đúng tên sách. Đây là ví dụ của thuật toán nào?",
+        "options": ["Tìm kiếm tuần tự", "Tìm kiếm nhị phân", "Sắp xếp chọn", "Sắp xếp nổi bọt"],
+        "answer": 0
+    },
+    {
+        "id": 2,
+        "topic": "tt",
+        "question": "Trong thuật toán tìm kiếm tuần tự, chúng ta thực hiện so sánh giá trị cần tìm với các phần tử trong danh sách theo thứ tự nào?",
+        "options": ["Từ giữa sang hai bên", "Bắt đầu từ phần tử cuối cùng", "Lần lượt từ phần tử đầu tiên đến cuối cùng", "Chọn ngẫu nhiên một phần tử để so sánh"],
+        "answer": 2
+    },
+    {
+        "id": 3,
+        "topic": "tt",
+        "question": "Lớp 7A có danh sách học sinh chưa được sắp xếp theo bảng chữ cái. Giáo viên muốn tìm xem bạn 'Bình' có trong danh sách không. Điều kiện để thuật toán tìm kiếm tuần tự dừng lại là gì?",
+        "options": ["Tìm thấy bạn Bình hoặc đã xem hết danh sách", "Chỉ dừng khi đã xem hết danh sách", "Chỉ dừng khi tìm thấy bạn Bình", "Dừng lại ở vị trí giữa danh sách"],
+        "answer": 0
+    },
+    {
+        "id": 4,
+        "topic": "tt",
+        "question": "Bạn đang tìm một chiếc chìa khóa trong chùm chìa khóa 10 chiếc. Tình huống tốt nhất (nhanh nhất) của tìm kiếm tuần tự xảy ra khi nào?",
+        "options": ["Chiếc chìa khóa cần tìm nằm ở cuối chùm", "Chiếc chìa khóa cần tìm nằm ở đầu chùm", "Chiếc chìa khóa cần tìm nằm ở giữa chùm", "Không có chiếc chìa khóa nào trong chùm"],
+        "answer": 1
+    },
+    {
+        "id": 5,
+        "topic": "tt",
+        "question": "Cho danh sách số: [5, 3, 8, 1, 9]. Để tìm số 9 bằng thuật toán tìm kiếm tuần tự, ta cần thực hiện bao nhiêu lần so sánh?",
+        "options": ["1 lần", "3 lần", "5 lần", "9 lần"],
+        "answer": 2
+    },
+    {
+        "id": 6,
+        "topic": "tt",
+        "question": "Đặc điểm quan trọng nhất của thuật toán tìm kiếm tuần tự là gì?",
+        "options": ["Danh sách bắt buộc phải được sắp xếp", "Danh sách không cần phải sắp xếp trước", "Tốc độ cực nhanh với danh sách lớn", "Sử dụng rất nhiều bộ nhớ"],
+        "answer": 1
+    },
+    {
+        "id": 7,
+        "topic": "tt",
+        "question": "Tình huống xấu nhất (chậm nhất) của thuật toán tìm kiếm tuần tự khi tìm giá trị X trong danh sách có n phần tử là gì?",
+        "options": ["X nằm ở vị trí đầu tiên", "X nằm ở vị trí thứ hai", "X không có trong danh sách hoặc nằm ở cuối danh sách", "X nằm chính giữa danh sách"],
+        "answer": 2
+    },
+    {
+        "id": 8,
+        "topic": "tt",
+        "question": "Trong thực tế, khi nào em nên sử dụng thuật toán tìm kiếm tuần tự?",
+        "options": ["Khi danh sách rất ngắn hoặc chưa được sắp xếp", "Khi danh sách có hàng triệu dữ liệu", "Khi cần tìm kiếm với tốc độ ánh sáng", "Khi danh sách đã được sắp xếp rất ngăn nắp"],
+        "answer": 0
+    },
+    {
+        "id": 9,
+        "topic": "tt",
+        "question": "Giả sử em tìm số 10 trong danh sách [2, 4, 6, 8]. Sau khi duyệt hết danh sách mà không thấy, thuật toán sẽ trả về kết quả gì?",
+        "options": ["Thông báo không tìm thấy", "Tiếp tục tìm lại từ đầu", "Thông báo tìm thấy ở vị trí số 0", "Máy tính bị treo"],
+        "answer": 0
+    },
+    {
+        "id": 10,
+        "topic": "tt",
+        "question": "Bước đầu tiên của thuật toán tìm kiếm tuần tự trong một dãy số là gì?",
+        "options": ["So sánh số cần tìm với số cuối cùng", "Sắp xếp dãy số tăng dần", "So sánh số cần tìm với số đầu tiên", "Chia đôi dãy số"],
+        "answer": 2
+    },
+    {
+        "id": 11,
+        "topic": "tt",
+        "question": "Để thực hiện thuật toán tìm kiếm tuần tự trong một danh sách, chúng ta cần những thông tin đầu vào (input) nào?",
+        "options": ["Danh sách các phần tử và giá trị cần tìm", "Chỉ cần danh sách các phần tử", "Danh sách đã được sắp xếp tăng dần", "Vị trí của phần tử nằm ở giữa danh sách"],
+        "answer": 0
+    },
+    {
+        "id": 12,
+        "topic": "tt",
+        "question": "Trong thuật toán tìm kiếm tuần tự, nếu phần tử đang xét không bằng giá trị cần tìm, bước tiếp theo máy tính sẽ làm gì?",
+        "options": ["Dừng thuật toán và báo lỗi", "Tăng chỉ số vị trí lên 1 để kiểm tra phần tử kế tiếp", "Quay lại kiểm tra từ phần tử đầu tiên", "Nhảy đến phần tử cuối cùng của danh sách"],
+        "answer": 1
+    },
+    {
+        "id": 13,
+        "topic": "tt",
+        "question": "Cho dãy số: [12, 5, 8, 20, 15]. Khi tìm số 15 bằng tìm kiếm tuần tự, ở bước thứ 3, máy tính sẽ thực hiện phép so sánh nào?",
+        "options": ["So sánh 15 với 12", "So sánh 15 với 8", "So sánh 15 với 15", "So sánh 15 với 20"],
+        "answer": 1
+    },
+    {
+        "id": 14,
+        "topic": "tt",
+        "question": "Tại sao tìm kiếm tuần tự thường kém hiệu quả hơn tìm kiếm nhị phân đối với danh sách rất lớn đã được sắp xếp?",
+        "options": ["Vì nó phải kiểm tra lần lượt từng phần tử một", "Vì nó yêu cầu bộ nhớ máy tính rất lớn", "Vì nó không thể tìm thấy các số âm", "Vì nó chỉ hoạt động trên các ký tự chữ cái"],
+        "answer": 0
+    },
+    {
+        "id": 15,
+        "topic": "tt",
+        "question": "Kết quả đầu ra (output) thông thường của thuật toán tìm kiếm tuần tự là gì?",
+        "options": ["Vị trí của phần tử tìm thấy hoặc thông báo không tìm thấy", "Một danh sách mới đã được sắp xếp", "Tổng của các số trong danh sách", "Giá trị lớn nhất trong danh sách"],
+        "answer": 0
+    },
+    {
+        "id": 16,
+        "topic": "tt",
+        "question": "Cho danh sách tên: [An, Bình, Chi, Đạt, Hoa, Lâm]. Nếu tìm tên 'Đạt', thuật toán tuần tự sẽ dừng lại sau bao nhiêu lần so sánh?",
+        "options": ["3 lần", "4 lần", "6 lần", "1 lần"],
+        "answer": 1
+    },
+    {
+        "id": 17,
+        "topic": "tt",
+        "question": "Trường hợp nào sau đây là ưu điểm lớn nhất của tìm kiếm tuần tự?",
+        "options": ["Dễ cài đặt và hoạt động tốt trên cả danh sách chưa sắp xếp", "Tốc độ nhanh nhất trong mọi trường hợp dữ liệu", "Luôn tìm thấy kết quả chỉ sau một lần thử đầu tiên", "Có khả năng tự động sửa lỗi dữ liệu trong danh sách"],
+        "answer": 0
+    },
+    {
+        "id": 18,
+        "topic": "tt",
+        "question": "Nếu một danh sách có n phần tử, trong trường hợp xấu nhất, thuật toán tìm kiếm tuần tự phải thực hiện bao nhiêu lần so sánh?",
+        "options": ["1 lần", "n lần", "n/2 lần", "0 lần"],
+        "answer": 1
+    },
+    {
+        "id": 19,
+        "topic": "tt",
+        "question": "Khi mô tả thuật toán tìm kiếm tuần tự bằng sơ đồ khối, hình thoi thường được dùng để thể hiện bước nào?",
+        "options": ["Bước so sánh phần tử hiện tại với giá trị cần tìm", "Bước nhập danh sách dữ liệu từ bàn phím", "Bước bắt đầu hoặc kết thúc chương trình", "Bước tăng chỉ số vị trí để chuyển sang phần tử tiếp theo"],
+        "answer": 0
+    },
+        { "id": 20, "topic": "tt", "question": "Bạn lật từng tờ bài kiểm tra trong xấp 45 bài để tìm bài của mình. Đây là minh họa thực tế của thuật toán nào?", "options": ["Sắp xếp nổi bọt", "Tìm kiếm tuần tự", "Tìm kiếm nhị phân", "Sắp xếp chọn"], "answer": 1 },
+
+        // --- CHỦ ĐỀ: TÌM KIẾM NHỊ PHÂN (np) ---
+        { "id": 1, "topic": "np", "question": "Điều kiện tiên quyết để có thể áp dụng thuật toán tìm kiếm nhị phân trên một danh sách là gì?", "options": ["Danh sách phải có ít nhất 100 phần tử", "Danh sách phải được sắp xếp (tăng dần hoặc giảm dần)", "Danh sách phải chứa toàn số nguyên dương", "Danh sách không được chứa các giá trị trùng nhau"], "answer": 1 },
+        {
+        "id": 2,
+        "topic": "np",
+        "question": "Trong thuật toán tìm kiếm nhị phân, bước đầu tiên chúng ta so sánh giá trị cần tìm với phần tử nào?",
+        "options": [
+            "Phần tử đầu tiên",
+            "Phần tử cuối cùng",
+            "Phần tử ở chính giữa danh sách",
+            "Phần tử bất kỳ"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 3,
+        "topic": "np",
+        "question": "Nếu giá trị cần tìm nhỏ hơn phần tử ở giữa trong một dãy số tăng dần, thuật toán tìm kiếm nhị phân sẽ tiếp tục tìm ở đâu?",
+        "options": [
+            "Nửa bên trái của dãy",
+            "Nửa bên phải của dãy",
+            "Dừng lại và thông báo không thấy",
+            "Tìm lại từ đầu dãy theo cách tuần tự"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 4,
+        "topic": "np",
+        "question": "Nếu giá trị cần tìm lớn hơn phần tử ở giữa trong một dãy số tăng dần, thuật toán sẽ làm gì?",
+        "options": [
+            "Bỏ qua nửa bên phải",
+            "Bỏ qua nửa bên trái và tiếp tục tìm ở nửa bên phải",
+            "Dừng thuật toán",
+            "Quay lại so sánh với phần tử đầu tiên"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 5,
+        "topic": "np",
+        "question": "Cho dãy số đã sắp xếp: [2, 4, 6, 8, 10, 12, 14]. Phần tử ở giữa (mid) trong lần so sánh đầu tiên là số mấy?",
+        "options": [
+            "2",
+            "8",
+            "14",
+            "10"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 6,
+        "topic": "np",
+        "question": "Thuật toán tìm kiếm nhị phân dừng lại khi nào?",
+        "options": [
+            "Khi tìm thấy giá trị cần tìm",
+            "Khi phạm vi tìm kiếm không còn phần tử nào",
+            "Cả A và B đều đúng",
+            "Khi đã duyệt qua tất cả các phần tử"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 7,
+        "topic": "np",
+        "question": "Ưu điểm lớn nhất của tìm kiếm nhị phân so với tìm kiếm tuần tự là gì?",
+        "options": [
+            "Dễ cài đặt hơn",
+            "Không cần sắp xếp dữ liệu",
+            "Tốc độ tìm kiếm nhanh hơn rất nhiều trên danh sách lớn",
+            "Hoạt động được trên danh sách lộn xộn"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 8,
+        "topic": "np",
+        "question": "Khi tìm kiếm tên trong một cuốn từ điển đã được sắp xếp theo bảng chữ cái, thuật toán nào hiệu quả hơn?",
+        "options": [
+            "Tìm kiếm tuần tự",
+            "Tìm kiếm nhị phân",
+            "Sắp xếp nổi bọt",
+            "Sắp xếp chọn"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 9,
+        "topic": "np",
+        "question": "Trong mỗi bước của tìm kiếm nhị phân, số lượng phần tử cần xét sẽ thay đổi như thế nào?",
+        "options": [
+            "Giảm đi 1 phần tử",
+            "Giảm đi một nửa",
+            "Giảm đi 2 phần tử",
+            "Không thay đổi"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 10,
+        "topic": "np",
+        "question": "Cho dãy [1, 3, 5, 7, 9, 11, 13]. Để tìm số 13, tìm kiếm nhị phân cần bao nhiêu lần so sánh?",
+        "options": [
+            "7 lần",
+            "3 lần",
+            "1 lần",
+            "5 lần"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 11,
+        "topic": "np",
+        "question": "Nếu danh sách có 1000 phần tử đã sắp xếp, tìm kiếm nhị phân cần tối đa khoảng bao nhiêu lần so sánh?",
+        "options": [
+            "1000 lần",
+            "500 lần",
+            "10 lần",
+            "100 lần"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 12,
+        "topic": "np",
+        "question": "Phép toán nào thường dùng để xác định vị trí phần tử ở giữa (mid) từ vị trí đầu (left) và cuối (right)?",
+        "options": [
+            "mid = (left + right) / 2",
+            "mid = right - left",
+            "mid = left * right / 2",
+            "mid = (left + right) * 2"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 13,
+        "topic": "np",
+        "question": "Trường hợp tốt nhất của tìm kiếm nhị phân xảy ra khi nào?",
+        "options": [
+            "Phần tử cần tìm nằm ở đầu dãy",
+            "Phần tử cần tìm nằm ở cuối dãy",
+            "Phần tử cần tìm nằm ngay vị trí giữa dãy ở lần so sánh đầu tiên",
+            "Không có phần tử nào trong dãy"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 14,
+        "topic": "np",
+        "question": "Tại sao tìm kiếm nhị phân không thể áp dụng cho danh sách chưa sắp xếp?",
+        "options": [
+            "Vì máy tính không thể chia đôi danh sách",
+            "Vì không thể xác định được giá trị cần tìm nằm ở nửa nào sau khi so sánh với phần tử giữa",
+            "Vì tìm kiếm tuần tự luôn nhanh hơn",
+            "Vì danh sách chưa sắp xếp không có phần tử giữa"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 15,
+        "topic": "np",
+        "question": "Input của thuật toán tìm kiếm nhị phân gồm những gì?",
+        "options": [
+            "Dãy số bất kỳ và số cần tìm",
+            "Dãy số đã sắp xếp và số cần tìm",
+            "Số lượng phần tử của dãy",
+            "Vị trí của số cần tìm"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 16,
+        "topic": "np",
+        "question": "Sơ đồ khối của tìm kiếm nhị phân có bao nhiêu hình thoi (phép so sánh) chính trong vòng lặp?",
+        "options": [
+            "1 hình thoi",
+            "2 hình thoi (kiểm tra điều kiện dừng và so sánh giá trị)",
+            "Không có hình thoi nào",
+            "Chỉ dùng hình chữ nhật"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 17,
+        "topic": "np",
+        "question": "Trong thực tế, trò chơi 'Đoán số' (từ 1-100 và gợi ý Lớn/Nhỏ) áp dụng chiến thuật của thuật toán nào?",
+        "options": [
+            "Tìm kiếm tuần tự",
+            "Sắp xếp chọn",
+            "Tìm kiếm nhị phân",
+            "Sắp xếp nổi bọt"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 18,
+        "topic": "np",
+        "question": "Nếu tìm số 5 trong dãy [2, 4, 6, 8, 10], tìm kiếm nhị phân sẽ trả về kết quả gì?",
+        "options": [
+            "Vị trí thứ 2",
+            "Vị trí thứ 3",
+            "Thông báo không tìm thấy",
+            "Số 4"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 19,
+        "topic": "np",
+        "question": "Nhược điểm của thuật toán tìm kiếm nhị phân là gì?",
+        "options": [
+            "Mất thời gian sắp xếp dữ liệu nếu danh sách chưa được sắp xếp",
+            "Chạy rất chậm trên danh sách lớn",
+            "Tốn nhiều bộ nhớ hơn tìm kiếm tuần tự",
+            "Khó thực hiện hơn sắp xếp nổi bọt"
+        ],
+        "answer": 0
+    },
+        { "id": 20, "topic": "np", "question": "Tìm kiếm nhị phân còn có tên gọi tiếng Anh là gì?", "options": ["Sequential Search", "Linear Search", "Binary Search", "Selection Sort"], "answer": 2 },
+
+        // --- CHỦ ĐỀ: SẮP XẾP CHỌN (sxc) ---
+        { "id": 1, "topic": "sxc", "question": "Trong thuật toán sắp xếp chọn tăng dần, công việc chính trong mỗi bước lặp là gì?", "options": ["Tìm phần tử lớn nhất và đưa về đầu dãy", "Tìm phần tử nhỏ nhất trong phần chưa sắp xếp và đưa về vị trí đầu của phần đó", "Đổi chỗ tất cả các phần tử liên tiếp", "Xóa bớt các phần tử trùng nhau"], "answer": 1 },
+        {
+        "id": 2,
+        "topic": "sxc",
+        "question": "Tại sao thuật toán này lại có tên gọi là 'Sắp xếp chọn'?",
+        "options": [
+            "Vì nó chọn ngẫu nhiên các phần tử để đổi chỗ",
+            "Vì nó chọn phần tử thỏa mãn điều kiện (nhỏ nhất/lớn nhất) để đưa về đúng vị trí",
+            "Vì người dùng được chọn số lần lặp",
+            "Vì máy tính tự chọn cách sắp xếp nhanh nhất"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 3,
+        "topic": "sxc",
+        "question": "Sau khi thực hiện xong bước 1 của sắp xếp chọn tăng dần, phần tử nhỏ nhất của dãy sẽ nằm ở đâu?",
+        "options": [
+            "Nằm ở vị trí cuối cùng của dãy",
+            "Nằm ở vị trí chính giữa của dãy",
+            "Nằm ở vị trí đầu tiên của dãy",
+            "Vẫn nằm ở vị trí cũ"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 4,
+        "topic": "sxc",
+        "question": "Cho dãy số: [7, 3, 5, 1]. Ở bước 1, số nhỏ nhất là 1. Thuật toán sẽ đổi chỗ số 1 với số nào?",
+        "options": ["Số 7", "Số 3", "Số 5", "Không đổi chỗ với số nào"],
+        "answer": 0
+    },
+    {
+        "id": 5,
+        "topic": "sxc",
+        "question": "Trong thuật toán sắp xếp chọn, biến dùng để lưu 'vị trí của phần tử nhỏ nhất' có vai trò gì?",
+        "options": [
+            "Để biết cần phải đổi chỗ với phần tử ở vị trí nào khi kết thúc lượt tìm kiếm",
+            "Để máy tính không bị quên các số khác",
+            "Để tính tổng các số trong dãy",
+            "Để đếm xem dãy có bao nhiêu số"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 6,
+        "topic": "sxc",
+        "question": "Nếu một dãy có 4 phần tử đã được sắp xếp tăng dần: [1, 2, 3, 4]. Khi thực hiện thuật toán sắp xếp chọn tăng dần, máy tính có thực hiện các phép so sánh không?",
+        "options": [
+            "Không thực hiện vì dãy đã sắp xếp rồi",
+            "Chỉ thực hiện 1 lần duy nhất",
+            "Vẫn thực hiện các phép so sánh theo đúng quy trình để kiểm tra",
+            "Dừng lại ngay lập tức và báo lỗi"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 7,
+        "topic": "sxc",
+        "question": "Thao tác 'Đổi chỗ' (swap) trong sắp xếp chọn thường diễn ra khi nào?",
+        "options": [
+            "Mỗi khi tìm thấy một số nhỏ hơn số đang xét",
+            "Sau khi đã tìm xong số nhỏ nhất trong toàn bộ phần chưa sắp xếp",
+            "Trước khi bắt đầu tìm kiếm phần tử nhỏ nhất",
+            "Chỉ diễn ra ở bước cuối cùng của thuật toán"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 8,
+        "topic": "sxc",
+        "question": "Để sắp xếp một dãy có 5 phần tử, thuật toán sắp xếp chọn cần thực hiện bao nhiêu lượt (vòng lặp chính) để đảm bảo dãy được sắp xếp?",
+        "options": ["1 lượt", "3 lượt", "4 lượt", "10 lượt"],
+        "answer": 2
+    },
+    {
+        "id": 9,
+        "topic": "sxc",
+        "question": "Cho dãy [4, 1, 3, 2]. Sau lượt 1, dãy trở thành [1, 4, 3, 2]. Ở lượt thứ 2, thuật toán sẽ tìm số nhỏ nhất trong phạm vi nào?",
+        "options": [
+            "Toàn bộ dãy [1, 4, 3, 2]",
+            "Chỉ xét số 1",
+            "Phần còn lại [4, 3, 2]",
+            "Chỉ xét hai số cuối [3, 2]"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 10,
+        "topic": "sxc",
+        "question": "Trong sơ đồ khối của thuật toán sắp xếp chọn, hình thoi chứa điều kiện 'A[j] < A[min]' dùng để làm gì?",
+        "options": [
+            "Để quyết định xem có nên cập nhật lại vị trí phần tử nhỏ nhất mới không",
+            "Để kết thúc thuật toán",
+            "Để nhập dữ liệu vào máy tính",
+            "Để in kết quả ra màn hình"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 11,
+        "topic": "sxc",
+        "question": "Nếu muốn sắp xếp dãy số theo thứ tự GIẢM DẦN, em cần thay đổi điều kiện tìm kiếm như thế nào?",
+        "options": [
+            "Giữ nguyên quy trình",
+            "Tìm phần tử LỚN NHẤT trong phần chưa sắp xếp để đưa về đầu phần đó",
+            "Tìm phần tử ở giữa để đưa về đầu",
+            "Không thể dùng sắp xếp chọn để sắp xếp giảm dần"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 12,
+        "topic": "sxc",
+        "question": "Trong thực tế, khi em chọn ra chiếc bút ngắn nhất trong hộp bút để để sang một bên, sau đó chọn chiếc ngắn nhất trong số còn lại. Đó là minh họa cho bước nào của thuật toán?",
+        "options": [
+            "Sắp xếp chọn",
+            "Tìm kiếm tuần tự",
+            "Tìm kiếm nhị phân",
+            "Lưu trữ dữ liệu"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 13,
+        "topic": "sxc",
+        "question": "Tại sao trong mỗi lượt lặp, phạm vi tìm kiếm phần tử nhỏ nhất lại thu hẹp dần?",
+        "options": [
+            "Vì máy tính bị mệt",
+            "Vì các phần tử ở đầu dãy đã được sắp xếp đúng vị trí rồi, không cần xét lại",
+            "Vì các phần tử đó đã bị xóa đi",
+            "Vì dãy số tự co lại"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 14,
+        "topic": "sxc",
+        "question": "Nếu trong phần chưa sắp xếp, phần tử đầu tiên chính là phần tử nhỏ nhất, thuật toán sẽ làm gì?",
+        "options": [
+            "Dừng lại không làm nữa",
+            "Đổi chỗ nó với phần tử cuối cùng",
+            "Giữ nguyên vị trí (hoặc đổi chỗ với chính nó) và chuyển sang lượt tiếp theo",
+            "Bỏ qua và không đưa vào dãy đã sắp xếp"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 15,
+        "topic": "sxc",
+        "question": "Kết quả cuối cùng của thuật toán sắp xếp chọn là gì?",
+        "options": [
+            "Một giá trị duy nhất (số nhỏ nhất)",
+            "Một dãy số mới đã được đổi thứ tự theo yêu cầu (tăng hoặc giảm)",
+            "Vị trí của số lớn nhất",
+            "Tổng của dãy số"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 16,
+        "topic": "sxc",
+        "question": "Trong thuật toán sắp xếp chọn, bước 'Đổi chỗ' giúp ích gì cho việc sắp xếp?",
+        "options": [
+            "Giúp đưa phần tử nhỏ nhất tìm được về đúng vị trí mong muốn trong dãy",
+            "Làm cho dãy số có nhiều số hơn",
+            "Làm cho máy tính chạy chậm lại để dễ quan sát",
+            "Giúp xóa đi các số không cần thiết"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 17,
+        "topic": "sxc",
+        "question": "Dãy số sau 2 lượt sắp xếp chọn tăng dần: [1, 2, 8, 5, 9]. Em có thể khẳng định điều gì?",
+        "options": [
+            "Dãy đã sắp xếp xong hoàn toàn",
+            "Số 1 và số 2 đã đứng đúng vị trí của chúng trong dãy kết quả",
+            "Số 8 là số lớn nhất",
+            "Thuật toán bị sai"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 18,
+        "topic": "sxc",
+        "question": "Khi mô tả thuật toán bằng ngôn ngữ tự nhiên, bước 'Lặp lại quá trình cho đến khi dãy được sắp xếp' thể hiện cấu trúc gì?",
+        "options": ["Cấu trúc rẽ nhánh", "Cấu trúc lặp", "Cấu trúc tuần tự", "Cấu trúc lựa chọn"],
+        "answer": 1
+    },
+    {
+        "id": 19,
+        "topic": "sxc",
+        "question": "Lợi ích của việc sắp xếp danh sách tên học sinh theo thứ tự bảng chữ cái là gì?",
+        "options": [
+            "Làm cho danh sách đẹp hơn",
+            "Giúp việc tìm kiếm tên một học sinh sau đó trở nên dễ dàng và nhanh chóng hơn",
+            "Để máy tính không bị hỏng",
+            "Để học sinh không quên tên mình"
+        ],
+        "answer": 1
+    },
+        { "id": 20, "topic": "sxc", "question": "Trong thuật toán sắp xếp chọn, nếu dãy ban đầu là [5, 4, 3, 2, 1] và cần sắp xếp tăng dần, số lần đổi chỗ sẽ như thế nào?", "options": ["Không cần đổi chỗ lần nào", "Thực hiện đổi chỗ ở mỗi lượt lặp chính", "Chỉ đổi chỗ 1 lần duy nhất", "Đổi chỗ liên tục hàng trăm lần"], "answer": 1 }
+    ];
+
+    let selectedQuestions = [];
+    let studentAnswers = [];
+
+    function startQuiz() {
+        const name = document.getElementById('student-name').value.trim();
+        const className = document.getElementById('student-class').value.trim();
+        const stt = document.getElementById('student-stt').value.trim();
+        const topic = document.getElementById('topic-select').value;
+
+        if (!name || !className || !stt) {
+            alert("Vui lòng điền đầy đủ thông tin học sinh!");
+            return;
+        }
+
+        // Lọc câu hỏi theo chủ đề đã chọn
+        let pool = allQuestions.filter(q => q.topic === topic);
+        
+        if (pool.length === 0) {
+            alert("Không tìm thấy câu hỏi cho chủ đề này!");
+            return;
+        }
+
+        // Lấy ngẫu nhiên 10 câu
+        selectedQuestions = pool.sort(() => Math.random() - 0.5).slice(0, 10);
+        studentAnswers = new Array(selectedQuestions.length).fill(null);
+
+        document.getElementById('display-topic').innerText = "Chủ đề: " + document.getElementById('topic-select').selectedOptions[0].text;
+        document.getElementById('display-info').innerText = `Học sinh: ${name} - Lớp: ${className} - STT: ${stt}`;
+        
+        document.getElementById('intro-section').classList.add('hidden');
+        document.getElementById('quiz-section').classList.remove('hidden');
+
+        renderQuestions();
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('question-container');
+        container.innerHTML = '';
+
+        selectedQuestions.forEach((q, idx) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = "p-4 border rounded-xl bg-gray-50 mb-4";
+            qDiv.innerHTML = `
+                <p class="font-bold text-gray-800 mb-4">${idx + 1}. ${q.question}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    ${q.options.map((opt, i) => `
+                        <div onclick="selectOption(${idx}, ${i})" id="opt-${idx}-${i}" class="option-card p-3 rounded-lg bg-white border-2">
+                            ${opt}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(qDiv);
+        });
+    }
+
+    function selectOption(qIdx, optIdx) {
+        studentAnswers[qIdx] = optIdx;
+        // Xóa class selected ở các lựa chọn cùng câu hỏi
+        for(let i=0; i<4; i++) {
+            const el = document.getElementById(`opt-${qIdx}-${i}`);
+            if(el) el.classList.remove('selected', 'bg-indigo-100', 'border-indigo-500');
+        }
+        // Thêm class selected cho lựa chọn mới
+        const selectedEl = document.getElementById(`opt-${qIdx}-${optIdx}`);
+        selectedEl.classList.add('selected', 'bg-indigo-100', 'border-indigo-500');
+    }
+
+    function submitQuiz() {
+        if (studentAnswers.includes(null)) {
+            if (!confirm("Bạn chưa làm hết các câu. Vẫn muốn nộp bài?")) return;
+        }
+
+        let score = 0;
+        const wrongList = document.getElementById('wrong-answers-list');
+        wrongList.innerHTML = '';
+
+        selectedQuestions.forEach((q, i) => {
+            if (studentAnswers[i] === q.answer) {
+                score++;
+            } else {
+                const div = document.createElement('div');
+                div.className = "review-card p-4 rounded-xl border-l-4 border-red-500 bg-red-50 mb-3";
+                div.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-1">Câu ${i + 1}: ${q.question}</p>
+                    <p class="text-sm text-red-600 italic">Em chọn: ${studentAnswers[i] !== null ? q.options[studentAnswers[i]] : 'Bỏ trống'}</p>
+                    <p class="text-sm text-emerald-600 font-bold">Đáp án đúng: ${q.options[q.answer]}</p>
+                `;
+                wrongList.appendChild(div);
+            }
+        });
+
+        document.getElementById('score-circle').innerText = `${score}/10`;
+        document.getElementById('result-student-info').innerText = document.getElementById('display-info').innerText;
+        
+        if (score < 10) {
+            document.getElementById('wrong-answers-section').classList.remove('hidden');
+        } else {
+            document.getElementById('wrong-answers-section').classList.add('hidden');
+        }
+
+        document.getElementById('quiz-section').classList.add('hidden');
+        document.getElementById('result-section').classList.remove('hidden');
+        window.scrollTo(0, 0);
+    }
+</script>
+</body>
+</html>
