@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Pixel Paint - Fixed Eraser</title>
+    <style>
+        :root {
+            --excel-green: #217346;
+            --header-bg: #f8f9fa;
+            --grid-line: #d1d1d1;
+        }
+
+        body {
+            margin: 0; display: flex; flex-direction: column; height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif; background: #e6e6e6;
+        }
+
+        .toolbar {
+            padding: 10px 20px; background: white; border-bottom: 1px solid #ccc;
+            display: flex; gap: 15px; align-items: center; z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tool-group { display: flex; gap: 2px; background: #eee; padding: 3px; border-radius: 4px; }
+
+        .btn {
+            padding: 8px 15px; cursor: pointer; border-radius: 3px; border: none;
+            font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 5px;
+        }
+
+        .btn-tool { background: transparent; color: #444; }
+        .btn-tool.active { background: white; color: var(--excel-green); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        
+        .btn-save { background: #0078d4; color: white; margin-left: auto; }
+        .btn-clear { background: #d93025; color: white; }
+
+        input[type="number"] { width: 55px; padding: 5px; border: 1px solid #ccc; }
+        input[type="color"] { width: 40px; height: 34px; border: 1px solid #ccc; cursor: pointer; padding: 0; }
+
+        .workspace { flex: 1; overflow: auto; padding: 30px; display: flex; justify-content: center; }
+        #paintContainer { background: white; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <strong>Cỡ:</strong>
+        <input type="number" id="rows" value="100"> x <input type="number" id="cols" value="100">
+        <button class="btn" onclick="initApp()" style="background: #ddd;">Đổi</button>
+    </div>
+
+    <div class="tool-group">
+        <button id="btnPencil" class="btn btn-tool active" onclick="setMode('pencil')">✏️ Bút (B)</button>
+        <button id="btnEraser" class="btn btn-tool" onclick="setMode('eraser')">🧽 Tẩy (E)</button>
+    </div>
+
+    <input type="color" id="colorPicker" value="#000000">
+
+    <button class="btn btn-clear" onclick="clearCanvas()">Xóa hết</button>
+    <button class="btn btn-save" onclick="saveImage()">💾 Lưu file</button>
+</div>
+
+<div class="workspace">
+    <div id="paintContainer">
+        <canvas id="mainCanvas"></canvas>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const colorPicker = document.getElementById('colorPicker');
+    const cellSize = 22;
+    
+    let isDrawing = false;
+    let currentMode = 'pencil';
+    let gridData = {}; 
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnPencil').classList.toggle('active', mode === 'pencil');
+        document.getElementById('btnEraser').classList.toggle('active', mode === 'eraser');
+    }
+
+    // Phím tắt bàn phím
+    window.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'e') setMode('eraser');
+        if (e.key.toLowerCase() === 'b') setMode('pencil');
+    });
+
+    function initApp() {
+        const rows = parseInt(document.getElementById('rows').value) || 50;
+        const cols = parseInt(document.getElementById('cols').value) || 50;
+        canvas.width = cols * cellSize;
+        canvas.height = rows * cellSize;
+
+        const saved = localStorage.getItem('pixelArt_Data_V3');
+        if (saved) gridData = JSON.parse(saved);
+        
+        renderFull();
+    }
+
+    // Vẽ lại toàn bộ Canvas
+    function renderFull() {
+        const rows = canvas.height / cellSize;
+        const cols = canvas.width / cellSize;
+
+        // Nền trắng
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Vẽ các ô màu
+        for (let key in gridData) {
+            const [c, r] = key.split('-').map(Number);
+            drawCell(c, r, gridData[key]);
+        }
+
+        // Vẽ lưới tổng thể
+        drawGridLines();
+    }
+
+    // Vẽ đường lưới mảnh chuẩn Excel
+    function drawGridLines() {
+        ctx.beginPath();
+        ctx.strokeStyle = "#d1d1d1";
+        ctx.lineWidth = 1;
+        
+        // Vẽ các đường dọc và ngang
+        for (let i = 0; i <= canvas.width; i += cellSize) {
+            ctx.moveTo(i + 0.5, 0);
+            ctx.lineTo(i + 0.5, canvas.height);
+        }
+        for (let j = 0; j <= canvas.height; j += cellSize) {
+            ctx.moveTo(0, j + 0.5);
+            ctx.lineTo(canvas.width, j + 0.5);
+        }
+        ctx.stroke();
+    }
+
+    // Vẽ hoặc Xóa 1 ô cụ thể
+    function drawCell(col, row, color) {
+        const x = col * cellSize;
+        const y = row * cellSize;
+
+        if (color) {
+            // Chế độ bút vẽ: Tô màu ô và vẽ lại viền bao quanh chính nó
+            ctx.fillStyle = color;
+            ctx.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
+        } else {
+            // Chế độ tẩy: Trả về màu trắng
+            ctx.fillStyle = "white";
+            ctx.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
+        }
+    }
+
+    function paint(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const col = Math.floor((e.clientX - rect.left) / cellSize);
+        const row = Math.floor((e.clientY - rect.top) / cellSize);
+        
+        if (col >= 0 && col < canvas.width/cellSize && row >= 0 && row < canvas.height/cellSize) {
+            const key = `${col}-${row}`;
+            
+            if (currentMode === 'pencil') {
+                const color = colorPicker.value;
+                if (gridData[key] === color) return; // Tránh vẽ đè cùng màu
+                gridData[key] = color;
+                drawCell(col, row, color);
+            } else {
+                if (!gridData[key]) return; // Đã trắng rồi thì thôi
+                delete gridData[key];
+                drawCell(col, row, null);
+            }
+        }
+    }
+
+    async function saveImage() {
+        try {
+            if ('showSaveFilePicker' in window) {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'excel-art.png',
+                    types: [{ description: 'PNG Image', accept: {'image/png': ['.png']} }],
+                });
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const link = document.createElement('a');
+                link.download = `excel-art.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            }
+        } catch (err) { if (err.name !== 'AbortError') console.error(err); }
+    }
+
+    function clearCanvas() {
+        if (confirm("Xóa sạch vùng vẽ?")) {
+            gridData = {};
+            localStorage.removeItem('pixelArt_Data_V3');
+            renderFull();
+        }
+    }
+
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
+    window.addEventListener('mousemove', paint);
+    window.addEventListener('mouseup', () => {
+        if(isDrawing) localStorage.setItem('pixelArt_Data_V3', JSON.stringify(gridData));
+        isDrawing = false;
+    });
+
+    canvas.addEventListener('dragstart', (e) => e.preventDefault());
+    initApp();
+</script>
+</body>
+</html>
