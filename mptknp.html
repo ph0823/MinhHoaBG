@@ -222,24 +222,29 @@
                 }
 
                 // Nhãn chỉ số L, R, M
+                // Tìm và thay thế đoạn vẽ nhãn L, R, M bằng đoạn này:
                 if (!state.finished) {
-                    if (idx === state.left) {
-                        const lLabel = document.createElement('span');
-                        lLabel.className = "absolute -bottom-6 text-blue-600 text-[10px] font-bold";
-                        lLabel.innerText = "L";
-                        div.appendChild(lLabel);
+                    let labelText = "";
+                    
+                    // Kiểm tra các trường hợp trùng nhau
+                    if (idx === state.left && idx === state.right && idx === state.mid) {
+                        labelText = "L = R = M";
+                    } else if (idx === state.left && idx === state.right) {
+                        labelText = "L = R";
+                    } else {
+                        // Nếu không trùng hết thì hiển thị riêng lẻ (nhưng vẫn kiểm tra từng cái)
+                        if (idx === state.left) labelText = "L";
+                        if (idx === state.right) labelText = (labelText ? labelText + ", R" : "R");
+                        if (idx === state.mid) labelText = (labelText ? labelText + ", M" : "M");
                     }
-                    if (idx === state.right) {
-                        const rLabel = document.createElement('span');
-                        rLabel.className = "absolute -bottom-10 text-blue-600 text-[10px] font-bold";
-                        rLabel.innerText = "R";
-                        div.appendChild(rLabel);
-                    }
-                    if (idx === state.mid) {
-                        const mLabel = document.createElement('span');
-                        mLabel.className = "absolute -bottom-14 text-amber-600 text-[10px] font-bold";
-                        mLabel.innerText = "M";
-                        div.appendChild(mLabel);
+
+                    if (labelText) {
+                        const label = document.createElement('span');
+                        // Sử dụng w-full và text-center để chữ luôn nằm chính giữa ô số
+                        label.className = "absolute -bottom-7 w-full text-center text-[11px] font-extrabold " + 
+                                         (idx === state.mid ? "text-amber-600" : "text-blue-600");
+                        label.innerText = labelText;
+                        div.appendChild(label);
                     }
                 }
 
