@@ -21,6 +21,7 @@
         }
         .array-item {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
         }
         .active-range {
             background-color: #eff6ff !important;
@@ -49,6 +50,7 @@
             background-color: #f1f5f9;
         }
         .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
             width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -128,9 +130,12 @@
             <!-- Cột Trái: Trực quan hóa & Điều khiển -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Vùng hiển thị dãy số -->
-                <div class="glass-morphism p-8 md:p-12 min-h-[400px] flex flex-col justify-between">
-                    <div id="array-container" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-20 py-10">
-                        <!-- Items injected here -->
+                <div class="glass-morphism p-6 md:p-8 min-h-[450px] flex flex-col justify-between overflow-hidden">
+                    <!-- Container cuộn ngang cho dãy số trên 1 dòng -->
+                    <div class="flex-grow flex flex-col justify-center">
+                        <div id="array-container" class="flex flex-nowrap justify-start lg:justify-center gap-3 md:gap-4 mb-24 py-16 overflow-x-auto custom-scrollbar px-4">
+                            <!-- Items injected here -->
+                        </div>
                     </div>
 
                     <!-- Chỉ dẫn Pointer -->
@@ -148,7 +153,7 @@
 
                     <!-- Hộp giải thích bước -->
                     <div class="flex flex-col md:flex-row items-stretch gap-4">
-                        <div id="step-desc" class="flex-grow p-6 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-semibold text-lg flex items-center justify-center text-center leading-relaxed">
+                        <div id="step-desc" class="flex-grow p-6 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-semibold text-lg flex items-center justify-center text-center leading-relaxed shadow-inner">
                             Sẵn sàng bắt đầu...
                         </div>
                         <button id="next-btn" onclick="stepForward()" class="md:w-64 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 px-8 rounded-2xl transition-all shadow-lg active:scale-95 text-lg flex items-center justify-center gap-2">
@@ -158,7 +163,7 @@
                 </div>
             </div>
 
-            <!-- Cột Phải: Nhật ký (Chỉ hiện tốt trên Laptop) -->
+            <!-- Cột Phải: Nhật ký -->
             <div class="lg:col-span-4 h-full">
                 <div class="glass-morphism p-6 h-full flex flex-col min-h-[500px] lg:max-h-[720px]">
                     <div class="flex items-center justify-between mb-6">
@@ -234,10 +239,12 @@
             selectedArrayData.forEach((val, idx) => {
                 const div = document.createElement('div');
                 div.id = `item-${idx}`;
-                // Kích thước linh hoạt cho laptop/tablet
-                div.className = "array-item relative w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-xl md:rounded-2xl border-2 font-bold text-sm md:text-xl shadow-sm bg-white border-slate-100";
+                div.className = "array-item relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-xl md:rounded-2xl border-2 font-bold text-sm md:text-xl shadow-sm bg-white border-slate-100";
                 
-                div.innerHTML = `<span class="z-10">${val}</span>`;
+                div.innerHTML = `
+                    <span class="z-10">${val}</span>
+                    <span class="absolute -top-7 text-[10px] text-slate-400 font-medium whitespace-nowrap">Vị trí ${idx + 1}</span>
+                `;
 
                 if (state.finished && idx === state.mid && state.found) {
                     div.classList.add('found-item');
@@ -249,11 +256,11 @@
                     div.classList.add('inactive-item');
                 }
 
-                // Pointer Markers
+                // Pointer Markers (L, R, M)
                 if (!state.finished) {
-                    if (idx === state.left) createMarker(div, "L", "text-blue-600", "-bottom-6");
-                    if (idx === state.right) createMarker(div, "R", "text-blue-600", "-bottom-9");
-                    if (idx === state.mid) createMarker(div, "M", "text-amber-600 font-black", "-top-7");
+                    if (idx === state.left) createMarker(div, "L", "text-blue-600", "-bottom-7");
+                    if (idx === state.right) createMarker(div, "R", "text-blue-600", "-bottom-12");
+                    if (idx === state.mid) createMarker(div, "M", "text-amber-600 font-black", "-bottom-17");
                 }
 
                 container.appendChild(div);
@@ -262,7 +269,7 @@
 
         function createMarker(parent, text, color, pos) {
             const span = document.createElement('span');
-            span.className = `absolute ${pos} ${color} text-[10px] font-black bg-white px-1 rounded shadow-sm border border-slate-50`;
+            span.className = `absolute ${pos} ${color} text-[11px] font-black bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 z-10`;
             span.innerText = text;
             parent.appendChild(span);
         }
@@ -279,7 +286,7 @@
                 
                 updateStatus(`Đang xét vị trí giữa: ${state.mid + 1}`, "text-amber-500");
                 updateDesc(`<strong>Bước ${state.stepCount}:</strong> Tính vị trí chính giữa của vùng đang xét.<br><span class='text-sm text-slate-500'>Mid = (${state.left + 1} + ${state.right + 1}) / 2 = ${state.mid + 1}</span>`);
-                addLog(`Bước ${state.stepCount}.1: Mid = ${state.mid + 1} (Giá trị: ${array[state.mid]})`);
+                addLog(`Bước ${state.stepCount}.1: Vị trí giữa = ${state.mid + 1} (Giá trị: ${array[state.mid]})`);
                 
                 state.subStep = 1;
             } else {
@@ -295,15 +302,15 @@
                     finishSim();
                 } else if (midVal < targetValue) {
                     updateStatus(`${midVal} < ${targetValue} → Tìm bên phải`, "text-indigo-500");
-                    updateDesc(`Vì ${midVal} nhỏ hơn ${targetValue}, ta loại bỏ nửa bên trái.`);
-                    addLog(`${midVal} < ${targetValue} → Cập nhật Left = ${state.mid + 2}`);
+                    updateDesc(`Vì ${midVal} nhỏ hơn ${targetValue}, ta thu hẹp vùng tìm kiếm sang bên phải (vị trí ${state.mid + 2} đến ${state.right + 1}).`);
+                    addLog(`${midVal} < ${targetValue} → Cập nhật Vị trí bắt đầu (Left) = ${state.mid + 2}`);
                     state.left = state.mid + 1;
                     state.subStep = 0;
                     state.mid = -1;
                 } else {
                     updateStatus(`${midVal} > ${targetValue} → Tìm bên trái`, "text-indigo-500");
-                    updateDesc(`Vì ${midVal} lớn hơn ${targetValue}, ta loại bỏ nửa bên phải.`);
-                    addLog(`${midVal} > ${targetValue} → Cập nhật Right = ${state.mid}`);
+                    updateDesc(`Vì ${midVal} lớn hơn ${targetValue}, ta thu hẹp vùng tìm kiếm sang bên trái (vị trí ${state.left + 1} đến ${state.mid}).`);
+                    addLog(`${midVal} > ${targetValue} → Cập nhật Vị trí kết thúc (Right) = ${state.mid}`);
                     state.right = state.mid - 1;
                     state.subStep = 0;
                     state.mid = -1;
