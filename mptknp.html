@@ -9,180 +9,144 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
         }
         .glass-morphism {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 24px;
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
         .array-item {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            flex-shrink: 0;
         }
+        /* Vùng đang xét: Màu nền xanh lam nhạt rõ rệt */
         .active-range {
-            background-color: #eff6ff !important;
+            background-color: #dbeafe !important;
             border: 2px solid #3b82f6 !important;
             color: #1e40af;
         }
+        /* Ô ở giữa: Nền vàng nổi bật trên nền xanh */
         .mid-item {
             background-color: #fbbf24 !important;
             color: #1e1b4b !important;
             transform: scale(1.1);
-            box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4);
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.6);
             border-color: #d97706 !important;
             z-index: 20;
         }
+        /* Khi tìm thấy: Màu xanh lá */
         .found-item {
             background-color: #10b981 !important;
             color: white !important;
             transform: scale(1.15);
             border-color: #059669 !important;
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
             z-index: 30;
         }
+        /* Các ô ngoài vùng tìm kiếm: Mờ đi */
         .inactive-item {
-            opacity: 0.3;
-            filter: grayscale(0.8);
-            background-color: #f1f5f9;
+            opacity: 0.25;
+            filter: grayscale(1);
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
         }
         .custom-scrollbar::-webkit-scrollbar {
-            height: 6px;
-            width: 5px;
+            width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
         }
-        @keyframes pulse-soft {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-        .pulse {
-            animation: pulse-soft 2s infinite;
-        }
     </style>
 </head>
-<body class="p-4 md:p-8 lg:p-12 flex justify-center items-start">
-    <div id="app" class="w-full max-w-7xl">
+<body class="p-4 md:p-10">
+    <div id="app" class="max-w-4xl mx-auto">
         <!-- Màn hình thiết lập -->
-        <div id="setup-screen" class="glass-morphism p-8 md:p-16 text-center max-w-3xl mx-auto mt-10">
-            <h1 class="text-4xl font-extrabold text-slate-800 mb-2 tracking-tight">Binary Search Visualizer</h1>
-            <p class="text-slate-500 mb-10 text-lg">Học thuật toán tìm kiếm nhị phân qua minh họa trực quan</p>
+        <div id="setup-screen" class="glass-morphism p-8 md:p-12 text-center">
+            <h1 class="text-3xl font-extrabold text-indigo-700 mb-2 uppercase tracking-tight">Mô phỏng Tìm kiếm nhị phân</h1>
+            <p class="text-gray-500 mb-8 font-medium italic">(Quy ước vị trí trong dãy số bắt đầu từ 1)</p>
             
-            <div class="space-y-8 text-left">
+            <div class="space-y-8 text-left max-w-xl mx-auto">
                 <!-- Chọn dãy số -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">1. Chọn bộ dữ liệu:</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button onclick="selectArray(1)" id="btn-arr-1" class="array-select-btn p-5 rounded-2xl border-2 border-slate-100 hover:border-indigo-300 bg-white text-slate-700 transition-all text-left flex flex-col group relative">
-                            <span class="text-xs text-indigo-500 font-bold mb-1">Dãy 1 (Chẵn)</span>
-                            <span class="font-mono text-sm">[6, 12, 18, 42, 44, 55, 67, 94]</span>
+                    <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">1. Chọn dãy số mẫu:</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="selectArray(1)" id="btn-arr-1" class="array-select-btn p-4 rounded-xl border-2 border-indigo-100 hover:border-indigo-400 bg-white text-gray-700 transition-all text-left flex justify-between items-center group">
+                            <span>Dãy 1: [6, 12, 18, 42, 44, 55, 67, 94]</span>
+                            <span class="opacity-0 group-hover:opacity-100 text-indigo-500 text-sm">Chọn</span>
                         </button>
-                        <button onclick="selectArray(2)" id="btn-arr-2" class="array-select-btn p-5 rounded-2xl border-2 border-slate-100 hover:border-indigo-300 bg-white text-slate-700 transition-all text-left flex flex-col group">
-                            <span class="text-xs text-indigo-500 font-bold mb-1">Dãy 2 (Lẻ)</span>
-                            <span class="font-mono text-sm">[5, 11, 18, 39, 41, 52, 63, 70, 85, 88, 91]</span>
+                        <button onclick="selectArray(2)" id="btn-arr-2" class="array-select-btn p-4 rounded-xl border-2 border-indigo-100 hover:border-indigo-400 bg-white text-gray-700 transition-all text-left flex justify-between items-center group">
+                            <span>Dãy 2: [5, 11, 18, 39, 41, 52, 63, 70, 85]</span>
+                            <span class="opacity-0 group-hover:opacity-100 text-indigo-500 text-sm">Chọn</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Nhập giá trị cần tìm -->
-                <div class="max-w-md">
-                    <label class="block text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">2. Nhập số cần tìm:</label>
-                    <input type="number" id="target-input" value="44" class="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none transition-all text-2xl font-bold text-indigo-600 shadow-inner" placeholder="Ví dụ: 44">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">2. Nhập số cần tìm:</label>
+                    <input type="number" id="target-input" value="44" class="w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none transition-all text-xl font-bold text-indigo-600" placeholder="Ví dụ: 44">
                 </div>
 
-                <div class="pt-6">
-                    <button onclick="startSimulation()" class="w-full bg-slate-900 hover:bg-indigo-700 text-white font-bold py-5 rounded-2xl transition-all shadow-xl hover:-translate-y-1 text-lg uppercase tracking-wider">
-                        Bắt đầu mô phỏng ngay
+                <div class="pt-4">
+                    <button onclick="startSimulation()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-indigo-200 text-lg uppercase tracking-wider">
+                        Bắt đầu mô phỏng
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Màn hình mô phỏng (Laptop Layout) -->
-        <div id="sim-screen" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            <!-- Header Bar (Full width) -->
-            <div class="lg:col-span-12 glass-morphism p-5 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">Đang tìm: <span id="display-target" class="text-indigo-600">0</span></h2>
-                        <p id="status-text" class="text-slate-500 text-sm font-medium italic">Khởi tạo hệ thống...</p>
-                    </div>
+        <!-- Màn hình mô phỏng -->
+        <div id="sim-screen" class="hidden space-y-6">
+            <div class="glass-morphism p-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-indigo-700">Đang tìm số: <span id="display-target" class="text-2xl">0</span></h2>
+                    <p class="text-gray-500 text-sm">Trạng thái: <span id="status-text" class="font-semibold text-indigo-500">Sẵn sàng</span></p>
                 </div>
-                <button onclick="location.reload()" class="w-full md:w-auto px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                    Thoát
-                </button>
+                <button onclick="location.reload()" class="px-5 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Quay lại</button>
             </div>
 
-            <!-- Cột Trái: Trực quan hóa & Điều khiển -->
-            <div class="lg:col-span-8 space-y-6">
-                <!-- Vùng hiển thị dãy số -->
-                <div class="glass-morphism p-6 md:p-8 min-h-[450px] flex flex-col justify-between overflow-hidden">
-                    <!-- Container cuộn ngang cho dãy số trên 1 dòng -->
-                    <div class="flex-grow flex flex-col justify-center">
-                        <div id="array-container" class="flex flex-nowrap justify-start lg:justify-center gap-3 md:gap-4 mb-24 py-16 overflow-x-auto custom-scrollbar px-4">
-                            <!-- Items injected here -->
-                        </div>
+            <div class="glass-morphism p-8 text-center overflow-hidden">
+                <!-- Visualization -->
+                <div class="mb-14">
+                    <div id="array-container" class="flex flex-wrap justify-center gap-3">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+
+                <!-- Pointers labels -->
+                <div class="flex flex-wrap justify-center gap-6 md:gap-12 text-sm font-bold mb-10">
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-400 rounded"></div> Vùng đang xét</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-amber-400 rounded"></div> Mid (Vị trí giữa)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-emerald-500 rounded"></div> Đã tìm thấy</div>
+                </div>
+
+                <div class="flex flex-col items-center gap-6">
+                    <div id="step-desc" class="min-h-[60px] p-4 bg-indigo-50 rounded-2xl text-indigo-800 font-bold max-w-2xl w-full flex items-center justify-center text-xl uppercase tracking-wide">
+                        Sẵn sàng bắt đầu...
                     </div>
 
-                    <!-- Chỉ dẫn Pointer -->
-                    <div class="grid grid-cols-3 gap-2 max-w-lg mx-auto mb-10">
-                        <div class="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                            <div class="w-3 h-3 bg-blue-100 border border-blue-400 rounded-sm"></div> Vùng đang xét
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                            <div class="w-3 h-3 bg-amber-400 rounded-sm"></div> Vị trí giữa (M)
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                            <div class="w-3 h-3 bg-emerald-500 rounded-sm"></div> Kết quả tìm thấy
-                        </div>
-                    </div>
-
-                    <!-- Hộp giải thích bước -->
-                    <div class="flex flex-col md:flex-row items-stretch gap-4">
-                        <div id="step-desc" class="flex-grow p-6 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-semibold text-lg flex items-center justify-center text-center leading-relaxed shadow-inner">
-                            Sẵn sàng bắt đầu...
-                        </div>
-                        <button id="next-btn" onclick="stepForward()" class="md:w-64 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 px-8 rounded-2xl transition-all shadow-lg active:scale-95 text-lg flex items-center justify-center gap-2">
-                            BƯỚC TIẾP <span class="hidden md:inline">→</span>
-                        </button>
-                    </div>
+                    <button id="next-btn" onclick="stepForward()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 px-12 rounded-2xl transition-all shadow-xl hover:-translate-y-1 active:scale-95 text-xl">
+                        BƯỚC TIẾP THEO →
+                    </button>
                 </div>
             </div>
 
-            <!-- Cột Phải: Nhật ký -->
-            <div class="lg:col-span-4 h-full">
-                <div class="glass-morphism p-6 h-full flex flex-col min-h-[500px] lg:max-h-[720px]">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">Nhật ký hoạt động</h3>
-                        <span id="step-counter" class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold">Bước: 0</span>
-                    </div>
-                    <div id="sim-log" class="flex-grow space-y-3 overflow-y-auto pr-2 custom-scrollbar text-sm">
-                        <div class="text-slate-300 italic">Dữ liệu nhật ký sẽ xuất hiện tại đây...</div>
-                    </div>
+            <!-- Log history -->
+            <div class="glass-morphism p-6">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Nhật ký hoạt động (Chi tiết)</h3>
+                <div id="sim-log" class="space-y-2 text-sm max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    <p class="text-gray-400">Chưa có hoạt động nào...</p>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
         const examples = {
             1: [6, 12, 18, 42, 44, 55, 67, 94],
-            2: [5, 11, 18, 39, 41, 52, 63, 70, 85, 88, 91]
+            2: [5, 11, 18, 39, 41, 52, 63, 70, 85]
         };
 
         let selectedArrayData = examples[1]; 
@@ -191,8 +155,7 @@
             left: 0, 
             right: 0,
             mid: -1,
-            stepCount: 0,
-            subStep: 0, // 0: calculate mid, 1: compare
+            step: 0,
             finished: false,
             found: false
         };
@@ -200,36 +163,37 @@
         function selectArray(id) {
             selectedArrayData = examples[id];
             document.querySelectorAll('.array-select-btn').forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'ring-4', 'ring-indigo-100');
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'ring-2', 'ring-indigo-100');
             });
             const selectedBtn = document.getElementById(`btn-arr-${id}`);
-            selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'ring-4', 'ring-indigo-100');
+            selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'ring-2', 'ring-indigo-100');
         }
 
-        window.onload = () => { selectArray(1); };
+        window.onload = () => {
+            selectArray(1);
+        };
 
         function startSimulation() {
             const inputVal = document.getElementById('target-input').value;
-            if (inputVal === "") return;
+            if (inputVal === "") {
+                alert("Vui lòng nhập một số để tìm!");
+                return;
+            }
 
             targetValue = parseInt(inputVal);
-            state = {
-                left: 0,
-                right: selectedArrayData.length - 1,
-                mid: -1,
-                stepCount: 0,
-                subStep: 0,
-                finished: false,
-                found: false
-            };
+            state.left = 0;
+            state.right = selectedArrayData.length - 1;
+            state.mid = -1;
+            state.step = 0;
+            state.finished = false;
+            state.found = false;
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('sim-screen').classList.remove('hidden');
             document.getElementById('display-target').innerText = targetValue;
             
             renderArray();
-            updateDesc("Bấm nút 'BƯỚC TIẾP' để bắt đầu quá trình tìm kiếm.");
-            addLog(`Khởi tạo: Tìm ${targetValue} trong dãy ${selectedArrayData.length} phần tử.`, "system");
+            addLog(`Bắt đầu tìm giá trị ${targetValue}.`);
         }
 
         function renderArray() {
@@ -239,13 +203,14 @@
             selectedArrayData.forEach((val, idx) => {
                 const div = document.createElement('div');
                 div.id = `item-${idx}`;
-                div.className = "array-item relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-xl md:rounded-2xl border-2 font-bold text-sm md:text-xl shadow-sm bg-white border-slate-100";
+                div.className = "array-item relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-2xl border-2 font-bold text-lg shadow-sm bg-white border-gray-100";
                 
                 div.innerHTML = `
+                    <span class="text-[10px] text-gray-400 absolute -top-6">Vị trí ${idx + 1}</span>
                     <span class="z-10">${val}</span>
-                    <span class="absolute -top-7 text-[10px] text-slate-400 font-medium whitespace-nowrap">Vị trí ${idx + 1}</span>
                 `;
 
+                // Áp dụng lớp hiển thị theo trạng thái
                 if (state.finished && idx === state.mid && state.found) {
                     div.classList.add('found-item');
                 } else if (idx === state.mid) {
@@ -256,109 +221,106 @@
                     div.classList.add('inactive-item');
                 }
 
-                // Pointer Markers (L, R, M)
+                // Nhãn chỉ số L, R, M
                 if (!state.finished) {
-                    if (idx === state.left) createMarker(div, "L", "text-blue-600", "-bottom-7");
-                    if (idx === state.right) createMarker(div, "R", "text-blue-600", "-bottom-12");
-                    if (idx === state.mid) createMarker(div, "M", "text-amber-600 font-black", "-bottom-17");
+                    if (idx === state.left) {
+                        const lLabel = document.createElement('span');
+                        lLabel.className = "absolute -bottom-6 text-blue-600 text-[10px] font-bold";
+                        lLabel.innerText = "L";
+                        div.appendChild(lLabel);
+                    }
+                    if (idx === state.right) {
+                        const rLabel = document.createElement('span');
+                        rLabel.className = "absolute -bottom-10 text-blue-600 text-[10px] font-bold";
+                        rLabel.innerText = "R";
+                        div.appendChild(rLabel);
+                    }
+                    if (idx === state.mid) {
+                        const mLabel = document.createElement('span');
+                        mLabel.className = "absolute -bottom-14 text-amber-600 text-[10px] font-bold";
+                        mLabel.innerText = "M";
+                        div.appendChild(mLabel);
+                    }
                 }
 
                 container.appendChild(div);
             });
         }
 
-        function createMarker(parent, text, color, pos) {
-            const span = document.createElement('span');
-            span.className = `absolute ${pos} ${color} text-[11px] font-black bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 z-10`;
-            span.innerText = text;
-            parent.appendChild(span);
-        }
-
         function stepForward() {
             if (state.finished) return;
 
             const array = selectedArrayData;
-            
-            if (state.subStep === 0) {
-                // Giai đoạn: Tính Mid
-                state.stepCount++;
-                state.mid = Math.floor((state.left + state.right) / 2);
-                
-                updateStatus(`Đang xét vị trí giữa: ${state.mid + 1}`, "text-amber-500");
-                updateDesc(`<strong>Bước ${state.stepCount}:</strong> Tính vị trí chính giữa của vùng đang xét.<br><span class='text-sm text-slate-500'>Mid = (${state.left + 1} + ${state.right + 1}) / 2 = ${state.mid + 1}</span>`);
-                addLog(`Bước ${state.stepCount}.1: Vị trí giữa = ${state.mid + 1} (Giá trị: ${array[state.mid]})`);
-                
-                state.subStep = 1;
-            } else {
-                // Giai đoạn: So sánh
-                const midVal = array[state.mid];
-                
-                if (midVal === targetValue) {
+            const L = state.left + 1;
+            const R = state.right + 1;
+            const stepNum = Math.floor(state.step / 2) + 1;
+
+            if (state.mid === -1 || state.step % 2 === 0) {
+                const M_display = Math.floor((L + R) / 2);
+                state.mid = M_display - 1; 
+
+                updateStatus(`Đang xét vị trí giữa: ${M_display}`);
+                updateDesc(`Bước ${stepNum}: Tính vị trí giữa`);
+                addLog(`Bước ${stepNum}: Mid = ( ${L} + ${R} ) / 2 = ${M_display} (giá trị ${array[state.mid]})`);
+                state.step++;
+            } 
+            else {
+                const M_display = state.mid + 1;
+                updateDesc(`Bước ${stepNum}: So sánh và thu hẹp vùng tìm kiếm`);
+
+                if (array[state.mid] === targetValue) {
                     state.finished = true;
                     state.found = true;
-                    updateStatus("Đã tìm thấy mục tiêu!", "text-emerald-500");
-                    updateDesc(`<span class="text-emerald-600">Thành công!</span> Giá trị ${targetValue} nằm ở vị trí ${state.mid + 1}.`);
-                    addLog(`KẾT QUẢ: Đã tìm thấy tại vị trí ${state.mid + 1}.`, "success");
-                    finishSim();
-                } else if (midVal < targetValue) {
-                    updateStatus(`${midVal} < ${targetValue} → Tìm bên phải`, "text-indigo-500");
-                    updateDesc(`Vì ${midVal} nhỏ hơn ${targetValue}, ta thu hẹp vùng tìm kiếm sang bên phải (vị trí ${state.mid + 2} đến ${state.right + 1}).`);
-                    addLog(`${midVal} < ${targetValue} → Cập nhật Vị trí bắt đầu (Left) = ${state.mid + 2}`);
+                    updateStatus("Đã tìm thấy!", "text-emerald-500");
+                    updateDesc("Tìm thấy giá trị!");
+                    addLog(`Kết quả: Tìm thấy ${targetValue} tại vị trí ${M_display}.`);
+                    document.getElementById('next-btn').innerText = "KẾT THÚC";
+                    document.getElementById('next-btn').classList.add('bg-emerald-500');
+                } else if (array[state.mid] < targetValue) {
+                    updateStatus(`${array[state.mid]} < ${targetValue}, tìm sang phải.`);
+                    addLog(`${array[state.mid]} < ${targetValue} -> Cập nhật Left = ${M_display + 1}`);
                     state.left = state.mid + 1;
-                    state.subStep = 0;
+                    // Khi cập nhật Left, reset mid để bước sau tính lại
                     state.mid = -1;
                 } else {
-                    updateStatus(`${midVal} > ${targetValue} → Tìm bên trái`, "text-indigo-500");
-                    updateDesc(`Vì ${midVal} lớn hơn ${targetValue}, ta thu hẹp vùng tìm kiếm sang bên trái (vị trí ${state.left + 1} đến ${state.mid}).`);
-                    addLog(`${midVal} > ${targetValue} → Cập nhật Vị trí kết thúc (Right) = ${state.mid}`);
+                    updateStatus(`${array[state.mid]} > ${targetValue}, tìm sang trái.`);
+                    addLog(`${array[state.mid]} > ${targetValue} -> Cập nhật Right = ${M_display - 1}`);
                     state.right = state.mid - 1;
-                    state.subStep = 0;
+                    // Khi cập nhật Right, reset mid để bước sau tính lại
                     state.mid = -1;
                 }
 
                 if (state.left > state.right && !state.found) {
                     state.finished = true;
-                    updateStatus("Không tìm thấy giá trị", "text-red-500");
-                    updateDesc("<span class='text-red-500'>Kết thúc:</span> Giá trị không tồn tại trong dãy này.");
-                    addLog(`KẾT THÚC: Không tìm thấy giá trị ${targetValue}.`, "error");
-                    finishSim();
+                    updateStatus("Không tìm thấy!", "text-red-500");
+                    updateDesc("Không tìm thấy giá trị!");
+                    addLog(`Kết thúc: Không tìm thấy ${targetValue} trong dãy.`);
+                    document.getElementById('next-btn').innerText = "KẾT THÚC";
+                    document.getElementById('next-btn').classList.add('bg-red-500');
                 }
+                state.step++;
             }
 
-            document.getElementById('step-counter').innerText = `Bước: ${state.stepCount}`;
             renderArray();
         }
 
-        function finishSim() {
-            const btn = document.getElementById('next-btn');
-            btn.innerText = "CHƠI LẠI";
-            btn.classList.replace('bg-indigo-600', 'bg-slate-800');
-            btn.onclick = () => location.reload();
-        }
-
-        function updateStatus(text, colorClass) {
+        function updateStatus(text, colorClass = "text-indigo-500") {
             const el = document.getElementById('status-text');
             el.innerText = text;
-            el.className = `text-sm font-bold ${colorClass}`;
+            el.className = `font-semibold ${colorClass}`;
         }
 
         function updateDesc(html) {
             document.getElementById('step-desc').innerHTML = html;
         }
 
-        function addLog(text, type = "normal") {
+        function addLog(text) {
             const log = document.getElementById('sim-log');
-            if (log.innerText.includes("Dữ liệu nhật ký")) log.innerHTML = '';
-            
-            const div = document.createElement('div');
-            let bgClass = "bg-white border-slate-100";
-            if (type === "success") bgClass = "bg-emerald-50 border-emerald-100 text-emerald-700 font-bold";
-            if (type === "error") bgClass = "bg-red-50 border-red-100 text-red-700 font-bold";
-            if (type === "system") bgClass = "bg-indigo-50 border-indigo-100 text-indigo-700";
-
-            div.className = `p-3 rounded-xl border ${bgClass} shadow-sm animate-in slide-in-from-right-4 duration-300`;
-            div.innerHTML = text;
-            log.prepend(div);
+            if (log.innerHTML.includes("Chưa có hoạt động")) log.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = "text-gray-600 border-l-2 border-indigo-200 pl-3 py-1";
+            p.innerHTML = `<span class="font-bold text-indigo-400">#</span> ${text}`;
+            log.prepend(p);
         }
     </script>
 </body>
