@@ -101,7 +101,7 @@
         <div id="sim-screen" class="hidden space-y-6">
             <div class="glass-morphism p-6 flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-indigo-700">Đang tìm số: <span id="display-target" class="text-2xl">0</span></h2>
+                    <h2 class="text-xl font-bold text-indigo-700">Đang tìm số: <span id="display-target" class="text-2xl text-rose-600">0</span></h2>
                     <p class="text-gray-500 text-sm">Trạng thái: <span id="status-text" class="font-semibold text-indigo-500">Sẵn sàng</span></p>
                 </div>
                 <button onclick="location.reload()" class="px-5 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Quay lại</button>
@@ -282,13 +282,13 @@
                     document.getElementById('next-btn').innerText = "KẾT THÚC";
                     document.getElementById('next-btn').classList.add('bg-emerald-500');
                 } else if (array[state.mid] < targetValue) {
-                    updateStatus(`${array[state.mid]} < ${targetValue}, tìm sang phải.`);
+                    updateStatus(`${array[state.mid]} < <span class="text-rose-600">${targetValue}</span>, tìm sang phải.`);
                     addLog(`${array[state.mid]} < ${targetValue} -> Cập nhật Left = ${M_display + 1}`);
                     state.left = state.mid + 1;
                     // Khi cập nhật Left, reset mid để bước sau tính lại
                     state.mid = -1;
                 } else {
-                    updateStatus(`${array[state.mid]} > ${targetValue}, tìm sang trái.`);
+                    updateStatus(`${array[state.mid]} > <span class="text-rose-600">${targetValue}</span>, tìm sang trái.`);
                     addLog(`${array[state.mid]} > ${targetValue} -> Cập nhật Right = ${M_display - 1}`);
                     state.right = state.mid - 1;
                     // Khi cập nhật Right, reset mid để bước sau tính lại
@@ -311,7 +311,7 @@
 
         function updateStatus(text, colorClass = "text-indigo-500") {
             const el = document.getElementById('status-text');
-            el.innerText = text;
+            el.innerHTML = text;
             el.className = `font-semibold ${colorClass}`;
         }
 
