@@ -605,7 +605,248 @@
             "Đổi chỗ liên tục hàng trăm lần"
         ],
         "answer": 1
+    },
+
+    {
+        "id": 1,
+        "topic": "sxnb",
+        "question": "Trong thuật toán sắp xếp nổi bọt, hai phần tử được so sánh với nhau là hai phần tử như thế nào?",
+        "options": [
+            "Hai phần tử bất kỳ trong dãy",
+            "Hai phần tử ở hai đầu dãy",
+            "Hai phần tử liền kề nhau",
+            "Phần tử đầu tiên và phần tử cuối cùng"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 2,
+        "topic": "sxnb",
+        "question": "Tại sao thuật toán này lại có tên là 'Sắp xếp nổi bọt'?",
+        "options": [
+            "Vì các phần tử nhỏ/lớn sẽ dần 'nổi lên' về đúng vị trí ở đầu hoặc cuối dãy giống như bong bóng",
+            "Vì thuật toán này làm cho dãy số trông đẹp hơn",
+            "Vì nó chỉ dùng để sắp xếp các số có hình tròn",
+            "Vì nó hoạt động rất nhanh như bong bóng nổ"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 3,
+        "topic": "sxnb",
+        "question": "Khi sắp xếp nổi bọt tăng dần, nếu phần tử đứng trước lớn hơn phần tử đứng sau, ta sẽ làm gì?",
+        "options": [
+            "Giữ nguyên vị trí",
+            "Đổi chỗ hai phần tử đó cho nhau",
+            "Xóa cả hai phần tử",
+            "Nhân hai phần tử với nhau"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 4,
+        "topic": "sxnb",
+        "question": "Sau bước lặp đầu tiên của sắp xếp nổi bọt tăng dần, phần tử nào chắc chắn sẽ về đúng vị trí cuối dãy?",
+        "options": [
+            "Phần tử nhỏ nhất",
+            "Phần tử lớn nhất",
+            "Phần tử đầu tiên",
+            "Không có phần tử nào"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 5,
+        "topic": "sxnb",
+        "question": "Điểm khác biệt lớn nhất giữa Sắp xếp nổi bọt và Sắp xếp chọn là gì?",
+        "options": [
+            "Sắp xếp nổi bọt không cần so sánh",
+            "Sắp xếp nổi bọt đổi chỗ nhiều lần trong mỗi lượt lặp, còn sắp xếp chọn chỉ đổi chỗ tối đa 1 lần",
+            "Sắp xếp chọn nhanh hơn gấp 100 lần",
+            "Sắp xếp nổi bọt chỉ dành cho chữ cái"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 6,
+        "topic": "sxnb",
+        "question": "Nếu một dãy đã được sắp xếp đúng thứ tự ngay từ đầu, thuật toán sắp xếp nổi bọt sẽ làm gì?",
+        "options": [
+            "Vẫn thực hiện so sánh các cặp phần tử nhưng không đổi chỗ",
+            "Dừng lại ngay lập tức mà không kiểm tra",
+            "Đảo ngược lại dãy số",
+            "Báo lỗi hệ thống"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 7,
+        "topic": "sxnb",
+        "question": "Trong mỗi vòng lặp của sắp xếp nổi bọt, ta so sánh các cặp phần tử từ đâu đến đâu?",
+        "options": [
+            "Chỉ so sánh cặp đầu tiên",
+            "Chỉ so sánh cặp cuối cùng",
+            "So sánh lần lượt từ đầu đến cuối phần chưa được sắp xếp",
+            "So sánh ngẫu nhiên"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 8,
+        "topic": "sxnb",
+        "question": "Nhược điểm lớn nhất của thuật toán sắp xếp nổi bọt là gì?",
+        "options": [
+            "Rất khó lập trình",
+            "Thực hiện rất nhiều phép đổi chỗ, gây mất thời gian khi dãy số lớn",
+            "Không thể sắp xếp được số âm",
+            "Chỉ sắp xếp được tối đa 10 phần tử"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 9,
+        "topic": "sxnb",
+        "question": "Ưu điểm của sắp xếp nổi bọt so với sắp xếp chọn là gì?",
+        "options": [
+            "Dễ hiểu và dễ cài đặt đối với người mới bắt đầu",
+            "Nhanh hơn mọi thuật toán khác",
+            "Tiết kiệm bộ nhớ gấp đôi",
+            "Không cần dùng biến trung gian"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 10,
+        "topic": "sxnb",
+        "question": "Để sắp xếp dãy số [5, 1, 4] tăng dần bằng nổi bọt, bước đầu tiên so sánh 5 và 1 sẽ dẫn đến kết quả gì?",
+        "options": [
+            "[5, 1, 4] (giữ nguyên)",
+            "[1, 5, 4] (đổi chỗ)",
+            "[1, 4, 5]",
+            "[4, 1, 5]"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 11,
+        "topic": "sxnb",
+        "question": "Thuật toán sắp xếp nổi bọt kết thúc khi nào?",
+        "options": [
+            "Khi đã thực hiện đủ số vòng lặp mà không còn cặp nào sai thứ tự",
+            "Khi máy tính hết pin",
+            "Khi dãy số biến thành toàn số 0",
+            "Khi ta xóa hết các phần tử"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 12,
+        "topic": "sxnb",
+        "question": "Trong thuật toán sắp xếp chọn, ta đi tìm phần tử nhỏ nhất. Còn trong sắp xếp nổi bọt, ta làm gì?",
+        "options": [
+            "Cũng đi tìm phần tử nhỏ nhất rồi mới đổi chỗ",
+            "Đổi chỗ ngay lập tức khi thấy hai phần tử kề nhau sai thứ tự",
+            "Xóa phần tử lớn nhất",
+            "Chia đôi dãy số"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 13,
+        "topic": "sxnb",
+        "question": "Nếu dãy có 5 phần tử, lượt lặp đầu tiên của sắp xếp nổi bọt sẽ thực hiện bao nhiêu lần so sánh?",
+        "options": [
+            "5 lần",
+            "4 lần",
+            "1 lần",
+            "10 lần"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 14,
+        "topic": "sxnb",
+        "question": "Thuật toán nào sau đây thực hiện ít phép đổi chỗ (hoán đổi) hơn khi dãy chưa sắp xếp?",
+        "options": [
+            "Sắp xếp nổi bọt",
+            "Sắp xếp chọn",
+            "Cả hai bằng nhau",
+            "Sắp xếp ngẫu nhiên"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 15,
+        "topic": "sxnb",
+        "question": "Tại sao sắp xếp nổi bọt thường chạy chậm hơn sắp xếp chọn trên các dãy số lớn?",
+        "options": [
+            "Vì nó phải đổi chỗ các phần tử liên tục nhiều lần",
+            "Vì nó tốn nhiều dung lượng ổ cứng",
+            "Vì nó không dùng phép toán cộng",
+            "Vì nó chỉ hoạt động trên máy tính cũ"
+        ],
+        "answer": 0
+    },
+    {
+        "id": 16,
+        "topic": "sxnb",
+        "question": "Khẳng định nào sau đây là ĐÚNG?",
+        "options": [
+            "Sắp xếp chọn và sắp xếp nổi bọt là một",
+            "Cả hai thuật toán đều dùng để thay đổi thứ tự các phần tử theo một quy tắc",
+            "Sắp xếp nổi bọt không cần dùng đến phép so sánh",
+            "Sắp xếp nổi bọt chỉ dùng cho dãy số giảm dần"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 17,
+        "topic": "sxnb",
+        "question": "Cho dãy: 3, 2, 1. Sau lần đổi chỗ đầu tiên của thuật toán nổi bọt (tăng dần), dãy sẽ là:",
+        "options": [
+            "1, 2, 3",
+            "2, 3, 1",
+            "2, 1, 3",
+            "3, 1, 2"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 18,
+        "topic": "sxnb",
+        "question": "Thuật toán sắp xếp nổi bọt thuộc loại kiến thức nào trong tin học?",
+        "options": [
+            "Thiết kế đồ họa",
+            "Lập trình và thuật toán",
+            "Soạn thảo văn bản",
+            "Mạng máy tính"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 19,
+        "topic": "sxnb",
+        "question": "Để đổi chỗ hai phần tử a và b, ta thường dùng thêm biến trung gian t. Các bước đúng là:",
+        "options": [
+            "a=b; b=a;",
+            "t=a; a=b; b=t;",
+            "t=b; b=a; a=b;",
+            "a=t; t=b; b=a;"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 20,
+        "topic": "sxnb",
+        "question": "Sắp xếp nổi bọt và sắp xếp chọn có điểm chung nào?",
+        "options": [
+            "Đều chia dãy thành phần đã sắp xếp và phần chưa sắp xếp qua mỗi bước",
+            "Đều không cần so sánh các số với nhau",
+            "Đều tìm phần tử lớn nhất ở đầu dãy",
+            "Đều là những thuật toán phức tạp nhất thế giới"
+        ],
+        "answer": 0
     }
-
-
 ]
+
+
