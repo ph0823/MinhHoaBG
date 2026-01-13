@@ -54,11 +54,11 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Lớp</label>
-                    <input type="text" id="student-class" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="7A1">
+                    <input type="text" id="student-class" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="7.1">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Số thứ tự (STT)</label>
-                    <input type="number" id="student-stt" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="01">
+                    <input type="number" id="student-stt" min="1" max="55" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="01">
                 </div>
             </div>
             <div>
@@ -144,20 +144,32 @@
         async function startQuiz() {
             const name = document.getElementById('student-name').value.trim();
             const className = document.getElementById('student-class').value.trim();
-            const stt = document.getElementById('student-stt').value.trim();
+            const sttInput = document.getElementById('student-stt').value.trim();
             const topic = document.getElementById('topic-select').value;
 
-            // Kiểm tra xem dữ liệu đã tải xong chưa
+            // Chuyển đổi STT sang số nguyên để kiểm tra
+            const stt = parseInt(sttInput);
+
+            // 1. Kiểm tra xem dữ liệu đã tải xong chưa
             if (allQuestions.length === 0) {
-                await loadQuestions(); // Thử tải lại nếu chưa có
+                await loadQuestions();
             }
 
-            if (!name || !className || !stt) {
+            // 2. Kiểm tra điền đầy đủ thông tin
+            if (!name || !className || !sttInput) {
                 alert("Vui lòng điền đầy đủ thông tin học sinh!");
                 return;
             }
 
-            // Lọc câu hỏi theo chủ đề (Logic giữ nguyên)
+            // 3. KIỂM TRA GIỚI HẠN STT (1 - 55)
+            if (isNaN(stt) || stt < 1 || stt > 55) {
+                alert("Số thứ tự (STT) không hợp lệ! Vui lòng nhập số từ 1 đến 55.");
+                // Tự động xóa hoặc reset giá trị sai (tùy chọn)
+                document.getElementById('student-stt').focus();
+                return;
+            }
+
+            // 4. Lọc câu hỏi theo chủ đề
             let pool = allQuestions.filter(q => q.topic === topic);
             
             if (pool.length === 0) {
@@ -165,120 +177,126 @@
                 return;
             }
 
+            // Xáo trộn và chọn 10 câu
             selectedQuestions = pool.sort(() => Math.random() - 0.5).slice(0, 10);
             studentAnswers = new Array(selectedQuestions.length).fill(null);
 
+            // Hiển thị thông tin lên giao diện làm bài
             document.getElementById('display-topic').innerText = "Chủ đề: " + document.getElementById('topic-select').selectedOptions[0].text;
-            document.getElementById('display-info').innerText = `Học sinh: ${name} - Lớp: ${className} - STT: ${stt}`;
+            document.getElementById('display-info').innerText = `Học sinh: ${name} - Lớp: ${className} - STT: ${stt < 10 ? '0' + stt : stt}`;
             
+            // Chuyển màn hình
             document.getElementById('intro-section').classList.add('hidden');
             document.getElementById('quiz-section').classList.remove('hidden');
 
+            // Vẽ câu hỏi
             renderQuestions();
+            // Reset tiến độ về 0
+            updateProgress();
         }
 
-    function renderQuestions() {
-        const container = document.getElementById('question-container');
-        container.innerHTML = '';
+        function renderQuestions() {
+            const container = document.getElementById('question-container');
+            container.innerHTML = '';
 
-        selectedQuestions.forEach((q, idx) => {
-            const qDiv = document.createElement('div');
-            qDiv.className = "p-4 border rounded-xl bg-gray-50 mb-4";
-            qDiv.innerHTML = `
-                <p class="font-bold text-gray-800 mb-4">${idx + 1}. ${q.question}</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    ${q.options.map((opt, i) => `
-                        <div onclick="selectOption(${idx}, ${i})" id="opt-${idx}-${i}" class="option-card p-3 rounded-lg bg-white border-2">
-                            ${opt}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(qDiv);
-        });
-    }
-
-    // Hàm tính số câu đã làm
-    
-    function updateProgress() {
-        /*
-            Vì mảng studentAnswers được khởi tạo là [null, null, ..., null]. 
-            Khi HS click vào một đáp án, giá trị null tại vị trí đó sẽ được thay bằng số (0, 1, 2, 3). 
-            SD Hàm filter để lọc ra các vị trí đã có đáp án, giúp đếm đúng số câu HS đã làm.
-        */
-        // Đếm số lượng phần tử trong mảng studentAnswers không phải là null
-        const answeredCount = studentAnswers.filter(ans => ans !== null).length;
-        
-        // Cập nhật con số hiển thị trên giao diện
-        const countEl = document.getElementById('answered-count');
-        if (countEl) {
-            countEl.innerText = answeredCount;
-        }
-
-        // (Tùy chọn) Thêm hiệu ứng đổi màu khi hoàn thành 10/10
-        if (answeredCount === 10) {
-            countEl.parentElement.classList.remove('text-indigo-600');
-            countEl.parentElement.classList.add('text-emerald-600');
-        }
-    }
-
-    function selectOption(qIdx, optIdx) {
-        studentAnswers[qIdx] = optIdx;
-        // Lấy số lượng options thực tế của câu hỏi đó
-        const numOptions = selectedQuestions[qIdx].options.length; 
-        // Xóa class 'selected' ở các lựa chọn của câu hỏi
-        for(let i=0; i < numOptions; i++) {
-            const el = document.getElementById(`opt-${qIdx}-${i}`);
-            if(el) {
-                el.classList.remove('selected', 'bg-indigo-100', 'border-indigo-500');
-            }
-        }
-        // Thêm class selected cho lựa chọn mới
-        const selectedEl = document.getElementById(`opt-${qIdx}-${optIdx}`);
-        selectedEl.classList.add('selected', 'bg-indigo-100', 'border-indigo-500');
-
-        // GỌI HÀM CẬP NHẬT TIẾN ĐỘ Sau khi học sinh làm xong 1 câu hỏi
-        updateProgress();
-    }
-    
-
-    function submitQuiz() {
-        if (studentAnswers.includes(null)) {
-            if (!confirm("Bạn chưa làm hết các câu. Vẫn muốn nộp bài?")) return;
-        }
-
-        let score = 0;
-        const wrongList = document.getElementById('wrong-answers-list');
-        wrongList.innerHTML = '';
-
-        selectedQuestions.forEach((q, i) => {
-            if (studentAnswers[i] === q.answer) {
-                score++;
-            } else {
-                const div = document.createElement('div');
-                div.className = "review-card p-4 rounded-xl border-l-4 border-red-500 bg-red-50 mb-3";
-                div.innerHTML = `
-                    <p class="font-bold text-gray-800 mb-1">Câu ${i + 1}: ${q.question}</p>
-                    <p class="text-sm text-red-600 italic">Em chọn: ${studentAnswers[i] !== null ? q.options[studentAnswers[i]] : 'Bỏ trống'}</p>
-                    <p class="text-sm text-emerald-600 font-bold">Đáp án đúng: ${q.options[q.answer]}</p>
+            selectedQuestions.forEach((q, idx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = "p-4 border rounded-xl bg-gray-50 mb-4";
+                qDiv.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-4">${idx + 1}. ${q.question}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${q.options.map((opt, i) => `
+                            <div onclick="selectOption(${idx}, ${i})" id="opt-${idx}-${i}" class="option-card p-3 rounded-lg bg-white border-2">
+                                ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
-                wrongList.appendChild(div);
-            }
-        });
-
-        document.getElementById('score-circle').innerText = `${score}/10`;
-        document.getElementById('result-student-info').innerText = document.getElementById('display-info').innerText;
-        
-        if (score < 10) {
-            document.getElementById('wrong-answers-section').classList.remove('hidden');
-        } else {
-            document.getElementById('wrong-answers-section').classList.add('hidden');
+                container.appendChild(qDiv);
+            });
         }
 
-        document.getElementById('quiz-section').classList.add('hidden');
-        document.getElementById('result-section').classList.remove('hidden');
-        window.scrollTo(0, 0);
-    }
-</script>
+        // Hàm tính số câu đã làm
+    
+        function updateProgress() {
+            /*
+                Vì mảng studentAnswers được khởi tạo là [null, null, ..., null]. 
+                Khi HS click vào một đáp án, giá trị null tại vị trí đó sẽ được thay bằng số (0, 1, 2, 3). 
+                SD Hàm filter để lọc ra các vị trí đã có đáp án, giúp đếm đúng số câu HS đã làm.
+            */
+            // Đếm số lượng phần tử trong mảng studentAnswers không phải là null
+            const answeredCount = studentAnswers.filter(ans => ans !== null).length;
+            
+            // Cập nhật con số hiển thị trên giao diện
+            const countEl = document.getElementById('answered-count');
+            if (countEl) {
+                countEl.innerText = answeredCount;
+            }
+
+            // (Tùy chọn) Thêm hiệu ứng đổi màu khi hoàn thành 10/10
+            if (answeredCount === 10) {
+                countEl.parentElement.classList.remove('text-indigo-600');
+                countEl.parentElement.classList.add('text-emerald-600');
+            }
+        }
+
+        function selectOption(qIdx, optIdx) {
+            studentAnswers[qIdx] = optIdx;
+            // Lấy số lượng options thực tế của câu hỏi đó
+            const numOptions = selectedQuestions[qIdx].options.length; 
+            // Xóa class 'selected' ở các lựa chọn của câu hỏi
+            for(let i=0; i < numOptions; i++) {
+                const el = document.getElementById(`opt-${qIdx}-${i}`);
+                if(el) {
+                    el.classList.remove('selected', 'bg-indigo-100', 'border-indigo-500');
+                }
+            }
+            // Thêm class selected cho lựa chọn mới
+            const selectedEl = document.getElementById(`opt-${qIdx}-${optIdx}`);
+            selectedEl.classList.add('selected', 'bg-indigo-100', 'border-indigo-500');
+
+            // GỌI HÀM CẬP NHẬT TIẾN ĐỘ Sau khi học sinh làm xong 1 câu hỏi
+            updateProgress();
+        }
+        
+
+        function submitQuiz() {
+            if (studentAnswers.includes(null)) {
+                if (!confirm("Bạn chưa làm hết các câu. Vẫn muốn nộp bài?")) return;
+            }
+
+            let score = 0;
+            const wrongList = document.getElementById('wrong-answers-list');
+            wrongList.innerHTML = '';
+
+            selectedQuestions.forEach((q, i) => {
+                if (studentAnswers[i] === q.answer) {
+                    score++;
+                } else {
+                    const div = document.createElement('div');
+                    div.className = "review-card p-4 rounded-xl border-l-4 border-red-500 bg-red-50 mb-3";
+                    div.innerHTML = `
+                        <p class="font-bold text-gray-800 mb-1">Câu ${i + 1}: ${q.question}</p>
+                        <p class="text-sm text-red-600 italic">Em chọn: ${studentAnswers[i] !== null ? q.options[studentAnswers[i]] : 'Bỏ trống'}</p>
+                        <p class="text-sm text-emerald-600 font-bold">Đáp án đúng: ${q.options[q.answer]}</p>
+                    `;
+                    wrongList.appendChild(div);
+                }
+            });
+
+            document.getElementById('score-circle').innerText = `${score}/10`;
+            document.getElementById('result-student-info').innerText = document.getElementById('display-info').innerText;
+            
+            if (score < 10) {
+                document.getElementById('wrong-answers-section').classList.remove('hidden');
+            } else {
+                document.getElementById('wrong-answers-section').classList.add('hidden');
+            }
+
+            document.getElementById('quiz-section').classList.add('hidden');
+            document.getElementById('result-section').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+    </script>
 </body>
 </html>
