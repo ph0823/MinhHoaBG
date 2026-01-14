@@ -3,151 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple TV Online</title>
+    <title>Professional TV & Radio Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
+        :root {
+            --primary-color: #e74c3c;
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #ffffff;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: white;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding-bottom: 50px;
         }
 
         .container {
-            width: 90%;
-            max-width: 1000px;
-            margin-top: 20px;
+            width: 95%;
+            max-width: 1100px;
+            margin-top: 30px;
         }
 
-        .video-wrapper {
+        h1 { text-align: center; color: var(--primary-color); letter-spacing: 1px; }
+
+        /* Video Wrapper */
+        .player-container {
+            position: relative;
             background: #000;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             aspect-ratio: 16 / 9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         video {
             width: 100%;
             height: 100%;
+            z-index: 1;
         }
 
-        .channel-list {
-            margin-top: 20px;
+        /* Visualizer - Sóng âm */
+        #visualizer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none; /* Ẩn mặc định */
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+            z-index: 2;
+        }
+
+        .bar {
+            width: 8px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: height 0.05s ease;
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+
+        /* Danh sách kênh */
+        .channel-grid {
+            margin-top: 30px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
         }
 
-        .channel-item {
-            background: #333;
-            padding: 15px;
+        .channel-card {
+            background: var(--container-bg);
+            padding: 20px 10px;
             text-align: center;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: 0.3s;
-            border: 1px solid #444;
+            transition: all 0.3s ease;
+            border: 1px solid #333;
+            font-weight: 500;
         }
 
-        .channel-item:hover {
-            background: #e74c3c;
-            transform: translateY(-3px);
+        .channel-card:hover {
+            background: var(--primary-color);
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
         }
 
         .active {
-            background: #e74c3c !important;
-            font-weight: bold;
+            background: var(--primary-color) !important;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
         }
 
-        h1 { font-size: 24px; color: #e74c3c; }
+        .tag {
+            display: block;
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1><span style="color: #fff;">LIVE</span> TV PLAYER</h1>
+    <h1>PRO <span style="color: #fff;">MEDIA</span> PLAYER</h1>
     
-    <div class="video-wrapper">
-        <video id="video" controls autoplay></video>
+    <div class="player-container">
+        <div id="visualizer">
+            </div>
+        
+        <video id="video" controls crossorigin="anonymous"></video>
     </div>
 
-    <div class="channel-list" id="playlist">
-        </div>
+    <div class="channel-grid" id="playlist"></div>
 </div>
 
 <script>
     const channels = [
-        { name: "HTV1", url: "https://live.fptplay53.net/epzhd2/btv1_hls.smil/chunklist.m3u8" },
-        { name: "HTV2", url: "https://live.fptplay53.net/epzhd1/htv2hd_vhls.smil/chunklist_b1800000.m3u8" },
-        { name: "HTV3", url: "https://live.fptplay53.net/epzhd1/htv3_hls.smil/chunklist.m3u8" },
-        { name: "HTV4", url: "https://live.fptplay53.net/epzhd1/htv4_hls.smil/chunklist_b1800000.m3u8" },
-        { name: "HTV7", url: "https://live.fptplay53.net/epzhd1/htv7hd_vhls.smil/chunklist_b5000000.m3u8" },
-        { name: "HTV9", url: "https://live.fptplay53.net/epzhd1/htv9hd_vhls.smil/chunklist.m3u8" },
+        { name: "HTV1", url: "https://live.fptplay53.net/epzhd2/btv1_hls.smil/chunklist.m3u8", type: "tv" },
+        { name: "HTV2", url: "https://live.fptplay53.net/epzhd1/htv2hd_vhls.smil/chunklist_b1800000.m3u8", type: "tv" },
+        { name: "HTV3", url: "https://live.fptplay53.net/epzhd1/htv3_hls.smil/chunklist.m3u8", type: "tv" },
+        { name: "HTV4", url: "https://live.fptplay53.net/epzhd1/htv4_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
+        { name: "HTV7", url: "https://live.fptplay53.net/epzhd1/htv7hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+        { name: "HTV9", url: "https://live.fptplay53.net/epzhd1/htv9hd_vhls.smil/chunklist.m3u8", type: "tv" },
         
-        { name: "VTV1", url: "https://live.fptplay53.net/fnxhd1/vtv1hd_vhls.smil/chunklist_b5000000.m3u8" },
-        { name: "VTV3", url: "https://live.fptplay53.net/fnxch2/vtv3hd_abr.smil/chunklist_b1000000.m3u8" },
-        { name: "VTV5", url: "https://live-a.fptplay53.net/live/media/VTV5HD/live_hls_avc/VTV5HD-avc1_600000=10004-mp4a_131600=20000.m3u8" },
-        { name: "VTV9", url: "https://live.fptplay53.net/fnxhd1/vtv9_vhls.smil/chunklist_b5000000.m3u8" },
-        { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8" },
-        { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8" },
-        { name: "THVL1", url: "https://live.fptplay53.net/epzch2/vinhlong1_abr.smil/chunklist.m3u8" },
-        { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8" },
-        { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8" },
-        { name: "THVL4", url: "https://live.fptplay53.net/epzhd2/vinhlong4hd_vhls.smil/chunklist.m3u8" },
-        { name: "VieDrama", url: "https://ec04-pop5-hht.tv360.vn/bpk-token/a5z3m632acshxtg4mexam45wpmdxhnt3/bpk-tv/339/output/339-audio_214835_und_iv_2=214800-video_iv_2=1064800.m3u8" },
-        { name: "INFO", url: "https://ec01-pop5-hht.tv360.vn/bpk-token/dkiv4wv64jgfuv3arehrrek6linjcxs2/bpk-tv/349/output/349-audio_208000_eng_iv_5=206000-video_iv_5=1067600.m3u8" },
-        { name: "CN", url: "https://cdn4.skygo.mn/live/disk1/Cartoon_Network/HLSv3-FTA/Cartoon_Network-avc1_2000000=10-mp4a_256000_eng=6.m3u8" },
-        { name: "HBO", url: "https://fl61.moveonjoy.com/HBO/tracks-v1a1/mono.ts.m3u8" },
-        { name: "Cinemax", url: "https://fl31.moveonjoy.com/CINEMAX/tracks-v1a1/mono.ts.m3u8" },
-        { name: "VNToday", url: "hhttps://vtvgolive-ssaimh.vtvdigital.vn/wDsanS82N2dGi2PYM6q98A/1768412272/manifest/vietnamtoday/playlist_720p.m3u8" },
-        { name: "VOV GT", url: "https://tfsj1gr4nhct1gwzdrcttfa4urmmoptoz1musp75gq4mbp74go55qchz8c5o.100ycdn.com/play.vovgiaothong.vn/live/gthcm/playlist.m3u8?wsSession=c15c0cbdbebe302bd16f414d-176840270071328&wsIPSercert=d333a9c2fa7b5fc1982df1c6360ff0ef&wsiphost=local&wsBindIP=1" },
-        { name: "FM 99.9", url: "hhttps://strm.voh.com.vn/radio/channel1/chunklist_w144246478.m3u8" }
-       
+        { name: "VTV1", url: "https://live.fptplay53.net/fnxhd1/vtv1hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+        { name: "VTV3", url: "https://live.fptplay53.net/fnxch2/vtv3hd_abr.smil/chunklist_b1000000.m3u8", type: "tv" },
+        { name: "VTV5", url: "https://live-a.fptplay53.net/live/media/VTV5HD/live_hls_avc/VTV5HD-avc1_600000=10004-mp4a_131600=20000.m3u8", type: "tv" },
+        { name: "VTV9", url: "https://live.fptplay53.net/fnxhd1/vtv9_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+        
+        { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },
+        { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
+        
+        { name: "THVL1", url: "https://live.fptplay53.net/epzch2/vinhlong1_abr.smil/chunklist.m3u8", type: "tv" },
+        { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8", type: "tv" },
+        { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8", type: "tv" },
+        { name: "THVL4", url: "https://live.fptplay53.net/epzhd2/vinhlong4hd_vhls.smil/chunklist.m3u8", type: "tv" },
+        
+        { name: "VieDrama", url: "https://ec04-pop5-hht.tv360.vn/bpk-token/a5z3m632acshxtg4mexam45wpmdxhnt3/bpk-tv/339/output/339-audio_214835_und_iv_2=214800-video_iv_2=1064800.m3u8", type: "tv" },
+        { name: "INFO", url: "https://ec01-pop5-hht.tv360.vn/bpk-token/dkiv4wv64jgfuv3arehrrek6linjcxs2/bpk-tv/349/output/349-audio_208000_eng_iv_5=206000-video_iv_5=1067600.m3u8", type: "tv" },
+        
+        { name: "CN", url: "https://cdn4.skygo.mn/live/disk1/Cartoon_Network/HLSv3-FTA/Cartoon_Network-avc1_2000000=10-mp4a_256000_eng=6.m3u8", type: "tv" },
+        { name: "HBO", url: "https://fl61.moveonjoy.com/HBO/tracks-v1a1/mono.ts.m3u8", type: "tv" },
+        { name: "Cinemax", url: "https://fl31.moveonjoy.com/CINEMAX/tracks-v1a1/mono.ts.m3u8", type: "tv" },
+        
+        { name: "VNToday", url: "https://vtvgolive-ssaimh.vtvdigital.vn/wDsanS82N2dGi2PYM6q98A/1768412272/manifest/vietnamtoday/playlist_720p.m3u8", type: "tv" },
+        
+        { name: "FM 99.9", url: "https://strm.voh.com.vn/radio/channel1/chunklist_w144246478.m3u8", type: "radio" },
+        { name: "VOV GT", url: "https://tfsj1gr4nhct1gwzdrcttfa4urmmoptoz1musp75gq4mbp74go55qchz8c5o.100ycdn.com/play.vovgiaothong.vn/live/gthcm/playlist.m3u8", type: "radio" }
     ];
-
     const video = document.getElementById('video');
+    const visualizer = document.getElementById('visualizer');
     const playlist = document.getElementById('playlist');
     let hls = new Hls();
+    
+    // Audio Context cho sóng âm
+    let audioCtx, analyser, source;
+    const barCount = 40;
+    const bars = [];
 
-    function playM3U8(url) {
-        if (Hls.isSupported()) {
-            hls.destroy(); // Hủy luồng cũ trước khi load luồng mới
-            hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                video.play();
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Cho Safari (hỗ trợ gốc)
-            video.src = url;
-            video.addEventListener('loadedmetadata', function() {
-                video.play();
-            });
+    // Tạo các thanh bar cho visualizer
+    for (let i = 0; i < barCount; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        visualizer.appendChild(bar);
+        bars.push(bar);
+    }
+
+    function initAudioVisualizer() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            source = audioCtx.createMediaElementSource(video);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            analyser.fftSize = 256;
+            animate();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
         }
     }
 
-    // Khởi tạo danh sách kênh
-    channels.forEach((channel, index) => {
-        const btn = document.createElement('div');
-        btn.className = 'channel-item';
-        btn.innerText = channel.name;
-        btn.onclick = () => {
-            // Xóa class active cũ
-            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-            playM3U8(channel.url);
-        };
-        playlist.appendChild(btn);
+    function animate() {
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
 
-        // Mặc định chạy kênh đầu tiên
-        if(index === 0) {
-            btn.classList.add('active');
-            playM3U8(channel.url);
+        for (let i = 0; i < barCount; i++) {
+            const barHeight = dataArray[i * 2] || 0;
+            // Áp dụng độ cao cho các thanh bar
+            bars[i].style.height = (barHeight / 2) + 10 + 'px';
+            // Đổi màu nhẹ dựa trên tần số
+            bars[i].style.opacity = (barHeight / 255) + 0.3;
         }
+        requestAnimationFrame(animate);
+    }
+
+    function playChannel(channel) {
+        // Tự động ẩn/hiện Visualizer
+        if (channel.type === "radio") {
+            visualizer.style.display = 'flex';
+            initAudioVisualizer();
+        } else {
+            visualizer.style.display = 'none';
+        }
+
+        // Kiểm tra link có hợp lệ không trước khi phát
+        if (!channel.url.startsWith('http')) {
+            alert("Link kênh không hợp lệ!");
+            return;
+        }
+
+        if (Hls.isSupported()) {
+            hls.destroy();
+            hls = new Hls();
+            hls.loadSource(channel.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log("Chờ tương tác người dùng")));
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = channel.url;
+            video.play();
+        }
+    }
+
+    // Render danh sách kênh
+    channels.forEach((ch, index) => {
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        card.innerHTML = `${ch.name} <span class="tag">${ch.type}</span>`;
+        card.onclick = () => {
+            document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
+            card.classList.add('active');
+            playChannel(ch);
+        };
+        playlist.appendChild(card);
+        if(index === 0) { card.classList.add('active'); playChannel(ch); }
     });
 </script>
 
