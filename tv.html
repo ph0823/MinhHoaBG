@@ -34,7 +34,11 @@
 
         /* Video Wrapper */
         .player-container {
-            position: relative;
+            /* khi người dùng cuộn trang web thì màn hình tivi vẫn "dính" ở phía trên */
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+
             background: #000;
             border-radius: 12px;
             overflow: hidden;
@@ -75,10 +79,35 @@
 
         /* Danh sách kênh */
         .channel-grid {
-            margin-top: 30px;
+            margin-top: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 15px;
+            /* Thêm các dòng dưới đây */
+            max-height: 350px; /* Chiều cao tối đa của danh sách kênh */
+            overflow-y: auto;  /* Cho phép cuộn dọc */
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho đẹp hơn (Scrollbar) */
+        .channel-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .channel-grid::-webkit-scrollbar-track {
+            background: #1e1e1e;
+            border-radius: 10px;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb:hover {
+            background: #c0392b;
         }
 
         .channel-card {
@@ -241,7 +270,8 @@
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
-        card.innerHTML = `${ch.name} <span class="tag">${ch.type}</span>`;
+        // Chỉ hiển thị tag nếu type là "radio"
+        card.innerHTML = `${ch.name}${ch.type === 'radio' ? ' <span class="tag">radio</span>' : ''}`;
         card.onclick = () => {
             document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
             card.classList.add('active');
