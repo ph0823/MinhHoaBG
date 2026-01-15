@@ -284,8 +284,24 @@
                 }
             });
 
-            document.getElementById('score-circle').innerText = `${score}/10`;
-            document.getElementById('result-student-info').innerText = document.getElementById('display-info').innerText;
+            // --- THAY ĐỔI 1: Cập nhật màu sắc vòng tròn nếu đạt 10/10 ---
+            const scoreCircle = document.getElementById('score-circle');
+            scoreCircle.innerText = `${score}/10`;
+            
+            if (score === 10) {
+                // Nếu đúng hết, chuyển sang màu đỏ
+                scoreCircle.classList.remove('border-indigo-500', 'text-indigo-600');
+                scoreCircle.classList.add('border-red-500', 'text-red-600');
+            } else {
+                // Nếu không, giữ màu xanh indigo mặc định
+                scoreCircle.classList.remove('border-red-500', 'text-red-600');
+                scoreCircle.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+
+            // --- THAY ĐỔI 2: Hiển thị thêm tên chủ đề chi tiết ở phần kết quả ---
+            const topicName = document.getElementById('display-topic').innerText;
+            const studentInfo = document.getElementById('display-info').innerText;
+            document.getElementById('result-student-info').innerText = `${topicName} | ${studentInfo}`;
             
             if (score < 10) {
                 document.getElementById('wrong-answers-section').classList.remove('hidden');
