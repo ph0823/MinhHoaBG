@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Trắc nghiệm Giáo dục Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-card:hover:not(.disabled) { transform: translateY(-2px); border-color: #3b82f6; background-color: #eff6ff; }
+        .correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .perfect-bg { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; }
+        .timer-warning { color: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="max-w-2xl w-full glass rounded-2xl shadow-2xl overflow-hidden min-h-[550px] flex flex-col">
+        
+        <div id="start-screen" class="p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-graduation-cap text-3xl text-blue-600"></i>
+            </div>
+            <h1 id="main-topic-title" class="text-2xl font-bold text-slate-800 mb-2">Hệ Thống Trắc Nghiệm</h1>
+            <p id="sub-topic-title" class="text-slate-500 mb-8 font-medium"></p>
+            
+            <div class="w-full space-y-4 max-w-sm">
+                <div class="text-left">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Thông tin học sinh:</label>
+                    <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    <input type="text" id="user-class" placeholder="Lớp (Ví dụ: 7A1)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-left flex items-start gap-3">
+                    <i class="fa-solid fa-clock mt-1"></i>
+                    <span>Thời gian làm bài: <strong id="time-display-limit"></strong> phút.<br>Kết quả sẽ tự động lưu khi hết giờ.</span>
+                </div>
+                <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="hidden flex-1 flex flex-col fade-in">
+            <div class="px-8 py-4 bg-slate-50 flex justify-between items-center border-b">
+                <div class="flex flex-col">
+                    <span id="display-info" class="text-sm font-bold text-slate-700"></span>
+                    <span id="progress-text" class="text-xs text-slate-500"></span>
+                </div>
+                <div id="timer-box" class="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
+                    <i class="fa-solid fa-stopwatch text-blue-500"></i>
+                    <span id="timer-text" class="font-mono font-bold text-lg text-slate-700">00:00</span>
+                </div>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200">
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300"></div>
+            </div>
+
+            <div class="p-8 flex-1">
+                <h2 id="question-text" class="text-xl font-bold text-slate-800 mb-8 leading-relaxed"></h2>
+                <div id="options-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div id="result-icon" class="mb-6"></div>
+            <h1 id="result-title" class="text-3xl font-bold text-slate-800 mb-2">Kết quả bài làm</h1>
+            <p id="result-user" class="text-slate-600 mb-6"></p>
+            <div id="score-container" class="bg-slate-50 rounded-2xl p-6 w-full max-w-sm mb-8">
+                <div class="text-5xl font-black text-blue-600 mb-2" id="final-score">0/0</div>
+                <div class="text-sm text-slate-500 uppercase font-bold tracking-widest">Câu trả lời đúng</div>
+            </div>
+            <p id="result-message" class="text-lg font-medium text-slate-700 mb-8 px-4"></p>
+            <button onclick="location.reload()" class="px-10 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-all">LÀM LẠI</button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= CẤU HÌNH DÀNH CHO GIÁO VIÊN ================= */
+        const QUIZ_CONFIG = {
+            topic: "Bài 1: Tạo bài trình chiếu",
+            timeLimitMinutes: 10, // Số phút làm bài
+            googleSheetURL: "https://script.google.com/macros/s/AKfycbyl0IuQQZHUqgluAPJT6H5hN1IPkHa2vb9TBJRx1hKqZIc97TNpK4Bdfucb75SATkpK/exec" 
+        };
+
+        const originalQuestions = [
+            { q: "Phần mềm nào sau đây dùng để tạo bài trình chiếu?", options: ["Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint", "Notepad"], correct: 2 },
+            { q: "Để chèn thêm một trang chiếu mới, em sử dụng tổ hợp phím nào?", options: ["Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"], correct: 1 },
+            { q: "Phím nào dùng để bắt đầu trình chiếu từ trang đầu tiên?", options: ["F1", "F3", "F5", "F7"], correct: 2 },
+            { q: "Trong PowerPoint, các khung có đường viền đứt đoạn dùng để nhập văn bản được gọi là gì?", options: ["Khung hình ảnh", "Khung dành sẵn (Placeholder)", "Khung trang trí", "Khung chú thích"], correct: 1 },
+            { q: "Muốn thoát khỏi chế độ trình chiếu, em nhấn phím nào?", options: ["Tab", "Shift", "Alt", "Esc"], correct: 3 },
+            { q: "Để chèn hình ảnh minh họa vào trang chiếu, em chọn dải lệnh nào?", options: ["Home", "Insert", "Design", "Animations"], correct: 1 },
+            { q: "Khi muốn chèn một bảng biểu (Table) để trình bày dữ liệu, thao tác nào là đúng?", options: ["Chọn Insert -> Table", "Chọn Home -> Table", "Chọn Design -> Table", "Chọn View -> Table"], correct: 0 },
+            { q: "Mỗi trang chiếu thường có bao nhiêu thành phần cơ bản?", options: ["Chỉ có văn bản", "Chỉ có hình ảnh", "Văn bản, hình ảnh, âm thanh, video...", "Chỉ có màu nền"], correct: 2 },
+            { q: "Để thay đổi bố cục trang chiếu (vị trí các khung văn bản), em chọn lệnh nào?", options: ["New Slide", "Layout", "Reset", "Section"], correct: 1 },
+            { q: "Theo nguyên tắc thiết kế, khi chọn màu chữ cho trang chiếu em nên lưu ý điều gì?", options: ["Màu chữ trùng màu nền", "Màu chữ tương phản với màu nền", "Dùng càng nhiều màu càng tốt", "Luôn dùng màu đỏ"], correct: 1 },
+            { q: "Tệp bài trình chiếu PowerPoint thường có phần mở rộng là gì?", options: [".docx", ".xlsx", ".pptx", ".txt"], correct: 2 },
+            { q: "Dải lệnh nào dùng để chọn mẫu thiết kế có sẵn (Theme) cho bài trình chiếu?", options: ["Design", "Insert", "Home", "View"], correct: 0 },
+            { q: "Để trình chiếu từ trang hiện tại, em sử dụng tổ hợp phím nào?", options: ["F5", "Shift + F5", "Ctrl + F5", "Alt + F5"], correct: 1 },
+            { q: "Phần mềm trình chiếu có thể được ứng dụng để làm gì?", options: ["Tạo bài giảng điện tử", "Tạo album ảnh", "Tạo bài thuyết trình", "Tất cả các ý trên"], correct: 3 },
+            { q: "Để xóa một trang chiếu, em chọn trang đó rồi nhấn phím gì?", options: ["Delete", "Backspace", "Cả A và B đều đúng", "Cả A và B đều sai"], correct: 2 },
+            { q: "Chức năng chính của chế độ 'Slide Sorter' (Sắp xếp trang chiếu) là gì?", options: ["Xem toàn bộ các trang thu nhỏ", "Chỉnh sửa văn bản", "Chèn thêm hình ảnh", "Tạo hiệu ứng"], correct: 0 },
+            { q: "Để thay đổi thứ tự của một trang chiếu, em có thể thực hiện thao tác nào?", options: ["Nhấn phím mũi tên", "Kéo thả trang chiếu đến vị trí mới", "Xóa đi tạo lại", "Không thể thay đổi"], correct: 1 },
+            { q: "Muốn lưu bài trình chiếu, em nhấn tổ hợp phím nào?", options: ["Ctrl + S", "Ctrl + L", "Ctrl + O", "Ctrl + A"], correct: 0 },
+            { q: "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?", options: ["Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn", "Trình diễn -> Tạo trang -> Chuẩn bị", "Chọn phần mềm -> Trình diễn -> Tạo trang", "Tạo trang -> Chuẩn bị -> Trình diễn"], correct: 0 },
+            { q: "Trang đầu tiên trong một bài trình chiếu thường được gọi là gì?", options: ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang tài liệu", "Trang cảm ơn"], correct: 1 }
+        ];
+
+        /* ================= LOGIC XỬ LÝ HỆ THỐNG ================= */
+        let questions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let userName = "";
+        let userClass = "";
+        let canClick = true;
+        let timerInterval;
+        let timeLeft;
+
+        // Khởi tạo thông tin chủ đề
+        document.getElementById('sub-topic-title').innerText = QUIZ_CONFIG.topic;
+        document.getElementById('time-display-limit').innerText = QUIZ_CONFIG.timeLimitMinutes;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz() {
+            userName = document.getElementById('user-name').value.trim();
+            userClass = document.getElementById('user-class').value.trim();
+
+            if (!userName || !userClass) {
+                alert("Vui lòng nhập đầy đủ Họ tên và Lớp bạn nhé!");
+                return;
+            }
+
+            // Trộn câu hỏi và đáp án
+            questions = [...originalQuestions];
+            shuffle(questions);
+            questions.forEach(q => {
+                const correctText = q.options[q.correct];
+                shuffle(q.options);
+                q.correct = q.options.indexOf(correctText);
+            });
+
+            // Thiết lập đồng hồ
+            timeLeft = QUIZ_CONFIG.timeLimitMinutes * 60;
+            startTimer();
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('display-info').innerText = `${userName} - Lớp: ${userClass}`;
+            
+            showQuestion();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Đã hết thời gian làm bài!");
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerElement = document.getElementById('timer-text');
+            timerElement.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 30) {
+                timerElement.classList.add('timer-warning');
+            }
+        }
+
+        function showQuestion() {
+            canClick = true;
+            const q = questions[currentQuestion];
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('progress-text').innerText = `Câu hỏi ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+            const optionsList = document.getElementById('options-list');
+            optionsList.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card group flex items-center p-4 border-2 border-slate-100 rounded-xl cursor-pointer bg-white';
+                btn.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center font-bold text-slate-500 group-hover:text-blue-600 transition-colors mr-4">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                    <span class="flex-1 font-medium text-slate-700">${opt}</span>
+                `;
+                btn.onclick = () => selectOption(idx, btn);
+                optionsList.appendChild(btn);
+            });
+        }
+
+        function selectOption(idx, element) {
+            if (!canClick) return;
+            canClick = false;
+
+            const correctIdx = questions[currentQuestion].correct;
+            const options = document.querySelectorAll('.option-card');
+            options.forEach(opt => opt.classList.add('disabled', 'opacity-60'));
+
+            if (idx === correctIdx) {
+                element.classList.remove('opacity-60');
+                element.classList.add('correct');
+                score++;
+            } else {
+                element.classList.remove('opacity-60');
+                element.classList.add('wrong');
+                options[correctIdx].classList.remove('opacity-60');
+                options[correctIdx].classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < questions.length) showQuestion();
+                else showResult();
+            }, 1000);
+        }
+
+        function showResult() {
+            clearInterval(timerInterval);
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            const ratio = score / questions.length;
+            const finalScoreElem = document.getElementById('final-score');
+            finalScoreElem.innerText = `${score}/${questions.length}`;
+            document.getElementById('result-user').innerText = `Thí sinh: ${userName} - Lớp: ${userClass}`;
+
+            const iconContainer = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const msg = document.getElementById('result-message');
+
+            if (score === questions.length) {
+                document.getElementById('app').classList.add('perfect-bg');
+                title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
+                iconContainer.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
+                msg.innerText = "Chúc mừng thiên tài! Bạn đã trả lời đúng tất cả các câu hỏi.";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            } else if (ratio >= 0.8) {
+                iconContainer.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
+                msg.innerText = "Kết quả rất ấn tượng! Bạn đã nắm rất vững kiến thức.";
+            } else if (ratio >= 0.5) {
+                iconContainer.innerHTML = '<i class="fa-solid fa-star text-6xl text-yellow-500"></i>';
+                msg.innerText = "Làm tốt lắm! Hãy cố gắng hơn để đạt điểm tối đa nhé.";
+            } else {
+                iconContainer.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
+                msg.innerText = "Bạn cần dành thêm thời gian ôn tập lại bài học này.";
+            }
+
+            // GỬI DỮ LIỆU VỀ GOOGLE SHEETS
+            if (QUIZ_CONFIG.googleSheetURL !== "DÁN_URL_WEB_APP_CỦA_BẠN_VÀO_ĐÂY") {
+                fetch(QUIZ_CONFIG.googleSheetURL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
+                        topic: QUIZ_CONFIG.topic,
+                        name: userName,
+                        userClass: userClass,
+                        score: score
+                    })
+                }).catch(e => console.log("Lưu dữ liệu lỗi:", e));
+            }
+        }
+    </script>
+</body>
+</html>
