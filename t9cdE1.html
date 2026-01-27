@@ -51,9 +51,9 @@
             <div class="w-full space-y-4 max-w-sm">
                 <div class="text-left">
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Thông tin học sinh:</label>
-                    <input type="text" id="user-class" placeholder="Lớp (Ví dụ: 7.1)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    <input type="text" id="user-class" placeholder="Lớp (Ví dụ: 9.1)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
                     
-                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-50)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
                     
                     <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
@@ -104,7 +104,7 @@
     <script>
         /* ================= CẤU HÌNH DÀNH CHO GIÁO VIÊN ================= */
         const QUIZ_CONFIG = {
-            topic: "Bài 1: Tạo bài trình chiếu",
+            topic: "Bài 1: Sử dụng bài trình chiếu",
             timeLimitMinutes: 10,
             questionLimit: 20,
             // URL Apps Script 
@@ -160,12 +160,24 @@
               { q: "Thẻ (Tab) nào chứa các lệnh để thay đổi nền Slide và chủ đề (Theme)?",
                 options: ["Home", "Insert", "Design", "Transitions"], correct: 2 },
 
-              
+              { q: "Công cụ SmartArt trong PowerPoint dùng để làm gì?",
+                options: [
+                  "Chèn hình ảnh từ máy tính",
+                  "Chèn các sơ đồ tổ chức, quy trình, tư duy một cách chuyên nghiệp",
+                  "Chèn các đoạn video từ YouTube",
+                  "Chèn các biểu đồ cột và đường"
+                ], correct: 1 },
 
               { q: "Để thay đổi bố cục (cách sắp xếp tiêu đề, văn bản, hình ảnh) của một slide, ta chọn lệnh nào?",
                 options: ["New Slide", "Reset", "Layout", "Section"], correct: 2 },
 
-              
+              { q: "Sự khác biệt giữa Transitions và Animations là gì?",
+                options: [
+                  "Transitions là hiệu ứng cho đối tượng, Animations là hiệu ứng cho Slide",
+                  "Transitions là hiệu ứng chuyển trang, Animations là hiệu ứng cho các đối tượng trên trang",
+                  "Cả hai đều giống nhau",
+                  "Transitions chỉ dành cho văn bản, Animations chỉ dành cho hình ảnh"
+                ], correct: 1 },
 
               { q: "Để bắt đầu trình chiếu từ Slide đầu tiên, ta nhấn phím nào?",
                 options: ["F1", "F5", "Shift + F5", "Ctrl + F5"], correct: 1 },
@@ -174,11 +186,40 @@
                 options: ["F5", "Ctrl + F5", "Shift + F5", "Alt + F5"], correct: 2 },
 
               { q: "Trong khi đang trình chiếu, muốn kết thúc buổi diễn thuyết và quay lại màn hình chỉnh sửa, ta nhấn phím nào?",
-                options: ["Enter", "Esc", "Tab", "Delete"], correct: 1 },              
+                options: ["Enter", "Esc", "Tab", "Delete"], correct: 1 },
+
+              { q: "Để thiết lập thời gian tự động chuyển trang cho các Slide, ta sử dụng nhóm lệnh nào trong thẻ Transitions?",
+                options: ["Sound", "Duration", "Advance Slide (After...)", "On Mouse Click"], correct: 2 },
+
+              { q: "Tính năng \"Slide Master\" dùng để làm gì?",
+                options: [
+                  "Để tạo các hiệu ứng chuyển động phức tạp",
+                  "Để thiết lập định dạng chung (logo, font, màu sắc) cho toàn bộ các slide một cách đồng bộ",
+                  "Để kiểm tra lỗi chính tả",
+                  "Để in bài trình chiếu ra giấy"
+                ], correct: 1 },
+
+              { q: "Để chèn một đoạn nhạc chạy xuyên suốt tất cả các Slide, ta chọn tùy chọn nào sau khi chèn âm thanh?",
+                options: ["Play in Background", "No Sound", "Loop until Stopped", "Play on Click"], correct: 0 },
+
+              { q: "Lệnh \"Hyperlink\" (Ctrl + K) dùng để làm gì?",
+                options: [
+                  "Tạo hiệu ứng chữ bay",
+                  "Tạo liên kết tới một trang web, một tệp tin hoặc một Slide khác trong bài",
+                  "Kiểm tra virus trong tệp PowerPoint",
+                  "Đóng gói bài trình chiếu thành video"
+                ], correct: 1 },
 
               { q: "Để vẽ các hình khối như hình vuông, hình tròn, mũi tên, ta vào thẻ Insert và chọn mục nào?",
-                options: ["Pictures", "Icons", "Shapes", "Screenshot"], correct: 2 }
+                options: ["Pictures", "Icons", "Shapes", "Screenshot"], correct: 2 },
 
+              { q: "Chế độ \"Presenter View\" khi trình chiếu có tác dụng gì?",
+                options: [
+                  "Cho khán giả thấy toàn bộ ghi chú của người thuyết trình",
+                  "Giúp người thuyết trình xem được slide hiện tại, slide kế tiếp và ghi chú trên màn hình riêng, trong khi khán giả chỉ thấy slide chính",
+                  "Làm cho các hiệu ứng chạy nhanh hơn",
+                  "Tự động dịch bài thuyết trình sang ngôn ngữ khác"
+                ], correct: 1 }
         ];
 
         /* ================= LOGIC HỆ THỐNG ================= */
@@ -345,7 +386,7 @@
 
             // Gửi dữ liệu về Sheet https://docs.google.com/spreadsheets/d/1DmOV7EfzK2pongT0rLsv666HotFzL2fZh1-HnYiHyI4
             const dataToSend = {
-                sheetName: "K7",
+                sheetName: "K9",
                 topic: QUIZ_CONFIG.topic,
                 userClass: userClass,
                 stt: userStt, 
