@@ -323,6 +323,7 @@
             const questionIdList = questions.map(q => q.id).join(",");
 
             // Gửi dữ liệu về Sheet https://docs.google.com/spreadsheets/d/1DmOV7EfzK2pongT0rLsv666HotFzL2fZh1-HnYiHyI4
+            
             const dataToSend = {
                 sheetName: "K7",
                 topic: QUIZ_CONFIG.topic,
@@ -335,25 +336,31 @@
             };
             
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+                const formData = new URLSearchParams();
+
+                formData.append("sheetName", dataToSend.sheetName);
+                formData.append("topic", dataToSend.topic);
+                formData.append("userClass", dataToSend.userClass);
+                formData.append("stt", dataToSend.stt);
+                formData.append("name", dataToSend.name);
+                formData.append("score", dataToSend.score);
+                formData.append("totalQuestions", dataToSend.totalQuestions);
+                formData.append("questionIds", dataToSend.questionIds);
+
                 fetch(QUIZ_CONFIG.googleSheetURL, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(dataToSend)
-                })
-                .then(res => res.text())
-                .then(msg => {
-                  if (msg.startsWith("ERROR")) {
-                    alert("❌ " + msg.replace("ERROR:", ""));
-                  } else {
-                    console.log("✅ Nộp bài thành công");
-                  }
-                })
-                .catch(err => {
-                  alert("❌ Không gửi được dữ liệu");
-                  console.error(err);
-                });
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                      },
+                      body: formData.toString()
+                    })
+                    .then(() => {
+                      console.log("✅ Gửi dữ liệu thành công");
+                    })
+                    .catch(err => {
+                      console.error("❌ Lỗi gửi dữ liệu", err);
+                    });
+
 
             }
         }
