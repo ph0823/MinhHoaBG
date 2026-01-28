@@ -137,7 +137,7 @@
                 console.log("Đã tải dữ liệu thành công:", allQuestions.length, "câu hỏi.");
             } catch (error) {
                 console.error("Lỗi:", error);
-                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file questions.json!");
+                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file t7cde1.json!");
             }
         }
 
@@ -145,7 +145,7 @@
         window.onload = loadQuestions;
 
         /* ================= LOGIC HỆ THỐNG ================= */
-        
+        let questions = [];
         let currentQuestion = 0;
         let score = 0;
         let userName = "";
@@ -335,12 +335,25 @@
             
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
                 fetch(QUIZ_CONFIG.googleSheetURL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(dataToSend) // Sử dụng biến dataToSend để đảm bảo có đủ STT
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(dataToSend)
                 })
-                .then(() => console.log("Đã gửi dữ liệu bài làm của STT: " + userStt))
-                .catch(e => console.log("Lỗi gửi dữ liệu:", e));
+                .then(res => res.text())
+                .then(msg => {
+                  if (msg.startsWith("ERROR")) {
+                    alert("❌ " + msg.replace("ERROR:", ""));
+                  } else {
+                    console.log("✅ Nộp bài thành công");
+                  }
+                })
+                .catch(err => {
+                  alert("❌ Không gửi được dữ liệu");
+                  console.error(err);
+                });
+
             }
         }
     </script>
