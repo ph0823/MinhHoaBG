@@ -51,9 +51,20 @@
             <div class="w-full space-y-4 max-w-sm">
                 <div class="text-left">
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Thông tin học sinh:</label>
-                    <input type="text" id="user-class" placeholder="Lớp (Ví dụ: 9.1)" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
                     
-                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-50)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    <select id="user-class">
+                        <option value="" disabled selected>Chọn lớp</option>
+                        <option value="9.1">9.1</option>
+                        <option value="9.2">9.2</option>
+                        <option value="9.3">9.3</option>
+                        <option value="9.4">9.4</option>
+                        <option value="9.5">9.5</option>
+                        <option value="9.14">9.14</option>
+                        <option value="9.15">9.15</option>
+                        <option value="9.16">9.16</option>
+                        
+                    </select>
+                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
                     
                     <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
@@ -110,117 +121,26 @@
             // URL Apps Script 
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyl0IuQQZHUqgluAPJT6H5hN1IPkHa2vb9TBJRx1hKqZIc97TNpK4Bdfucb75SATkpK/exec" 
         };
+        
+        let allQuestions = [];
 
-        const originalQuestions = [
-            { q: "Phần mềm nào sau đây dùng để tạo bài trình chiếu?", options: ["Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint", "Notepad"], correct: 2 },
-            { q: "Để chèn thêm một trang chiếu mới, em sử dụng tổ hợp phím nào?", options: ["Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"], correct: 1 },
-            { q: "Phím nào dùng để bắt đầu trình chiếu từ trang đầu tiên?", options: ["F1", "F3", "F5", "F7"], correct: 2 },
-            { q: "Trong PowerPoint, các khung có đường viền đứt đoạn dùng để nhập văn bản được gọi là gì?", options: ["Khung hình ảnh", "Khung dành sẵn (Placeholder)", "Khung trang trí", "Khung chú thích"], correct: 1 },
-            { q: "Muốn thoát khỏi chế độ trình chiếu, em nhấn phím nào?", options: ["Tab", "Shift", "Alt", "Esc"], correct: 3 },
-            { q: "Để chèn hình ảnh minh họa vào trang chiếu, em chọn dải lệnh nào?", options: ["Home", "Insert", "Design", "Animations"], correct: 1 },
-            { q: "Khi muốn chèn một bảng biểu (Table) để trình bày dữ liệu, thao tác nào là đúng?", options: ["Chọn Insert -> Table", "Chọn Home -> Table", "Chọn Design -> Table", "Chọn View -> Table"], correct: 0 },
-            { q: "Mỗi trang chiếu thường có bao nhiêu thành phần cơ bản?", options: ["Chỉ có văn bản", "Chỉ có hình ảnh", "Văn bản, hình ảnh, âm thanh, video...", "Chỉ có màu nền"], correct: 2 },
-            { q: "Để thay đổi bố cục trang chiếu (vị trí các khung văn bản), em chọn lệnh nào?", options: ["New Slide", "Layout", "Reset", "Section"], correct: 1 },
-            { q: "Theo nguyên tắc thiết kế, khi chọn màu chữ cho trang chiếu em nên lưu ý điều gì?", options: ["Màu chữ trùng màu nền", "Màu chữ tương phản với màu nền", "Dùng càng nhiều màu càng tốt", "Luôn dùng màu đỏ"], correct: 1 },
-            { q: "Tệp bài trình chiếu PowerPoint thường có phần mở rộng là gì?", options: [".docx", ".xlsx", ".pptx", ".txt"], correct: 2 },
-            { q: "Dải lệnh nào dùng để chọn mẫu thiết kế có sẵn (Theme) cho bài trình chiếu?", options: ["Design", "Insert", "Home", "View"], correct: 0 },
-            { q: "Để trình chiếu từ trang hiện tại, em sử dụng tổ hợp phím nào?", options: ["F5", "Shift + F5", "Ctrl + F5", "Alt + F5"], correct: 1 },
-            { q: "Phần mềm trình chiếu có thể được ứng dụng để làm gì?", options: ["Tạo bài giảng điện tử", "Tạo album ảnh", "Tạo bài thuyết trình", "Tất cả các ý trên"], correct: 3 },
-            { q: "Để xóa một trang chiếu, em chọn trang đó rồi nhấn phím gì?", options: ["Delete", "Backspace", "Cả A và B đều đúng", "Cả A và B đều sai"], correct: 2 },
-            { q: "Chức năng chính của chế độ 'Slide Sorter' (Sắp xếp trang chiếu) là gì?", options: ["Xem toàn bộ các trang thu nhỏ", "Chỉnh sửa văn bản", "Chèn thêm hình ảnh", "Tạo hiệu ứng"], correct: 0 },
-            { q: "Để thay đổi thứ tự của một trang chiếu, em có thể thực hiện thao tác nào?", options: ["Nhấn phím mũi tên", "Kéo thả trang chiếu đến vị trí mới", "Xóa đi tạo lại", "Không thể thay đổi"], correct: 1 },
-            { q: "Muốn lưu bài trình chiếu, em nhấn tổ hợp phím nào?", options: ["Ctrl + S", "Ctrl + L", "Ctrl + O", "Ctrl + A"], correct: 0 },
-            { q: "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?", options: ["Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn", "Trình diễn -> Tạo trang -> Chuẩn bị", "Chọn phần mềm -> Trình diễn -> Tạo trang", "Tạo trang -> Chuẩn bị -> Trình diễn"], correct: 0 },
-            { q: "Trang đầu tiên trong một bài trình chiếu thường được gọi là gì?", options: ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang tài liệu", "Trang cảm ơn"], correct: 1 },
-            { q: "Phần mở rộng (đuôi tệp) mặc định của tệp tin PowerPoint từ phiên bản 2007 trở về sau là gì?", options: [".doc", ".xls", ".ppt", ".pptx"], correct: 3 },
+        // HÀM TẢI DỮ LIỆU TỪ FILE JSON
+        async function loadQuestions() {
+            try {
+                const response = await fetch('t9cde1.json'); // Đường dẫn đến file json
+                if (!response.ok) {
+                    throw new Error('Không thể tải file dữ liệu câu hỏi');
+                }
+                allQuestions = await response.json();
+                console.log("Đã tải dữ liệu thành công:", allQuestions.length, "câu hỏi.");
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file t9cde1.json!");
+            }
+        }
 
-              { q: "Để khởi động PowerPoint, cách nào sau đây là đúng?",
-                options: [
-                  "Start -> All Programs -> Microsoft Office -> Microsoft PowerPoint",
-                  "Nháy đúp chuột vào biểu tượng PowerPoint trên màn hình Desktop",
-                  "Gõ lệnh \"powerpnt\" trong hộp thoại Run (Windows + R)",
-                  "Tất cả các cách trên đều đúng"
-                ], correct: 3 },
-
-              { q: "Trong PowerPoint, một trang trình chiếu được gọi là gì?",
-                options: ["Page", "Slide", "Sheet", "Document"], correct: 1 },
-
-              { q: "Để tạo một bản trình bày mới hoàn toàn trống, ta chọn mục nào?",
-                options: ["New Slide", "Blank Presentation", "Design Template", "Layout"], correct: 1 },
-
-              { q: "Để lưu một bài trình chiếu hiện có với một tên khác, ta sử dụng lệnh nào?",
-                options: ["File -> Save", "File -> Save As", "File -> New", "File -> Print"], correct: 1 },
-
-              { q: "Để chèn thêm một Slide mới vào bài trình chiếu, ta sử dụng tổ hợp phím nào?",
-                options: ["Ctrl + N", "Ctrl + M", "Ctrl + S", "Ctrl + O"], correct: 1 },
-
-              { q: "Chế độ hiển thị nào cho phép xem tất cả các slide dưới dạng các hình ảnh nhỏ (thumbnails)?",
-                options: ["Normal View", "Slide Sorter View", "Reading View", "Notes Page"], correct: 1 },
-
-              { q: "Thẻ (Tab) nào chứa các lệnh để thay đổi nền Slide và chủ đề (Theme)?",
-                options: ["Home", "Insert", "Design", "Transitions"], correct: 2 },
-
-              { q: "Công cụ SmartArt trong PowerPoint dùng để làm gì?",
-                options: [
-                  "Chèn hình ảnh từ máy tính",
-                  "Chèn các sơ đồ tổ chức, quy trình, tư duy một cách chuyên nghiệp",
-                  "Chèn các đoạn video từ YouTube",
-                  "Chèn các biểu đồ cột và đường"
-                ], correct: 1 },
-
-              { q: "Để thay đổi bố cục (cách sắp xếp tiêu đề, văn bản, hình ảnh) của một slide, ta chọn lệnh nào?",
-                options: ["New Slide", "Reset", "Layout", "Section"], correct: 2 },
-
-              { q: "Sự khác biệt giữa Transitions và Animations là gì?",
-                options: [
-                  "Transitions là hiệu ứng cho đối tượng, Animations là hiệu ứng cho Slide",
-                  "Transitions là hiệu ứng chuyển trang, Animations là hiệu ứng cho các đối tượng trên trang",
-                  "Cả hai đều giống nhau",
-                  "Transitions chỉ dành cho văn bản, Animations chỉ dành cho hình ảnh"
-                ], correct: 1 },
-
-              { q: "Để bắt đầu trình chiếu từ Slide đầu tiên, ta nhấn phím nào?",
-                options: ["F1", "F5", "Shift + F5", "Ctrl + F5"], correct: 1 },
-
-              { q: "Để bắt đầu trình chiếu từ Slide đang chọn (Slide hiện hành), ta nhấn tổ hợp phím nào?",
-                options: ["F5", "Ctrl + F5", "Shift + F5", "Alt + F5"], correct: 2 },
-
-              { q: "Trong khi đang trình chiếu, muốn kết thúc buổi diễn thuyết và quay lại màn hình chỉnh sửa, ta nhấn phím nào?",
-                options: ["Enter", "Esc", "Tab", "Delete"], correct: 1 },
-
-              { q: "Để thiết lập thời gian tự động chuyển trang cho các Slide, ta sử dụng nhóm lệnh nào trong thẻ Transitions?",
-                options: ["Sound", "Duration", "Advance Slide (After...)", "On Mouse Click"], correct: 2 },
-
-              { q: "Tính năng \"Slide Master\" dùng để làm gì?",
-                options: [
-                  "Để tạo các hiệu ứng chuyển động phức tạp",
-                  "Để thiết lập định dạng chung (logo, font, màu sắc) cho toàn bộ các slide một cách đồng bộ",
-                  "Để kiểm tra lỗi chính tả",
-                  "Để in bài trình chiếu ra giấy"
-                ], correct: 1 },
-
-              { q: "Để chèn một đoạn nhạc chạy xuyên suốt tất cả các Slide, ta chọn tùy chọn nào sau khi chèn âm thanh?",
-                options: ["Play in Background", "No Sound", "Loop until Stopped", "Play on Click"], correct: 0 },
-
-              { q: "Lệnh \"Hyperlink\" (Ctrl + K) dùng để làm gì?",
-                options: [
-                  "Tạo hiệu ứng chữ bay",
-                  "Tạo liên kết tới một trang web, một tệp tin hoặc một Slide khác trong bài",
-                  "Kiểm tra virus trong tệp PowerPoint",
-                  "Đóng gói bài trình chiếu thành video"
-                ], correct: 1 },
-
-              { q: "Để vẽ các hình khối như hình vuông, hình tròn, mũi tên, ta vào thẻ Insert và chọn mục nào?",
-                options: ["Pictures", "Icons", "Shapes", "Screenshot"], correct: 2 },
-
-              { q: "Chế độ \"Presenter View\" khi trình chiếu có tác dụng gì?",
-                options: [
-                  "Cho khán giả thấy toàn bộ ghi chú của người thuyết trình",
-                  "Giúp người thuyết trình xem được slide hiện tại, slide kế tiếp và ghi chú trên màn hình riêng, trong khi khán giả chỉ thấy slide chính",
-                  "Làm cho các hiệu ứng chạy nhanh hơn",
-                  "Tự động dịch bài thuyết trình sang ngôn ngữ khác"
-                ], correct: 1 }
-        ];
+        // Gọi hàm tải dữ liệu ngay khi trang web vừa load xong
+        window.onload = loadQuestions;
 
         /* ================= LOGIC HỆ THỐNG ================= */
         let questions = [];
@@ -232,7 +152,7 @@
         let timerInterval;
         let timeLeft;
         let isSubmitted = false; // Tránh gửi dữ liệu 2 lần
-        let userStt = ""; // Thêm biến này ở trên cùng phần script
+        let userStt = ""; 
 
         document.getElementById('sub-topic-title').innerText = QUIZ_CONFIG.topic;
         document.getElementById('time-display-limit').innerText = QUIZ_CONFIG.timeLimitMinutes;
@@ -245,42 +165,55 @@
             return array;
         }
 
-        function startQuiz() {
-            
-            userClass = document.getElementById('user-class').value.trim();
-            userStt = document.getElementById('user-stt').value.trim(); // Lấy STT học sinh nhập
-            userName = document.getElementById('user-name').value.trim();
+        async function startQuiz() {
 
-            if (!userName || !userClass || !userStt) {
-                alert("Vui lòng nhập đầy đủ Lớp, STT và Họ tên nhé!");
-                return;
-            }
+          userClass = document.getElementById('user-class').value.trim();
+          userStt = document.getElementById('user-stt').value.trim();
+          userName = document.getElementById('user-name').value.trim();
 
-            // 1. Copy toàn bộ ngân hàng câu hỏi
-            let pool = [...originalQuestions];
+          const stt = parseInt(userStt);
 
-            // 2. Trộn ngẫu nhiên ngân hàng
-            shuffle(pool);
+          // 1. Kiểm tra dữ liệu đã tải
+          if (allQuestions.length === 0) {
+            await loadQuestions();
+          }
 
-            // 3. Lấy đúng 20 câu đầu tiên
-            questions = pool.slice(0, QUIZ_CONFIG.questionLimit);
+          // 2. Kiểm tra thông tin
+          if (!userName || !userClass || !userStt) {
+            alert("Vui lòng nhập đầy đủ Lớp, STT và Họ tên!");
+            return;
+          }
 
-            // 4. Shuffle đáp án cho từng câu
-            questions.forEach(q => {
-                const correctText = q.options[q.correct];
-                shuffle(q.options);
-                q.correct = q.options.indexOf(correctText);
-            });
+          // 3. Kiểm tra STT hợp lệ
+          if (isNaN(stt) || stt < 1 || stt > 55) {
+            alert("STT không hợp lệ (1–55)");
+            document.getElementById('user-stt').focus();
+            return;
+          }
 
-            timeLeft = QUIZ_CONFIG.timeLimitMinutes * 60;
-            startTimer();
+          // 4. Random câu hỏi
+          let pool = [...allQuestions];
+          shuffle(pool);
+          questions = pool.slice(0, QUIZ_CONFIG.questionLimit);
 
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('quiz-screen').classList.remove('hidden');
-            document.getElementById('display-info').innerText = `${userName} - Lớp: ${userClass}`;
-            
-            showQuestion();
+          // 5. Shuffle đáp án
+          questions.forEach(q => {
+            const correctText = q.options[q.correct];
+            shuffle(q.options);
+            q.correct = q.options.indexOf(correctText);
+          });
+
+          timeLeft = QUIZ_CONFIG.timeLimitMinutes * 60;
+          startTimer();
+
+          document.getElementById('start-screen').classList.add('hidden');
+          document.getElementById('quiz-screen').classList.remove('hidden');
+          document.getElementById('display-info').innerText =
+            `${userName} - Lớp: ${userClass}`;
+
+          showQuestion();
         }
+
 
         function startTimer() {
             timerInterval = setInterval(() => {
@@ -348,7 +281,7 @@
                 } else {
                     // Đã làm hết câu hỏi -> Hiện nút nộp bài
                     document.getElementById('submit-quiz-btn').classList.remove('hidden');
-                    alert("Bạn đã hoàn thành các câu hỏi. Hãy nhấn nút 'NỘP BÀI' để xem kết quả!");
+                    
                 }
             }, 1000);
         }
@@ -374,15 +307,17 @@
                 document.getElementById('app').classList.add('perfect-bg');
                 title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
                 icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
-                msg.innerText = "Chúc mừng! Bạn thật sự là một chuyên gia PowerPoint.";
+                msg.innerText = "Chúc mừng! Bạn đã hoàn thành xuất sắc.";
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             } else if (ratio >= 0.5) {
                 icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
                 msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức cơ bản.";
             } else {
                 icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
-                msg.innerText = "Bạn cần ôn tập thêm một chút nữa nhé.";
+                msg.innerText = "Bạn cần ôn tập thêm.";
             }
+
+            const questionIdList = questions.map(q => q.id).join(",");
 
             // Gửi dữ liệu về Sheet https://docs.google.com/spreadsheets/d/1DmOV7EfzK2pongT0rLsv666HotFzL2fZh1-HnYiHyI4
             const dataToSend = {
@@ -391,17 +326,32 @@
                 userClass: userClass,
                 stt: userStt, 
                 name: userName,
-                score: score
+                score: score,
+                totalQuestions: questions.length,
+                questionIds: questionIdList
             };
             
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
                 fetch(QUIZ_CONFIG.googleSheetURL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(dataToSend) // Sử dụng biến dataToSend để đảm bảo có đủ STT
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(dataToSend)
                 })
-                .then(() => console.log("Đã gửi dữ liệu bài làm của STT: " + userStt))
-                .catch(e => console.log("Lỗi gửi dữ liệu:", e));
+                .then(res => res.text())
+                .then(msg => {
+                  if (msg.startsWith("ERROR")) {
+                    alert("❌ " + msg.replace("ERROR:", ""));
+                  } else {
+                    console.log("✅ Nộp bài thành công");
+                  }
+                })
+                .catch(err => {
+                  alert("❌ Không gửi được dữ liệu");
+                  console.error(err);
+                });
+
             }
         }
     </script>
