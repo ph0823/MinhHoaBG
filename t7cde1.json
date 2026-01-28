@@ -1,0 +1,101 @@
+[
+    { id: "PPT_01", q: "Phần mềm nào sau đây dùng để tạo bài trình chiếu?",
+    options: ["Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint", "Notepad"], correct: 2 },
+
+  { id: "PPT_02", q: "Để chèn thêm một trang chiếu mới, em sử dụng tổ hợp phím nào?",
+    options: ["Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"], correct: 1 },
+
+  { id: "PPT_03", q: "Phím nào dùng để bắt đầu trình chiếu từ trang đầu tiên?",
+    options: ["F1", "F3", "F5", "F7"], correct: 2 },
+
+  { id: "PPT_04", q: "Trong PowerPoint, các khung có đường viền đứt đoạn dùng để nhập văn bản được gọi là gì?",
+    options: ["Khung hình ảnh", "Khung dành sẵn (Placeholder)", "Khung trang trí", "Khung chú thích"], correct: 1 },
+
+  { id: "PPT_05", q: "Muốn thoát khỏi chế độ trình chiếu, em nhấn phím nào?",
+    options: ["Tab", "Shift", "Alt", "Esc"], correct: 3 },
+
+  { id: "PPT_06", q: "Để chèn hình ảnh minh họa vào trang chiếu, em chọn dải lệnh nào?",
+    options: ["Home", "Insert", "Design", "Animations"], correct: 1 },
+
+  { id: "PPT_07", q: "Khi muốn chèn một bảng biểu (Table) để trình bày dữ liệu, thao tác nào là đúng?",
+    options: ["Chọn Insert -> Table", "Chọn Home -> Table", "Chọn Design -> Table", "Chọn View -> Table"], correct: 0 },
+
+  { id: "PPT_08", q: "Mỗi trang chiếu thường có bao nhiêu thành phần cơ bản?",
+    options: ["Chỉ có văn bản", "Chỉ có hình ảnh", "Văn bản, hình ảnh, âm thanh, video...", "Chỉ có màu nền"], correct: 2 },
+
+  { id: "PPT_09", q: "Để thay đổi bố cục trang chiếu (vị trí các khung văn bản), em chọn lệnh nào?",
+    options: ["New Slide", "Layout", "Reset", "Section"], correct: 1 },
+
+  { id: "PPT_10", q: "Theo nguyên tắc thiết kế, khi chọn màu chữ cho trang chiếu em nên lưu ý điều gì?",
+    options: ["Màu chữ trùng màu nền", "Màu chữ tương phản với màu nền", "Dùng càng nhiều màu càng tốt", "Luôn dùng màu đỏ"], correct: 1 },
+
+  { id: "PPT_11", q: "Tệp bài trình chiếu PowerPoint thường có phần mở rộng là gì?",
+    options: [".docx", ".xlsx", ".pptx", ".txt"], correct: 2 },
+
+  { id: "PPT_12", q: "Dải lệnh nào dùng để chọn mẫu thiết kế có sẵn (Theme) cho bài trình chiếu?",
+    options: ["Design", "Insert", "Home", "View"], correct: 0 },
+
+  { id: "PPT_13", q: "Để trình chiếu từ trang hiện tại, em sử dụng tổ hợp phím nào?",
+    options: ["F5", "Shift + F5", "Ctrl + F5", "Alt + F5"], correct: 1 },
+
+  { id: "PPT_14", q: "Phần mềm trình chiếu có thể được ứng dụng để làm gì?",
+    options: ["Tạo bài giảng điện tử", "Tạo album ảnh", "Tạo bài thuyết trình", "Tất cả các ý trên"], correct: 3 },
+
+  { id: "PPT_15", q: "Để xóa một trang chiếu, em chọn trang đó rồi nhấn phím gì?",
+    options: ["Delete", "Backspace", "Cả A và B đều đúng", "Cả A và B đều sai"], correct: 2 },
+
+  { id: "PPT_16", q: "Chức năng chính của chế độ 'Slide Sorter' (Sắp xếp trang chiếu) là gì?",
+    options: ["Xem toàn bộ các trang thu nhỏ", "Chỉnh sửa văn bản", "Chèn thêm hình ảnh", "Tạo hiệu ứng"], correct: 0 },
+
+  { id: "PPT_17", q: "Để thay đổi thứ tự của một trang chiếu, em có thể thực hiện thao tác nào?",
+    options: ["Nhấn phím mũi tên", "Kéo thả trang chiếu đến vị trí mới", "Xóa đi tạo lại", "Không thể thay đổi"], correct: 1 },
+
+  { id: "PPT_18", q: "Muốn lưu bài trình chiếu, em nhấn tổ hợp phím nào?",
+    options: ["Ctrl + S", "Ctrl + L", "Ctrl + O", "Ctrl + A"], correct: 0 },
+
+  { id: "PPT_19", q: "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?",
+    options: [
+      "Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn",
+      "Trình diễn -> Tạo trang -> Chuẩn bị",
+      "Chọn phần mềm -> Trình diễn -> Tạo trang",
+      "Tạo trang -> Chuẩn bị -> Trình diễn"
+    ], correct: 0 },
+
+  { id: "PPT_20", q: "Trang đầu tiên trong một bài trình chiếu thường được gọi là gì?",
+    options: ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang tài liệu", "Trang cảm ơn"], correct: 1 },
+
+  { id: "PPT_21", q: "Phần mở rộng (đuôi tệp) mặc định của tệp tin PowerPoint từ phiên bản 2007 trở về sau là gì?",
+    options: [".doc", ".xls", ".ppt", ".pptx"], correct: 3 },
+
+  { id: "PPT_22", q: "Để khởi động PowerPoint, cách nào sau đây là đúng?",
+    options: [
+      "Start -> All Programs -> Microsoft Office -> Microsoft PowerPoint",
+      "Nháy đúp chuột vào biểu tượng PowerPoint trên màn hình Desktop",
+      "Gõ lệnh \"powerpnt\" trong hộp thoại Run (Windows + R)",
+      "Tất cả các cách trên đều đúng"
+    ], correct: 3 },
+
+  { id: "PPT_23", q: "Trong PowerPoint, một trang trình chiếu được gọi là gì?",
+    options: ["Page", "Slide", "Sheet", "Document"], correct: 1 },
+
+  { id: "PPT_24", q: "Để tạo một bản trình bày mới hoàn toàn trống, ta chọn mục nào?",
+    options: ["New Slide", "Blank Presentation", "Design Template", "Layout"], correct: 1 },
+
+  { id: "PPT_25", q: "Để lưu một bài trình chiếu hiện có với một tên khác, ta sử dụng lệnh nào?",
+    options: ["File -> Save", "File -> Save As", "File -> New", "File -> Print"], correct: 1 },
+
+  { id: "PPT_26", q: "Để chèn thêm một Slide mới vào bài trình chiếu, ta sử dụng tổ hợp phím nào?",
+    options: ["Ctrl + N", "Ctrl + M", "Ctrl + S", "Ctrl + O"], correct: 1 },
+
+  { id: "PPT_27", q: "Chế độ hiển thị nào cho phép xem tất cả các slide dưới dạng các hình ảnh nhỏ (thumbnails)?",
+    options: ["Normal View", "Slide Sorter View", "Reading View", "Notes Page"], correct: 1 },
+
+  { id: "PPT_28", q: "Thẻ (Tab) nào chứa các lệnh để thay đổi nền Slide và chủ đề (Theme)?",
+    options: ["Home", "Insert", "Design", "Transitions"], correct: 2 },
+
+  { id: "PPT_29", q: "Để bắt đầu trình chiếu từ Slide đầu tiên, ta nhấn phím nào?",
+    options: ["F1", "F5", "Shift + F5", "Ctrl + F5"], correct: 1 },
+
+  { id: "PPT_30", q: "Để vẽ các hình khối như hình vuông, hình tròn, mũi tên, ta vào thẻ Insert và chọn mục nào?",
+    options: ["Pictures", "Icons", "Shapes", "Screenshot"], correct: 2 }                          
+]
