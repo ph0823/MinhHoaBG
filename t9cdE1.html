@@ -62,7 +62,6 @@
                         <option value="9.14">9.14</option>
                         <option value="9.15">9.15</option>
                         <option value="9.16">9.16</option>
-                        
                     </select>
                     <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
                     
@@ -119,6 +118,7 @@
             timeLimitMinutes: 10,
             questionLimit: 20,
             // URL Apps Script 
+
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec" 
         };
         
@@ -185,8 +185,8 @@
           }
 
           // 3. Kiểm tra STT hợp lệ
-          if (isNaN(stt) || stt < 1 || stt > 55) {
-            alert("STT không hợp lệ (1–55)");
+          if (isNaN(stt) || stt < 1 || stt > 52) {
+            alert("STT không hợp lệ (1–52)");
             document.getElementById('user-stt').focus();
             return;
           }
@@ -320,6 +320,7 @@
             const questionIdList = questions.map(q => q.id).join(",");
 
             // Gửi dữ liệu về Sheet https://docs.google.com/spreadsheets/d/1DmOV7EfzK2pongT0rLsv666HotFzL2fZh1-HnYiHyI4
+            
             const dataToSend = {
                 sheetName: "K9",
                 topic: QUIZ_CONFIG.topic,
@@ -332,25 +333,35 @@
             };
             
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+                const formData = new URLSearchParams();
+
+                formData.append("sheetName", dataToSend.sheetName);
+                formData.append("topic", dataToSend.topic);
+                formData.append("userClass", dataToSend.userClass);
+                formData.append("stt", dataToSend.stt);
+                formData.append("name", dataToSend.name);
+                formData.append("score", dataToSend.score);
+                formData.append("totalQuestions", dataToSend.totalQuestions);
+                formData.append("questionIds", dataToSend.questionIds);
+
+                // Thay đoạn fetch cũ bằng đoạn này để bắt lỗi chính xác từ Server
                 fetch(QUIZ_CONFIG.googleSheetURL, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(dataToSend)
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
                 })
-                .then(res => res.text())
-                .then(msg => {
-                  if (msg.startsWith("ERROR")) {
-                    alert("❌ " + msg.replace("ERROR:", ""));
-                  } else {
-                    console.log("✅ Nộp bài thành công");
-                  }
+                .then(response => response.text()) // Chuyển phản hồi sang dạng văn bản
+                .then(responseText => {
+                    if (responseText === "OK") {
+                        console.log("✅ Dữ liệu đã được lưu vào Google Sheet!");
+                    } else {
+                        console.log("❌ Lỗi từ Server: " + responseText);
+                    }
                 })
                 .catch(err => {
-                  alert("❌ Không gửi được dữ liệu");
-                  console.error(err);
+                    console.error("❌ Lỗi kết nối mạng:", err);
                 });
+
 
             }
         }
