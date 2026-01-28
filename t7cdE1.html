@@ -347,19 +347,23 @@
                 formData.append("totalQuestions", dataToSend.totalQuestions);
                 formData.append("questionIds", dataToSend.questionIds);
 
+                // Thay đoạn fetch cũ bằng đoạn này để bắt lỗi chính xác từ Server
                 fetch(QUIZ_CONFIG.googleSheetURL, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                      },
-                      body: formData.toString()
-                    })
-                    .then(() => {
-                      console.log("✅ Gửi dữ liệu thành công");
-                    })
-                    .catch(err => {
-                      console.error("❌ Lỗi gửi dữ liệu", err);
-                    });
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
+                })
+                .then(response => response.text()) // Chuyển phản hồi sang dạng văn bản
+                .then(responseText => {
+                    if (responseText === "OK") {
+                        console.log("✅ Dữ liệu đã được lưu vào Google Sheet!");
+                    } else {
+                        console.log("❌ Lỗi từ Server: " + responseText);
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Lỗi kết nối mạng:", err);
+                });
 
 
             }
