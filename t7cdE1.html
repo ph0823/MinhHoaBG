@@ -117,11 +117,12 @@
     <script>
         /* ================= CẤU HÌNH DÀNH CHO GIÁO VIÊN ================= */
         const QUIZ_CONFIG = {
-            topic: "Bài 1: Tạo bài trình chiếu",
+            topic: "Bài 1: Sử dụng bài trình chiếu",
             timeLimitMinutes: 10,
             questionLimit: 20,
             // URL Apps Script 
-            googleSheetURL: "https://script.google.com/macros/s/AKfycbyl0IuQQZHUqgluAPJT6H5hN1IPkHa2vb9TBJRx1hKqZIc97TNpK4Bdfucb75SATkpK/exec" 
+
+            googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec" 
         };
         
         let allQuestions = [];
@@ -129,7 +130,7 @@
         // HÀM TẢI DỮ LIỆU TỪ FILE JSON
         async function loadQuestions() {
             try {
-                const response = await fetch('t7cde1.json'); // Đường dẫn đến file json
+                const response = await fetch('t9cde1.json'); // Đường dẫn đến file json
                 if (!response.ok) {
                     throw new Error('Không thể tải file dữ liệu câu hỏi');
                 }
@@ -137,7 +138,7 @@
                 console.log("Đã tải dữ liệu thành công:", allQuestions.length, "câu hỏi.");
             } catch (error) {
                 console.error("Lỗi:", error);
-                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file t7cde1.json!");
+                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file t9cde1.json!");
             }
         }
 
