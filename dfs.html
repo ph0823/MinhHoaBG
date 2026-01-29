@@ -7,10 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
         }
         .font-mono {
             font-family: 'Fira Code', monospace;
@@ -18,42 +19,46 @@
         .grid-cell {
             transition: all 0.2s ease;
             position: relative;
+            max-width: 55px;
+            max-height: 55px;
         }
         .coord-label {
             position: absolute;
             top: 2px;
             left: 2px;
-            font-size: 8px;
+            font-size: 7px;
             font-weight: 800;
-            opacity: 0.6;
+            opacity: 0.5;
             pointer-events: none;
         }
-        #logContainer::-webkit-scrollbar {
-            width: 6px;
+        #logContainer::-webkit-scrollbar, #codeDisplay::-webkit-scrollbar, .stack-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
         }
-        #logContainer::-webkit-scrollbar-track {
+        #logContainer::-webkit-scrollbar-track, #codeDisplay::-webkit-scrollbar-track, .stack-scroll::-webkit-scrollbar-track {
             background: #f1f5f9;
         }
-        #logContainer::-webkit-scrollbar-thumb {
+        #logContainer::-webkit-scrollbar-thumb, #codeDisplay::-webkit-scrollbar-thumb, .stack-scroll::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
         }
         .log-entry {
             animation: fadeIn 0.3s ease-out;
-            border-left: 3px solid transparent;
+            border-left: 2px solid transparent;
+            padding: 2px 8px;
+            line-height: 1.4;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-10px); }
+            from { opacity: 0; transform: translateX(-5px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        /* Modal Style */
         #guideModal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.7);
+            background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(4px);
-            z-index: 50;
+            z-index: 100;
             align-items: center;
             justify-content: center;
             padding: 1rem;
@@ -61,207 +66,229 @@
         #guideModal.show {
             display: flex;
         }
+        .running-layout #configSidebar {
+            display: none;
+        }
+        .stack-item {
+            animation: stackIn 0.3s ease-out;
+        }
+        @keyframes stackIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 text-slate-800 antialiased" id="appBody">
 
     <!-- Modal Hướng dẫn -->
     <div id="guideModal" onclick="toggleGuide()">
-        <div class="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl relative" onclick="event.stopPropagation()">
             <button onclick="toggleGuide()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-6 h-6"></i>
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-6 flex items-center gap-3 border-b pb-4">
-                <i data-lucide="help-circle" class="text-blue-500 w-8 h-8"></i> Hướng dẫn sử dụng
+            <h2 class="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2 border-b pb-3">
+                <i data-lucide="help-circle" class="text-blue-500 w-6 h-6"></i> Hướng dẫn sử dụng
             </h2>
-            <div class="space-y-6 text-slate-600 overflow-y-auto max-h-[60vh] pr-2">
+            <div class="space-y-4 text-sm text-slate-600 overflow-y-auto max-h-[60vh] pr-2">
                 <section>
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-2 italic">
-                        <i data-lucide="mouse-pointer-2" class="w-4 h-4"></i> Ý nghĩa các chế độ vẽ chuột:
-                    </h3>
-                    <ul class="space-y-3">
-                        <li class="flex gap-3">
-                            <span class="bg-slate-800 text-white p-1 rounded h-fit shrink-0"><i data-lucide="square" class="w-4 h-4 fill-current"></i></span>
-                            <div>
-                                <strong class="text-slate-800">Đặt vật cản (Phím 1):</strong> Click chuột vào ô để biến nó thành tường. DFS sẽ không thể đi qua ô này.
-                            </div>
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-2 italic">Chế độ vẽ:</h3>
+                    <ul class="space-y-2 text-xs">
+                        <li class="flex gap-2">
+                            <span class="bg-slate-800 text-white p-1 rounded"><i data-lucide="square" class="w-3 h-3 fill-current"></i></span>
+                            <div><strong>Vật cản (Phím 1):</strong> Click để đặt tường (DFS không đi qua).</div>
                         </li>
-                        <li class="flex gap-3">
-                            <span class="bg-green-500 text-white p-1 rounded h-fit shrink-0"><i data-lucide="home" class="w-4 h-4"></i></span>
-                            <div>
-                                <strong class="text-slate-800">Đặt Bắt đầu (Phím 2):</strong> Click chuột để đặt điểm xuất phát (gốc đệ quy).
-                            </div>
+                        <li class="flex gap-2">
+                            <span class="bg-green-500 text-white p-1 rounded"><i data-lucide="home" class="w-3 h-3"></i></span>
+                            <div><strong>Bắt đầu (Phím 2):</strong> Điểm xuất phát của DFS.</div>
                         </li>
-                        <li class="flex gap-3">
-                            <span class="bg-red-500 text-white p-1 rounded h-fit shrink-0"><i data-lucide="flag" class="w-4 h-4"></i></span>
-                            <div>
-                                <strong class="text-slate-800">Đặt Kết thúc (Phím 3):</strong> Click chuột để đặt đích đến. DFS dừng lại khi tìm thấy ô này.
-                            </div>
+                        <li class="flex gap-2">
+                            <span class="bg-red-500 text-white p-1 rounded"><i data-lucide="flag" class="w-3 h-3"></i></span>
+                            <div><strong>Kết thúc (Phím 3):</strong> Điểm đích cần tìm.</div>
                         </li>
                     </ul>
                 </section>
-                <section>
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-2 italic">
-                        <i data-lucide="zap" class="w-4 h-4"></i> Quy trình mô phỏng:
-                    </h3>
-                    <ol class="list-decimal pl-5 space-y-2">
-                        <li>Chọn <strong>N x M</strong> để thay đổi kích thước bản đồ.</li>
-                        <li>Sử dụng các <strong>chế độ vẽ</strong> để thiết lập chướng ngại vật và điểm đi/đến.</li>
-                        <li>Nhấn <strong>CHẠY DFS</strong> để bắt đầu quá trình duyệt.</li>
-                        <li>Theo dõi <strong>Nhật ký</strong> và <strong>Stack</strong> bên dưới để hiểu luồng đệ quy.</li>
-                    </ol>
+                <section class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-xs">
+                    <strong>Chế độ mô phỏng:</strong> Khi nhấn Chạy, bảng cấu hình sẽ ẩn đi để tập trung vào bản đồ và nhật ký. Bạn có thể nhấn <strong>"Dừng & Cài đặt"</strong> để quay lại.
                 </section>
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-[11px] font-medium leading-relaxed">
-                    <strong>Mẹo:</strong> Thứ tự ưu tiên hướng của thuật toán là <strong>Trên → Dưới → Trái → Phải</strong>. 
-                    Bạn có thể thấy trong nhật ký khi hệ thống đẩy các tọa độ lân cận vào ngăn xếp theo thứ tự ngược lại để đảm bảo lấy ra đúng ưu tiên (LIFO).
-                </div>
             </div>
-            <button onclick="toggleGuide()" class="w-full mt-8 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-colors">ĐÃ HIỂU</button>
+            <button onclick="toggleGuide()" class="w-full mt-6 py-2.5 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700">ĐÃ HIỂU</button>
         </div>
     </div>
 
-    <div class="flex flex-col min-h-screen p-4 md:p-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight underline decoration-blue-500 decoration-4 underline-offset-8">Mô phỏng DFS (Toạ độ & Nhật ký)</h1>
-            <p class="text-slate-500 mt-4 font-medium uppercase text-xs tracking-widest">Công cụ bồi dưỡng HSG Tin học THCS</p>
+    <div class="max-w-[1600px] mx-auto min-h-screen flex flex-col p-4 transition-all duration-500">
+        <header class="mb-4 text-center">
+            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Mô phỏng thuật toán DFS</h1>
+            <p id="headerDesc" class="text-blue-600 text-[10px] font-black uppercase tracking-widest mt-1">Thứ tự di chuyển Trên Dưới Trái Phải</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto w-full">
-            <!-- Cột trái: Điều khiển (3 cols) -->
-            <div class="lg:col-span-3 space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
-                    <div class="flex items-center justify-between mb-4 border-b pb-2">
-                        <h2 class="text-lg font-bold flex items-center gap-2 text-slate-700">
-                            <i data-lucide="settings" class="w-5 h-5 text-blue-500"></i> Cấu hình
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
+            
+            <!-- Cột trái: Cấu hình (Sẽ ẩn khi chạy) -->
+            <div id="configSidebar" class="lg:col-span-3 space-y-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3 border-b pb-2">
+                        <h2 class="text-sm font-bold flex items-center gap-2 text-slate-700">
+                            <i data-lucide="settings" class="w-4 h-4 text-blue-500"></i> Cấu hình
                         </h2>
-                        <button onclick="toggleGuide()" class="text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-1 text-[10px] font-black uppercase">
-                            <i data-lucide="help-circle" class="w-5 h-5"></i> HDSD
+                        <button onclick="toggleGuide()" class="text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-1 text-[9px] font-black uppercase">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i> HDSD
                         </button>
                     </div>
                     
-                    <div class="space-y-4">
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Hàng (N)</label>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Hàng (N)</label>
                                 <input type="number" id="inputRows" value="4" min="2" max="10" 
-                                    class="w-full p-2 bg-slate-50 border-2 border-slate-100 rounded-lg outline-none font-bold">
+                                    class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm text-center">
                             </div>
-                            <div class="flex-1">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Cột (M)</label>
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Cột (M)</label>
                                 <input type="number" id="inputCols" value="4" min="2" max="12" 
-                                    class="w-full p-2 bg-slate-50 border-2 border-slate-100 rounded-lg outline-none font-bold">
+                                    class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm text-center">
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Chế độ vẽ chuột</label>
-                            <div class="grid grid-cols-1 gap-2">
-                                <button onclick="setEditMode('wall')" id="btnWall" class="mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-slate-800 border-slate-900 text-white flex items-center gap-3">
-                                    <i data-lucide="square" class="w-4 h-4 fill-current"></i> Đặt vật cản (Phím 1)
+                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-2">Chế độ vẽ</label>
+                            <div class="flex flex-col gap-1.5">
+                                <button onclick="setEditMode('wall')" id="btnWall" class="mode-btn p-2 text-[10px] font-bold rounded-lg border bg-slate-800 border-slate-900 text-white flex items-center gap-2 transition-all shadow-sm">
+                                    <i data-lucide="square" class="w-3.5 h-3.5 fill-current"></i> Vật cản
                                 </button>
-                                <button onclick="setEditMode('start')" id="btnStart" class="mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-white border-slate-100 text-slate-400 flex items-center gap-3">
-                                    <i data-lucide="home" class="w-4 h-4"></i> Đặt Bắt đầu (Phím 2)
+                                <button onclick="setEditMode('start')" id="btnStart" class="mode-btn p-2 text-[10px] font-bold rounded-lg border bg-white border-slate-200 text-slate-400 flex items-center gap-2 transition-all">
+                                    <i data-lucide="home" class="w-3.5 h-3.5"></i> Bắt đầu
                                 </button>
-                                <button onclick="setEditMode('end')" id="btnEnd" class="mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-white border-slate-100 text-slate-400 flex items-center gap-3">
-                                    <i data-lucide="flag" class="w-4 h-4"></i> Đặt Kết thúc (Phím 3)
+                                <button onclick="setEditMode('end')" id="btnEnd" class="mode-btn p-2 text-[10px] font-bold rounded-lg border bg-white border-slate-200 text-slate-400 flex items-center gap-2 transition-all">
+                                    <i data-lucide="flag" class="w-3.5 h-3.5"></i> Kết thúc
                                 </button>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="pt-1">
                             <div class="flex justify-between items-end mb-1">
-                                <label class="text-[10px] font-black text-slate-400 uppercase">Tốc độ</label>
-                                <span id="speedVal" class="text-xs font-mono font-bold text-blue-600">500ms</span>
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Tốc độ</label>
+                                <span id="speedVal" class="text-[10px] font-mono font-bold text-blue-600">500ms</span>
                             </div>
-                            <input type="range" id="inputSpeed" min="50" max="1500" step="50" value="500" class="w-full accent-blue-600">
+                            <input type="range" id="inputSpeed" min="50" max="1500" step="50" value="500" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
 
-                        <button id="runBtn" onclick="startSimulation()" class="w-full py-4 rounded-xl font-black text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
-                            <i data-lucide="play" class="w-5 h-5 fill-current"></i> CHẠY DFS
+                        <button id="runBtn" onclick="startSimulation()" class="w-full py-3 mt-2 rounded-xl font-black text-xs bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-100 transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4 fill-current"></i> BẮT ĐẦU MÔ PHỎNG
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
-                    <h3 class="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
-                        <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i> Stack hiện tại
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-[9px] font-black text-slate-400 uppercase mb-2 flex items-center gap-2 border-b pb-1.5">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-500"></i> Ngăn xếp (Cài đặt)
                     </h3>
-                    <div id="stackContainer" class="flex flex-wrap gap-2 min-h-[100px] content-start">
+                    <div id="stackContainerBase" class="flex flex-col gap-1.5 content-start min-h-[50px] stack-scroll max-h-[200px] overflow-y-auto pr-1">
                         <span class="text-[10px] text-slate-300 italic">Trống</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Cột giữa & phải: Grid và Log (9 cols) -->
-            <div class="lg:col-span-9 space-y-6">
-                <!-- Khu vực Lưới -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 relative overflow-hidden">
-                    <div id="statusAlert" class="hidden absolute top-4 right-4 p-3 bg-green-500 text-white rounded-xl flex items-center gap-2 z-30 shadow-lg animate-bounce">
-                        <i data-lucide="check-circle" class="w-5 h-5"></i>
-                        <span class="font-bold text-xs uppercase tracking-tight">Tìm thấy đích!</span>
+            <!-- Cột giữa: Grid & Log (Sẽ mở rộng) -->
+            <div id="mainDisplay" class="lg:col-span-5 flex flex-col gap-4 transition-all duration-500">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative flex flex-col min-h-[400px]">
+                    
+                    <div class="flex justify-between items-start mb-4">
+                        <div id="simInfo" class="hidden flex flex-col">
+                            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Đang mô phỏng DFS...</span>
+                            <span id="currentStatus" class="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">Đang xét ô: (0,0)</span>
+                        </div>
+                        <button id="stopBtn" onclick="stopSimulation()" class="hidden px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[9px] font-black uppercase hover:bg-red-100 transition-all flex items-center gap-1.5">
+                            <i data-lucide="square" class="w-3 h-3 fill-current"></i> Dừng & Cài đặt
+                        </button>
                     </div>
 
-                    <div id="gridContainer" class="grid gap-2 mx-auto transition-all duration-500">
-                        <!-- Ô lưới tạo bởi JS -->
+                    <div id="statusAlert" class="hidden absolute top-16 right-6 p-2 px-3 bg-green-500 text-white rounded-lg flex items-center gap-2 z-30 shadow-md animate-bounce text-[10px] font-bold uppercase">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>Tìm thấy đích!</span>
                     </div>
 
-                    <!-- Nhật ký chạy thuật toán -->
-                    <div class="mt-8 border-t pt-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xs font-black text-slate-400 uppercase flex items-center gap-2">
-                                <i data-lucide="list-todo" class="w-4 h-4 text-blue-500"></i> Nhật ký thuật toán (Step-by-Step)
+                    <div id="gridContainer" class="grid gap-1.5 mx-auto transition-all duration-300">
+                        <!-- Grid cells by JS -->
+                    </div>
+
+                    <!-- Ngăn xếp hiển thị trong khi chạy -->
+                    <div id="stackInSim" class="hidden mt-6 pt-4 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-[9px] font-black text-slate-400 uppercase flex items-center gap-2">
+                                <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-500"></i> Trạng thái ngăn xếp (Stack LIFO)
                             </h3>
-                            <button onclick="clearLog()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors">XOÁ NHẬT KÝ</button>
+                            <span class="text-[8px] text-slate-400 font-bold uppercase italic tracking-tighter">* Trên cùng là phần tử sẽ Pop tiếp theo</span>
                         </div>
-                        <div id="logContainer" class="bg-slate-900 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] space-y-1 shadow-inner">
-                            <div class="text-slate-500 italic">// Hệ thống sẵn sàng. Nhấn 'CHẠY DFS' để bắt đầu...</div>
-                        </div>
+                        <div id="stackContainerSim" class="flex flex-col-reverse gap-1 content-start stack-scroll max-h-[120px] overflow-y-auto pr-1"></div>
                     </div>
                 </div>
 
-                <!-- Source Code -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex bg-slate-100 p-1 rounded-xl">
-                            <button onclick="setLang('cpp')" id="langCpp" class="px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-600 shadow-sm">C++</button>
-                            <button onclick="setLang('py')" id="langPy" class="px-4 py-2 rounded-lg text-xs font-black text-slate-500">PYTHON</button>
-                        </div>
-                        <div class="text-[10px] font-bold text-slate-400">Ưu tiên: Trên -> Dưới -> Trái -> Phải</div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-[9px] font-black text-slate-400 uppercase flex items-center gap-2">
+                            <i data-lucide="list-todo" class="w-3.5 h-3.5 text-blue-500"></i> Nhật ký thuật toán (Vết)
+                        </h3>
+                        <button onclick="clearLog()" class="text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase">Xoá nhật ký</button>
                     </div>
-                    <pre id="codeDisplay" class="text-emerald-400 text-xs font-mono bg-slate-900 p-4 rounded-xl overflow-x-auto border-l-4 border-blue-500"></pre>
+                    <div id="logContainer" class="bg-slate-900 rounded-xl p-3 h-40 overflow-y-auto font-mono text-[10px] space-y-0.5 shadow-inner mb-3">
+                        <div class="text-slate-500 italic">// Hệ thống sẵn sàng...</div>
+                    </div>
+                    
+                    <!-- Phần ghi chú sư phạm -->
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] text-slate-600 space-y-1 font-medium leading-relaxed">
+                        <p><span class="font-bold text-blue-600">Đẩy vào (Push):</span> Là để "dành" các hướng chưa đi.</p>
+                        <p><span class="font-bold text-blue-600">Lấy ra (Pop):</span> Là để chọn hướng đi tiếp theo.</p>
+                        <p><span class="font-bold text-blue-600">Thứ tự:</span> Muốn đi hướng nào trước thì đẩy hướng đó vào sau cùng (Toạ độ Trên vào sau cùng).</p>
+                    </div>
                 </div>
             </div>
+
+            <!-- Cột phải: Mã nguồn -->
+            <div id="codeSidebar" class="lg:col-span-4 flex flex-col transition-all duration-500 h-full">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3 border-b pb-2">
+                        <div class="flex bg-slate-100 p-1 rounded-lg">
+                            <button onclick="setLang('cpp')" id="langCpp" class="px-3 py-1.5 rounded-md text-[10px] font-black bg-white text-blue-600 shadow-sm">C++</button>
+                            <button onclick="setLang('py')" id="langPy" class="px-3 py-1.5 rounded-md text-[10px] font-black text-slate-500">PYTHON</button>
+                        </div>
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Ưu tiên: T-D-T-P</div>
+                    </div>
+                    <div class="flex-1 bg-slate-900 rounded-xl overflow-hidden relative shadow-inner min-h-[400px]">
+                        <pre id="codeDisplay" class="text-emerald-400 text-[10px] font-mono p-4 h-full overflow-y-auto leading-relaxed"></pre>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // State
         let rows = 4, cols = 4;
-        let grid = [
-            [0, 0, 1, 0],
-            [1, 0, 1, 0],
-            [0, 0, 0, 0],
-            [1, 1, 1, 0]
-        ];
+        let grid = [[0, 0, 1, 0],[1, 0, 1, 0],[0, 0, 0, 0],[1, 1, 1, 0]];
         let startNode = { r: 0, c: 0 }, endNode = { r: 3, c: 3 };
         let isRunning = false, editMode = 'wall', speed = 500, language = 'cpp';
         let visited = new Set(), pathCells = [];
+        let simulationActive = false;
 
         const cppSource = `void dfs(int x, int y) {
     visited[x][y] = true;
-    int dx[] = {-1, 1, 0, 0}, dy[] = {0, 0, -1, 1};
+    int dx[] = {-1, 1, 0, 0}; // Trên, Dưới, Trái, Phải
+    int dy[] = {0, 0, -1, 1};
 
     for (int k = 0; k < 4; k++) {
         int nx = x + dx[k], ny = y + dy[k];
         if (nx >= 0 && nx < n && ny >= 0 && ny < m) {
-            if (grid[nx][ny] == 0 && !visited[nx][ny])
+            if (grid[nx][ny] == 0 && !visited[nx][ny]) {
                 dfs(nx, ny);
+            }
         }
     }
 }`;
         const pySource = `def dfs(x, y):
     visited[x][y] = True
-    dx, dy = [-1, 1, 0, 0], [0, 0, -1, 1]
+    dx = [-1, 1, 0, 0] # Trên, Dưới, Trái, Phải
+    dy = [0, 0, -1, 1]
+    
     for k in range(4):
         nx, ny = x + dx[k], y + dy[k]
         if 0 <= nx < n and 0 <= ny < m:
@@ -274,8 +301,8 @@
             renderGrid();
             updateCode();
             
-            // Lắng nghe phím tắt 1, 2, 3
             document.addEventListener('keydown', (e) => {
+                if (isRunning) return;
                 if (e.key === '1') setEditMode('wall');
                 if (e.key === '2') setEditMode('start');
                 if (e.key === '3') setEditMode('end');
@@ -298,13 +325,13 @@
         function setEditMode(mode) {
             editMode = mode;
             document.querySelectorAll('.mode-btn').forEach(b => {
-                b.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-white border-slate-100 text-slate-400 flex items-center gap-3 transition-all";
+                b.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border bg-white border-slate-200 text-slate-400 flex items-center gap-2 transition-all";
             });
             const btn = mode === 'wall' ? 'btnWall' : (mode === 'start' ? 'btnStart' : 'btnEnd');
             const el = document.getElementById(btn);
-            if (mode === 'wall') el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-slate-800 border-slate-900 text-white flex items-center gap-3 shadow-lg";
-            else if (mode === 'start') el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-green-50 border-green-500 text-green-700 flex items-center gap-3 shadow-md";
-            else el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border-2 bg-red-50 border-red-500 text-red-700 flex items-center gap-3 shadow-md";
+            if (mode === 'wall') el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border bg-slate-800 border-slate-900 text-white flex items-center gap-2 shadow-sm";
+            else if (mode === 'start') el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border bg-green-50 border-green-500 text-green-700 flex items-center gap-2 shadow-sm";
+            else el.className = "mode-btn p-2 text-[10px] font-bold rounded-lg border bg-red-50 border-red-500 text-red-700 flex items-center gap-2 shadow-sm";
         }
 
         function resetGrid() {
@@ -313,13 +340,11 @@
             endNode = { r: rows - 1, c: cols - 1 };
             clearSim();
             renderGrid();
-            addLog("Đã làm mới bản đồ kích thước " + rows + "x" + cols, "system");
         }
 
         function clearSim() {
             visited = new Set();
             pathCells = [];
-            isRunning = false;
             document.getElementById('statusAlert').classList.add('hidden');
             renderGrid();
         }
@@ -331,17 +356,16 @@
         function addLog(msg, type = "info") {
             const container = document.getElementById('logContainer');
             const div = document.createElement('div');
-            let color = "text-slate-300";
-            let prefix = ">> ";
-            let border = "border-slate-700";
+            let color = "text-slate-300", prefix = "• ", border = "border-slate-700";
 
             if (type === "visit") { color = "text-blue-400"; prefix = "[THĂM] "; border = "border-blue-500"; }
-            if (type === "stack") { color = "text-amber-400"; prefix = "[STACK] "; border = "border-amber-500"; }
+            if (type === "stack") { color = "text-amber-400"; prefix = "[LƯU] "; border = "border-amber-500"; }
             if (type === "found") { color = "text-green-400"; prefix = "[ĐÍCH] "; border = "border-green-500"; }
-            if (type === "wall") { color = "text-red-400"; prefix = "[CHẶN] "; }
+            if (type === "wall") { color = "text-red-400"; prefix = "[CẢN] "; }
             if (type === "system") { color = "text-slate-500"; prefix = "# "; }
+            if (type === "path") { color = "text-yellow-400 font-bold"; prefix = "[PATH] "; border = "border-yellow-500"; }
 
-            div.className = `log-entry p-1 pl-2 ${color} border-l-2 ${border}`;
+            div.className = `log-entry ${color} border-l-2 ${border}`;
             div.innerText = prefix + msg;
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
@@ -352,14 +376,18 @@
             container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
             container.innerHTML = '';
 
+            const cellSide = Math.min(55, Math.floor(400 / Math.max(rows, cols)));
+
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const cell = document.createElement('div');
-                    cell.className = `grid-cell aspect-square border-2 rounded-xl cursor-pointer flex items-center justify-center`;
+                    cell.className = `grid-cell aspect-square border border-slate-200 rounded-lg cursor-pointer flex items-center justify-center`;
+                    cell.style.width = cellSide + 'px';
+                    cell.style.height = cellSide + 'px';
                     
                     const label = document.createElement('span');
                     label.className = "coord-label";
-                    label.innerText = `(${r},${c})`;
+                    label.innerText = `${r},${c}`;
                     cell.appendChild(label);
 
                     const isStart = startNode.r === r && startNode.c === c;
@@ -370,12 +398,12 @@
                     const isInPath = pathCells.some(p => p.r === r && p.c === c);
 
                     if (isWall) cell.classList.add('bg-slate-800', 'border-slate-900');
-                    else if (isCurrent) cell.classList.add('bg-yellow-400', 'border-yellow-600', 'scale-105', 'z-20', 'shadow-xl');
+                    else if (isCurrent) cell.classList.add('bg-yellow-400', 'border-yellow-600', 'scale-110', 'z-20', 'shadow-lg');
                     else if (isStart) cell.classList.add('bg-green-500', 'border-green-700');
                     else if (isEnd) cell.classList.add('bg-red-500', 'border-red-700');
                     else if (isInPath) cell.classList.add('bg-yellow-200', 'border-yellow-400');
                     else if (isVisited) cell.classList.add('bg-blue-400', 'border-blue-600');
-                    else cell.classList.add('bg-white', 'border-slate-200', 'hover:bg-slate-50');
+                    else cell.classList.add('bg-white', 'hover:bg-slate-50');
 
                     if (isStart) cell.insertAdjacentHTML('beforeend', '<i data-lucide="home" class="w-1/2 h-1/2 text-white opacity-80"></i>');
                     if (isEnd) cell.insertAdjacentHTML('beforeend', '<i data-lucide="flag" class="w-1/2 h-1/2 text-white opacity-80"></i>');
@@ -396,37 +424,42 @@
         async function startSimulation() {
             if (isRunning) return;
             isRunning = true;
+            simulationActive = true;
+            updateLayout(true);
+            
             visited = new Set();
             pathCells = [];
             clearLog();
-            addLog(`Bắt đầu DFS từ (${startNode.r}, ${startNode.c})...`, "system");
+            addLog(`Khởi chạy DFS từ gốc (${startNode.r}, ${startNode.c})`, "system");
             
-            const stack = [{ r: startNode.r, c: startNode.c, p: [] }];
+            const stack = [{ r: startNode.r, c: startNode.c, p: [], dir: "GỐC" }];
             
-            while (stack.length > 0) {
+            while (stack.length > 0 && simulationActive) {
                 updateStackUI(stack);
                 const curr = stack.pop();
-                const { r, c, p } = curr;
+                const { r, c, p, dir } = curr;
                 const key = `${r}-${c}`;
 
-                if (visited.has(key)) {
-                    addLog(`Bỏ qua (${r},${c}) vì đã thăm.`, "system");
-                    continue;
-                }
+                if (visited.has(key)) continue;
 
                 visited.add(key);
-                addLog(`Đang tại ô (${r},${c}). Đánh dấu visited[${r}][${c}] = true`, "visit");
+                document.getElementById('currentStatus').innerText = `Đang xét ô: (${r}, ${c}) - Hướng: ${dir}`;
+                addLog(`Duyệt (${r},${c}) từ hướng ${dir}.`, "visit");
                 renderGrid({ r, c });
 
                 const newPath = [...p, { r, c }];
 
                 if (r === endNode.r && c === endNode.c) {
                     pathCells = newPath;
-                    addLog(`Tìm thấy đích tại (${r},${c})!`, "found");
+                    addLog(`Tìm thấy đích!`, "found");
+                    
+                    const pathString = newPath.map(node => `(${node.r},${node.c})`).join(' → ');
+                    addLog(`Đường đi: ${pathString}`, "path");
+                    
                     document.getElementById('statusAlert').classList.remove('hidden');
                     renderGrid();
-                    isRunning = false;
-                    return;
+                    updateStackUI(stack);
+                    break;
                 }
 
                 await new Promise(res => setTimeout(res, speed));
@@ -434,39 +467,90 @@
                 const dr = [-1, 1, 0, 0], dc = [0, 0, -1, 1];
                 const labels = ["TRÊN", "DƯỚI", "TRÁI", "PHẢI"];
 
+                // Đẩy vào stack ngược thứ tự ưu tiên
                 for (let i = 3; i >= 0; i--) {
                     const nr = r + dr[i], nc = c + dc[i];
                     if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
                         if (grid[nr][nc] === 1) {
-                            addLog(`Hướng ${labels[i]} (${nr},${nc}) là VẬT CẢN.`, "wall");
+                            addLog(`(${nr},${nc}) là vật cản.`, "wall");
                         } else if (!visited.has(`${nr}-${nc}`)) {
-                            addLog(`Đẩy hướng ${labels[i]} (${nr},${nc}) vào Stack.`, "stack");
-                            stack.push({ r: nr, c: nc, p: newPath });
+                            addLog(`Đẩy ${labels[i]} (${nr},${nc}) vào Stack.`, "stack");
+                            stack.push({ r: nr, c: nc, p: newPath, dir: labels[i] });
                         }
                     }
                 }
             }
-            addLog("Kết thúc: Không tìm thấy đường đi.", "wall");
+            
             isRunning = false;
-            renderGrid();
+            simulationActive = false;
+        }
+
+        function stopSimulation() {
+            simulationActive = false;
+            isRunning = false;
+            updateLayout(false);
+            clearSim();
+        }
+
+        function updateLayout(running) {
+            const sidebar = document.getElementById('configSidebar');
+            const main = document.getElementById('mainDisplay');
+            const code = document.getElementById('codeSidebar');
+            const simHeader = document.getElementById('simInfo');
+            const stopBtn = document.getElementById('stopBtn');
+            const stackSim = document.getElementById('stackInSim');
+
+            if (running) {
+                sidebar.classList.add('hidden');
+                main.classList.replace('lg:col-span-5', 'lg:col-span-8');
+                code.classList.replace('lg:col-span-4', 'lg:col-span-4');
+                simHeader.classList.remove('hidden');
+                stopBtn.classList.remove('hidden');
+                stackSim.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('hidden');
+                main.classList.replace('lg:col-span-8', 'lg:col-span-5');
+                simHeader.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+                stackSim.classList.add('hidden');
+            }
         }
 
         function updateStackUI(stack) {
-            const container = document.getElementById('stackContainer');
-            container.innerHTML = '';
-            stack.forEach(s => {
-                const item = document.createElement('div');
-                item.className = "px-2 py-1 bg-amber-50 text-amber-700 text-[9px] font-black border border-amber-200 rounded shadow-sm";
-                item.innerText = `(${s.r},${s.c})`;
-                container.appendChild(item);
-            });
+            const containerBase = document.getElementById('stackContainerBase');
+            const containerSim = document.getElementById('stackContainerSim');
+            
+            if (stack.length === 0) {
+                const emptyMsg = '<span class="text-[10px] text-slate-300 italic">Trống</span>';
+                containerBase.innerHTML = emptyMsg;
+                containerSim.innerHTML = emptyMsg;
+                return;
+            }
+
+            const html = stack.map((s, idx) => {
+                const isTop = idx === stack.length - 1;
+                const bgColor = isTop ? 'bg-amber-100 border-amber-500 text-amber-900' : 'bg-white border-slate-200 text-slate-600';
+                return `
+                    <div class="stack-item flex items-center justify-between px-3 py-1.5 border-2 rounded-lg ${bgColor} shadow-sm">
+                        <span class="text-[9px] font-black">${s.dir}</span>
+                        <span class="text-[9px] font-mono font-bold">(${s.r}, ${s.c})</span>
+                        ${isTop ? '<span class="text-[7px] font-black bg-amber-500 text-white px-1 rounded">TOP</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            containerBase.innerHTML = html;
+            containerSim.innerHTML = html;
+            
+            // Auto-scroll to bottom of simulation stack to see the top element
+            containerSim.scrollTop = containerSim.scrollHeight;
         }
 
         function setLang(l) { 
             language = l; 
             updateCode(); 
-            document.getElementById('langCpp').className = l === 'cpp' ? 'px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-600 shadow-sm' : 'px-4 py-2 rounded-lg text-xs font-black text-slate-500';
-            document.getElementById('langPy').className = l === 'py' ? 'px-4 py-2 rounded-lg text-xs font-black bg-white text-blue-600 shadow-sm' : 'px-4 py-2 rounded-lg text-xs font-black text-slate-500';
+            document.getElementById('langCpp').className = l === 'cpp' ? 'px-3 py-1.5 rounded-md text-[10px] font-black bg-white text-blue-600 shadow-sm' : 'px-3 py-1.5 rounded-md text-[10px] font-black text-slate-500';
+            document.getElementById('langPy').className = l === 'py' ? 'px-3 py-1.5 rounded-md text-[10px] font-black bg-white text-blue-600 shadow-sm' : 'px-3 py-1.5 rounded-md text-[10px] font-black text-slate-500';
         }
         function updateCode() { document.getElementById('codeDisplay').innerText = language === 'cpp' ? cppSource : pySource; }
     </script>
