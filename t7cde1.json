@@ -86,8 +86,8 @@
   {
     "id": "PPT_15",
     "q": "Để xóa một trang chiếu, em chọn trang đó rồi nhấn phím gì?",
-    "options": ["Delete", "Backspace", "Cả A và B đều đúng", "Cả A và B đều sai"],
-    "correct": 2
+    "options": ["Delete", "Tab", "Cả 2 phím Delete, Tab đều đúng", "Cả 2 phím Delete, Tab đều sai"],
+    "correct": 0
   },
   {
     "id": "PPT_16",
