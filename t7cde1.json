@@ -161,8 +161,8 @@
   },
   {
     "id": "PPT_26",
-    "q": "Để chèn thêm một Slide mới vào bài trình chiếu, ta sử dụng tổ hợp phím nào?",
-    "options": ["Ctrl + N", "Ctrl + M", "Ctrl + S", "Ctrl + O"],
+    "q": "Để chèn thêm một trang chiếu (Slide) mới bằng thao tác trên thanh công cụ, em chọn dải lệnh Home rồi chọn lệnh nào?", 
+    "options": ["Layout", "New Slide", "Section", "Reset"], 
     "correct": 1
   },
   {
@@ -179,14 +179,39 @@
   },
   {
     "id": "PPT_29",
-    "q": "Để bắt đầu trình chiếu từ Slide đầu tiên, ta nhấn phím nào?",
-    "options": ["F1", "F5", "Shift + F5", "Ctrl + F5"],
-    "correct": 1
+    "q": "Khi đang ở chế độ trình chiếu (Slide Show), em muốn thoát ra để quay lại màn hình soạn thảo thì nhấn phím nào?",
+    "options": ["Enter", "Shift", "Esc", "Tab"],
+    "correct": 2
   },
   {
     "id": "PPT_30",
     "q": "Để vẽ các hình khối như hình vuông, hình tròn, mũi tên, ta vào thẻ Insert và chọn mục nào?",
     "options": ["Pictures", "Icons", "Shapes", "Screenshot"],
     "correct": 2
+  },
+  {
+    "id": "PPT_31",
+    "q": "Trong các phần mềm sau, đâu là phần mềm trình chiếu?",
+    "options": ["Google Slides", "Adobe Photoshop", "Windows Media Player", "Mozilla Firefox"],
+    "correct": 0
+  },
+  {
+    "id": "PPT_32",
+    "q": "Trong các phần mềm dưới đây, phần mềm nào KHÔNG PHẢI là phần mềm trình chiếu?",
+    "options": ["Microsoft PowerPoint", "Google Slides", "Microsoft Excel", "LibreOffice Impress"],
+    "correct": 2
+  },
+  {
+    "id": "PPT_33",
+    "q": "Phần mềm trình chiếu nào sau đây là phần mềm mã nguồn mở?",
+    "options": ["Microsoft PowerPoint", "LibreOffice Impress", "Prezi", "Canva"],
+    "correct": 1
+  },
+  {
+    "id": "PPT_34",
+    "q": "Ngoài PowerPoint, phần mềm nào có thể dùng để tạo bài thuyết trình trực tuyến miễn phí?",
+    "options": ["LibreOffice Impress", "Google Slides", "Notepad", "Paint"],
+    "correct": 1
   }
+
 ]
