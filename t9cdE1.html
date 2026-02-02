@@ -337,7 +337,7 @@
 
                 formData.append("sheetName", dataToSend.sheetName);
                 formData.append("topic", dataToSend.topic);
-                formData.append("userClass", dataToSend.userClass);
+                formData.append("userClass", "'" + dataToSend.userClass);
                 formData.append("stt", dataToSend.stt);
                 formData.append("name", dataToSend.name);
                 formData.append("score", dataToSend.score);
