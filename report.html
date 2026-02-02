@@ -50,23 +50,54 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
-        let masterData = [];
+                     
+        let masterData = []; // Biến toàn cục lưu trữ dữ liệu
 
-        async function fetchData() {
-            document.getElementById('loading').classList.remove('hidden');
+        /**
+         * Hàm lấy dữ liệu từ Google Sheets theo tên thẻ (Sheet)
+         * @param {string} selectedSheet - Tên thẻ muốn lấy (Mặc định là K7)
+         */
+        async function fetchData(selectedSheet = "K7") {
+            const loadingElem = document.getElementById('loading');
+            const tableBody = document.getElementById('data-body');
+            
+            // 1. Hiển thị trạng thái đang tải
+            loadingElem.classList.remove('hidden');
+            tableBody.innerHTML = ''; 
+            
+            // 2. Xây dựng URL có tham số ?sheet=
+            // Ví dụ: https://script.google.com/.../exec?sheet=K9
+            const finalUrl = `${API_URL}?sheet=${encodeURIComponent(selectedSheet)}`;
+            
             try {
-                const response = await fetch(API_URL);
-                masterData = await response.json();
-                masterData.reverse(); 
+                // 3. Gọi API
+                const response = await fetch(finalUrl);
+                const result = await response.json();
+                
+                // Kiểm tra nếu Server trả về lỗi
+                if (result.error) {
+                    alert("Lỗi: " + result.error);
+                    masterData = [];
+                } else {
+                    // 4. Lưu dữ liệu và đảo ngược để hiện người mới nộp lên đầu
+                    masterData = result.reverse(); 
+                }
 
-                updateDropdowns(); // Cập nhật cả 2 bộ lọc
-                renderTable(masterData);
-                updateStats(masterData);
+                // 5. Cập nhật giao diện
+                renderTable(masterData);    // Hiển thị danh sách vào bảng
+                updateStats(masterData);    // Tính toán lại con số thống kê (Tổng, Trung bình...)
+                
+                // Nếu bạn có bộ lọc Lớp, hãy cập nhật lại danh sách lớp theo dữ liệu mới
+                if (typeof updateDropdowns === "function") {
+                    updateDropdowns(); 
+                }
+
             } catch (error) {
-                console.error("Lỗi:", error);
-                alert("Lỗi kết nối dữ liệu!");
+                console.error("Lỗi kết nối API:", error);
+                alert("Không thể kết nối với máy chủ Google. Vui lòng kiểm tra lại link API hoặc quyền truy cập!");
             } finally {
-                document.getElementById('loading').classList.add('hidden');
+                // 6. Ẩn trạng thái đang tải
+                loadingElem.classList.add('hidden');
             }
         }
 
