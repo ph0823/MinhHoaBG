@@ -1,176 +1,198 @@
-<body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Giáo Viên Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800&display=swap');
+        body { font-family: 'Lexend', sans-serif; background-color: #f0f4f8; }
+        .stats-card { transition: all 0.3s ease; }
+        .stats-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white p-6 rounded-3xl shadow-xl border border-white mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
-                <h1 class="text-3xl font-black text-slate-800">Dashboard Quản Lý Điểm</h1>
-                <p class="text-slate-500">Hệ thống lọc dữ liệu theo Thẻ (Sheet) và Lớp</p>
-            </div>
-            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95">
-                <i class="fa-solid fa-rotate"></i> CẬP NHẬT DỮ LIỆU
-            </button>
-        </div>
-
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4">
-            <div class="flex-1 min-w-[200px] relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="search-name" placeholder="Tìm tên học sinh..." class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <h1 class="text-4xl font-black text-slate-800 tracking-tight">Bảng Vàng Kết Quả</h1>
+                <p class="text-slate-500 font-medium italic">"Dữ liệu minh bạch - Giảng dạy hiệu quả"</p>
             </div>
             
-            <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-400 uppercase">Thẻ:</span>
-                <select id="filter-sheet" class="px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 border-blue-500 outline-none min-w-[120px] bg-slate-50 font-bold text-blue-600">
-                    <option value="">Tất cả</option>
-                </select>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-400 uppercase">Lớp:</span>
-                <select id="filter-class" class="px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 border-blue-500 outline-none min-w-[120px]">
-                    <option value="">Tất cả</option>
-                </select>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 ml-2 mb-1">CHỌN KHỐI/THẺ</span>
+                    <select id="sheet-selector" onchange="fetchData(this.value)" class="bg-blue-50 border-2 border-blue-200 text-blue-700 font-bold py-3 px-6 rounded-2xl outline-none focus:border-blue-500 transition-all">
+                        <option value="K7">Khối 7</option>
+                        <option value="K9">Khối 9</option>
+                    </select>
+                </div>
+                <button onclick="fetchData(document.getElementById('sheet-selector').value)" class="bg-slate-800 hover:bg-black text-white p-4 rounded-2xl shadow-lg transition-all active:scale-90 mt-4 md:mt-0">
+                    <i class="fa-solid fa-arrows-rotate text-xl"></i>
+                </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                        <th class="px-6 py-4 font-bold text-slate-700">Thẻ</th>
-                        <th class="px-6 py-4 font-bold text-slate-700">Lớp</th>
-                        <th class="px-6 py-4 font-bold text-slate-700">Họ và Tên</th>
-                        <th class="px-6 py-4 font-bold text-slate-700 text-center">Điểm số</th>
-                        <th class="px-6 py-4 font-bold text-slate-700">Thời gian nộp</th>
-                    </tr>
-                </thead>
-                <tbody id="data-body" class="divide-y divide-slate-50"></tbody>
-            </table>
-            <div id="loading" class="p-12 text-center text-slate-400"> Đang tải dữ liệu từ Google Sheets... </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stats-card bg-white p-6 rounded-3xl shadow-md border-b-8 border-blue-500 flex items-center gap-5">
+                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-2xl"><i class="fa-solid fa-users"></i></div>
+                <div><p class="text-sm font-bold text-slate-400 uppercase">Tổng số bài</p><h2 id="stat-total" class="text-3xl font-black text-slate-800">0</h2></div>
+            </div>
+            <div class="stats-card bg-white p-6 rounded-3xl shadow-md border-b-8 border-green-500 flex items-center gap-5">
+                <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-2xl"><i class="fa-solid fa-award"></i></div>
+                <div><p class="text-sm font-bold text-slate-400 uppercase">Trung bình</p><h2 id="stat-avg" class="text-3xl font-black text-slate-800">0</h2></div>
+            </div>
+            <div class="stats-card bg-white p-6 rounded-3xl shadow-md border-b-8 border-amber-500 flex items-center gap-5">
+                <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-2xl"><i class="fa-solid fa-chart-line"></i></div>
+                <div><p class="text-sm font-bold text-slate-400 uppercase">Tỷ lệ Đạt</p><h2 id="stat-pass" class="text-3xl font-black text-slate-800">0%</h2></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-md mb-6 flex flex-wrap gap-4 items-center">
+            <div class="relative flex-1 min-w-[300px]">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                <input type="text" id="search-name" placeholder="Tìm tên học sinh..." class="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+            </div>
+            <select id="filter-class" class="px-6 py-3 bg-slate-50 rounded-xl font-bold text-slate-600 outline-none border-none">
+                <option value="">Tất cả các lớp</option>
+            </select>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-white">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white">
+                            <th class="px-6 py-5 font-bold uppercase text-xs tracking-widest">Học sinh</th>
+                            <th class="px-6 py-5 font-bold uppercase text-xs tracking-widest">Lớp</th>
+                            <th class="px-6 py-5 font-bold uppercase text-xs tracking-widest">Tiến trình</th>
+                            <th class="px-6 py-5 font-bold uppercase text-xs tracking-widest text-center">Điểm số</th>
+                            <th class="px-6 py-5 font-bold uppercase text-xs tracking-widest">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-body" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
+            <div id="loading" class="p-20 text-center">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-slate-400 font-bold">Đang lấy dữ liệu từ Google...</p>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
-                     
-        let masterData = []; // Biến toàn cục lưu trữ dữ liệu
+        const API_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec";
+        let masterData = [];
 
-        /**
-         * Hàm lấy dữ liệu từ Google Sheets theo tên thẻ (Sheet)
-         * @param {string} selectedSheet - Tên thẻ muốn lấy (Mặc định là K7)
-         */
-        async function fetchData(selectedSheet = "K7") {
-            const loadingElem = document.getElementById('loading');
-            const tableBody = document.getElementById('data-body');
-            
-            // 1. Hiển thị trạng thái đang tải
-            loadingElem.classList.remove('hidden');
-            tableBody.innerHTML = ''; 
-            
-            // 2. Xây dựng URL có tham số ?sheet=
-            // Ví dụ: https://script.google.com/.../exec?sheet=K9
-            const finalUrl = `${API_URL}?sheet=${encodeURIComponent(selectedSheet)}`;
-            
+        // Hàm hỗ trợ lấy dữ liệu an toàn (Chống lỗi sai tên cột)
+        const getVal = (obj, keys) => {
+            const foundKey = Object.keys(obj).find(k => keys.includes(k.trim().toLowerCase()));
+            return foundKey ? obj[foundKey] : "";
+        };
+
+        async function fetchData(sheet = "K7") {
+            const loading = document.getElementById('loading');
+            loading.classList.remove('hidden');
+            document.getElementById('data-body').innerHTML = '';
+
             try {
-                // 3. Gọi API
-                const response = await fetch(finalUrl);
+                const response = await fetch(`${API_URL}?sheet=${sheet}`);
                 const result = await response.json();
                 
-                // Kiểm tra nếu Server trả về lỗi
-                if (result.error) {
-                    alert("Lỗi: " + result.error);
-                    masterData = [];
-                } else {
-                    // 4. Lưu dữ liệu và đảo ngược để hiện người mới nộp lên đầu
-                    masterData = result.reverse(); 
-                }
-
-                // 5. Cập nhật giao diện
-                renderTable(masterData);    // Hiển thị danh sách vào bảng
-                updateStats(masterData);    // Tính toán lại con số thống kê (Tổng, Trung bình...)
+                if (result.error) throw new Error(result.error);
                 
-                // Nếu bạn có bộ lọc Lớp, hãy cập nhật lại danh sách lớp theo dữ liệu mới
-                if (typeof updateDropdowns === "function") {
-                    updateDropdowns(); 
-                }
-
+                masterData = result.reverse(); 
+                updateDropdowns();
+                renderTable(masterData);
+                updateStats(masterData);
             } catch (error) {
-                console.error("Lỗi kết nối API:", error);
-                alert("Không thể kết nối với máy chủ Google. Vui lòng kiểm tra lại link API hoặc quyền truy cập!");
+                console.error(error);
+                alert("Lỗi tải dữ liệu. Bạn đã Deploy Apps Script chưa?");
             } finally {
-                // 6. Ẩn trạng thái đang tải
-                loadingElem.classList.add('hidden');
+                loading.classList.add('hidden');
             }
         }
 
-        // Cập nhật danh sách Thẻ và Lớp từ dữ liệu thực tế
         function updateDropdowns() {
-            // Lấy danh sách Thẻ duy nhất
-            const sheets = [...new Set(masterData.map(item => item.sheetName || item.Thẻ))].filter(Boolean).sort();
-            const sheetSelect = document.getElementById('filter-sheet');
-            sheetSelect.innerHTML = '<option value="">Tất cả</option>';
-            sheets.forEach(s => sheetSelect.innerHTML += `<option value="${s}">${s}</option>`);
-
-            // Lấy danh sách Lớp duy nhất
-            const classes = [...new Set(masterData.map(item => item.userClass || item.Lớp))].filter(Boolean).sort();
-            const classSelect = document.getElementById('filter-class');
-            classSelect.innerHTML = '<option value="">Tất cả</option>';
-            classes.forEach(c => classSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            const classes = [...new Set(masterData.map(item => getVal(item, ['lớp', 'userclass', 'class'])))].filter(Boolean).sort();
+            const select = document.getElementById('filter-class');
+            select.innerHTML = '<option value="">Tất cả các lớp</option>';
+            classes.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
         }
 
         function renderTable(data) {
             const body = document.getElementById('data-body');
-            body.innerHTML = data.map(item => `
-                <tr class="hover:bg-blue-50/50 transition-colors">
-                    <td class="px-6 py-4"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-mono border">${item.sheetName || item.Thẻ || '-'}</span></td>
-                    <td class="px-6 py-4"><span class="font-bold text-blue-600">${item.userClass || item.Lớp}</span></td>
-                    <td class="px-6 py-4 font-semibold text-slate-800">${item.name}</td>
+            body.innerHTML = data.map(item => {
+                const name = getVal(item, ['họ và tên', 'name', 'tên']);
+                const cls = getVal(item, ['lớp', 'userclass', 'class']);
+                const score = parseFloat(getVal(item, ['điểm', 'score', 'điểm số'])) || 0;
+                const total = parseFloat(getVal(item, ['tổng câu', 'totalquestions', 'số câu'])) || 1;
+                const percent = (score / total) * 100;
+                const isPass = percent >= 50;
+
+                return `
+                <tr class="hover:bg-blue-50/50 transition-all group">
+                    <td class="px-6 py-4">
+                        <div class="font-black text-slate-800 group-hover:text-blue-600 transition-colors">${name || "Ẩn danh"}</div>
+                        <div class="text-[10px] text-slate-400 font-bold">${getVal(item, ['timestamp', 'thời gian'])}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-black border">${cls || "-"}</span>
+                    </td>
+                    <td class="px-6 py-4 w-48">
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="h-full ${isPass ? 'bg-green-500' : 'bg-red-400'}" style="width: ${percent}%"></div>
+                        </div>
+                    </td>
                     <td class="px-6 py-4 text-center">
-                        <span class="text-lg font-black ${item.score >= (item.totalQuestions/2) ? 'text-green-600' : 'text-red-500'}">
-                            ${item.score}/${item.totalQuestions}
+                        <span class="text-xl font-black ${isPass ? 'text-green-600' : 'text-red-500'}">${score}/${total}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="${isPass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                            ${isPass ? 'Đạt' : 'Cần cố gắng'}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-xs text-slate-400">${new Date(item.timestamp).toLocaleString('vi-VN')}</td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
 
-        // Sự kiện lọc đa tầng
+        // Các sự kiện Lọc
         document.getElementById('search-name').addEventListener('input', applyFilters);
         document.getElementById('filter-class').addEventListener('change', applyFilters);
-        document.getElementById('filter-sheet').addEventListener('change', applyFilters);
 
         function applyFilters() {
             const nameSearch = document.getElementById('search-name').value.toLowerCase();
             const classFilter = document.getElementById('filter-class').value;
-            const sheetFilter = document.getElementById('filter-sheet').value;
 
             const filtered = masterData.filter(item => {
-                const matchName = item.name.toLowerCase().includes(nameSearch);
-                const matchClass = classFilter === "" || (item.userClass || item.Lớp) === classFilter;
-                const matchSheet = sheetFilter === "" || (item.sheetName || item.Thẻ) === sheetFilter;
-                return matchName && matchClass && matchSheet;
+                const name = getVal(item, ['họ và tên', 'name', 'tên']).toLowerCase();
+                const cls = getVal(item, ['lớp', 'userclass', 'class']);
+                return name.includes(nameSearch) && (classFilter === "" || cls === classFilter);
             });
-
             renderTable(filtered);
-            updateStats(filtered); // Cập nhật thống kê theo kết quả đã lọc
+            updateStats(filtered);
         }
 
         function updateStats(data) {
-            if (data.length === 0) {
-                document.getElementById('stat-total').innerText = 0;
-                document.getElementById('stat-avg').innerText = 0;
-                document.getElementById('stat-pass').innerText = "0%";
-                return;
-            }
             const total = data.length;
-            const avg = (data.reduce((sum, item) => sum + Number(item.score), 0) / total).toFixed(1);
-            const passCount = data.filter(item => (item.score / item.totalQuestions) >= 0.5).length;
-            const passRate = ((passCount / total) * 100).toFixed(0);
-
+            if (total === 0) return;
+            const avg = (data.reduce((sum, item) => sum + (parseFloat(getVal(item, ['điểm', 'score'])) || 0), 0) / total).toFixed(1);
+            const passCount = data.filter(item => {
+                const s = parseFloat(getVal(item, ['điểm', 'score'])) || 0;
+                const t = parseFloat(getVal(item, ['tổng câu', 'totalquestions'])) || 1;
+                return (s / t) >= 0.5;
+            }).length;
+            
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-avg').innerText = avg;
-            document.getElementById('stat-pass').innerText = passRate + "%";
+            document.getElementById('stat-pass').innerText = Math.round((passCount / total) * 100) + "%";
         }
 
-        fetchData();
+        // Chạy lần đầu
+        fetchData("K7");
     </script>
 </body>
+</html>
