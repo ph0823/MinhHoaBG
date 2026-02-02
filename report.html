@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo Giáo viên - Hệ thống Trắc nghiệm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800">Báo Cáo Kết Quả</h1>
+                <p class="text-slate-500">Xem danh sách điểm số và thống kê bài làm của học sinh</p>
+            </div>
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95">
+                <i class="fa-solid fa-rotate"></i> LÀM MỚI DỮ LIỆU
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider">Tổng số bài làm</p>
+                <h2 id="stat-total" class="text-4xl font-black text-blue-600 mt-1">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider">Điểm trung bình</p>
+                <h2 id="stat-avg" class="text-4xl font-black text-green-600 mt-1">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ trên trung bình</p>
+                <h2 id="stat-pass" class="text-4xl font-black text-amber-500 mt-1">0%</h2>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4">
+            <div class="flex-1 min-w-[200px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search-name" placeholder="Tìm theo tên học sinh..." class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <select id="filter-class" class="px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none min-w-[150px]">
+                <option value="">Tất cả các lớp</option>
+            </select>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 font-bold text-slate-700">STT</th>
+                            <th class="px-6 py-4 font-bold text-slate-700">Lớp</th>
+                            <th class="px-6 py-4 font-bold text-slate-700">Họ và Tên</th>
+                            <th class="px-6 py-4 font-bold text-slate-700 text-center">Điểm số</th>
+                            <th class="px-6 py-4 font-bold text-slate-700">Thời gian nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-body" class="divide-y divide-slate-50">
+                        </tbody>
+                </table>
+            </div>
+            <div id="loading" class="p-12 text-center text-slate-400"> Đang tải dữ liệu... </div>
+        </div>
+    </div>
+
+    <script>
+        // DÙNG CHUNG URL VỚI FILE TRẮC NGHIỆM
+        const API_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
+        
+        let masterData = [];
+
+        async function fetchData() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('data-body').innerHTML = '';
+            
+            try {
+                const response = await fetch(API_URL);
+                masterData = await response.json();
+                
+                // Đảo ngược để hiện người nộp mới nhất lên đầu
+                masterData.reverse(); 
+
+                updateFilters();
+                renderTable(masterData);
+                updateStats(masterData);
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Không thể tải dữ liệu. Hãy kiểm tra lại Apps Script!");
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function updateFilters() {
+            const classes = [...new Set(masterData.map(item => item.userClass))].sort();
+            const select = document.getElementById('filter-class');
+            select.innerHTML = '<option value="">Tất cả các lớp</option>';
+            classes.forEach(c => {
+                select.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+
+        function renderTable(data) {
+            const body = document.getElementById('data-body');
+            body.innerHTML = data.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-600">${item.stt}</td>
+                    <td class="px-6 py-4"><span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">${item.userClass}</span></td>
+                    <td class="px-6 py-4 font-bold text-slate-800">${item.name}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="text-lg font-black ${item.score >= 5 ? 'text-green-600' : 'text-red-500'}">
+                            ${item.score}/${item.totalQuestions}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-400">${new Date(item.timestamp).toLocaleString('vi-VN')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStats(data) {
+            if (data.length === 0) return;
+            const total = data.length;
+            const avg = (data.reduce((sum, item) => sum + Number(item.score), 0) / total).toFixed(1);
+            const passCount = data.filter(item => (item.score / item.totalQuestions) >= 0.5).length;
+            const passRate = ((passCount / total) * 100).toFixed(0);
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-avg').innerText = avg;
+            document.getElementById('stat-pass').innerText = passRate + "%";
+        }
+
+        // Sự kiện lọc
+        document.getElementById('search-name').addEventListener('input', applyFilters);
+        document.getElementById('filter-class').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const nameSearch = document.getElementById('search-name').value.toLowerCase();
+            const classFilter = document.getElementById('filter-class').value;
+
+            const filtered = masterData.filter(item => {
+                const matchName = item.name.toLowerCase().includes(nameSearch);
+                const matchClass = classFilter === "" || item.userClass === classFilter;
+                return matchName && matchClass;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Tự động tải khi mở trang
+        fetchData();
+    </script>
+</body>
+</html>
