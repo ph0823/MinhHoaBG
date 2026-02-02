@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống Trắc nghiệm - Phiên bản Kiểm tra</title>
+    <title>KIỂM TRA THƯỜNG XUYÊN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -71,7 +71,7 @@
                 </div>
                 <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-left flex items-start gap-3">
                     <i class="fa-solid fa-circle-info mt-1"></i>
-                    <span>Phiên bản kiểm tra: Kết quả đúng/sai sẽ không hiển thị trong quá trình làm bài. Thời gian: <strong id="time-display-limit"></strong> phút.</span>
+                    <span>Thời gian: <strong id="time-display-limit"></strong> phút.</span>
                 </div>
                 <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
                     BẮT ĐẦU LÀM BÀI
@@ -263,6 +263,7 @@
             }, 400);
         }
 
+        /*
         function showResult() {
             if (isSubmitted) return;
             isSubmitted = true;
@@ -296,7 +297,7 @@
             const formData = new URLSearchParams();
             formData.append("sheetName", "KT7");
             formData.append("topic", QUIZ_CONFIG.topic);
-            formData.append("userClass", userClass);
+            formData.append("userClass", "'" + userClass);
             formData.append("stt", userStt);
             formData.append("name", userName);
             formData.append("score", score);
@@ -311,6 +312,90 @@
             .then(res => res.text())
             .then(txt => console.log("Server Response:", txt))
             .catch(err => console.error("Network Error:", err));
+        }
+        */
+        function showResult() {
+            if (isSubmitted) return;
+            isSubmitted = true;
+
+            clearInterval(timerInterval);
+            document.getElementById('submit-quiz-btn').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            // 1. Hiển thị kết quả cơ bản
+            const totalQuestions = questions.length;
+            const ratio = score / totalQuestions;
+            document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
+            document.getElementById('result-user').innerText = `Lớp: ${userClass} - STT: ${userStt} - ${userName}`;
+
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const msg = document.getElementById('result-message');
+
+            if (score === totalQuestions) {
+                document.getElementById('app').classList.add('perfect-bg');
+                title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
+                icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
+                msg.innerText = "Chúc mừng! Bạn đã hoàn thành xuất sắc.";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            } else if (ratio >= 0.5) {
+                icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
+                msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức.";
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
+                msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
+            }
+
+            // 2. PHÂN TÍCH LỖI SAI (Đưa vào cột questionIds)
+            let analysisResult = [];
+            questions.forEach((q, index) => {
+                const userChoiceIndex = userAnswers[index];
+                if (userChoiceIndex !== q.correct) {
+                    const userText = q.options[userChoiceIndex] || "Bỏ trống";
+                    const correctText = q.options[q.correct];
+                    // Định dạng: Mã câu (Sai: ... | Đúng: ...)
+                    analysisResult.push(`${q.id}(Sai: ${userText} | Đúng: ${correctText})`);
+                }
+            });
+
+            // Nếu đúng hết thì ghi là "Đúng hết 100%", nếu sai thì gộp danh sách lỗi lại
+            const questionDataDetail = analysisResult.length > 0 
+                ? analysisResult.join(" || ") 
+                : "Hoàn thành xuất sắc - Không sai câu nào";
+
+            // 3. GỬI DỮ LIỆU VỀ GOOGLE SHEETS
+            if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+                const formData = new URLSearchParams();
+
+                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K7");
+                formData.append("topic", QUIZ_CONFIG.topic);
+                formData.append("userClass", "'" + userClass); // Ép kiểu chuỗi để tránh lỗi ngày tháng
+                formData.append("stt", userStt);
+                formData.append("name", userName);
+                formData.append("score", score);
+                formData.append("totalQuestions", totalQuestions);
+                
+                // Gửi nội dung phân tích lỗi sai vào cột questionIds
+                formData.append("questionIds", questionDataDetail);
+
+                fetch(QUIZ_CONFIG.googleSheetURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
+                })
+                .then(response => response.text())
+                .then(responseText => {
+                    if (responseText === "OK") {
+                        console.log("✅ Dữ liệu (kèm chi tiết lỗi sai) đã được lưu!");
+                    } else {
+                        console.log("❌ Lỗi từ Server: " + responseText);
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Lỗi mạng:", err);
+                });
+            }
         }
     </script>
 </body>

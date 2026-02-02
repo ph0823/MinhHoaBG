@@ -294,16 +294,18 @@
             document.getElementById('submit-quiz-btn').classList.add('hidden');
             document.getElementById('quiz-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
-            
-            const ratio = score / questions.length;
-            document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+
+            // 1. Hiển thị kết quả cơ bản
+            const totalQuestions = questions.length;
+            const ratio = score / totalQuestions;
+            document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
             document.getElementById('result-user').innerText = `Lớp: ${userClass} - STT: ${userStt} - ${userName}`;
 
             const icon = document.getElementById('result-icon');
             const title = document.getElementById('result-title');
             const msg = document.getElementById('result-message');
 
-            if (score === questions.length) {
+            if (score === totalQuestions) {
                 document.getElementById('app').classList.add('perfect-bg');
                 title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
                 icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
@@ -311,58 +313,60 @@
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             } else if (ratio >= 0.5) {
                 icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
-                msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức cơ bản.";
+                msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức.";
             } else {
                 icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
-                msg.innerText = "Bạn cần ôn tập thêm.";
+                msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
             }
 
-            const questionIdList = questions.map(q => q.id).join(",");
+            // 2. PHÂN TÍCH LỖI SAI (Đưa vào cột questionIds)
+            let analysisResult = [];
+            questions.forEach((q, index) => {
+                const userChoiceIndex = userAnswers[index];
+                if (userChoiceIndex !== q.correct) {
+                    const userText = q.options[userChoiceIndex] || "Bỏ trống";
+                    const correctText = q.options[q.correct];
+                    // Định dạng: Mã câu (Sai: ... | Đúng: ...)
+                    analysisResult.push(`${q.id}(Sai: ${userText} | Đúng: ${correctText})`);
+                }
+            });
 
-            // Gửi dữ liệu về Sheet https://docs.google.com/spreadsheets/d/1DmOV7EfzK2pongT0rLsv666HotFzL2fZh1-HnYiHyI4
-            
-            const dataToSend = {
-                sheetName: "K9",
-                topic: QUIZ_CONFIG.topic,
-                userClass: userClass,
-                stt: userStt, 
-                name: userName,
-                score: score,
-                totalQuestions: questions.length,
-                questionIds: questionIdList
-            };
-            
+            // Nếu đúng hết thì ghi là "Đúng hết 100%", nếu sai thì gộp danh sách lỗi lại
+            const questionDataDetail = analysisResult.length > 0 
+                ? analysisResult.join(" || ") 
+                : "Hoàn thành xuất sắc - Không sai câu nào";
+
+            // 3. GỬI DỮ LIỆU VỀ GOOGLE SHEETS
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
                 const formData = new URLSearchParams();
 
-                formData.append("sheetName", dataToSend.sheetName);
-                formData.append("topic", dataToSend.topic);
-                formData.append("userClass", "'" + dataToSend.userClass);
-                formData.append("stt", dataToSend.stt);
-                formData.append("name", dataToSend.name);
-                formData.append("score", dataToSend.score);
-                formData.append("totalQuestions", dataToSend.totalQuestions);
-                formData.append("questionIds", dataToSend.questionIds);
+                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K7");
+                formData.append("topic", QUIZ_CONFIG.topic);
+                formData.append("userClass", "'" + userClass); // Ép kiểu chuỗi để tránh lỗi ngày tháng
+                formData.append("stt", userStt);
+                formData.append("name", userName);
+                formData.append("score", score);
+                formData.append("totalQuestions", totalQuestions);
+                
+                // Gửi nội dung phân tích lỗi sai vào cột questionIds
+                formData.append("questionIds", questionDataDetail);
 
-                // Thay đoạn fetch cũ bằng đoạn này để bắt lỗi chính xác từ Server
                 fetch(QUIZ_CONFIG.googleSheetURL, {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: formData.toString()
                 })
-                .then(response => response.text()) // Chuyển phản hồi sang dạng văn bản
+                .then(response => response.text())
                 .then(responseText => {
                     if (responseText === "OK") {
-                        console.log("✅ Dữ liệu đã được lưu vào Google Sheet!");
+                        console.log("✅ Dữ liệu (kèm chi tiết lỗi sai) đã được lưu!");
                     } else {
                         console.log("❌ Lỗi từ Server: " + responseText);
                     }
                 })
                 .catch(err => {
-                    console.error("❌ Lỗi kết nối mạng:", err);
+                    console.error("❌ Lỗi mạng:", err);
                 });
-
-
             }
         }
     </script>
