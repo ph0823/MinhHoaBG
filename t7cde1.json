@@ -126,9 +126,9 @@
   },
   {
     "id": "PPT_21",
-    "q": "Phần mở rộng (đuôi tệp) mặc định của tệp tin PowerPoint từ phiên bản 2007 trở về sau là gì?",
-    "options": [".doc", ".xls", ".ppt", ".pptx"],
-    "correct": 3
+    "q": "Để in các trang chiếu ra giấy, em sử dụng tổ hợp phím tắt nào?",
+    "options": ["Ctrl + S", "Ctrl + P", "Ctrl + N", "Ctrl + I"],
+    "correct": 1
   },
   {
     "id": "PPT_22",
@@ -192,7 +192,7 @@
   {
     "id": "PPT_31",
     "q": "Trong các phần mềm sau, đâu là phần mềm trình chiếu?",
-    "options": ["Google Slides", "Adobe Photoshop", "Windows Media Player", "Mozilla Firefox"],
+    "options": ["Keynote", "Adobe Photoshop", "Windows Media Player", "Mozilla Firefox"],
     "correct": 0
   },
   {
