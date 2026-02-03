@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Trắc nghiệm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-card:hover:not(.disabled) { transform: translateY(-2px); border-color: #3b82f6; background-color: #eff6ff; }
+        .correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .perfect-bg { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; }
+        .timer-warning { color: #ef4444; animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        /* Hiệu ứng cho nút nộp bài */
+        .btn-submit-final {
+            animation: pulse-green 2s infinite;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <button id="submit-quiz-btn" onclick="showResult()" class="hidden fixed bottom-8 right-8 z-50 bg-green-600 hover:bg-green-700 text-white font-black py-5 px-10 rounded-2xl shadow-2xl border-4 border-white transition-all btn-submit-final flex items-center gap-3 text-lg">
+        <i class="fa-solid fa-paper-plane"></i> NỘP BÀI
+    </button>
+
+    <div id="app" class="max-w-2xl w-full glass rounded-2xl shadow-2xl overflow-hidden min-h-[550px] flex flex-col relative">
+        
+        <div id="start-screen" class="p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-graduation-cap text-3xl text-blue-600"></i>
+            </div>
+            <h1 id="main-topic-title" class="text-2xl font-bold text-slate-800 mb-2">Hệ Thống Trắc Nghiệm</h1>
+            <p id="sub-topic-title" class="text-slate-500 mb-8 font-medium"></p>
+            
+            <div class="w-full space-y-4 max-w-sm">
+                <div class="text-left">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Thông tin học sinh:</label>
+                    
+                    <select id="user-class">
+                        <option value="" disabled selected>Chọn lớp</option>
+                        <option value="9.1">9.1</option>
+                        <option value="9.2">9.2</option>
+                        <option value="9.3">9.3</option>
+                        <option value="9.4">9.4</option>
+                        <option value="9.5">9.5</option>
+                        <option value="9.14">9.14</option>
+                        <option value="9.15">9.15</option>
+                        <option value="9.16">9.16</option>
+                    </select>
+                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52"class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    
+                    <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-left flex items-start gap-3">
+                    <i class="fa-solid fa-clock mt-1"></i>
+                    <span>Thời gian làm bài: <strong id="time-display-limit"></strong> phút.<br>Dữ liệu sẽ được gửi tự động khi bấm nộp bài hoặc hết giờ.</span>
+                </div>
+                <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="hidden flex-1 flex flex-col fade-in">
+            <div class="px-8 py-4 bg-slate-50 flex justify-between items-center border-b">
+                <div class="flex flex-col">
+                    <span id="display-info" class="text-sm font-bold text-slate-700"></span>
+                    <span id="progress-text" class="text-xs text-slate-500"></span>
+                </div>
+                <div id="timer-box" class="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
+                    <i class="fa-solid fa-stopwatch text-blue-500"></i>
+                    <span id="timer-text" class="font-mono font-bold text-lg text-slate-700">00:00</span>
+                </div>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200">
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300"></div>
+            </div>
+
+            <div class="p-8 flex-1">
+                <h2 id="question-text" class="text-xl font-bold text-slate-800 mb-8 leading-relaxed"></h2>
+                <div id="options-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div id="result-icon" class="mb-6"></div>
+            <h1 id="result-title" class="text-3xl font-bold text-slate-800 mb-2">Kết quả bài làm</h1>
+            <p id="result-user" class="text-slate-600 mb-6"></p>
+            <div id="score-container" class="bg-slate-50 rounded-2xl p-6 w-full max-w-sm mb-8">
+                <div class="text-5xl font-black text-blue-600 mb-2" id="final-score">0/0</div>
+                <div class="text-sm text-slate-500 uppercase font-bold tracking-widest">Câu trả lời đúng</div>
+            </div>
+            <p id="result-message" class="text-lg font-medium text-slate-700 mb-8 px-4"></p>
+            <button onclick="location.reload()" class="px-10 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-all">LÀM LẠI</button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= CẤU HÌNH DÀNH CHO GIÁO VIÊN ================= */
+        const QUIZ_CONFIG = {
+            topic: "Bài 1: Sử dụng bài trình chiếu",
+            timeLimitMinutes: 10,
+            questionLimit: 20,
+            // URL Apps Script 
+
+            googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec" 
+        };
+        
+        let allQuestions = [];
+
+        // HÀM TẢI DỮ LIỆU TỪ FILE JSON
+        async function loadQuestions() {
+            try {
+                const response = await fetch('t9cde1.json'); // Đường dẫn đến file json
+                if (!response.ok) {
+                    throw new Error('Không thể tải file dữ liệu câu hỏi');
+                }
+                allQuestions = await response.json();
+                console.log("Đã tải dữ liệu thành công:", allQuestions.length, "câu hỏi.");
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra file t9cde1.json!");
+            }
+        }
+
+        // Gọi hàm tải dữ liệu ngay khi trang web vừa load xong
+        window.onload = loadQuestions;
+
+        /* ================= LOGIC HỆ THỐNG ================= */
+        let questions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let userName = "";
+        let userClass = "";
+        let canClick = true;
+        let timerInterval;
+        let timeLeft;
+        let isSubmitted = false; // Tránh gửi dữ liệu 2 lần
+        let userStt = ""; 
+        let userAnswers = []; 
+
+        document.getElementById('sub-topic-title').innerText = QUIZ_CONFIG.topic;
+        document.getElementById('time-display-limit').innerText = QUIZ_CONFIG.timeLimitMinutes;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        async function startQuiz() {
+
+          userClass = document.getElementById('user-class').value.trim();
+          userStt = document.getElementById('user-stt').value.trim();
+          userName = document.getElementById('user-name').value.trim();
+
+          const stt = parseInt(userStt);
+
+          // 1. Kiểm tra dữ liệu đã tải
+          if (allQuestions.length === 0) {
+            await loadQuestions();
+          }
+
+          // 2. Kiểm tra thông tin
+          if (!userName || !userClass || !userStt) {
+            alert("Vui lòng nhập đầy đủ Lớp, STT và Họ tên!");
+            return;
+          }
+
+          // 3. Kiểm tra STT hợp lệ
+          if (isNaN(stt) || stt < 1 || stt > 52) {
+            alert("STT không hợp lệ (1–52)");
+            document.getElementById('user-stt').focus();
+            return;
+          }
+
+          // 4. Random câu hỏi
+          let pool = [...allQuestions];
+          shuffle(pool);
+          questions = pool.slice(0, QUIZ_CONFIG.questionLimit);
+
+          // 5. Shuffle đáp án
+          questions.forEach(q => {
+            const correctText = q.options[q.correct];
+            shuffle(q.options);
+            q.correct = q.options.indexOf(correctText);
+          });
+
+          timeLeft = QUIZ_CONFIG.timeLimitMinutes * 60;
+          startTimer();
+
+          document.getElementById('start-screen').classList.add('hidden');
+          document.getElementById('quiz-screen').classList.remove('hidden');
+          document.getElementById('display-info').innerText =
+            `${userName} - Lớp: ${userClass}`;
+
+          showQuestion();
+        }
+
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.");
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const min = Math.floor(timeLeft / 60);
+            const sec = timeLeft % 60;
+            const timerElem = document.getElementById('timer-text');
+            timerElem.innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            if (timeLeft <= 30) timerElem.classList.add('timer-warning');
+        }
+
+        function showQuestion() {
+            canClick = true;
+            const q = questions[currentQuestion];
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('progress-text').innerText = `Câu ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+            const list = document.getElementById('options-list');
+            list.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card group flex items-center p-4 border-2 border-slate-100 rounded-xl cursor-pointer bg-white';
+                btn.innerHTML = `<div class="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center font-bold mr-4">${String.fromCharCode(65 + idx)}</div><span class="flex-1 font-medium text-slate-700">${opt}</span>`;
+                btn.onclick = () => selectOption(idx, btn);
+                list.appendChild(btn);
+            });
+        }
+
+        function selectOption(idx, element) {
+            if (!canClick) return;
+
+            userAnswers[currentQuestion] = idx;
+            canClick = false;
+
+            const correctIdx = questions[currentQuestion].correct;
+            const options = document.querySelectorAll('.option-card');
+            options.forEach(opt => opt.classList.add('disabled', 'opacity-60'));
+
+            if (idx === correctIdx) {
+                element.classList.remove('opacity-60');
+                element.classList.add('correct');
+                score++;
+            } else {
+                element.classList.remove('opacity-60');
+                element.classList.add('wrong');
+                options[correctIdx].classList.remove('opacity-60');
+                options[correctIdx].classList.add('correct');
+            }
+
+            // Chuyển câu hỏi hoặc Hiện nút nộp bài
+            setTimeout(() => {
+                if (currentQuestion < questions.length - 1) {
+                    currentQuestion++;
+                    showQuestion();
+                } else {
+                    // Đã làm hết câu hỏi -> Hiện nút nộp bài
+                    document.getElementById('submit-quiz-btn').classList.remove('hidden');
+                    
+                }
+            }, 1000);
+        }
+
+
+        function showResult() {
+            if (isSubmitted) return;
+            isSubmitted = true;
+
+            clearInterval(timerInterval);
+            document.getElementById('submit-quiz-btn').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const totalQuestions = questions.length;
+            const ratio = score / totalQuestions;
+            document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
+            document.getElementById('result-user').innerText = `Lớp: ${userClass} - STT: ${userStt} - ${userName}`;
+
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const msg = document.getElementById('result-message');
+
+            // Hiển thị hiệu ứng kết quả
+            if (score === totalQuestions) {
+                document.getElementById('app').classList.add('perfect-bg');
+                title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
+                icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
+                msg.innerText = "Chúc mừng! Bạn đã hoàn thành xuất sắc.";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            } else if (ratio >= 0.5) {
+                icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
+                msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức.";
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
+                msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
+            }
+
+            // --- PHÂN TÍCH LỖI SAI (ĐÃ SỬA LỖI "BỎ TRỐNG") ---
+            let analysisResult = [];
+            
+            questions.forEach((q, index) => {
+                const userChoiceIndex = userAnswers[index]; // Lấy index đáp án HS chọn
+                
+                // Chỉ xử lý nếu làm sai
+                if (userChoiceIndex !== q.correct) {
+                    
+                    // 1. Xác định nội dung học sinh chọn
+                    let userText = "Bỏ trống"; 
+                    //if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
+                    userText = q.options[userChoiceIndex]; 
+                    //}
+                    
+                    // 2. Xác định nội dung đáp án đúng
+                    const correctText = q.options[q.correct];
+                    
+                    // 3. Lấy ID câu hỏi (Nếu không có id thì lấy số thứ tự)
+                    const qId = q.id || `Câu ${index + 1}`;
+
+                    // 4. TẠO CHUỖI ĐÚNG FORMAT CỦA MODAL
+                    // Format bắt buộc: ID(Sai: ... | Đúng: ...)
+                    // Lưu ý dấu gạch đứng | phải có khoảng trắng 2 bên như trong hàm split(' | ')
+                    analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
+                }
+            });
+
+            // Nối các câu bằng dấu " || " (khớp với split(' || '))
+            const questionDataDetail = analysisResult.length > 0 
+                ? analysisResult.join(" || ") 
+                : "Hoàn thành xuất sắc";
+
+            // --- GỬI DỮ LIỆU ---
+            if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+                const formData = new URLSearchParams();
+                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K9");
+                formData.append("topic", QUIZ_CONFIG.topic);
+                formData.append("userClass", "'" + userClass);
+                formData.append("stt", userStt);
+                formData.append("name", userName);
+                formData.append("score", score);
+                formData.append("totalQuestions", totalQuestions);
+                formData.append("questionIds", questionDataDetail);
+
+                fetch(QUIZ_CONFIG.googleSheetURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
+                })
+                .then(response => response.text())
+                .then(res => console.log("✅ Server response:", res))
+                .catch(err => console.error("❌ Network error:", err));
+            }
+        }
+    </script>
+</body>
+</html>
