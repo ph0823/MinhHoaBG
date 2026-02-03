@@ -153,6 +153,7 @@
         let timeLeft;
         let isSubmitted = false; // Tránh gửi dữ liệu 2 lần
         let userStt = ""; 
+        let userAnswers = []; // Đảm bảo biến này tồn tại ở phạm vi toàn cục
 
         document.getElementById('sub-topic-title').innerText = QUIZ_CONFIG.topic;
         document.getElementById('time-display-limit').innerText = QUIZ_CONFIG.timeLimitMinutes;
@@ -340,7 +341,7 @@
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
                 const formData = new URLSearchParams();
 
-                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K7");
+                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K9");
                 formData.append("topic", QUIZ_CONFIG.topic);
                 formData.append("userClass", "'" + userClass); // Ép kiểu chuỗi để tránh lỗi ngày tháng
                 formData.append("stt", userStt);
