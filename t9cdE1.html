@@ -325,23 +325,36 @@
 
             // --- PHÂN TÍCH LỖI SAI (ĐÃ SỬA LỖI "BỎ TRỐNG") ---
             let analysisResult = [];
+            
             questions.forEach((q, index) => {
-                const userChoiceIndex = userAnswers[index];
+                const userChoiceIndex = userAnswers[index]; // Lấy index đáp án HS chọn
                 
-                
+                // Chỉ xử lý nếu làm sai
                 if (userChoiceIndex !== q.correct) {
-                    let userText = "Bỏ trống";
+                    
+                    // 1. Xác định nội dung học sinh chọn
+                    let userText = "Bỏ trống"; 
                     if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
-                        userText = q.options[userChoiceIndex];
+                        userText = q.options[userChoiceIndex]; 
                     }
+                    
+                    // 2. Xác định nội dung đáp án đúng
                     const correctText = q.options[q.correct];
-                    analysisResult.push(`${q.id}(Sai: ${userText} | Đúng: ${correctText})`);
+                    
+                    // 3. Lấy ID câu hỏi (Nếu không có id thì lấy số thứ tự)
+                    const qId = q.id || `Câu ${index + 1}`;
+
+                    // 4. TẠO CHUỖI ĐÚNG FORMAT CỦA MODAL
+                    // Format bắt buộc: ID(Sai: ... | Đúng: ...)
+                    // Lưu ý dấu gạch đứng | phải có khoảng trắng 2 bên như trong hàm split(' | ')
+                    analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
                 }
             });
 
+            // Nối các câu bằng dấu " || " (khớp với split(' || '))
             const questionDataDetail = analysisResult.length > 0 
                 ? analysisResult.join(" || ") 
-                : "Hoàn thành xuất sắc - Không sai câu nào";
+                : "Hoàn thành xuất sắc";
 
             // --- GỬI DỮ LIỆU ---
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
