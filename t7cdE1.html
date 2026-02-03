@@ -260,6 +260,8 @@
 
         function selectOption(idx, element) {
             if (!canClick) return;
+            userAnswers[currentQuestion] = idx;
+
             canClick = false;
 
             const correctIdx = questions[currentQuestion].correct;
@@ -299,7 +301,6 @@
             document.getElementById('quiz-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
 
-            // 1. Hiển thị kết quả cơ bản
             const totalQuestions = questions.length;
             const ratio = score / totalQuestions;
             document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
@@ -309,6 +310,7 @@
             const title = document.getElementById('result-title');
             const msg = document.getElementById('result-message');
 
+            // Hiển thị hiệu ứng kết quả
             if (score === totalQuestions) {
                 document.getElementById('app').classList.add('perfect-bg');
                 title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
@@ -323,36 +325,49 @@
                 msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
             }
 
-            // 2. PHÂN TÍCH LỖI SAI (Đưa vào cột questionIds)
+            // --- PHÂN TÍCH LỖI SAI (ĐÃ SỬA LỖI "BỎ TRỐNG") ---
             let analysisResult = [];
+            
             questions.forEach((q, index) => {
-                const userChoiceIndex = userAnswers[index];
+                const userChoiceIndex = userAnswers[index]; // Lấy index đáp án HS chọn
+                
+                // Chỉ xử lý nếu làm sai
                 if (userChoiceIndex !== q.correct) {
-                    const userText = q.options[userChoiceIndex] || "Bỏ trống";
+                    
+                    // 1. Xác định nội dung học sinh chọn
+                    let userText = "Bỏ trống"; 
+                    if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
+                        userText = q.options[userChoiceIndex]; 
+                    }
+                    
+                    // 2. Xác định nội dung đáp án đúng
                     const correctText = q.options[q.correct];
-                    // Định dạng: Mã câu (Sai: ... | Đúng: ...)
-                    analysisResult.push(`${q.id}(Sai: ${userText} | Đúng: ${correctText})`);
+                    
+                    // 3. Lấy ID câu hỏi (Nếu không có id thì lấy số thứ tự)
+                    const qId = q.id || `Câu ${index + 1}`;
+
+                    // 4. TẠO CHUỖI ĐÚNG FORMAT CỦA MODAL
+                    // Format bắt buộc: ID(Sai: ... | Đúng: ...)
+                    // Lưu ý dấu gạch đứng | phải có khoảng trắng 2 bên như trong hàm split(' | ')
+                    analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
                 }
             });
 
-            // Nếu đúng hết thì ghi là "Đúng hết 100%", nếu sai thì gộp danh sách lỗi lại
+            // Nối các câu bằng dấu " || " (khớp với split(' || '))
             const questionDataDetail = analysisResult.length > 0 
                 ? analysisResult.join(" || ") 
-                : "Hoàn thành xuất sắc - Không sai câu nào";
+                : "Hoàn thành xuất sắc";
 
-            // 3. GỬI DỮ LIỆU VỀ GOOGLE SHEETS
+            // --- GỬI DỮ LIỆU ---
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
                 const formData = new URLSearchParams();
-
-                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K7");
+                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K9");
                 formData.append("topic", QUIZ_CONFIG.topic);
-                formData.append("userClass", "'" + userClass); // Ép kiểu chuỗi để tránh lỗi ngày tháng
+                formData.append("userClass", "'" + userClass);
                 formData.append("stt", userStt);
                 formData.append("name", userName);
                 formData.append("score", score);
                 formData.append("totalQuestions", totalQuestions);
-                
-                // Gửi nội dung phân tích lỗi sai vào cột questionIds
                 formData.append("questionIds", questionDataDetail);
 
                 fetch(QUIZ_CONFIG.googleSheetURL, {
@@ -361,16 +376,8 @@
                     body: formData.toString()
                 })
                 .then(response => response.text())
-                .then(responseText => {
-                    if (responseText === "OK") {
-                        console.log("✅ Dữ liệu (kèm chi tiết lỗi sai) đã được lưu!");
-                    } else {
-                        console.log("❌ Lỗi từ Server: " + responseText);
-                    }
-                })
-                .catch(err => {
-                    console.error("❌ Lỗi mạng:", err);
-                });
+                .then(res => console.log("✅ Server response:", res))
+                .catch(err => console.error("❌ Network error:", err));
             }
         }
     </script>

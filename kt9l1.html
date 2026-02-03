@@ -235,6 +235,7 @@
         /* Logic quan trọng: Không hiện đáp án đúng/sai */
         function selectOption(idx, element) {
             if (!canClick) return;
+            userAnswers[currentQuestion] = idx;
             canClick = false;
 
             const correctIdx = questions[currentQuestion].correct;
@@ -347,20 +348,36 @@
 
             // 2. PHÂN TÍCH LỖI SAI (Đưa vào cột questionIds)
             let analysisResult = [];
+            
             questions.forEach((q, index) => {
-                const userChoiceIndex = userAnswers[index];
+                const userChoiceIndex = userAnswers[index]; // Lấy index đáp án HS chọn
+                
+                // Chỉ xử lý nếu làm sai
                 if (userChoiceIndex !== q.correct) {
-                    const userText = q.options[userChoiceIndex] || "Bỏ trống";
+                    
+                    // 1. Xác định nội dung học sinh chọn
+                    let userText = "Bỏ trống"; 
+                    if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
+                        userText = q.options[userChoiceIndex]; 
+                    }
+                    
+                    // 2. Xác định nội dung đáp án đúng
                     const correctText = q.options[q.correct];
-                    // Định dạng: Mã câu (Sai: ... | Đúng: ...)
-                    analysisResult.push(`${q.id}(Sai: ${userText} | Đúng: ${correctText})`);
+                    
+                    // 3. Lấy ID câu hỏi (Nếu không có id thì lấy số thứ tự)
+                    const qId = q.id || `Câu ${index + 1}`;
+
+                    // 4. TẠO CHUỖI ĐÚNG FORMAT CỦA MODAL
+                    // Format bắt buộc: ID(Sai: ... | Đúng: ...)
+                    // Lưu ý dấu gạch đứng | phải có khoảng trắng 2 bên như trong hàm split(' | ')
+                    analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
                 }
             });
 
-            // Nếu đúng hết thì ghi là "Đúng hết 100%", nếu sai thì gộp danh sách lỗi lại
+            // Nối các câu bằng dấu " || " (khớp với split(' || '))
             const questionDataDetail = analysisResult.length > 0 
                 ? analysisResult.join(" || ") 
-                : "Hoàn thành xuất sắc - Không sai câu nào";
+                : "Hoàn thành xuất sắc";
 
             // 3. GỬI DỮ LIỆU VỀ GOOGLE SHEETS
             if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
