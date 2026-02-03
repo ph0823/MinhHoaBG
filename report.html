@@ -113,6 +113,25 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec";
         let masterData = [];
 
+                let allQuestions = [];
+
+        // Hàm tải file JSON chứa câu hỏi (copy code bạn gửi)
+        async function loadQuestions() {
+            try {
+                const response = await fetch('t9cde1.json'); // Đảm bảo đúng tên file JSON của bạn
+                if (!response.ok) throw new Error('Không thể tải file dữ liệu câu hỏi');
+                
+                allQuestions = await response.json();
+                console.log("✅ Đã tải dữ liệu tra cứu:", allQuestions.length, "câu hỏi.");
+            } catch (error) {
+                console.error("Lỗi:", error);
+                // Không alert để tránh phiền nếu chỉ xem báo cáo nhanh
+            }
+        }
+
+      
+        loadQuestions();
+
         const getVal = (obj, keys) => {
             const foundKey = Object.keys(obj).find(k => keys.includes(k.trim()));
             return foundKey ? obj[foundKey] : "";
@@ -135,6 +154,7 @@
             }
         }
 
+
         // HÀM HIỂN THỊ MODAL LỖI SAI
         function openErrorModal(errorString, studentName) {
             const container = document.getElementById('modal-content');
@@ -143,20 +163,43 @@
             container.innerHTML = `<p class="mb-4 text-slate-500">Học sinh: <span class="font-bold text-blue-600">${studentName}</span></p>`;
             
             items.forEach(item => {
-                // Tách ID và phần nội dung trong ngoặc
+                // Chuỗi có dạng: "Q01(Sai: A | Đúng: B)"
                 const parts = item.split('(');
-                const qId = parts[0];
+                const qId = parts[0].trim(); // Lấy ID (ví dụ: "Q01")
+                
                 const detail = parts[1] ? parts[1].replace(')', '') : "";
                 const subParts = detail.split(' | ');
                 const sai = subParts[0] ? subParts[0].replace('Sai: ', '') : "";
                 const dung = subParts[1] ? subParts[1].replace('Đúng: ', '') : "";
 
+                // --- TRA CỨU NỘI DUNG CÂU HỎI ---
+                let questionContent = qId; // Mặc định hiển thị ID nếu chưa tải được data
+                
+                // Tìm câu hỏi trong mảng allQuestions có id trùng với qId
+                if (allQuestions.length > 0) {
+                    const foundQ = allQuestions.find(q => String(q.id) === String(qId));
+                    if (foundQ) {
+                        questionContent = foundQ.q; // Lấy nội dung câu hỏi thay thế cho ID
+                    }
+                }
+                // -------------------------------
+
                 container.innerHTML += `
-                    <div class="error-item bg-rose-50 p-4 rounded-2xl">
-                        <div class="font-black text-xs text-rose-400 mb-1 uppercase tracking-widest">${qId}</div>
+                    <div class="error-item bg-rose-50 p-4 rounded-2xl mb-3">
+                        <div class="font-bold text-slate-800 text-sm mb-3 border-b border-rose-200 pb-2">
+                            <span class="inline-block bg-rose-200 text-rose-700 text-[10px] px-2 py-0.5 rounded mr-2 align-middle">${qId}</span>
+                            ${questionContent}
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Học sinh chọn:</p><p class="text-sm font-bold text-rose-600">${sai}</p></div>
-                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Đáp án đúng:</p><p class="text-sm font-bold text-emerald-600">${dung}</p></div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Học sinh chọn:</p>
+                                <p class="text-sm font-bold text-rose-600">${sai}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Đáp án đúng:</p>
+                                <p class="text-sm font-bold text-emerald-600">${dung}</p>
+                            </div>
                         </div>
                     </div>
                 `;
