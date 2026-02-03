@@ -257,6 +257,8 @@
 
         function selectOption(idx, element) {
             if (!canClick) return;
+
+            userAnswers[currentQuestion] = idx;
             canClick = false;
 
             const correctIdx = questions[currentQuestion].correct;
@@ -326,7 +328,7 @@
             questions.forEach((q, index) => {
                 const userChoiceIndex = userAnswers[index];
                 
-                // Kiểm tra xem học sinh có chọn hay không (không dùng || vì index 0 là falsy)
+                
                 if (userChoiceIndex !== q.correct) {
                     let userText = "Bỏ trống";
                     if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
