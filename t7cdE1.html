@@ -362,7 +362,7 @@
     if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
         const formData = new URLSearchParams();
 
-        formData.append("sheetName", QUIZ_CONFIG.sheetName || "KT7");
+        formData.append("sheetName", QUIZ_CONFIG.sheetName || "K7");
         formData.append("topic", QUIZ_CONFIG.topic);
         formData.append("userClass", "'" + userClass); 
         formData.append("stt", userStt);
