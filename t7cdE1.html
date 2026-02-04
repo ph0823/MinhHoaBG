@@ -293,93 +293,108 @@
         }
 
         function showResult() {
-            if (isSubmitted) return;
-            isSubmitted = true;
+    if (isSubmitted) return;
+    isSubmitted = true;
 
-            clearInterval(timerInterval);
-            document.getElementById('submit-quiz-btn').classList.add('hidden');
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('result-screen').classList.remove('hidden');
+    clearInterval(timerInterval);
+    document.getElementById('submit-quiz-btn').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
 
-            const totalQuestions = questions.length;
-            const ratio = score / totalQuestions;
-            document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
-            document.getElementById('result-user').innerText = `Lớp: ${userClass} - STT: ${userStt} - ${userName}`;
+    // 1. Hiển thị kết quả cơ bản
+    const totalQuestions = questions.length;
+    
+    // [THAY ĐỔI 1] Tính điểm thang 10 và làm tròn 2 chữ số thập phân
+    // Nếu muốn làm tròn 1 số lẻ thì sửa toFixed(2) thành toFixed(1)
+    const score10 = ((score / totalQuestions) * 10).toFixed(2);
 
-            const icon = document.getElementById('result-icon');
-            const title = document.getElementById('result-title');
-            const msg = document.getElementById('result-message');
+    const ratio = score / totalQuestions;
 
-            // Hiển thị hiệu ứng kết quả
-            if (score === totalQuestions) {
-                document.getElementById('app').classList.add('perfect-bg');
-                title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
-                icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
-                msg.innerText = "Chúc mừng! Bạn đã hoàn thành xuất sắc.";
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            } else if (ratio >= 0.5) {
-                icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
-                msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức.";
-            } else {
-                icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
-                msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
+    // [THAY ĐỔI 2] Hiển thị điểm 10 ra màn hình
+    // Ví dụ hiển thị: "8.50 / 10 điểm"
+    document.getElementById('final-score').innerText = `${score10} / 10 điểm`;
+    
+    // Nếu bạn muốn hiển thị kèm số câu đúng bên cạnh thì dùng dòng dưới này thay thế dòng trên:
+    // document.getElementById('final-score').innerText = `${score10} (Đúng ${score}/${totalQuestions})`;
+
+    document.getElementById('result-user').innerText = `Lớp: ${userClass} - STT: ${userStt} - ${userName}`;
+
+    const icon = document.getElementById('result-icon');
+    const title = document.getElementById('result-title');
+    const msg = document.getElementById('result-message');
+
+    if (score === totalQuestions) {
+        document.getElementById('app').classList.add('perfect-bg');
+        title.innerText = "XUẤT SẮC TUYỆT ĐỐI!";
+        icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
+        msg.innerText = "Chúc mừng! Bạn đã hoàn thành xuất sắc.";
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    } else if (ratio >= 0.5) { // Tương đương điểm >= 5
+        icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
+        msg.innerText = "Làm tốt lắm! Bạn đã nắm vững kiến thức.";
+    } else {
+        icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
+        msg.innerText = "Bạn cần ôn tập thêm kỹ nhé.";
+    }
+
+    // 2. PHÂN TÍCH LỖI SAI (Giữ nguyên logic cũ)
+    let analysisResult = [];
+    
+    questions.forEach((q, index) => {
+        const userChoiceIndex = userAnswers[index]; 
+        
+        if (userChoiceIndex !== q.correct) {
+            let userText = "Bỏ trống"; 
+            if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
+                userText = q.options[userChoiceIndex]; 
             }
-
-            // --- PHÂN TÍCH LỖI SAI (ĐÃ SỬA LỖI "BỎ TRỐNG") ---
-            let analysisResult = [];
-            
-            questions.forEach((q, index) => {
-                const userChoiceIndex = userAnswers[index]; // Lấy index đáp án HS chọn
-                
-                // Chỉ xử lý nếu làm sai
-                if (userChoiceIndex !== q.correct) {
-                    
-                    // 1. Xác định nội dung học sinh chọn
-                    let userText = "Bỏ trống"; 
-                    if (userChoiceIndex !== undefined && userChoiceIndex !== null) {
-                        userText = q.options[userChoiceIndex]; 
-                    }
-                    
-                    // 2. Xác định nội dung đáp án đúng
-                    const correctText = q.options[q.correct];
-                    
-                    // 3. Lấy ID câu hỏi (Nếu không có id thì lấy số thứ tự)
-                    const qId = q.id || `Câu ${index + 1}`;
-
-                    // 4. TẠO CHUỖI ĐÚNG FORMAT CỦA MODAL
-                    // Format bắt buộc: ID(Sai: ... | Đúng: ...)
-                    // Lưu ý dấu gạch đứng | phải có khoảng trắng 2 bên như trong hàm split(' | ')
-                    analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
-                }
-            });
-
-            // Nối các câu bằng dấu " || " (khớp với split(' || '))
-            const questionDataDetail = analysisResult.length > 0 
-                ? analysisResult.join(" || ") 
-                : "Hoàn thành xuất sắc";
-
-            // --- GỬI DỮ LIỆU ---
-            if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
-                const formData = new URLSearchParams();
-                formData.append("sheetName", QUIZ_CONFIG.sheetName || "K9");
-                formData.append("topic", QUIZ_CONFIG.topic);
-                formData.append("userClass", "'" + userClass);
-                formData.append("stt", userStt);
-                formData.append("name", userName);
-                formData.append("score", score);
-                formData.append("totalQuestions", totalQuestions);
-                formData.append("questionIds", questionDataDetail);
-
-                fetch(QUIZ_CONFIG.googleSheetURL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: formData.toString()
-                })
-                .then(response => response.text())
-                .then(res => console.log("✅ Server response:", res))
-                .catch(err => console.error("❌ Network error:", err));
-            }
+            const correctText = q.options[q.correct];
+            const qId = q.id || `Câu ${index + 1}`;
+            analysisResult.push(`${qId}(Sai: ${userText} | Đúng: ${correctText})`);
         }
+    });
+
+    const questionDataDetail = analysisResult.length > 0 
+        ? analysisResult.join(" || ") 
+        : "Hoàn thành xuất sắc";
+
+    // 3. GỬI DỮ LIỆU VỀ GOOGLE SHEETS
+    if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+        const formData = new URLSearchParams();
+
+        formData.append("sheetName", QUIZ_CONFIG.sheetName || "KT7");
+        formData.append("topic", QUIZ_CONFIG.topic);
+        formData.append("userClass", "'" + userClass); 
+        formData.append("stt", userStt);
+        formData.append("name", userName);
+        
+        // [THAY ĐỔI 3] Gửi điểm hệ 10 lên Google Sheet
+        formData.append("score", score10); 
+        
+        // Gửi thêm số câu làm đúng nếu cần (tùy chọn, có thể tạo cột mới trên Sheet tên là 'correctCount')
+        // formData.append("correctCount", score); 
+
+        formData.append("totalQuestions", totalQuestions);
+        formData.append("questionIds", questionDataDetail);
+
+        fetch(QUIZ_CONFIG.googleSheetURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData.toString()
+        })
+        .then(response => response.text())
+        .then(responseText => {
+            if (responseText === "OK") {
+                console.log("✅ Dữ liệu (kèm chi tiết lỗi sai) đã được lưu!");
+            } else {
+                console.log("❌ Lỗi từ Server: " + responseText);
+            }
+        })
+        .catch(err => {
+            console.error("❌ Lỗi mạng:", err);
+        });
+    }
+}
     </script>
 </body>
 </html>
