@@ -217,25 +217,31 @@
   {
     "id": "PPT_35",
     "q": "Trong một bài trình chiếu, trang dùng để giới thiệu chủ đề và thông tin tác giả được phân loại là gì?",
-    "options": ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang đồ họa", "Trang kết thúc"],
+    "options": ["Trang nội dung", "Trang tiêu đề", "Trang mục lục", "Trang kết thúc"],
     "correct": 1
   },
   {
     "id": "PPT_36",
     "q": "Để nội dung trên trang chiếu rõ ràng và dễ theo dõi, em nên trình bày các ý chính theo dạng nào?",
-    "options": ["Một đoạn văn bản dài", "Danh sách liệt kê (Bullet points)", "Chữ viết tay", "Viết hoa toàn bộ các từ"],
+    "options": [
+      "Một đoạn văn bản dài nhưng nhiều màu sắc", 
+      "Danh sách liệt kê (Bullet points)", "Chữ viết tay cho có phong cách", "Viết hoa toàn bộ các từ"],
     "correct": 1
   },
   {
     "id": "PPT_37",
     "q": "Khi trình bày nội dung trên trang chiếu, tại sao không nên đưa quá nhiều chữ vào một trang?",
-    "options": ["Để người nghe tập trung vào lời nói của người thuyết trình", "Để tiết kiệm bộ nhớ máy tính", "Để trang chiếu trông nhiều màu sắc hơn", "Vì phần mềm không cho phép viết nhiều"],
+    "options": [
+      "Để người nghe tập trung vào lời nói của người thuyết trình", 
+      "Để tiết kiệm bộ nhớ và giúp tăng tốc độ máy tính khi thuyết trình", 
+      "Để trang chiếu trông nhiều màu sắc hơn", 
+      "Vì phần mềm không cho phép viết nhiều"],
     "correct": 0
   },
   {
     "id": "PPT_38",
     "q": "Việc lựa chọn cấu trúc phân bổ văn bản và hình ảnh trên một trang chiếu được gọi là thiết lập gì?",
-    "options": ["Màu nền (Background)", "Hiệu ứng (Animation)", "Bố cục trang chiếu (Slide Layout)", "Kiểu chữ (Font)"],
+    "options": ["Màu nền (Background)", "Hiệu ứng đối tượng cho trang chiếu (Animation)", "Bố cục trang chiếu (Slide Layout)", "Kiểu chữ (Font)"],
     "correct": 2
   }
 
