@@ -1,14 +1,35 @@
 [
-  { "id": "PPT9_01", "q": "Phần mềm nào sau đây dùng để tạo bài trình chiếu?", "options": ["Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint", "Notepad"], "correct": 2 },
+  { "id": "PPT9_01", 
+  "q": "Phần mềm nào sau đây dùng để tạo bài trình chiếu?", 
+  "options": [
+      "Microsoft Word", 
+      "Microsoft Excel", 
+      "PowerPoint", 
+      "Notepad"],
+    "correct": 2 },
   { "id": "PPT9_02", "q": "Để chèn thêm một trang chiếu mới, em sử dụng tổ hợp phím nào?", 
     "options": ["Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"], "correct": 1 },
   { "id": "PPT9_03", "q": "Phím nào dùng để bắt đầu trình chiếu từ trang đầu tiên?", "options": ["F1", "F3", "F5", "F7"], "correct": 2 },
-  { "id": "PPT9_04", "q": "Trong PowerPoint, các khung có đường viền đứt đoạn dùng để nhập văn bản được gọi là gì?", "options": ["Khung hình ảnh", "Khung dành sẵn (Placeholder)", "Khung trang trí", "Khung chú thích"], "correct": 1 },
+  { "id": "PPT9_04", 
+    "q": "Trong PowerPoint, các khung có đường viền đứt đoạn dùng để nhập văn bản được gọi là gì?",
+    "options": [
+      "Khung chèn hình ảnh (Picture Place)", 
+      "Khung dành sẵn (Placeholder)", 
+      "Khung trang trí", 
+      "Khung chú thích"],
+    "correct": 1
+  },
   { "id": "PPT9_05", "q": "Muốn thoát khỏi chế độ trình chiếu, em nhấn phím nào?", "options": ["Tab", "Shift", "Alt", "Esc"], "correct": 3 },
   { "id": "PPT9_06", "q": "Để chèn hình ảnh minh họa vào trang chiếu, em chọn dải lệnh nào?", "options": ["Home", "Insert", "Design", "Animations"], "correct": 1 },
   { "id": "PPT9_07", "q": "Khi muốn chèn một bảng biểu (Table) để trình bày dữ liệu, thao tác nào là đúng?", "options": ["Chọn Insert -> Table", "Chọn Home -> Table", "Chọn Design -> Table", "Chọn View -> Table"], "correct": 0 },
-  { "id": "PPT9_08", "q": "Mỗi trang chiếu thường có bao nhiêu thành phần cơ bản?", "options": ["Chỉ có văn bản", "Chỉ có hình ảnh", "Văn bản, hình ảnh, âm thanh, video...", "Chỉ có màu nền"], "correct": 2 },
-  
+  { "id": "PPT9_08", 
+    "options": [
+      "Chỉ có văn bản", 
+      "Chỉ có hình ảnh", 
+      "Văn bản, hình ảnh, âm thanh, video...", 
+      "Chỉ có màu nền trang chiếu, văn bản là cơ bản"],
+    "correct": 2
+  },  
   { "id": "PPT9_09", "q": "Để thay đổi bố cục trang chiếu (vị trí các khung văn bản), em chọn lệnh nào?", 
   "options": ["New Slide", "Layout", "Reset", "Section"], "correct": 1 },
 
@@ -20,27 +41,76 @@
   "q": "Dải lệnh nào dùng để chọn mẫu thiết kế có sẵn (Theme) cho bài trình chiếu?", 
   "options": ["Design", "Insert", "Home", "View"], "correct": 0 },
   { "id": "PPT9_13", "q": "Để trình chiếu từ trang hiện tại, em sử dụng tổ hợp phím nào?", "options": ["F5", "Shift + F5", "Ctrl + F5", "Alt + F5"], "correct": 1 },
-  { "id": "PPT9_14", "q": "Phần mềm trình chiếu có thể được ứng dụng để làm gì?", "options": ["Tạo bài giảng điện tử", "Tạo album ảnh", "Tạo bài thuyết trình", "Tất cả các ý trên"], "correct": 3 },
+  { "id": "PPT9_14", 
+    "q": "Phần mềm trình chiếu có thể được ứng dụng để làm gì?",
+    "options": ["Xử lí bảng tính", "Soạn thảo văn bản", "Tạo bài thuyết trình", "Lập trình phần mềm"],
+    "correct": 2
+  },
   { "id": "PPT9_15", "q": "Để xóa một trang chiếu, ta chọn trang đó rồi nhấn phím _______", 
     "options": ["Delete", "Tab", "Cả 2 phím Delete, Tab đều đúng", "Cả 2 phím Delete, Tab đều sai"],
      "correct": 0 },
-  { "id": "PPT9_16", "q": "Chức năng chính của chế độ 'Slide Sorter' (Sắp xếp trang chiếu) là gì?", "options": ["Xem toàn bộ các trang thu nhỏ", "Chỉnh sửa văn bản", "Chèn thêm hình ảnh", "Tạo hiệu ứng"], "correct": 0 },
-  { "id": "PPT9_17", "q": "Để thay đổi thứ tự của một trang chiếu, em có thể thực hiện thao tác nào?", "options": ["Nhấn phím mũi tên", "Kéo thả trang chiếu đến vị trí mới", "Xóa đi tạo lại", "Không thể thay đổi"], "correct": 1 },
+  { "id": "PPT9_16", 
+    "q": "Chức năng chính của chế độ \"Slide Show\" là gì?",
+    "options": ["Xem toàn bộ các trang thu nhỏ", "Chỉnh sửa văn bản", "Trình chiếu", "Tạo hiệu ứng"],
+    "correct": 2
+  },
+  { "id": "PPT9_17", 
+    "q": "Để thay đổi thứ tự của một trang chiếu, em có thể thực hiện thao tác nào?", 
+    "options": ["Nhấn phím mũi tên để di chuyển trang chiếu", "Kéo thả trang chiếu đến vị trí mới", "Xóa đi tạo lại", "Không thể thay đổi"], "correct": 1 },
   { "id": "PPT9_18", "q": "Muốn lưu bài trình chiếu, em nhấn tổ hợp phím nào?", "options": ["Ctrl + S", "Ctrl + L", "Ctrl + O", "Ctrl + A"], "correct": 0 },
-  { "id": "PPT9_19", "q": "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?", "options": ["Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn", "Trình diễn -> Tạo trang -> Chuẩn bị", "Chọn phần mềm -> Trình diễn -> Tạo trang", "Tạo trang -> Chuẩn bị -> Trình diễn"], "correct": 0 },
-  { "id": "PPT9_20", "q": "Trang đầu tiên trong một bài trình chiếu thường được gọi là gì?", "options": ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang tài liệu", "Trang cảm ơn"], "correct": 1 },
+  
+  { "id": "PPT9_19", 
+    "q": "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?",
+    "options": [
+      "Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn",
+      "Trình diễn thử -> Chỉnh sửa nội dung -> Tạo trang -> Chuẩn bị",
+      "Chọn phần mềm -> Trình diễn -> Tạo trang",
+      "Tạo trang -> Tạo hiệu ứng -> Chuẩn bị -> Trình diễn"
+    ],
+    "correct": 0
+  },
+  { "id": "PPT9_20", "q": "Trang cuối cùng trong một bài trình chiếu thường là gì?",
+    "options": ["Trang nội dung", "Trang tiêu đề (Title Slide)", "Trang tài liệu", "Trang cảm ơn"],
+    "correct": 3 },
 
   { "id": "PPT9_21", 
     "q": "Khi đang ở chế độ trình chiếu, em muốn ẩn/hiện con trỏ chuột thì nhấn tổ hợp phím nào?", 
     "options": ["Ctrl + P", "Ctrl + S", "Ctrl + M", "Ctrl + H"], "correct": 3 },
-  { "id": "PPT9_22", "q": "Để khởi động PowerPoint, cách nào sau đây là đúng?", "options": ["Start -> All Programs -> Microsoft Office -> Microsoft PowerPoint", "Nháy đúp chuột vào biểu tượng PowerPoint trên màn hình Desktop", "Gõ lệnh \"powerpnt\" trong hộp thoại Run (Windows + R)", "Tất cả các cách trên đều đúng"], "correct": 3 },
+  { "id": "PPT9_22", 
+    "q": "Để khởi động PowerPoint, cách nào sau đây là đúng?", 
+    "options": [
+      "Tất cả các cách được đề cập đều sai",
+      "Nháy đúp chuột vào biểu tượng PowerPoint trên màn hình Desktop",
+      "Gõ lệnh \"powerpnt\" trong hộp thoại Run (Windows + R)",
+      "Tất cả các cách được đề cập đều đúng"
+    ],
+    "correct": 3
+  },
   { "id": "PPT9_23", "q": "Trong PowerPoint, một trang trình chiếu được gọi là gì?", "options": ["Page", "Slide", "Sheet", "Document"], "correct": 1 },
-  { "id": "PPT9_24", "q": "Để tạo một bản trình bày mới hoàn toàn trống, ta chọn mục nào?", "options": ["New Slide", "Blank Presentation", "Design Template", "Layout"], "correct": 1 },
-  { "id": "PPT9_25", "q": "Để lưu một bài trình chiếu hiện có với một tên khác, ta sử dụng lệnh nào?", "options": ["File -> Save", "File -> Save As", "File -> New", "File -> Print"], "correct": 1 },
+  { "id": "PPT9_24", 
+  "q": "Để tạo một bản trình bày mới hoàn toàn trống, ta chọn mục nào?", 
+  "options": [
+      "New Blank Slide", 
+      "Blank Presentation", 
+      "Design Template", 
+      "New Empty Slide"],
+    "correct": 1
+  },
+  { "id": "PPT9_25", 
+  "q": "Để lưu một bài trình chiếu hiện có với một tên khác, ta sử dụng lệnh nào?", 
+"options": ["File -> Save ...", "File -> Save As", "File -> New", "File -> Print"], "correct": 1 },
   { "id": "PPT9_26", "q": "Để chèn thêm một trang chiếu (Slide) mới bằng thao tác trên thanh công cụ, em chọn dải lệnh Home rồi chọn lệnh nào?", 
-    "options": ["Layout", "New Slide", "Section", "Reset"], 
+    "options": ["Layout", "New Slide", "Add Section", "Add a Slide"], 
     "correct": 1 },
-  { "id": "PPT9_27", "q": "Chế độ hiển thị nào cho phép xem tất cả các slide dưới dạng các hình ảnh nhỏ (thumbnails)?", "options": ["Normal View", "Slide Sorter View", "Reading View", "Notes Page"], "correct": 1 },
+  
+  { "id": "PPT9_27", "q": "Chế độ hiển thị nào cho phép xem tất cả các slide dưới dạng các hình ảnh nhỏ (thumbnails)?", "options": [
+      "Chế độ Normal View", 
+      "Slide Sorter View", 
+      "Reading View", 
+      "Notes Page"],
+    "correct": 1
+  },
+
   { "id": "PPT9_28", 
     "q": "Để thiết lập hiệu ứng chuyển tiếp giữa các trang chiếu, em sử dụng dải lệnh nào?", 
     "options": ["Home", "Insert", "Design", "Transitions"], "correct": 3 },
@@ -82,9 +152,9 @@
   },
   {
     "id": "PPT9_42",
-    "q": "Trong các phần mềm sau, đâu là phần mềm trình chiếu?",
-    "options": ["Microsoft PowerPoint", "Adobe Photoshop", "Transitions", "Mozilla Firefox"],
-    "correct": 0
+    "q": "Trong các phần mềm dưới đây, phần mềm nào KHÔNG PHẢI là phần mềm trình chiếu?",
+    "options": ["WPS Presentation", "Google Slides", "Flisoft PowerPaint", "LibreOffice Impress"],
+    "correct": 2
   },
   {
     "id": "PPT9_43",
