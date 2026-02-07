@@ -23,6 +23,7 @@
   { "id": "PPT9_06", "q": "Để chèn hình ảnh minh họa vào trang chiếu, em chọn dải lệnh nào?", "options": ["Home", "Insert", "Design", "Animations"], "correct": 1 },
   { "id": "PPT9_07", "q": "Khi muốn chèn một bảng biểu (Table) để trình bày dữ liệu, thao tác nào là đúng?", "options": ["Chọn Insert -> Table", "Chọn Home -> Table", "Chọn Design -> Table", "Chọn View -> Table"], "correct": 0 },
   { "id": "PPT9_08", 
+    "q": "Các thành phần cơ bản của trang chiếu là ......",
     "options": [
       "Chỉ có văn bản", 
       "Chỉ có hình ảnh", 
@@ -168,4 +169,5 @@
     "options": ["LibreOffice Impress", "Google Slides", "Notepad", "Paint"],
     "correct": 1
   }
+
 ]
