@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc Nghiệm Excel - THCS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0fdf4; /* Xanh lá nhạt, dịu mắt cho học sinh */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .hidden-screen { display: none; }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .selected {
+            background-color: #3b82f6 !important; /* Màu xanh dương khi chọn */
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Container chính -->
+    <div class="bg-white max-w-2xl w-full rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        
+        <!-- MÀN HÌNH 1: NHẬP THÔNG TIN -->
+        <div id="login-screen" class="p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-green-600 mb-2">Kiểm Tra Tin Học</h1>
+                <p class="text-gray-500">Chủ đề: Bảng tính điện tử Excel</p>
+            </div>
+            
+            <form id="info-form" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">Lớp:</label>
+                    <input type="text" id="class-input" required placeholder="VD: 7A1" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">Số thứ tự:</label>
+                    <input type="number" id="id-input" required placeholder="VD: 15" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">Họ và tên học sinh:</label>
+                    <input type="text" id="name-input" required placeholder="Nhập họ và tên có dấu..." class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                </div>
+                <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 rounded-lg mt-6 hover:bg-green-600 transition duration-200">
+                    Bắt đầu làm bài
+                </button>
+            </form>
+        </div>
+
+        <!-- MÀN HÌNH 2: LÀM BÀI TRẮC NGHIỆM -->
+        <div id="quiz-screen" class="hidden-screen flex-col h-full">
+            <!-- Header hiển thị thông tin để GV kiểm soát -->
+            <div class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center text-sm md:text-base">
+                <div>
+                    <span class="font-bold text-blue-800" id="display-name">Học sinh: ...</span>
+                </div>
+                <div class="text-gray-600">
+                    <span id="display-class" class="mr-3">Lớp: ...</span>
+                    <span id="display-id">STT: ...</span>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <div class="flex justify-between items-end mb-6">
+                    <h2 class="text-xl font-bold text-gray-800" id="question-number">Câu 1/20</h2>
+                </div>
+                
+                <p class="text-lg text-gray-700 mb-6 font-medium" id="question-text">
+                    Nội dung câu hỏi sẽ hiển thị ở đây?
+                </p>
+
+                <div id="options-container" class="space-y-3">
+                    <!-- Các nút đáp án sẽ được tạo bằng JavaScript -->
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button id="next-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200" disabled>
+                        Câu tiếp theo ❯
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH 3: KẾT QUẢ -->
+        <div id="result-screen" class="hidden-screen p-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Hoàn thành bài thi!</h2>
+            <div class="bg-gray-50 rounded-xl p-6 mb-6 inline-block">
+                <p class="text-gray-600 mb-2" id="result-student-info">Học sinh: ...</p>
+                <p class="text-5xl font-black text-green-500 mb-2" id="score-display">10.0</p>
+                <p class="text-gray-500">Điểm (Thang 10)</p>
+                <p class="mt-4 text-blue-600 font-semibold" id="correct-count">Số câu đúng: 20/20</p>
+            </div>
+            <p class="text-gray-600 mb-8" id="feedback-message">Chúc mừng em đã hoàn thành xuất sắc!</p>
+            <button onclick="location.reload()" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition duration-200">
+                Làm lại (Tải lại trang)
+            </button>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Dữ liệu 20 câu hỏi do giáo viên cung cấp
+        const rawQuestions = [
+            { q: "Chức năng ưu việt nhất của phần mềm bảng tính điện tử so với bảng trong văn bản là gì?", options: ["Có thể trình bày văn bản đẹp mắt.", "Tự động tính toán lại kết quả khi thay đổi số liệu nhập vào.", "Có thể chèn được nhiều hình ảnh sinh động.", "Có thể soạn thảo các đoạn văn dài."], ans: "Tự động tính toán lại kết quả khi thay đổi số liệu nhập vào." },
+            { q: "Trong phần mềm bảng tính Excel, các hàng của trang tính được ký hiệu bằng:", options: ["Các chữ cái A, B, C...", "Các ký tự đặc biệt @, #, $...", "Các số 1, 2, 3....", "Các từ Tiếng Anh Row 1, Row 2..."], ans: "Các số 1, 2, 3...." },
+            { q: "Một công thức trong Excel luôn bắt đầu bằng ký tự nào sau đây?", options: ["Dấu cộng (+)", "Dấu ngoặc đơn (()", "Dấu bằng (=)", "Dấu chấm phẩy (;)"], ans: "Dấu bằng (=)" },
+            { q: "Ký hiệu dùng để thực hiện phép nhân trong Excel là:", options: ["Dấu x", "Dấu *", "Dấu .", "Dấu ^"], ans: "Dấu *" },
+            { q: "Để thực hiện phép chia trong Excel, ta sử dụng ký hiệu:", options: ["Dấu :", "Dấu", "Dấu /", "Dấu %"], ans: "Dấu /" },
+            { q: "Nút lệnh Σ (AutoSum) trong dải lệnh Home dùng để làm gì?", options: ["Tính trung bình cộng.", "Tính tổng nhanh các ô số liệu.", "Tìm giá trị lớn nhất.", "Đếm số lượng ô có dữ liệu."], ans: "Tính tổng nhanh các ô số liệu." },
+            { q: "Vùng hiển thị địa chỉ của ô đang được chọn trên màn hình Excel gọi là:", options: ["Thanh công thức (Formula Bar).", "Hộp địa chỉ (Name Box).", "Thanh trạng thái.", "Dải lệnh (Ribbon)."], ans: "Hộp địa chỉ (Name Box)." },
+            { q: "Khi muốn tìm giá trị lớn nhất trong một danh sách số, em sử dụng hàm nào?", options: ["SUM", "MIN", "MAX", "AVERAGE"], ans: "MAX" },
+            { q: "Hàm nào sau đây dùng để tính trung bình cộng của một khối dữ liệu?", options: ["COUNT", "AVERAGE", "SUM", "MAX"], ans: "AVERAGE" },
+            { q: "Tệp được lưu bởi phần mềm Microsoft Excel thường có phần mở rộng mặc định là:", options: [".docx", ".pptx", ".xlsx", ".pdf"], ans: ".xlsx" },
+            { q: "Nếu ô C4 chứa số 25 và ô D4 chứa số 10, để tính tổng số cây tại ô E4 (như ví dụ dự án Trường học xanh), công thức nào sau đây là tốt nhất?", options: ["=25+10", "=C4+D4", "C4+D4", "=SUM(25,10)"], ans: "=C4+D4" },
+            { q: "Khi sao chép một ô chứa công thức sang vị trí mới, Excel có khả năng:", options: ["Chỉ sao chép giá trị kết quả, không sao chép công thức.", "Tự động điều chỉnh các địa chỉ trong công thức cho phù hợp với vị trí mới.", "Giữ nguyên hoàn toàn các địa chỉ ô như cũ.", "Làm cho công thức bị lỗi không tính toán được."], ans: "Tự động điều chỉnh các địa chỉ trong công thức cho phù hợp với vị trí mới." },
+            { q: "Để trình bày dữ liệu số dưới dạng tiền tệ (có dấu ngăn cách hàng nghìn và ký hiệu tiền), em sử dụng tính năng nào trong Format Cells?", options: ["Alignment", "Number (chọn Currency hoặc Accounting)", "Font", "Border"], ans: "Number (chọn Currency hoặc Accounting)" },
+            { q: "Việc sử dụng địa chỉ ô trong công thức thay vì số cụ thể giúp bài tính:", options: ["Ngắn gọn hơn.", "Tự động cập nhật kết quả khi thay đổi dữ liệu tại các ô đó.", "Dễ dàng định dạng màu sắc hơn.", "Tránh việc phải đặt tên cho bảng tính."], ans: "Tự động cập nhật kết quả khi thay đổi dữ liệu tại các ô đó." },
+            { q: "Biểu tượng dấu mũ (^) trong Excel dùng để thực hiện phép toán nào?", options: ["Phép nhân.", "Phép tính phần trăm.", "Phép lũy thừa.", "Phép chia lấy dư."], ans: "Phép lũy thừa." },
+            { q: "Nếu muốn tính trung bình cộng của các ô từ B5 đến C7, cách viết tham số nào cho hàm AVERAGE là đúng?", options: ["(B5, C7)", "(B5:C7)", "(B5-C7)", "(B5..C7)"], ans: "(B5:C7)" },
+            { q: "Trong Excel, khi dữ liệu số quá dài không hiển thị hết trong ô, kết quả thường xuất hiện ký hiệu nào?", options: ["#VALUE!", "#REF!", "#######", "#N/A"], ans: "#######" },
+            { q: "Lợi ích của việc biểu diễn dữ liệu bằng biểu đồ trong Excel là gì?", options: ["Giúp bảng tính có nhiều trang hơn.", "Giúp trình bày thông tin trực quan, dễ so sánh và nhận xét.", "Giúp máy tính chạy nhanh hơn.", "Giúp bảo mật dữ liệu tốt hơn."], ans: "Giúp trình bày thông tin trực quan, dễ so sánh và nhận xét." },
+            { q: "Để tìm giá trị nhỏ nhất trong cột Cân nặng của bảng BMI, em sẽ thực hiện:", options: ["Nháy chọn lệnh Σ -> Sum.", "Nháy mũi tên cạnh lệnh Σ -> chọn Min.", "Tự nhập tay số nhỏ nhất vào ô cuối bảng.", "Nháy mũi tên cạnh lệnh Σ -> chọn Count."], ans: "Nháy mũi tên cạnh lệnh Σ -> chọn Min." },
+            { q: "Khi nhập công thức vào Excel, nếu quên dấu bằng (=) ở đầu thì:", options: ["Excel sẽ báo lỗi.", "Excel sẽ tự động thêm dấu bằng cho em.", "Excel sẽ coi nội dung đó là một đoạn văn bản và không thực hiện tính toán.", "Máy tính sẽ tự động tắt phần mềm."], ans: "Excel sẽ coi nội dung đó là một đoạn văn bản và không thực hiện tính toán." }
+        ];
+
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let scoreCount = 0;
+        let selectedAnswer = null;
+
+        // Các thành phần DOM
+        const loginScreen = document.getElementById('login-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const infoForm = document.getElementById('info-form');
+        const nextBtn = document.getElementById('next-btn');
+
+        // Hàm xáo trộn mảng (Fisher-Yates)
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = tmp;
+            }
+            return array;
+        }
+
+        // Xử lý khi Submit Form nhập thông tin
+        infoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Lấy thông tin
+            const studentClass = document.getElementById('class-input').value;
+            const studentId = document.getElementById('id-input').value;
+            const studentName = document.getElementById('name-input').value;
+
+            // Hiển thị lên Header màn hình làm bài
+            document.getElementById('display-name').textContent = `Học sinh: ${studentName}`;
+            document.getElementById('display-class').textContent = `Lớp: ${studentClass}`;
+            document.getElementById('display-id').textContent = `STT: ${studentId}`;
+            document.getElementById('result-student-info').textContent = `${studentName} - Lớp ${studentClass} - STT ${studentId}`;
+
+            // Chuẩn bị câu hỏi: Xáo trộn mảng câu hỏi gốc
+            questions = shuffleArray([...rawQuestions]);
+
+            // Chuyển màn hình
+            loginScreen.classList.add('hidden-screen');
+            quizScreen.classList.remove('hidden-screen');
+            quizScreen.classList.add('flex');
+
+            loadQuestion();
+        });
+
+        // Tải câu hỏi hiện tại
+        function loadQuestion() {
+            selectedAnswer = null;
+            nextBtn.disabled = true;
+            nextBtn.textContent = (currentQuestionIndex === questions.length - 1) ? "Nộp bài ❯" : "Câu tiếp theo ❯";
+
+            const qData = questions[currentQuestionIndex];
+            
+            document.getElementById('question-number').textContent = `Câu ${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('question-text').textContent = qData.q;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            // Xáo trộn thứ tự đáp án (A,B,C,D) để học sinh không học vẹt
+            const shuffledOptions = shuffleArray([...qData.options]);
+
+            // Tạo các nút đáp án
+            shuffledOptions.forEach((optionText, index) => {
+                const btn = document.createElement('button');
+                // Gán chữ A, B, C, D động dựa vào index
+                const letters = ['A', 'B', 'C', 'D'];
+                
+                btn.className = "option-btn w-full text-left p-4 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-700 font-medium hover:bg-blue-50 hover:border-blue-200";
+                btn.innerHTML = `<span class="font-bold mr-2">${letters[index]}.</span> ${optionText}`;
+                
+                btn.onclick = () => selectOption(btn, optionText);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Xử lý khi học sinh click chọn 1 đáp án
+        function selectOption(clickedBtn, optionText) {
+            // Xóa trạng thái selected của các nút khác
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(btn => {
+                btn.classList.remove('selected');
+                btn.classList.add('bg-gray-50', 'text-gray-700', 'border-gray-200');
+            });
+
+            // Thêm trạng thái selected cho nút vừa click
+            clickedBtn.classList.add('selected');
+            clickedBtn.classList.remove('bg-gray-50', 'text-gray-700', 'border-gray-200');
+
+            selectedAnswer = optionText;
+            nextBtn.disabled = false; // Bật nút đi tiếp
+        }
+
+        // Xử lý khi bấm nút "Câu tiếp theo / Nộp bài"
+        nextBtn.addEventListener('click', () => {
+            // Kiểm tra kết quả
+            if (selectedAnswer === questions[currentQuestionIndex].ans) {
+                scoreCount++;
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        });
+
+        // Kết thúc bài và tính điểm
+        function finishQuiz() {
+            quizScreen.classList.remove('flex');
+            quizScreen.classList.add('hidden-screen');
+            resultScreen.classList.remove('hidden-screen');
+
+            // Tính điểm thang 10: (Số câu đúng / Tổng câu) * 10
+            const maxScore = 10;
+            const finalScore = (scoreCount / questions.length) * maxScore;
+
+            // Làm tròn đến 1 chữ số thập phân
+            document.getElementById('score-display').textContent = finalScore.toFixed(1);
+            document.getElementById('correct-count').textContent = `Số câu đúng: ${scoreCount}/${questions.length}`;
+
+            const feedback = document.getElementById('feedback-message');
+            if (finalScore >= 8) {
+                feedback.textContent = "Xuất sắc! Em nắm kiến thức Excel rất vững.";
+                feedback.className = "text-green-600 font-medium mb-8";
+            } else if (finalScore >= 5) {
+                feedback.textContent = "Khá tốt! Em cố gắng ôn tập thêm một chút nữa nhé.";
+                feedback.className = "text-blue-600 font-medium mb-8";
+            } else {
+                feedback.textContent = "Em cần xem lại bài giảng Excel nhiều hơn nhé. Cố lên!";
+                feedback.className = "text-red-500 font-medium mb-8";
+            }
+        }
+    </script>
+</body>
+</html>
