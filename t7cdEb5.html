@@ -27,10 +27,8 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Container chính -->
     <div class="bg-white max-w-2xl w-full rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
-        <!-- MÀN HÌNH 1: NHẬP THÔNG TIN -->
         <div id="login-screen" class="p-8">
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-green-600 mb-2">Kiểm Tra Tin Học</h1>
@@ -40,11 +38,24 @@
             <form id="info-form" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">Lớp:</label>
-                    <input type="text" id="class-input" required placeholder="VD: 7A1" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <select id="class-input" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                        <option value="" disabled selected>Chọn lớp...</option>
+                        <option value="7.1">7.1</option>
+                        <option value="7.2">7.2</option>
+                        <option value="7.3">7.3</option>
+                        <option value="7.4">7.4</option>
+                        <option value="7.5">7.5</option>
+                        <option value="7.6">7.6</option>
+                        <option value="7.7">7.7</option>
+                        <option value="7.8">7.8</option>
+                        <option value="7.9">7.9</option>
+                        <option value="7.10">7.10</option>
+                        <option value="7.11">7.11</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">Số thứ tự:</label>
-                    <input type="number" id="id-input" required placeholder="VD: 15" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <input type="number" id="id-input" required placeholder="VD: 15" min="1" max="60" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
                 </div>
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">Họ và tên học sinh:</label>
@@ -56,9 +67,7 @@
             </form>
         </div>
 
-        <!-- MÀN HÌNH 2: LÀM BÀI TRẮC NGHIỆM -->
         <div id="quiz-screen" class="hidden-screen flex-col h-full">
-            <!-- Header hiển thị thông tin để GV kiểm soát -->
             <div class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center text-sm md:text-base">
                 <div>
                     <span class="font-bold text-blue-800" id="display-name">Học sinh: ...</span>
@@ -79,8 +88,7 @@
                 </p>
 
                 <div id="options-container" class="space-y-3">
-                    <!-- Các nút đáp án sẽ được tạo bằng JavaScript -->
-                </div>
+                    </div>
 
                 <div class="mt-8 flex justify-end">
                     <button id="next-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200" disabled>
@@ -90,14 +98,14 @@
             </div>
         </div>
 
-        <!-- MÀN HÌNH 3: KẾT QUẢ -->
         <div id="result-screen" class="hidden-screen p-8 text-center">
             <h2 class="text-3xl font-bold text-gray-800 mb-4">Hoàn thành bài thi!</h2>
             <div class="bg-gray-50 rounded-xl p-6 mb-6 inline-block">
                 <p class="text-gray-600 mb-2" id="result-student-info">Học sinh: ...</p>
-                <p class="text-5xl font-black text-green-500 mb-2" id="score-display">10.0</p>
+                <p class="text-5xl font-black text-green-500 mb-2" id="score-display">0.0</p>
                 <p class="text-gray-500">Điểm (Thang 10)</p>
-                <p class="mt-4 text-blue-600 font-semibold" id="correct-count">Số câu đúng: 20/20</p>
+                <p class="mt-4 text-blue-600 font-semibold" id="correct-count">Số câu đúng: 0/0</p>
+                <p id="save-status" class="text-xs text-gray-400 mt-2 italic">Đang lưu kết quả...</p>
             </div>
             <p class="text-gray-600 mb-8" id="feedback-message">Chúc mừng em đã hoàn thành xuất sắc!</p>
             <button onclick="location.reload()" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition duration-200">
@@ -107,9 +115,15 @@
 
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // Dữ liệu 20 câu hỏi do giáo viên cung cấp
+        // --- CẤU HÌNH GOOGLE SHEET ---
+        const CONFIG = {
+            googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec",
+            sheetName: "K7b5", // Tên Sheet cần lưu
+            topic: "Trắc Nghiệm Excel"
+        };
+
+        // Dữ liệu 20 câu hỏi
         const rawQuestions = [
             { q: "Chức năng ưu việt nhất của phần mềm bảng tính điện tử so với bảng trong văn bản là gì?", options: ["Có thể trình bày văn bản đẹp mắt.", "Tự động tính toán lại kết quả khi thay đổi số liệu nhập vào.", "Có thể chèn được nhiều hình ảnh sinh động.", "Có thể soạn thảo các đoạn văn dài."], ans: "Tự động tính toán lại kết quả khi thay đổi số liệu nhập vào." },
             { q: "Trong phần mềm bảng tính Excel, các hàng của trang tính được ký hiệu bằng:", options: ["Các chữ cái A, B, C...", "Các ký tự đặc biệt @, #, $...", "Các số 1, 2, 3....", "Các từ Tiếng Anh Row 1, Row 2..."], ans: "Các số 1, 2, 3...." },
@@ -137,6 +151,12 @@
         let currentQuestionIndex = 0;
         let scoreCount = 0;
         let selectedAnswer = null;
+        let userAnswers = []; // Mảng lưu lịch sử trả lời của học sinh
+
+        // Biến toàn cục lưu thông tin học sinh
+        let studentClass = "";
+        let studentId = "";
+        let studentName = "";
 
         // Các thành phần DOM
         const loginScreen = document.getElementById('login-screen');
@@ -163,9 +183,14 @@
             e.preventDefault();
             
             // Lấy thông tin
-            const studentClass = document.getElementById('class-input').value;
-            const studentId = document.getElementById('id-input').value;
-            const studentName = document.getElementById('name-input').value;
+            studentClass = document.getElementById('class-input').value;
+            studentId = document.getElementById('id-input').value;
+            studentName = document.getElementById('name-input').value;
+
+            if(!studentClass) {
+                alert("Vui lòng chọn lớp!");
+                return;
+            }
 
             // Hiển thị lên Header màn hình làm bài
             document.getElementById('display-name').textContent = `Học sinh: ${studentName}`;
@@ -175,6 +200,8 @@
 
             // Chuẩn bị câu hỏi: Xáo trộn mảng câu hỏi gốc
             questions = shuffleArray([...rawQuestions]);
+            userAnswers = []; // Reset câu trả lời
+            scoreCount = 0;
 
             // Chuyển màn hình
             loginScreen.classList.add('hidden-screen');
@@ -234,8 +261,19 @@
 
         // Xử lý khi bấm nút "Câu tiếp theo / Nộp bài"
         nextBtn.addEventListener('click', () => {
-            // Kiểm tra kết quả
-            if (selectedAnswer === questions[currentQuestionIndex].ans) {
+            const currentQ = questions[currentQuestionIndex];
+            const isCorrect = (selectedAnswer === currentQ.ans);
+
+            // 1. Lưu kết quả câu trả lời
+            userAnswers.push({
+                questionId: currentQuestionIndex + 1,
+                userChoice: selectedAnswer,
+                correctChoice: currentQ.ans,
+                isCorrect: isCorrect
+            });
+
+            // 2. Tính điểm
+            if (isCorrect) {
                 scoreCount++;
             }
 
@@ -256,23 +294,76 @@
 
             // Tính điểm thang 10: (Số câu đúng / Tổng câu) * 10
             const maxScore = 10;
-            const finalScore = (scoreCount / questions.length) * maxScore;
+            const finalScoreVal = (scoreCount / questions.length) * maxScore;
+            const finalScoreFixed = finalScoreVal.toFixed(2); // Dùng 2 số thập phân
 
-            // Làm tròn đến 1 chữ số thập phân
-            document.getElementById('score-display').textContent = finalScore.toFixed(1);
+            // Hiển thị kết quả
+            document.getElementById('score-display').textContent = finalScoreFixed;
             document.getElementById('correct-count').textContent = `Số câu đúng: ${scoreCount}/${questions.length}`;
 
             const feedback = document.getElementById('feedback-message');
-            if (finalScore >= 8) {
+            if (finalScoreVal >= 8) {
                 feedback.textContent = "Xuất sắc! Em nắm kiến thức Excel rất vững.";
                 feedback.className = "text-green-600 font-medium mb-8";
-            } else if (finalScore >= 5) {
+            } else if (finalScoreVal >= 5) {
                 feedback.textContent = "Khá tốt! Em cố gắng ôn tập thêm một chút nữa nhé.";
                 feedback.className = "text-blue-600 font-medium mb-8";
             } else {
                 feedback.textContent = "Em cần xem lại bài giảng Excel nhiều hơn nhé. Cố lên!";
                 feedback.className = "text-red-500 font-medium mb-8";
             }
+
+            // --- GỬI DỮ LIỆU LÊN GOOGLE SHEET ---
+            sendToGoogleSheet(finalScoreFixed);
+        }
+
+        function sendToGoogleSheet(score) {
+            const statusText = document.getElementById('save-status');
+            
+            // 1. Tạo chuỗi chi tiết lỗi sai
+            // Format: Câu 1(Sai: A | Đúng: B) || Câu 2...
+            let analysisResult = [];
+            userAnswers.forEach((ans, idx) => {
+                if (!ans.isCorrect) {
+                    analysisResult.push(`Câu ${idx + 1}(Sai: ${ans.userChoice} | Đúng: ${ans.correctChoice})`);
+                }
+            });
+
+            const details = analysisResult.length > 0 ? analysisResult.join(" || ") : "Hoàn thành xuất sắc";
+
+            // 2. Chuẩn bị FormData
+            const formData = new URLSearchParams();
+            formData.append("sheetName", CONFIG.sheetName);
+            formData.append("topic", CONFIG.topic);
+            formData.append("userClass", "'" + studentClass); // Thêm dấu ' để Excel không tự format ngày tháng
+            formData.append("stt", studentId);
+            formData.append("name", studentName);
+            formData.append("score", score);
+            formData.append("totalQuestions", questions.length);
+            formData.append("questionIds", details);
+
+            // 3. Gửi Fetch
+            fetch(CONFIG.googleSheetURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: formData.toString()
+            })
+            .then(response => response.text())
+            .then(responseText => {
+                if (responseText.includes("OK") || responseText.includes("Success")) {
+                    console.log("✅ Đã lưu kết quả thành công!");
+                    statusText.innerText = "✅ Kết quả đã được lưu vào hệ thống.";
+                    statusText.classList.replace("text-gray-400", "text-green-600");
+                } else {
+                    console.log("⚠️ Phản hồi server: " + responseText);
+                    statusText.innerText = "Đã gửi dữ liệu.";
+                }
+            })
+            .catch(err => {
+                console.error("❌ Lỗi mạng:", err);
+                statusText.innerText = "❌ Không thể lưu kết quả (Lỗi mạng).";
+                statusText.classList.replace("text-gray-400", "text-red-500");
+            });
         }
     </script>
 </body>
