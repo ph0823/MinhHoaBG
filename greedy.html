@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc Nghiệm: Thuật Toán Tham Lam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-btn { transition: all 0.2s ease-in-out; }
+        .option-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .option-btn:active:not(:disabled) { transform: translateY(0); }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
+
+    <div id="app-container" class="glass-panel w-full max-w-3xl rounded-3xl shadow-xl overflow-hidden relative fade-in">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="p-8 md:p-12 text-center">
+            <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="brain-circuit" class="w-10 h-10 text-indigo-600"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Thử Thách Tư Duy Tham Lam</h1>
+            <p class="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">Bộ 20 câu hỏi trắc nghiệm được thiết kế riêng cho đội tuyển HSG Tin học THCS. Hãy suy nghĩ thật kỹ và áp dụng chiến thuật "tối ưu cục bộ" nhé!</p>
+            <button onclick="startQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-200 transform hover:scale-105 flex items-center justify-center mx-auto gap-2">
+                <span>Bắt Đầu Ngay</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden flex flex-col h-full">
+            <!-- Header & Progress -->
+            <div class="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="target" class="w-5 h-5 text-indigo-500"></i>
+                    <span id="question-counter" class="font-semibold text-gray-700">Câu 1 / 20</span>
+                </div>
+                <div class="flex items-center gap-2 text-green-600 font-semibold bg-green-50 px-3 py-1 rounded-full">
+                    <i data-lucide="award" class="w-4 h-4"></i>
+                    <span id="score-counter">0 Điểm</span>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 h-1.5">
+                <div id="progress-bar" class="bg-indigo-600 h-1.5 transition-all duration-300 w-0"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="p-6 md:p-8 flex-grow">
+                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-6 leading-snug">
+                    Nội dung câu hỏi sẽ hiển thị ở đây?
+                </h2>
+
+                <div id="options-container" class="space-y-3">
+                    <!-- Options injected via JS -->
+                </div>
+
+                <!-- Explanation / Feedback Area -->
+                <div id="feedback-area" class="hidden mt-6 p-4 rounded-xl border-l-4">
+                    <div class="flex items-start gap-3">
+                        <i id="feedback-icon" data-lucide="info" class="w-6 h-6 mt-0.5"></i>
+                        <div>
+                            <p id="feedback-title" class="font-bold mb-1"></p>
+                            <p id="feedback-text" class="text-gray-700 text-sm md:text-base"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl shadow transition flex items-center gap-2">
+                    <span>Câu tiếp theo</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden p-8 md:p-12 text-center">
+            <div id="result-icon-container" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <!-- Icon injected via JS -->
+            </div>
+            <h2 id="result-title" class="text-3xl font-bold text-gray-800 mb-2">Hoàn thành xuất sắc!</h2>
+            <p class="text-gray-600 mb-6">Bạn đã hoàn thành bài kiểm tra Thuật toán Tham lam.</p>
+            
+            <div class="bg-indigo-50 rounded-2xl p-6 inline-block mb-8">
+                <p class="text-sm text-indigo-500 font-semibold uppercase tracking-wider mb-1">Điểm Số Của Bạn</p>
+                <p id="final-score" class="text-5xl font-extrabold text-indigo-600">18/20</p>
+            </div>
+
+            <p id="result-message" class="text-gray-700 mb-8 max-w-md mx-auto font-medium"></p>
+
+            <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-8 rounded-full shadow transition flex items-center justify-center mx-auto gap-2">
+                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                <span>Làm lại từ đầu</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Data: 20 Questions
+        const questions = [
+            {
+                text: "Tư duy cốt lõi của thuật toán Tham lam là gì?",
+                options: [
+                    "Thử tất cả các trường hợp để tìm ra kết quả cuối cùng.",
+                    "Luôn chọn phương án tốt nhất ở thời điểm hiện tại.",
+                    "Chia bài toán lớn thành các bài toán nhỏ hơn để giải.",
+                    "Ghi nhớ các kết quả cũ để không phải tính toán lại."
+                ],
+                answer: 1,
+                explanation: "Tham lam (Greedy) giải quyết bài toán bằng cách tối ưu hóa cục bộ ở từng bước, hy vọng chuỗi lựa chọn đó dẫn đến tối ưu toàn cục."
+            },
+            {
+                text: "Bước chuẩn bị nào sau đây gần như BẮT BUỘC phải có trước khi thực hiện vòng lặp tham lam?",
+                options: [
+                    "Đảo ngược mảng dữ liệu ban đầu.",
+                    "Loại bỏ các phần tử trùng lặp.",
+                    "Sắp xếp lại dữ liệu theo một tiêu chí định trước.",
+                    "Tính tổng tất cả các phần tử trong mảng."
+                ],
+                answer: 2,
+                explanation: "Để biết đâu là phương án 'tốt nhất' để chọn, ta luôn luôn phải sắp xếp dữ liệu (tăng dần hoặc giảm dần) trước khi duyệt."
+            },
+            {
+                text: "Tý có 100 nghìn và muốn mua ĐƯỢC NHIỀU món đồ nhất trong siêu thị. Chiến thuật tham lam nào là đúng nhất?",
+                options: [
+                    "Ưu tiên chọn các món đồ đắt nhất.",
+                    "Ưu tiên chọn các món đồ rẻ nhất.",
+                    "Chọn ngẫu nhiên đến khi hết tiền.",
+                    "Chọn món có kích thước nhỏ nhất."
+                ],
+                answer: 1,
+                explanation: "Khi giá trị càng nhỏ, số lượng tích lũy được trong một giới hạn cố định sẽ càng lớn."
+            },
+            {
+                text: "Có các đồng xu mệnh giá 1, 5, 10. Cần đổi số tiền 16 đồng sao cho dùng ít xu nhất. Thuật toán tham lam sẽ chọn những xu nào?",
+                options: [
+                    "Mười sáu đồng 1.",
+                    "Ba đồng 5 và một đồng 1.",
+                    "Một đồng 10, một đồng 5, một đồng 1.",
+                    "Hai đồng 5 và sáu đồng 1."
+                ],
+                answer: 2,
+                explanation: "Ưu tiên xu lớn nhất: Lấy 10 (dư 6) -> Lấy 5 (dư 1) -> Lấy 1. Tổng cộng 3 xu."
+            },
+            {
+                text: "Một trung tâm có nhiều lớp học thêm với giờ bắt đầu và kết thúc khác nhau. Để tham gia được nhiều lớp nhất (không trùng giờ), ta ưu tiên chọn lớp nào?",
+                options: [
+                    "Lớp học có thời lượng học ngắn nhất.",
+                    "Lớp học bắt đầu sớm nhất trong ngày.",
+                    "Lớp học kết thúc sớm nhất trong ngày.",
+                    "Lớp học có ít học sinh đăng ký nhất."
+                ],
+                answer: 2,
+                explanation: "Lớp kết thúc càng sớm, ta càng chừa lại được nhiều không gian thời gian phía sau để sắp xếp các lớp khác."
+            },
+            {
+                text: "Nếu áp dụng chiến thuật 'Chọn lớp BẮT ĐẦU sớm nhất' cho bài toán xếp lịch học, trường hợp nào sau đây sẽ làm thuật toán chọn sai?",
+                options: [
+                    "Có một lớp bắt đầu từ 7h sáng nhưng kéo dài đến tận 5h chiều.",
+                    "Các lớp học đều có thời gian học bằng đúng 1 tiếng.",
+                    "Không có lớp học nào bị trùng thời gian với nhau.",
+                    "Tất cả các lớp đều bắt đầu vào buổi chiều."
+                ],
+                answer: 0,
+                explanation: "Lớp 7h-17h bắt đầu sớm nhất, nhưng nếu chọn nó, bạn sẽ mất nguyên ngày và không học được các lớp ngắn khác. Đây là phản ví dụ kinh điển."
+            },
+            {
+                text: "Thuật toán Tham lam có thể cho ra kết quả SAI (không tối ưu) trong trường hợp đổi tiền nào sau đây (ví dụ cần đổi 6 đồng lấy ít xu nhất)?",
+                options: [
+                    "Hệ thống xu có các mệnh giá: 1, 2, 5.",
+                    "Hệ thống xu có các mệnh giá: 1, 5, 10.",
+                    "Hệ thống xu có các mệnh giá: 1, 3, 4.",
+                    "Hệ thống xu có các mệnh giá: 1, 2, 4, 8."
+                ],
+                answer: 2,
+                explanation: "Với hệ xu 1, 3, 4. Tham lam chọn 4, 1, 1 (3 xu). Nhưng cách tối ưu là chọn 3, 3 (chỉ 2 xu)."
+            },
+            {
+                text: "Một xe tải chở tối đa 50kg. Có 3 thùng: A(30kg, 100k), B(20kg, 80k), C(25kg, 90k). Nếu tham lam theo 'Giá trị cao nhất', xe sẽ chở thùng nào?",
+                options: [
+                    "Chở thùng A, bỏ lỡ thùng B và C (Tổng thu: 100k).",
+                    "Chở thùng B và C, bỏ lỡ thùng A (Tổng thu: 170k).",
+                    "Chở thùng A và B, bỏ lỡ thùng C.",
+                    "Chở thùng C, bỏ lỡ thùng A và B."
+                ],
+                answer: 0,
+                explanation: "Tham lam chọn A (100k), xe còn 20kg. Thùng B và C đều không vừa (nếu không được xé lẻ). Cách tối ưu phải là B+C = 170k."
+            },
+            {
+                text: "Đội cứu hộ dùng thuyền phao sơ tán. Mỗi thuyền chở tối đa 2 người và không vượt quá tải trọng K (kg). Để dùng ít thuyền nhất, ta nên ghép cặp người lên thuyền như thế nào?",
+                options: [
+                    "Ghép người nặng nhất với người nặng thứ hai.",
+                    "Ghép người nhẹ nhất với người nhẹ thứ hai.",
+                    "Ghép người nặng nhất với người nhẹ nhất.",
+                    "Chọn ngẫu nhiên hai người đứng gần nhau."
+                ],
+                answer: 2,
+                explanation: "Chiến thuật Hai con trỏ: Người nặng nhất rất khó lên chung với ai, nên cố gắng ghép họ với người nhẹ nhất. Nếu không được thì người nặng đi 1 mình."
+            },
+            {
+                text: "Tý cần mua 15kg nông sản với tiền ít nhất. Nông dân A bán 5k/kg (còn 10kg), B bán 3k/kg (còn 8kg), C bán 6k/kg (còn 20kg). Tý sẽ mua thế nào?",
+                options: [
+                    "Mua 10kg của A và 5kg của B.",
+                    "Mua 8kg của B và 7kg của A.",
+                    "Mua 15kg của C để đỡ mất công.",
+                    "Mua của mỗi người đúng 5kg."
+                ],
+                answer: 1,
+                explanation: "Rẻ nhất là B (3k), mua hết 8kg. Còn thiếu 7kg, mua tiếp của người rẻ nhì là A (5k)."
+            },
+            {
+                text: "Khi lập trình bài toán cần quản lý đồng thời 'Giá bán' và 'Số lượng' của từng mặt hàng, cấu trúc dữ liệu nào trong C++ giúp hai thông tin này luôn gắn liền với nhau khi sắp xếp?",
+                options: [
+                    "Dùng hai mảng số nguyên hoàn toàn độc lập.",
+                    "Dùng một mảng số thực lưu giá trị trung bình.",
+                    "Dùng kiểu dữ liệu `struct` hoặc `std::pair`.",
+                    "Dùng kiểu dữ liệu `string` để ghép nối chữ."
+                ],
+                answer: 2,
+                explanation: "Struct hoặc Pair giúp đóng gói 2 trường dữ liệu. Khi gọi hàm sort(), cả khối dữ liệu sẽ được hoán đổi cùng nhau."
+            },
+            {
+                text: "Khuyến mãi: 'Mua 3 món, miễn phí trả tiền cho món rẻ nhất trong 3 món đó'. Để tiết kiệm nhiều tiền nhất, người mua nên gom nhóm thế nào?",
+                options: [
+                    "Gom 3 món có giá tiền cao nhất lại với nhau.",
+                    "Gom 3 món có giá tiền thấp nhất lại với nhau.",
+                    "Gom 1 món giá cao và 2 món giá thấp với nhau.",
+                    "Gom 3 món có mức giá chênh lệch nhau lớn."
+                ],
+                answer: 0,
+                explanation: "Món được miễn phí là món rẻ nhất trong nhóm. Để món này có giá trị cao nhất có thể, ta phải ép nó vào nhóm toàn những món đắt tiền."
+            },
+            {
+                text: "Bạn có mảng gồm 10^5 phần tử và dùng hàm `sort()` của C++. Độ phức tạp thời gian (Time Complexity) của bước này là bao nhiêu?",
+                options: [
+                    "O(1)",
+                    "O(N)",
+                    "O(N log N)",
+                    "O(N^2)"
+                ],
+                answer: 2,
+                explanation: "Hàm sort() trong C++ sử dụng IntroSort (kết hợp QuickSort, HeapSort, InsertionSort), đảm bảo tốc độ luôn là O(N log N)."
+            },
+            {
+                text: "Minh muốn đi quãng đường dài nhất với số lần đổ xăng ít nhất. Tại mỗi lần đổ, điểm đổ xăng tiếp theo nào Minh nên ưu tiên chọn?",
+                options: [
+                    "Trạm xăng gần nhất tính từ vị trí hiện tại.",
+                    "Trạm xăng xa nhất mà xe còn có thể tới được.",
+                    "Trạm xăng có giá bán xăng rẻ nhất.",
+                    "Trạm xăng nằm ở chính giữa quãng đường."
+                ],
+                answer: 1,
+                explanation: "Để đổ xăng ít lần nhất, mỗi bình xăng phải được chạy hết công suất (đi xa nhất có thể trước khi cạn)."
+            },
+            {
+                text: "Có N người xếp hàng chờ rút tiền tại ATM. Để TỔNG thời gian chờ đợi của tất cả mọi người là thấp nhất, ai nên được ưu tiên rút tiền trước?",
+                options: [
+                    "Người cần rút số tiền lớn nhất.",
+                    "Người có thời gian thao tác nhanh nhất.",
+                    "Người đến xếp hàng sau cùng.",
+                    "Người lớn tuổi nhất trong hàng."
+                ],
+                answer: 1,
+                explanation: "Người thao tác nhanh làm trước sẽ làm giảm thời gian chờ cộng dồn của TẤT CẢ những người đứng phía sau."
+            },
+            {
+                text: "Giới hạn số lượng món đồ N = 10^5 và giá mỗi món là 10^5. Trong C++, biến lưu tổng tiền phải khai báo kiểu gì để tránh tràn số (Overflow)?",
+                options: [
+                    "Kiểu `int`",
+                    "Kiểu `float`",
+                    "Kiểu `long long`",
+                    "Kiểu `bool`"
+                ],
+                answer: 2,
+                explanation: "Tổng tối đa = 10^5 * 10^5 = 10^10. Kiểu int trong C++ chỉ lưu được tối đa khoảng 2*10^9, nên bắt buộc dùng long long."
+            },
+            {
+                text: "Đặc điểm nhận diện một bài toán có thể giải bằng Tham Lam trong các kỳ thi HSG THCS thường là gì?",
+                options: [
+                    "Đề bài yêu cầu tìm 'nhiều nhất', 'ít nhất' và N rất lớn ($10^5$).",
+                    "Đề bài yêu cầu liệt kê tất cả các cách sắp xếp có thể xảy ra.",
+                    "Đề bài cho số lượng phần tử N rất nhỏ (N < 20).",
+                    "Đề bài yêu cầu tính toán trên các chuỗi ký tự dài."
+                ],
+                answer: 0,
+                explanation: "Với N = 10^5, thuật toán Quy hoạch động O(N^2) sẽ bị TLE (Quá thời gian). Dấu hiệu lớn để dùng Sort + Greedy O(N log N)."
+            },
+            {
+                text: "Để tính tổng tiền mảng (chỉ số `i` từ 0 đến N-1) nhưng BỎ QUA không cộng phần tử ở vị trí thứ 3 của mỗi nhóm (bỏ qua i = 2, 5, 8...), điều kiện `if` THỰC HIỆN CỘNG là?",
+                options: [
+                    "if (i % 3 == 0)",
+                    "if (i % 3 != 2)",
+                    "if (i / 3 == 0)",
+                    "if (i == 3)"
+                ],
+                answer: 1,
+                explanation: "Chỉ số 2, 5, 8 chia 3 đều dư 2. Nên ta chỉ cộng những chỉ số có phần dư khác 2 (i % 3 != 2)."
+            },
+            {
+                text: "Thuật toán tham lam thường KHÔNG phù hợp và dễ cho kết quả sai đối với loại bài toán nào dưới đây?",
+                options: [
+                    "Bài toán xếp hàng rút tiền sao cho thời gian chờ ít nhất.",
+                    "Bài toán cái túi 0/1 (chỉ được lấy toàn bộ hoặc bỏ qua vật).",
+                    "Bài toán chọn số lượng công việc nhiều nhất.",
+                    "Bài toán xếp hàng lên xe tải lấy số lượng thùng nhiều nhất."
+                ],
+                answer: 1,
+                explanation: "Bài toán cái túi 0/1 (0/1 Knapsack Problem) kinh điển không thể giải bằng tham lam, bắt buộc phải dùng Quy hoạch động."
+            },
+            {
+                text: "Khi code thuật toán tham lam bị sai kết quả (Wrong Answer) ở một vài test case, lỗi logic nào học sinh nên kiểm tra đầu tiên?",
+                options: [
+                    "Quên gọi hàm sắp xếp hoặc viết hàm so sánh (compare) sai.",
+                    "Khai báo thiếu các thư viện toán học phức tạp.",
+                    "Máy tính chạy quá chậm dẫn đến tính toán sai.",
+                    "Chưa chuyển sang dùng ngôn ngữ Python."
+                ],
+                answer: 0,
+                explanation: "90% lỗi sai của học sinh mới học Tham lam là quên sắp xếp mảng dữ liệu hoặc sắp xếp tăng dần trong khi đề yêu cầu giảm dần."
+            }
+        ];
+
+        // App State
+        let currentQuestion = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // DOM Elements
+        const screens = {
+            welcome: document.getElementById('welcome-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            result: document.getElementById('result-screen')
+        };
+        const elements = {
+            qText: document.getElementById('question-text'),
+            options: document.getElementById('options-container'),
+            nextBtn: document.getElementById('next-btn'),
+            counter: document.getElementById('question-counter'),
+            score: document.getElementById('score-counter'),
+            progress: document.getElementById('progress-bar'),
+            feedback: document.getElementById('feedback-area'),
+            feedbackIcon: document.getElementById('feedback-icon'),
+            feedbackTitle: document.getElementById('feedback-title'),
+            feedbackText: document.getElementById('feedback-text')
+        };
+
+        function startQuiz() {
+            screens.welcome.classList.add('hidden');
+            screens.quiz.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const q = questions[currentQuestion];
+            
+            // Update UI
+            elements.qText.textContent = `${currentQuestion + 1}. ${q.text}`;
+            elements.counter.textContent = `Câu ${currentQuestion + 1} / ${questions.length}`;
+            elements.progress.style.width = `${((currentQuestion) / questions.length) * 100}%`;
+            elements.nextBtn.classList.add('hidden');
+            elements.feedback.classList.add('hidden');
+            
+            // Generate Options
+            elements.options.innerHTML = '';
+            const labels = ['A', 'B', 'C', 'D'];
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-indigo-300 hover:bg-indigo-50 font-medium text-gray-700 flex gap-4 items-start';
+                btn.innerHTML = `
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500 label-circle">${labels[index]}</span>
+                    <span class="pt-1">${opt}</span>
+                `;
+                btn.onclick = () => selectOption(index, btn);
+                elements.options.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = questions[currentQuestion];
+            const isCorrect = selectedIndex === q.answer;
+            const allBtns = elements.options.querySelectorAll('button');
+
+            // Disable all buttons
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-70');
+                btn.classList.remove('hover:border-indigo-300', 'hover:bg-indigo-50');
+            });
+
+            // Highlight Correct and Wrong
+            if (isCorrect) {
+                score++;
+                elements.score.textContent = `${score} Điểm`;
+                elements.score.classList.add('scale-110');
+                setTimeout(() => elements.score.classList.remove('scale-110'), 200);
+                
+                selectedBtn.classList.remove('border-gray-100', 'bg-white', 'opacity-70');
+                selectedBtn.classList.add('border-green-500', 'bg-green-50', 'opacity-100');
+                selectedBtn.querySelector('.label-circle').classList.replace('bg-gray-100', 'bg-green-500');
+                selectedBtn.querySelector('.label-circle').classList.replace('text-gray-500', 'text-white');
+                
+                showFeedback(true, q.explanation);
+            } else {
+                selectedBtn.classList.remove('border-gray-100', 'bg-white', 'opacity-70');
+                selectedBtn.classList.add('border-red-400', 'bg-red-50', 'opacity-100');
+                selectedBtn.querySelector('.label-circle').classList.replace('bg-gray-100', 'bg-red-500');
+                selectedBtn.querySelector('.label-circle').classList.replace('text-gray-500', 'text-white');
+                
+                // Highlight the actual correct one
+                const correctBtn = allBtns[q.answer];
+                correctBtn.classList.remove('opacity-70');
+                correctBtn.classList.add('border-green-500', 'border-dashed');
+                
+                showFeedback(false, q.explanation);
+            }
+
+            // Show next button
+            elements.nextBtn.classList.remove('hidden');
+            if(currentQuestion === questions.length - 1) {
+                elements.nextBtn.querySelector('span').textContent = 'Xem kết quả';
+            }
+        }
+
+        function showFeedback(isCorrect, text) {
+            elements.feedback.classList.remove('hidden', 'bg-green-50', 'border-green-500', 'text-green-800', 'bg-red-50', 'border-red-500', 'text-red-800');
+            
+            if (isCorrect) {
+                elements.feedback.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+                elements.feedbackIcon.setAttribute('data-lucide', 'check-circle');
+                elements.feedbackTitle.textContent = 'Chính xác!';
+            } else {
+                elements.feedback.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                elements.feedbackIcon.setAttribute('data-lucide', 'x-circle');
+                elements.feedbackTitle.textContent = 'Chưa chính xác!';
+            }
+            elements.feedbackText.textContent = text;
+            lucide.createIcons(); // Re-render icon
+            
+            // Scroll to bottom smoothly
+            elements.feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            screens.quiz.classList.add('hidden');
+            screens.result.classList.remove('hidden');
+            
+            document.getElementById('final-score').textContent = `${score}/${questions.length}`;
+            
+            const iconContainer = document.getElementById('result-icon-container');
+            const msg = document.getElementById('result-message');
+            
+            let percentage = score / questions.length;
+            
+            if (percentage >= 0.8) {
+                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 bg-yellow-100 text-yellow-500";
+                iconContainer.innerHTML = '<i data-lucide="trophy" class="w-12 h-12"></i>';
+                msg.textContent = "Tuyệt vời! Bạn đã nắm rất vững tư duy Tham lam. Sẵn sàng chinh phục đề thi HSG rồi!";
+                triggerConfetti();
+            } else if (percentage >= 0.5) {
+                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 bg-blue-100 text-blue-500";
+                iconContainer.innerHTML = '<i data-lucide="thumbs-up" class="w-12 h-12"></i>';
+                msg.textContent = "Khá tốt! Bạn đã hiểu cơ bản. Hãy ôn lại một chút phần kỹ thuật Gom nhóm dữ liệu nhé.";
+            } else {
+                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 bg-red-100 text-red-500";
+                iconContainer.innerHTML = '<i data-lucide="book-open" class="w-12 h-12"></i>';
+                msg.textContent = "Đừng nản chí! Thuật toán cần thời gian thẩm thấu. Hãy xem lại phần giải thích ở từng câu hỏi nhé.";
+            }
+            lucide.createIcons();
+        }
+
+        function triggerConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+    </script>
+</body>
+</html>
