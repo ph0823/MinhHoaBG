@@ -300,7 +300,7 @@
                 explanation: "Với N = 10^5, thuật toán Quy hoạch động O(N^2) sẽ bị TLE (Quá thời gian). Dấu hiệu lớn để dùng Sort + Greedy O(N log N)."
             },
             {
-                text: "Để tính tổng tiền mảng (chỉ số `i` từ 0 đến N-1) nhưng BỎ QUA không cộng phần tử ở vị trí thứ 3 của mỗi nhóm (bỏ qua i = 2, 5, 8...), điều kiện `if` THỰC HIỆN CỘNG là?",
+                text: "Trong bài toán 'Mua 3 tính tiền 2' (mảng giá tiền đã sắp xếp giảm dần, duyệt chỉ số `i` từ 0 đến N-1), ta cần tính tổng tiền nhưng BỎ QUA phần tử đứng thứ 3 trong mỗi nhóm 3 món (tương ứng bỏ qua các món ở chỉ số i = 2, 5, 8...). Điều kiện `if` để THỰC HIỆN CỘNG dồn giá tiền là gì?",
                 options: [
                     "if (i % 3 == 0)",
                     "if (i % 3 != 2)",
@@ -308,7 +308,7 @@
                     "if (i == 3)"
                 ],
                 answer: 1,
-                explanation: "Chỉ số 2, 5, 8 chia 3 đều dư 2. Nên ta chỉ cộng những chỉ số có phần dư khác 2 (i % 3 != 2)."
+                explanation: "Các món được miễn phí (đứng thứ 3 trong nhóm) nằm ở các chỉ số 2, 5, 8... Điểm chung của chúng là chia 3 dư 2 (i % 3 == 2). Do đó, để THỰC HIỆN CỘNG tiền các món phải trả, ta chọn các chỉ số không rơi vào nhóm này, tức là (i % 3 != 2)."
             },
             {
                 text: "Thuật toán tham lam thường KHÔNG phù hợp và dễ cho kết quả sai đối với loại bài toán nào dưới đây?",
