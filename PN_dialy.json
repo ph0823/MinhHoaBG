@@ -1,0 +1,1080 @@
+[
+      {
+        "id": 1,
+        "question": "Vị trí địa lí của Hoa Kỳ nằm ở",
+        "options": [
+          "bán cầu Tây.",
+          "bán cầu Nam.",
+          "tiếp giáp với Cu Ba.",
+          "tiếp giáp Ấn Độ Dương."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 2,
+        "question": "Hoa Kỳ tiếp giáp với",
+        "options": [
+          "Ấn Độ Dương, Thái Bình Dương, Mê-hi-cô, Ca-na-đa.",
+          "Bắc Băng Dương, Thái Bình Dương, Mê-hi-cô, Ca-na-đa.",
+          "Nam Đại Dương, Thái Bình Dương, Mê-hi-cô, Ca-na-đa.",
+          "Đại Tây Dương, Thái Bình Dương, Mê-hi-cô, Ca-na-đa."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 3,
+        "question": "Vị trí của Hoa Kỳ tạo điều kiện giao lưu kinh tế bằng đường biển qua Thái Bình Dương với",
+        "options": [
+          "các nước châu Phi và Nam Mỹ.",
+          "Nhật Bản và các nước Đông Á.",
+          "Liên Bang Nga và các nước châu Âu.",
+          "Ấn Độ và nhiều nước Nam Á."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 4,
+        "question": "Vị trí của Hoa Kỳ tạo điều kiện giao lưu kinh tế bằng đường biển qua Đại Tây Dương với",
+        "options": [
+          "các nước châu Phi và Nam Mỹ.",
+          "Nhật Bản và các nước Đông Á.",
+          "Cộng hòa Liên bang Đức và nhiều nước EU.",
+          "Ấn Độ và nhiều nước Nam Á."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 5,
+        "question": "Hoa Kỳ không phải là một đất nước có",
+        "options": [
+          "thiên nhiên đa dạng.",
+          "khoáng sản phong phú.",
+          "tài nguyên dồi dào.",
+          "lãnh thổ dạng quần đảo."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 6,
+        "question": "Phần lãnh thổ nào sau đây không thuộc Hoa Kỳ?",
+        "options": [
+          "Phần ở trung tâm Bắc Mỹ.",
+          "Bán đảo A-la-xca.",
+          "Quần đảo Ha-oai.",
+          "Quần đảo Ăng-ti Lớn."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 7,
+        "question": "Ngoài phần đất ở trung tâm Bắc Mỹ, Hoa Kỳ còn bao gồm",
+        "options": [
+          "bán đảo A-la-xca và quần đảo Ha-oai.",
+          "quần đảo Ha-oai và quần đảo Ăng-ti lớn.",
+          "quần đảo Ăng-ti lớn, quần đảo Ăng-ti nhỏ.",
+          "quần đảo Ăng-ti nhỏ và bán đảo A-la-xca."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 8,
+        "question": "Đặc điểm nào sau đây không đúng với vị trí địa lí của Hoa Kỳ?",
+        "options": [
+          "Nằm ở bán cầu Đông.",
+          "Giáp Đại Tây Dương và Thái Bình Dương.",
+          "Tiếp giáp Ca-na-đa và khu vực Mỹ Latinh.",
+          "Ở trên lục địa Bắc Mỹ."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 9,
+        "question": "Vùng phía Đông Hoa Kỳ có",
+        "options": [
+          "các dãy núi trẻ chạy theo hướng bắc - nam.",
+          "nhiều kim loại màu như vàng, đồng, chì.",
+          "tài nguyên năng lượng hết sức phong phú.",
+          "các đồng bằng phù sa ven Đại Tây Dương."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 10,
+        "question": "Đặc điểm nào sau đây không đúng với vùng phía Tây Hoa Kỳ?",
+        "options": [
+          "Các dãy núi trẻ chạy theo hướng bắc - nam.",
+          "Nhiều kim loại màu như vàng, đồng, chì.",
+          "Tài nguyên năng lượng hết sức phong phú.",
+          "Các đồng bằng phù sa ven Đại Tây Dương."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 11,
+        "question": "Vùng phía Tây Hoa Kỳ có",
+        "options": [
+          "dãy A-pa-lat với độ cao trung bình, sườn thoải.",
+          "than đá, quặng sắt trữ lượng lớn, dễ khai thác.",
+          "các đồng bằng phù sa ven Đại Tây Dương rộng.",
+          "các bồn địa và cao nguyên với khí hậu khô hạn."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 12,
+        "question": "Đặc điểm nào sau đây không đúng với vùng phía Đông Hoa Kỳ?",
+        "options": [
+          "Dãy A-pa-lat với độ cao trung bình, sườn thoải.",
+          "Than đá, quặng sắt trữ lượng lớn, dễ khai thác.",
+          "Các đồng bằng phù sa ven Đại Tây Dương rộng.",
+          "Các bồn địa và cao nguyên với khí hậu khô hạn."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 13,
+        "question": "Vùng Trung tâm Hoa Kỳ có",
+        "options": [
+          "dãy A-pa-lat với độ cao trung bình, sườn thoải.",
+          "than đá, quặng sắt trữ lượng lớn, dễ khai thác.",
+          "trữ năng thủy điện và diện tích rừng tương đối lớn.",
+          "đồng bằng phù sa do sông Mi-xi-xi-pi bồi đắp."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 14,
+        "question": "Đặc điểm nào sau đây không đúng với tự nhiên của A-la-xca?",
+        "options": [
+          "Bán đảo rộng lớn.",
+          "Có nhiều than đá.",
+          "Ở tây bắc Bắc Mỹ.",
+          "Địa hình đồi núi."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 15,
+        "question": "Phát biểu nào sau đây không đúng với lãnh thổ vùng phía Tây Hoa Kỳ?",
+        "options": [
+          "Gồm các dãy núi trẻ cao trên 2.000 m.",
+          "Các bồn địa và cao nguyên xen giữa núi.",
+          "Hoàn toàn không có đồng bằng.",
+          "Có diện tích rừng tương đối lớn."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 16,
+        "question": "Đặc điểm tự nhiên của vùng phía Tây Hoa Kỳ là",
+        "options": [
+          "gồm các dãy núi trẻ cao trung bình trên 2.000 m.",
+          "gồm địa hình gò đồi thấp và nhiều đồng cỏ rộng.",
+          "có đồng bằng phù sa Mi-xi-xi-pi màu mỡ, rộng lớn.",
+          "có các đồng bằng phù sa ven Đại Tây Dương rộng."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 17,
+        "question": "Đặc điểm tự nhiên của vùng phía Đông Hoa Kỳ là",
+        "options": [
+          "rừng tương đối nhiều và có các đồng bằng ven Thái Bình Dương.",
+          "có dãy núi già A-pa-lat và các đồng bằng ven Đại Tây Dưong.",
+          "có đồng bằng phù sa màu mỡ do hệ thống sông Mi-xi-xi-pi bồi đắp.",
+          "có trữ lượng dầu mỏ và khí tự nhiên đứng vào hàng thứ hai cả nước."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 18,
+        "question": "Kiểu khí hậu phổ biến ở vùng phía Đông và vùng Trung tâm Hoa Kỳ là",
+        "options": [
+          "ôn đới lục địa và hàn đới.",
+          "hoang mạc và ôn đới lục địa.",
+          "cận nhiệt đới và ôn đới hải dương.",
+          "cận nhiệt đới và cận xích đạo."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 19,
+        "question": "Khí hậu hoang mạc và bán hoang mạc ở Hoa Kỳ tập trung chủ yếu ở nơi nào sau đây?",
+        "options": [
+          "Các đồng bằng nhỏ ven Thái Bình Dương.",
+          "Các bồn địa và cao nguyên ở vùng phía Tây.",
+          "Khu vực giữa dãy A-pa-lat và dãy Rốc-ki.",
+          "Vùng đồi núi thuộc bán đảo A-la-xca."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 20,
+        "question": "Than đá và quặng sắt có trữ lượng rất lớn của Hoa Kỳ tập trung chủ yếu ở nơi nào sau đây?",
+        "options": [
+          "Vùng phía Tây và vùng Trung tâm.",
+          "Vùng phía Đông và vùng Trung tâm.",
+          "Vùng Trung tâm và A-la-xca.",
+          "Vùng phía Đông và Ha-oai."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 21,
+        "question": "Năm 2020, dân số Hoa Kỳ đứng sau",
+        "options": [
+          "Trung Quốc và Liên bang Nga.",
+          "Ấn Độ và In-đô-nê-xi-a.",
+          "Bra-xin và Trung Quốc.",
+          "Trung Quốc và Ấn Độ."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 22,
+        "question": "Đặc điểm nào sau đây không đúng với dân cư Hoa Kỳ?",
+        "options": [
+          "Quy mô đứng thứ ba thế giới.",
+          "Dân số tăng nhanh do nhập cư.",
+          "Người nhập cư đa số từ châu Âu.",
+          "Hiện nay không còn dân nhập cư."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 23,
+        "question": "Phát biểu nào sau đây không đúng với dân cư Hoa Kỳ?",
+        "options": [
+          "Dân đông nhờ một phần lớn vào nhập cư.",
+          "Người châu Âu chiếm đa số dân cư.",
+          "Chi phí đầu tư ban đầu cho nhập cư cao.",
+          "Nguồn nhập cư là nguồn lao động lớn."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 24,
+        "question": "Ích lợi của dân nhập cư đến Hoa Kỳ không phải chủ yếu là mang lại",
+        "options": [
+          "nguồn tri thức.",
+          "nguồn vốn.",
+          "lực lượng lao động.",
+          "bản sắc văn hóa."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 25,
+        "question": "Phát biểu nào sau đây không đúng với dân cư Hoa Kỳ hiện nay?",
+        "options": [
+          "Gia tăng tự nhiên thấp.",
+          "Tuổi thọ trung bình cao.",
+          "Nhóm tuổi trên 65 tăng.",
+          "Cơ cấu dân số trẻ."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 26,
+        "question": "Phát biểu nào sau đây không đúng với dân cư Hoa Kỳ hiện nay?",
+        "options": [
+          "Số dân đông thứ ba thế giới.",
+          "Thành phần dân cư đa dạng.",
+          "Nhiều dân nhập cư từ châu Âu.",
+          "Rất ít người nhập cư từ châu Á."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 27,
+        "question": "Phát biểu nào sau đây không đúng với sự thay đổi đặc điểm dân số Hoa Kỳ từ năm 1950 đến nay?",
+        "options": [
+          "Tỉ suất tăng dân số tự nhiên tăng.",
+          "Tuổi thọ trung bình dân số tăng.",
+          "Nhóm dân cư dưới 15 tuổi giảm.",
+          "Nhóm dân cư trên 65 tuổi tăng."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 28,
+        "question": "Thành phần dân cư với số lượng đứng đầu ở Hoa Kỳ có nguồn gốc",
+        "options": [
+          "châu Âu.",
+          "châu Phi.",
+          "châu Á.",
+          "Mỹ Latinh."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 29,
+        "question": "Thành phần dân cư với số lượng đứng thứ hai ở Hoa Kỳ có nguồn gốc",
+        "options": [
+          "châu Âu.",
+          "châu Phi.",
+          "châu Á.",
+          "Mỹ La tinh."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 30,
+        "question": "Phát biểu nào sau đây không đúng với thành phần dân cư của Hoa Kỳ?",
+        "options": [
+          "Có nhiều chủng tộc và dân tộc khác nhau.",
+          "Phần lớn dân số có nguồn gốc châu Âu.",
+          "Dân cư từ châu Á đến gần đây tăng mạnh.",
+          "Dân Anh-điêng chiếm cao nhất trong cơ cấu."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 31,
+        "question": "Người dân Hoa Kỳ chủ yếu sinh sống ở các",
+        "options": [
+          "đô thị cực lớn.",
+          "đô thị vừa và nhỏ.",
+          "vùng ven đô thị.",
+          "vùng nông thôn."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 32,
+        "question": "Các tiêu cực của đô thị hóa ở Hoa Kỳ được hạn chế một phần nhờ vào việc người dân tập trung sinh sống ở các",
+        "options": [
+          "đô thị cực lớn.",
+          "đô thị vừa và nhỏ.",
+          "vùng ven đô thị.",
+          "vùng nông thôn."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 33,
+        "question": "Dân cư Hoa Kỳ tập trung với mật độ cao ở",
+        "options": [
+          "ven Thái Bình Dương.",
+          "ven Đại Tây Dương.",
+          "ven vịnh Mê-hi-cô.",
+          "khu vực trung tâm."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 34,
+        "question": "Dân cư Hoa Kỳ hiện nay đang có xu hướng di chuyển từ các bang vùng Đông Bắc đến các bang phía",
+        "options": [
+          "nam và ven Đại Tây Dương.",
+          "nam và ven bờ Thái Bình Dương.",
+          "bắc và ven bờ Thái Bình Dương.",
+          "tây và ven bờ Đại Tây Dương."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 35,
+        "question": "Dân cư Hoa Kỳ đang có xu hướng di chuyển từ các bang vùng Đông Bắc đến các bang phía Nam do nguyên nhân chủ yếu là",
+        "options": [
+          "sự dịch chuyển của phân bố công nghiệp.",
+          "sự thu hút của các điều kiện sinh thái.",
+          "tâm lí thích dịch chuyển của người dân.",
+          "có nhiều đô thị mới xây dựng hấp dẫn."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 36,
+        "question": "Phát biểu nào sau đây không đúng với dân thành thị ở Hoa Kỳ?",
+        "options": [
+          "Người dân chủ yếu sống trong các thành phố.",
+          "Tỉ lệ dân thành thị cao, đạt 83% (năm 2020).",
+          "Dân cư tập trung chủ yếu trong các siêu đô thị.",
+          "Các thành phố vừa và nhỏ chiếm phần lớn số dân."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 37,
+        "question": "Dân số Hoa Kỳ tăng nhanh một phần quan trọng là do",
+        "options": [
+          "tỉ suất sinh giảm, tỉ suất tử giảm.",
+          "tỉ suất nhập cư lớn, tỉ suất tử giảm.",
+          "tỉ suất sinh tăng, tỉ suất nhập cư cao.",
+          "tỉ suất tử giảm, tỉ suất xuất cư nhỏ."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 38,
+        "question": "Một trong những vấn đề khó khăn nhất đối với xã hội Hoa Kỳ hiện nay là",
+        "options": [
+          "dân cư tập trung quá nhiều vào các đô thị.",
+          "chênh lệch giàu nghèo ngày càng gia tăng.",
+          "nhiều dân tộc với nền văn hóa khác nhau.",
+          "người dân thường xuyên thay đổi nơi ở."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 39,
+        "question": "Nền kinh tế của Hoa Kỳ",
+        "options": [
+          "đứng sau Trung Quốc.",
+          "đứng đầu thế giới.",
+          "đứng sau Nhật Bản.",
+          "lớn gấp nhiều lần EU."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 40,
+        "question": "Nền kinh tế Hoa Kỳ phát triển cao không phải do",
+        "options": [
+          "phát triển cao độ nền kinh tế thị trường.",
+          "đẩy mạnh đầu tư nghiên cứu phát triển.",
+          "lao động năng suất cao, tiêu dùng nhiều.",
+          "thu hút nhiều nguồn đầu tư nước ngoài."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 41,
+        "question": "Thuận lợi chủ yếu để phát triển kinh tế của Hoa Kỳ không phải là",
+        "options": [
+          "tài nguyên thiên nhiên giàu có.",
+          "nguồn lao động kĩ thuật dồi dào.",
+          "đất nước tránh được chiến tranh.",
+          "phát triển từ nước tư bản lâu đời."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 42,
+        "question": "Nền kinh tế Hoa Kỳ",
+        "options": [
+          "chủ yếu thuộc sự quản lí của thành phần kinh tế nhà nước.",
+          "rất linh hoạt, phát huy sức mạnh của tất cả các thành phần.",
+          "đáp ứng cao thị trường, nhưng vẫn do nhà nước quyết định.",
+          "phụ thuộc nhiều vào các nguồn đầu tư lớn từ nước ngoài."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 43,
+        "question": "Biểu hiện của nền kinh tế tri thức ở Hoa Kỳ không phải là",
+        "options": [
+          "hiện đại hóa thông tin, liên lạc.",
+          "phát triển mạnh hàng không - vũ trụ.",
+          "phân bố công nghiệp về phía nam.",
+          "Mở rộng ngành dịch vụ viễn thông."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 45,
+        "question": "Phát biểu nào sau đây không đúng với giao thông vận tải của Hoa Kỳ hiện nay?",
+        "options": [
+          "Mạng lưới đường bộ đến khắp mọi miền.",
+          "Phương tiện vận tải hiện đại nhất thế giới.",
+          "Có số lượng sân bay nhiều nhất thế giới.",
+          "Vận tải đường hàng hải không phát triển."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 46,
+        "question": "Phát biểu nào sau đây không đúng với hoạt động tài chính của Hoa Kỳ?",
+        "options": [
+          "Có hàng nghìn tổ chức ngân hàng, tài chính.",
+          "Thu hút nhiều triệu lao động khắp đất nước.",
+          "Tạo ra rất nhiều lợi thế và các nguồn thu lớn.",
+          "Chỉ tập trung phát triển mạnh mẽ trong nước."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 47,
+        "question": "Phát biểu nào sau đây không đúng với hoạt động thông tin liên lạc của Hoa Kỳ?",
+        "options": [
+          "Rất hiện đại.",
+          "Nhiều vệ tinh.",
+          "Có GPS toàn cầu.",
+          "ít thay đổi."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 48,
+        "question": "Phát biểu nào sau đây không đúng với hoạt động du lịch của Hoa Kỳ?",
+        "options": [
+          "Ngành du lịch phát triển mạnh mẽ.",
+          "Du khách hầu hết là khách nội địa.",
+          "Có doanh thu hàng năm rất lớn.",
+          "Cơ sở hạ tầng ngày càng hiện đại."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 49,
+        "question": "Hoa Kỳ là quốc gia không có",
+        "options": [
+          "hệ thống giao thông hiện đại nhất, đủ các loại hình.",
+          "thị trường tài chính lớn nhất, ảnh hưởng toàn cầu.",
+          "nhiều vệ tinh nhất và đã thiết lập GPS toàn cầu.",
+          "giá trị xuất khẩu luôn lớn hơn giá trị nhập khẩu."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 50,
+        "question": "Hoa Kỳ là",
+        "options": [
+          "siêu cường công nghiệp của thế giới.",
+          "chỉ đầu tư mạnh ngành khai khoáng.",
+          "chỉ phát triển mạnh ngành chế biến.",
+          "nước ít chú trọng ngành năng lượng."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 51,
+        "question": "Phát biểu nào sau đây đúng với ngành công nghiệp của Hoa Kỳ?",
+        "options": [
+          "Tạo ra nguồn hàng xuất khẩu chủ yếu của Hoa Kỳ.",
+          "Tỉ trọng giá trị sản lượng trong GDP ngày càng tăng nhanh.",
+          "Công nghiệp khai khoáng chiếm hầu hết giá trị xuất khẩu.",
+          "Hiện nay, công nghiệp tập trung chủ yếu ở vùng Đông Bắc."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 52,
+        "question": "Hiện nay các ngành nào sau đây của Hoa Kỳ được phát triển mạnh?",
+        "options": [
+          "Luyện kim, gia công đồ nhựa, hóa dầu.",
+          "Đóng tàu, gia công đồ nhựa, hóa chất.",
+          "Điện tử, hóa dầu, hàng không - vũ trụ.",
+          "Hàng không - vũ trụ, đóng tàu, hóa chất."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 53,
+        "question": "Trong cơ cấu ngành công nghiệp hiện nay của Hoa Kỳ, các ngành nào sau đây có tỉ trọng ngày càng tăng?",
+        "options": [
+          "luyện kim, hàng không - vũ trụ.",
+          "cơ khí, gia công đồ nhựa.",
+          "hàng không - vũ trụ, điện tử.",
+          "gia công đồ nhựa, điện tử.  Câu 54 Hoạt động điện lực nào sau đây ở Hoa Kỳ không sử dụng nguồn năng lượng tái tạo?  A. Nhiệt điện.                       B. Điện địa nhiệt.            C. Điện gió.                      D. Điện mặt trời."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 54,
+        "question": "Các ngành sản xuất công nghiệp truyền thống của Hoa Kỳ hiện nay chủ yếu tập trung ở vùng",
+        "options": [
+          "Đông Bắc.",
+          "Đông Nam.",
+          "ven Thái Bình Dương.",
+          "ven vịnh Mê-hi-cô."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 55,
+        "question": "Công nghiệp Hoa Kỳ có sự dịch chuyển phân bố từ vùng Đông Bắc đến",
+        "options": [
+          "vùng phía Nam.",
+          "vùng phía Bắc.",
+          "ven Đại Tây Dương.",
+          "vùng Trung tâm."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 56,
+        "question": "Ngành công nghiệp hiện đại của Hoa Kỳ không phải là",
+        "options": [
+          "hóa dầu.",
+          "hàng không - vũ trụ.",
+          "viễn thông.",
+          "đóng tàu."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 57,
+        "question": "Ngành có tỉ trọng ngày càng tăng trong cơ cấu giá trị sản lượng công nghiệp của Hoa Kỳ là",
+        "options": [
+          "luyện kim.",
+          "dệt.",
+          "điện tử.",
+          "gia công đồ nhựa."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 58,
+        "question": "Ngành nào sau đây được phát triển từ rất sớm ở vùng Đông Bắc Hoa Kỳ?",
+        "options": [
+          "Luyện kim đen.",
+          "Chế tạo máy bay.",
+          "Điện tử, viễn thông.",
+          "Chế tạo tên lửa vũ trụ."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 59,
+        "question": "Công nghiệp của Hoa Kỳ chuyển dịch theo hướng phát triển các ngành cần nhiều",
+        "options": [
+          "tri thức, tạo ra giá trị sản xuất cao.",
+          "nguyên liệu, tạo ra sản lượng lớn.",
+          "năng lượng, tạo hàng xuất khẩu tốt.",
+          "lao động, tạo ra giá trị tiêu dùng tốt."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 60,
+        "question": "Công nghiệp Hoa Kỳ tập trung phát triển các ngành đòi hỏi sử dụng nhiều",
+        "options": [
+          "tri thức khoa học.",
+          "tài nguyên khoáng sản.",
+          "năng lượng truyền thống.",
+          "lao động phổ thông."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 61,
+        "question": "Vùng Đông Bắc của Hoa Kỳ là nơi tập trung các ngành sản xuất chủ yếu nào?",
+        "options": [
+          "Luyện kim, chế tạo ô tô, đóng tàu, điện tử.",
+          "Đóng tàu, dệt, chế tạo ô tô, hàng không - vũ trụ.",
+          "Hóa dầu, hàng không - vũ trụ, dệt, luyện kim.",
+          "Luyện kim, chế tạo ô tô, đóng tàu, hóa chất, dệt."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 62,
+        "question": "Trung tâm công nghiệp nào sau đây không nằm ở phía Đông Hoa Kỳ?",
+        "options": [
+          "Xan Phran-xi-xcô.",
+          "Niu Oóc-lin.",
+          "Niu Oóc.",
+          "Si-ca-gô."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 63,
+        "question": "Trung tâm công nghiệp nào sau đây không nằm ở phía Tây Hoa Kỳ?",
+        "options": [
+          "Xit-tơn.",
+          "Xan Phran-xi-xcô.",
+          "Phi-la-đen-phi-a.",
+          "Lốt An-giơ-lét."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 64,
+        "question": "Trung tâm công nghiệp nào sau đây không nằm ở vùng Trung tâm Hoa Kỳ?",
+        "options": [
+          "Bô-xtơn.",
+          "Đa-lát.",
+          "Xanh Lu-i.",
+          "Mi-nê-a-pô-lít."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 65,
+        "question": "Phát biểu nào sau đây đúng với nông nghiệp của Hoa Kỳ?",
+        "options": [
+          "Hình thức tổ chức sản xuất chủ yếu là hộ gia đình.",
+          "Nền nông nghiệp hàng hóa phát triển mạnh.",
+          "Là nước xuất khẩu nông sản lớn nhất thế giới.",
+          "Hiện nay, các vành đai chuyên canh phát triển mạnh."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 66,
+        "question": "Phát biểu nào sau đây không đúng với nông nghiệp Hoa Kỳ?",
+        "options": [
+          "Nền nông nghiệp hàng hóa phát triển từ sớm.",
+          "Tỉ trọng sản xuất dịch vụ nông nghiệp tăng.",
+          "Đa dạng hóa nông sản trên cùng một lãnh thổ.",
+          "Trang trại là hình thức tố chức sản xuất thứ yếu."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 67,
+        "question": "Vùng phía Tây Hoa Kỳ phát triển mạnh hoạt động lâm nghiệp, do có",
+        "options": [
+          "cao nguyên rộng.",
+          "các bồn địa lớn.",
+          "nhiều dãy núi trẻ.",
+          "diện tích rừng lớn."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 68,
+        "question": "Ven vịnh Mê-hi-cô ở Hoa Kỳ trồng nhiều lúa gạo, do có",
+        "options": [
+          "đồng bằng phù sa màu mỡ, khí hậu cận nhiệt.",
+          "khí hậu cận nhiệt, đồng bằng ở ven biển rộng.",
+          "đồng bằng ven biển rộng, khí hậu cận xích đạo.",
+          "khí hậu cận xích đạo, đồng bằng phù sa màu mỡ."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 69,
+        "question": "Phía bắc của vùng Trung tâm Hoa Kỳ phát triển mạnh chăn nuôi bò, chủ yếu do có",
+        "options": [
+          "núi cao.",
+          "đồng cỏ rộng.",
+          "đồng bằng rộng.",
+          "sông nhiều nước."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 70,
+        "question": "Ha-oai là nơi phát triển mạnh",
+        "options": [
+          "cây lương thực.",
+          "nuôi gia súc lớn.",
+          "du lịch biển.",
+          "khai thác mỏ."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 71,
+        "question": "Lãnh thổ của Liên bang Nga",
+        "options": [
+          "có diện tích rộng nhất thế giới.",
+          "nằm hoàn toàn ở châu Âu.",
+          "giáp Ấn Độ Dương.",
+          "liền kề với Đại Tây Dương."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 72,
+        "question": "Liên bang Nga không phải là một đất nước có",
+        "options": [
+          "đường biên giới xấp xỉ chiều dài Xích đạo.",
+          "chiều đông - tây trải dài trên 11 múi giờ.",
+          "Giáp nhiều biển rộng và đại dương lớn.",
+          "lãnh thổ nằm hoàn toàn ở châu Âu."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 73,
+        "question": "Lãnh thổ Liên bang Nga không giáp với biển nào sau đây?",
+        "options": [
+          "Ban-tích.",
+          "Biển Đen.",
+          "Ca-xpi.",
+          "Địa Trung Hải."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 74,
+        "question": "Liên bang Nga giáp với các đại dương nào sau đây?",
+        "options": [
+          "Thái Bình Dương, Bắc Băng Dương.",
+          "Bắc Băng Dương, Đại Tây Dương.",
+          "Đại Tây Dương, Ấn Độ Dương.",
+          "Ấn Độ Dương, Thái Bình Dương."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 75,
+        "question": "Phát biểu nào sau đây không đúng về Liên bang Nga?",
+        "options": [
+          "Có diện tích rộng đứng đầu thế giới.",
+          "Giáp với 14 quốc gia, hai đại dương",
+          "Giáp các biển lớn: Ban-tích, Ca-xpi.",
+          "Gồm đồng bằng Đông Âu và Tây Á."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 76,
+        "question": "Sông nào sau đây được xem là ranh giới tự nhiên của phần phía Đông và phần phía Tây Liên bang Nga?",
+        "options": [
+          "Von-ga.",
+          "Ô-bi.",
+          "Ê-nit-xây.",
+          "Lê-na."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 77,
+        "question": "Đặc điểm tự nhiên phần phía Tây của nước Nga là",
+        "options": [
+          "đại bộ phận là đồng bằng và vùng trũng.",
+          "phần lớn là vùng núi và các cao nguyên.",
+          "có nguồn khoáng sản và lâm sản khá lớn.",
+          "có nguồn trữ năng thủy điện lớn ở sông."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 78,
+        "question": "Đặc điểm nào sau đây không đúng với phần phía Đông của nước Nga?",
+        "options": [
+          "Phần lớn là núi và cao nguyên.",
+          "Có nguồn khoáng sản và lâm sản lớn.",
+          "Có nguồn trữ năng thủy điện lớn.",
+          "Có đồng bằng Đông Âu tương đối cao."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 79,
+        "question": "Nơi có nhiều thuận lợi cho trồng cây lương thực của Nga là",
+        "options": [
+          "đồng bằng Đông Âu.",
+          "đồng bằng Tây Xi-bia.",
+          "đông Xi-bia.",
+          "phần phía Đông."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 80,
+        "question": "Dãy U-ran được xem là ranh giới tự nhiên của",
+        "options": [
+          "đồng bằng Đông Âu và cao nguyên Trung Xi-bia.",
+          "phần lãnh thổ phía Đông và phần lãnh thổ phía Tây.",
+          "hai châu lục Á-Âu trên lãnh thổ Liên bang Nga.",
+          "hai bán cầu Đông - Tây trên lãnh thổ Liên bang Nga."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 81,
+        "question": "Phát biểu nào sau đây không đúng với tự nhiên nước Nga?",
+        "options": [
+          "Địa hình cao ở phía đông, thấp dần về phía tây.",
+          "Phần phía Tây chủ yếu là đồng bằng và vùng trũng.",
+          "Phần phía Đông phần lớn là núi và cao nguyên.",
+          "Dãy U-ran là ranh giới của phần phía Đông và phần phía Tây."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 82,
+        "question": "Đặc điểm nào sau đây không đúng với phần phía Đông của Nga?",
+        "options": [
+          "Phần lớn là núi và cao nguyên.",
+          "Có tài nguyên lâm sản lớn.",
+          "Có trữ năng thủy điện lớn.",
+          "Đất hẹp nhưng rất màu mỡ."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 83,
+        "question": "Sông lớn nhất chảy trên đồng bằng Đông Âu của Nga là",
+        "options": [
+          "Ê-nit-xây.",
+          "Ô-bi.",
+          "Lê-na.",
+          "Von-ga."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 84,
+        "question": "Phần lớn lãnh thổ Liên bang Nga thuộc đới khí hậu",
+        "options": [
+          "cận cực.",
+          "ôn đới.",
+          "cận nhiệt.",
+          "nhiệt đới."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 85,
+        "question": "Lãnh thổ Liên bang Nga không nằm trong vành đai khí hậu",
+        "options": [
+          "cận cực.",
+          "cận nhiệt.",
+          "ôn đới.",
+          "cận xích đạo."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 86,
+        "question": "Nơi nào sau đây ở Nga có diện tích rừng không lớn?",
+        "options": [
+          "Phần phía Bắc của đồng bằng Đông Âu.",
+          "Phần phía Nam của đồng bằng Tây Xi-bia.",
+          "Cao nguyên Trung Xi-bia.",
+          "Vùng phía Đông của Xi-bia."
+        ],
+        "correctIndex": 3
+      },
+      {
+        "id": 87,
+        "question": "Phát biểu nào sau đây không đúng với những khó khăn về tự nhiên của Liên bang Nga đối với phát triển kinh tế - xã hội?",
+        "options": [
+          "Địa hình núi và cao nguyên chiếm diện tích lớn.",
+          "Nhiều vùng rộng, có khí hậu băng giá hoặc khô hạn.",
+          "Phần lớn lãnh thổ nằm ở vành đai khí hậu ôn đới.",
+          "Tài nguyên chủ yếu ở vùng núi hoặc vùng lạnh giá."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 88,
+        "question": "Dân tộc nào sau đây chiếm đến 80% dân số Liên bang Nga?",
+        "options": [
+          "Tác-ta.",
+          "Chu-vát.",
+          "Nga.",
+          "Bát-xkia."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 89,
+        "question": "Vào những thập niên 90 của thế kỉ 20, dân số Nga bị giảm đi, chủ yếu là do",
+        "options": [
+          "tỉ suất gia tăng tự nhiên dân số âm và xuất cư nhiều.",
+          "tỉ suất gia tăng tự nhiên dân số âm và nhập cư ít.",
+          "tỉ suất sinh thấp, tỉ suất tử thấp, người nhập cư ít.",
+          "tỉ suất sinh thấp, tỉ suất tử cao, người nhập cư nhiều."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 90,
+        "question": "Phát biểu nào sau đây không đúng với dân cư - xã hội Nga?",
+        "options": [
+          "Người Nga là dân tộc chủ yếu.",
+          "Mật độ dân số trung bình cao.",
+          "Tỉ lệ dân sống ở thành thị lớn.",
+          "Nhiều người di cư ra nước ngoài."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 91,
+        "question": "Dân cư Nga tập trung đông đúc ở",
+        "options": [
+          "đồng bằng Đông Âu.",
+          "đồng bằng Tây Xi-bia.",
+          "cao nguyên Trung Xi-bia.",
+          "vùng Đông Xi-bia."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 92,
+        "question": "Đồng bằng Đông Âu ở Liêng bang Nga có mật độ dân cư cao là do",
+        "options": [
+          "đồng bằng rộng, đất màu mỡ, khí hậu ôn hòa.",
+          "đồng bằng rộng, nhiều tài nguyên khoáng sản.",
+          "khí hậu ôn hòa, nguồn nước ngọt dồi dào.",
+          "nhiều sông ngòi, khí hậu không khắc nghiệt."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 93,
+        "question": "Biểu hiện nào sau đây chứng tỏ Nga là một cường quốc văn hóa?",
+        "options": [
+          "Có nhiều công trình kiến trúc, văn học, nghệ thuật giá trị.",
+          "Có nhiều nhà bác học thiên tài và nổi tiếng khắp thế giới.",
+          "Nghiên cứu cơ bản rất mạnh, tỉ lệ người biết chữ rất cao.",
+          "Là nước đầu tiên trên thế giới đưa con người lên vũ trụ."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 94,
+        "question": "Biểu hiện nào sau đây chứng tỏ Nga là một cường quốc khoa học?",
+        "options": [
+          "Có nhiều công trình kiến trúc, văn học, nghệ thuật có giá trị.",
+          "Có nhiều văn hào lớn như A. x. Puskin, M. A. Sô-lô-khôp...",
+          "Là quốc gia đứng hàng đầu thế giới về các khoa học cơ bản.",
+          "Người dân có trình độ học vấn khá cao, tỉ lệ biết chữ 99%."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 95,
+        "question": "Người dân Nga có trình độ học vấn",
+        "options": [
+          "Khá cao.",
+          "Cao.",
+          "Thấp.",
+          "Rất cao."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": 96,
+        "question": "Phần lãnh thổ phía đông của Liên Bang Nga không thuận lợi cho phát triển",
+        "options": [
+          "Nông nghiệp.",
+          "Rừng.",
+          "Thủy điện.",
+          "Khai thác khoáng sản."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 97,
+        "question": "Lãnh thổ Liên bang Nga nằm trên bao nhiêu múi giờ?",
+        "options": [
+          "13.",
+          "12.",
+          "11.",
+          "10."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "id": 98,
+        "question": "Rừng ở Liên Bang Nga chủ yếu là rừng lá kim vì đại bộ phận lãnh thổ",
+        "options": [
+          "Nằm trong vành đai ôn đới.",
+          "Là đồng bằng.",
+          "Là cao nguyên.",
+          "Là đầm lầy."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": 99,
+        "question": "Vấn đề về dân số mà Liên Bang Nga đang quan tâm là",
+        "options": [
+          "Tỉ lệ sinh giảm mạnh.",
+          "Dân số tăng nhanh.",
+          "Tuổi thọ trung bình thấp.",
+          "Tỉ lệ sinh tăng nhanh."
+        ],
+        "correctIndex": 0
+      }
+    ]
