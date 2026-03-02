@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Word → JSON (Underline Correct Answer)</title>
+
+<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+button { padding: 8px 15px; margin-top: 10px; }
+pre { background: #f4f4f4; padding: 10px; max-height: 400px; overflow: auto; }
+</style>
+</head>
+
+<body>
+
+<h2>Upload file Word (.docx)</h2>
+<input type="file" id="fileInput" accept=".docx" />
+<br>
+<button onclick="convert()">Chuyển sang JSON</button>
+<button onclick="downloadJSON()">Tải JSON</button>
+
+<h3>Kết quả:</h3>
+<pre id="output"></pre>
+
+<script>
+let finalData = [];
+
+async function convert() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) {
+        alert("Vui lòng chọn file");
+        return;
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const html = result.value;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    finalData = parseQuestions(doc);
+
+    document.getElementById("output").textContent =
+        JSON.stringify(finalData, null, 2);
+}
+
+function parseQuestions(doc) {
+    const paragraphs = [...doc.querySelectorAll("p")];
+    let questions = [];
+    let current = null;
+    let id = 1;
+
+    paragraphs.forEach(p => {
+        const text = p.innerText.trim();
+
+        if (/^Câu\s+\d+/i.test(text)) {
+            if (current) questions.push(current);
+
+            current = {
+                id: id++,
+                question: text.replace(/^Câu\s+\d+:\s*/i, ""),
+                options: [],
+                correctIndex: -1
+            };
+        }
+
+        else if (/^[A-D]\./.test(text) && current) {
+            const letter = text[0];
+            const content = text.substring(2).trim();
+
+            // kiểm tra có underline không
+            const hasUnderline = p.querySelector("u") !== null;
+
+            if (hasUnderline) {
+                current.correctIndex = current.options.length;
+            }
+
+            current.options.push(content);
+        }
+    });
+
+    if (current) questions.push(current);
+
+    return questions;
+}
+
+function downloadJSON() {
+    if (!finalData.length) {
+        alert("Chưa có dữ liệu");
+        return;
+    }
+
+    const blob = new Blob(
+        [JSON.stringify(finalData, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "questions.json";
+    a.click();
+}
+</script>
+
+</body>
+</html>
