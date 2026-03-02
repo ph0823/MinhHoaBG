@@ -25,7 +25,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 select-none">
 
     <div class="bg-white max-w-2xl w-full rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
@@ -116,6 +116,23 @@
     </div>
 
     <script>
+         // --- BẢO MẬT: CHẶN COPY VÀ CHUỘT PHẢI ---
+        // 1. Chặn mở menu chuột phải
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // 2. Chặn phím tắt Copy (Ctrl+C / Cmd+C)
+        document.addEventListener('copy', function(e) {
+            e.preventDefault();            
+        });
+
+        // 3. Chặn phím tắt Cut (Ctrl+X / Cmd+X)
+        document.addEventListener('cut', function(e) {
+            e.preventDefault();
+        });
+        // ----------------------------------------
+
         // --- CẤU HÌNH GOOGLE SHEET ---
         const CONFIG = {
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec",
