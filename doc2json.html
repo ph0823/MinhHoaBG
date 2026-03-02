@@ -2,280 +2,211 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Chuẩn hoá Word trắc nghiệm → JSON</title>
-<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+<title>DOCX → JSON (Personal Stable)</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    padding: 20px;
-    background: #f4f6f9;
-}
-.container {
-    max-width: 1000px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-}
-h2 { color: #2c3e50; }
-
-button {
-    padding: 10px 15px;
-    margin-top: 10px;
-    cursor: pointer;
-}
-
-textarea {
-    width: 100%;
-    height: 250px;
-    margin-top: 10px;
-    font-family: monospace;
-}
-
-#output {
-    background: #1e1e1e;
-    color: #00ff88;
-}
-
-.stat-box {
-    margin-top: 15px;
-    padding: 10px;
-    background: #eef2f7;
-    border-radius: 5px;
-}
-
-#errorBox {
-    margin-top: 10px;
-    color: red;
-    white-space: pre-wrap;
-    background: #fff3f3;
-    padding: 10px;
-    border-radius: 5px;
-}
-.success {
-    color: green;
-    font-weight: bold;
-}
+body { font-family: Arial; padding:20px; background:#f5f6fa; }
+.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:8px; }
+textarea { width:100%; height:250px; margin-top:10px; font-family:monospace; }
+button { padding:8px 15px; margin-top:10px; cursor:pointer; }
+#errorBox { color:red; white-space:pre-wrap; margin-top:10px; }
+#stats { margin-top:10px; font-weight:bold; }
 </style>
 </head>
-
 <body>
 <div class="container">
 
-<h2>Chuẩn hoá đề trắc nghiệm Word → JSON</h2>
+<h2>Chuyển DOCX trắc nghiệm → JSON</h2>
 
-<input type="file" id="fileInput" accept=".docx" />
+<input type="file" id="fileInput" accept=".docx">
 <br>
-<button onclick="convertFile()">Phân tích file</button>
+<button onclick="processFile()">Phân tích</button>
 <button onclick="downloadJSON()">Tải JSON</button>
 
-<div class="stat-box">
-    <div id="stats"></div>
-</div>
+<div id="stats"></div>
 
-<h3>Kết quả JSON hợp lệ</h3>
 <textarea id="output"></textarea>
 
-<h3>Câu bị lỗi</h3>
 <div id="errorBox"></div>
 
 </div>
 
 <script>
 
-let finalQuestions = [];
+let validQuestions = [];
 let invalidQuestions = [];
 
-async function convertFile() {
+async function processFile() {
 
-    finalQuestions = [];
+    validQuestions = [];
     invalidQuestions = [];
 
     const file = document.getElementById("fileInput").files[0];
-    if (!file) return alert("Vui lòng chọn file .docx");
+    if (!file) return alert("Chọn file docx");
 
-    const reader = new FileReader();
+    const arrayBuffer = await file.arrayBuffer();
 
-    reader.onload = async function(event) {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const xmlText = await zip.file("word/document.xml").async("text");
 
-        const arrayBuffer = event.target.result;
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        const html = result.value;
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "application/xml");
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+    const body = xmlDoc.getElementsByTagName("w:body")[0];
 
-        // =============================
-        // 1️⃣ Flatten toàn bộ nội dung
-        // =============================
+    let lines = [];
 
-        let lines = [];
+    for (let node of body.childNodes) {
 
-        doc.querySelectorAll("table td").forEach(td => {
-            lines.push(td.textContent.trim());
-        });
-
-        doc.querySelectorAll("p").forEach(p => {
-            lines.push(p.textContent.trim());
-        });
-
-        lines = lines.filter(l => l.length > 0);
-
-        // =============================
-        // 2️⃣ Gộp dòng bị vỡ
-        // =============================
-
-        let normalized = [];
-
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i];
-
-            if (!/^(Câu\s*\d+|\d+\.|[A-D][\.\)])/.test(line) && normalized.length > 0) {
-                normalized[normalized.length - 1] += " " + line;
-            } else {
-                normalized.push(line);
-            }
+        if (node.nodeName === "w:p") {
+            lines.push(extractParagraph(node));
         }
 
-        // =============================
-        // 3️⃣ Parse câu hỏi
-        // =============================
+        if (node.nodeName === "w:tbl") {
+            lines.push(...extractTable(node));
+        }
+    }
 
-        let questions = [];
-        let current = null;
-        let id = 1;
+    lines = lines.filter(l => l.trim().length > 0);
 
-        function pushCurrent() {
-            if (!current) return;
-            questions.push(current);
+    parseQuestions(lines);
+}
+
+function extractParagraph(pNode) {
+
+    let texts = pNode.getElementsByTagName("w:t");
+    let fullText = "";
+
+    for (let t of texts) {
+        fullText += t.textContent;
+    }
+
+    return fullText.trim();
+}
+
+function extractTable(tblNode) {
+
+    let results = [];
+    const rows = tblNode.getElementsByTagName("w:tr");
+
+    for (let row of rows) {
+
+        const cells = row.getElementsByTagName("w:tc");
+
+        for (let cell of cells) {
+
+            let texts = cell.getElementsByTagName("w:t");
+            let cellText = "";
+
+            for (let t of texts) {
+                cellText += t.textContent;
+            }
+
+            if (cellText.trim().length > 0)
+                results.push(cellText.trim());
+        }
+    }
+
+    return results;
+}
+
+function parseQuestions(lines) {
+
+    let questions = [];
+    let current = null;
+    let id = 1;
+
+    function pushCurrent() {
+        if (current) questions.push(current);
+    }
+
+    lines.forEach(line => {
+
+        if (/^Câu\s*\d+/i.test(line)) {
+
+            pushCurrent();
+
+            current = {
+                id: id++,
+                question: line.replace(/^Câu\s*\d+[:\.]?\s*/i, "").trim(),
+                options: [],
+                correctIndex: -1
+            };
         }
 
-        normalized.forEach(rawLine => {
+        else if (/^[A-D][\.\)]\s/.test(line) && current) {
 
-            let splitLines = rawLine
-                .replace(/(^|\s{2,})([A-D][\.\)]\s)/g, "\n$2")
-                .split("\n")
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
+            let optionText = line.replace(/^[A-D][\.\)]\s/, "").trim();
 
-            splitLines.forEach(line => {
+            let correct = false;
 
-                // Câu hỏi
-                if (/^(Câu\s*\d+[:\.]|\d+[\.:])/.test(line)) {
-
-                    pushCurrent();
-
-                    current = {
-                        id: id++,
-                        question: line.replace(/^(Câu\s*\d+[:\.]|\d+[\.:])/, "").trim(),
-                        options: [],
-                        correctIndex: -1
-                    };
-                }
-
-                // Đáp án
-                else if (/^[A-D][\.\)]\s/.test(line) && current) {
-
-                    let optionText = line.replace(/^[A-D][\.\)]\s/, "").trim();
-
-                    let correct = false;
-
-                    if (optionText.includes("*")) {
-                        correct = true;
-                        optionText = optionText.replace("*", "").trim();
-                    }
-
-                    if (optionText.toLowerCase().includes("(đúng)")) {
-                        correct = true;
-                        optionText = optionText.replace(/\(đúng\)/i, "").trim();
-                    }
-
-                    if (correct) {
-                        current.correctIndex = current.options.length;
-                    }
-
-                    current.options.push(optionText);
-                }
-
-            });
-
-        });
-
-        pushCurrent();
-
-        // =============================
-        // 4️⃣ Validate & lọc lỗi
-        // =============================
-
-        questions.forEach(q => {
-
-            let errors = [];
-
-            if (q.options.length !== 4) {
-                errors.push("Không đủ 4 đáp án");
+            if (optionText.includes("*")) {
+                correct = true;
+                optionText = optionText.replace("*", "").trim();
             }
 
-            if (q.correctIndex === -1) {
-                errors.push("Chưa đánh dấu đáp án đúng");
+            if (optionText.toLowerCase().includes("(đúng)")) {
+                correct = true;
+                optionText = optionText.replace(/\(đúng\)/i, "").trim();
             }
 
-            if (errors.length > 0) {
-                invalidQuestions.push({
-                    id: q.id,
-                    question: q.question,
-                    errors: errors
-                });
-            } else {
-                finalQuestions.push(q);
-            }
+            if (correct)
+                current.correctIndex = current.options.length;
 
-        });
-
-        // =============================
-        // 5️⃣ Hiển thị kết quả
-        // =============================
-
-        document.getElementById("output").value =
-            JSON.stringify(finalQuestions, null, 4);
-
-        let statsText = `
-Tổng số câu đọc được: ${questions.length}
-Câu hợp lệ: ${finalQuestions.length}
-Câu lỗi: ${invalidQuestions.length}
-        `;
-
-        document.getElementById("stats").innerText = statsText;
-
-        if (invalidQuestions.length > 0) {
-
-            let errorText = "";
-
-            invalidQuestions.forEach(q => {
-                errorText += `Câu ${q.id}: ${q.errors.join(", ")}\n`;
-            });
-
-            document.getElementById("errorBox").innerText = errorText;
-
-        } else {
-            document.getElementById("errorBox").innerHTML =
-                "<span class='success'>Không có câu lỗi 🎉</span>";
+            current.options.push(optionText);
         }
 
-    };
+    });
 
-    reader.readAsArrayBuffer(file);
+    pushCurrent();
+
+    validate(questions);
+}
+
+function validate(questions) {
+
+    questions.forEach(q => {
+
+        let errors = [];
+
+        if (q.options.length !== 4)
+            errors.push("Không đủ 4 đáp án");
+
+        if (q.correctIndex === -1)
+            errors.push("Chưa đánh dấu đáp án đúng");
+
+        if (errors.length > 0)
+            invalidQuestions.push({ id:q.id, errors:errors });
+        else
+            validQuestions.push(q);
+    });
+
+    document.getElementById("output").value =
+        JSON.stringify(validQuestions, null, 4);
+
+    document.getElementById("stats").innerText =
+        `Tổng câu: ${questions.length} | Hợp lệ: ${validQuestions.length} | Lỗi: ${invalidQuestions.length}`;
+
+    let errText = "";
+    invalidQuestions.forEach(e => {
+        errText += `Câu ${e.id}: ${e.errors.join(", ")}\n`;
+    });
+
+    document.getElementById("errorBox").innerText = errText;
 }
 
 function downloadJSON() {
 
     if (invalidQuestions.length > 0) {
-        alert("Còn câu lỗi. Vui lòng sửa trước khi tải.");
+        alert("Còn câu lỗi. Sửa trước khi tải.");
         return;
     }
 
-    const data = JSON.stringify(finalQuestions, null, 4);
-    const blob = new Blob([data], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(validQuestions, null, 4)],
+                          { type: "application/json" });
+
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
