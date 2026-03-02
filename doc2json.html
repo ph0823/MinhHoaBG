@@ -49,38 +49,89 @@ async function convert() {
 }
 
 function parseQuestions(doc) {
-    const paragraphs = [...doc.querySelectorAll("p")];
+
+    const textContent = doc.body.innerHTML;
+
+    // Chuẩn hóa xuống dòng
+    const blocks = textContent
+        .replace(/<\/p>/g, "\n")
+        .replace(/<br\s*\/?>/g, "\n");
+
+    const container = document.createElement("div");
+    container.innerHTML = blocks;
+
+    const nodes = [...container.childNodes];
+
     let questions = [];
     let current = null;
     let id = 1;
 
-    paragraphs.forEach(p => {
-        const text = p.innerText.trim();
+    nodes.forEach(node => {
 
-        if (/^Câu\s+\d+/i.test(text)) {
+        if (node.nodeType !== 1) return;
+
+        const rawText = node.innerText.trim();
+
+        // ===== CÂU HỎI =====
+        if (/^Câu\s+\d+/i.test(rawText)) {
+
             if (current) questions.push(current);
 
             current = {
                 id: id++,
-                question: text.replace(/^Câu\s+\d+:\s*/i, ""),
+                question: rawText.replace(/^Câu\s+\d+:\s*/i, ""),
                 options: [],
                 correctIndex: -1
             };
         }
 
-        else if (/^[A-D]\./.test(text) && current) {
-            const letter = text[0];
-            const content = text.substring(2).trim();
+        // ===== PHÂN TÍCH ĐÁP ÁN (Có thể nhiều đáp án trong 1 paragraph) =====
+        else if (current) {
 
-            // kiểm tra có underline không
-            const hasUnderline = p.querySelector("u") !== null;
+            const optionRegex = /([A-D])\.\s*([^A-D]+)/g;
+            let match;
 
-            if (hasUnderline) {
-                current.correctIndex = current.options.length;
+            while ((match = optionRegex.exec(rawText)) !== null) {
+
+                const letter = match[1];
+                const optionText = match[2].trim();
+
+                const indexBeforePush = current.options.length;
+
+                current.options.push(optionText);
+
+                // ===== KIỂM TRA UNDERLINE =====
+                const letterPattern = new RegExp(letter + "\\.\\s*" + optionText);
+
+                const htmlSegment = node.innerHTML;
+
+                if (
+                    htmlSegment.includes("<u>") ||
+                    htmlSegment.includes("text-decoration") ||
+                    htmlSegment.includes("<strong>")
+                ) {
+                    // kiểm tra kỹ xem đoạn đó có nằm trong underline không
+                    const tempDiv = document.createElement("div");
+                    tempDiv.innerHTML = htmlSegment;
+
+                    const underlined = [...tempDiv.querySelectorAll("u, strong, span")]
+                        .some(el => {
+                            const style = el.getAttribute("style") || "";
+                            return (
+                                el.innerText.includes(optionText) &&
+                                (el.tagName === "U" ||
+                                 el.tagName === "STRONG" ||
+                                 style.includes("underline"))
+                            );
+                        });
+
+                    if (underlined) {
+                        current.correctIndex = indexBeforePush;
+                    }
+                }
             }
-
-            current.options.push(content);
         }
+
     });
 
     if (current) questions.push(current);
