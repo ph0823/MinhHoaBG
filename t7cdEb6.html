@@ -7,21 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #f0fdf4; /* Xanh lá nhạt, dịu mắt cho học sinh */
+            background-color: #f0fdf4; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .hidden-screen { display: none; }
-        .option-btn {
-            transition: all 0.2s ease-in-out;
-        }
-        .option-btn:hover {
+        .hidden-screen { display: none !important; }
+        .option-btn { transition: all 0.2s ease-in-out; }
+        .option-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        .selected {
-            background-color: #3b82f6 !important; /* Màu xanh dương khi chọn */
-            color: white !important;
-            border-color: #2563eb !important;
+        .correct {
+            background-color: #dcfce7 !important; 
+            color: #166534 !important;
+            border-color: #22c55e !important;
+        }
+        .wrong {
+            background-color: #fee2e2 !important; 
+            color: #991b1b !important;
+            border-color: #ef4444 !important;
+            opacity: 0.7;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -33,18 +38,19 @@
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-green-600 mb-2">Trắc Nghiệm Tin Học</h1>
                 <p class="text-gray-500">Excel - Làm quen với trang tính</p>
+                
             </div>
             
             <form id="info-form" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">Lớp:</label>
-                    <select id="class-input" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <select id="class-input" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
                         <option value="" disabled selected>Chọn lớp...</option>
                         <option value="7.1">7.1</option>
                         <option value="7.2">7.2</option>
                         <option value="7.3">7.3</option>
                         <option value="7.4">7.4</option>
-                        <option value="7.5">7.5</option>
+                        <option value="7.5">7.5</option>                        
                         <option value="7.6">7.6</option>
                         <option value="7.7">7.7</option>
                         <option value="7.8">7.8</option>
@@ -61,341 +67,346 @@
                     <label class="block text-gray-700 font-semibold mb-1">Họ và tên học sinh:</label>
                     <input type="text" id="name-input" required placeholder="Nhập họ và tên có dấu..." class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
                 </div>
-                <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 rounded-lg mt-6 hover:bg-green-600 transition duration-200">
+                <button id="start-btn" type="submit" class="w-full bg-green-500 text-white font-bold py-3 rounded-lg mt-6 hover:bg-green-600 transition duration-200">
                     Bắt đầu làm bài
                 </button>
             </form>
         </div>
 
         <div id="quiz-screen" class="hidden-screen flex-col h-full">
-            <div class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center text-sm md:text-base">
-                <div>
-                    <span class="font-bold text-blue-800" id="display-name">Học sinh: ...</span>
-                </div>
-                <div class="text-gray-600">
+            <div class="bg-blue-50 p-4 border-b border-blue-100 flex flex-wrap justify-between items-center text-sm md:text-base gap-2">
+                <div><span class="font-bold text-blue-800" id="display-name">Học sinh: ...</span></div>
+                <div class="text-gray-700 font-medium flex items-center">
                     <span id="display-class" class="mr-3">Lớp: ...</span>
-                    <span id="display-id">STT: ...</span>
+                    <span id="display-id" class="mr-4">STT: ...</span>
+                    <span id="timer-display" class="bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full shadow-sm border border-red-200">05:00</span>
                 </div>
             </div>
 
             <div class="p-6 md:p-8">
-                <div class="flex justify-between items-end mb-6">
+                <div class="flex justify-between items-end mb-4">
                     <h2 class="text-xl font-bold text-gray-800" id="question-number">Câu 1/20</h2>
                 </div>
                 
-                <p class="text-lg text-gray-700 mb-6 font-medium" id="question-text">
-                    Nội dung câu hỏi sẽ hiển thị ở đây?
-                </p>
+                <p class="text-lg text-gray-800 mb-6 font-medium leading-relaxed" id="question-text">Đang tải câu hỏi...</p>
 
                 <div id="options-container" class="space-y-3">
                     </div>
 
-                <div class="mt-8 flex justify-end">
-                    <button id="next-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200" disabled>
-                        Câu tiếp theo ❯
+                <div class="mt-4 text-center h-8">
+                    <p id="feedback-text" class="text-lg transition-opacity duration-200"></p>
+                </div>
+
+                <div class="mt-6 flex justify-between items-center border-t pt-4">
+                    <button id="prev-btn" onclick="goPrev()" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition duration-200 invisible">
+                        ⬅️ Câu trước
+                    </button>
+                    <button id="next-btn" onclick="goNext()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600 shadow-md transition duration-200 invisible">
+                        Câu tiếp ➡️
                     </button>
                 </div>
             </div>
         </div>
 
         <div id="result-screen" class="hidden-screen p-8 text-center">
-            <h2 class="text-3xl font-bold text-gray-800 mb-4">Hoàn thành!</h2>
-            <div class="bg-gray-50 rounded-xl p-6 mb-6 inline-block">
-                <p class="text-gray-600 mb-2" id="result-student-info">Học sinh: ...</p>
-                <p class="text-5xl font-black text-green-500 mb-2" id="score-display">0.0</p>
-                <p class="text-gray-500">Điểm (Thang 10)</p>
-                <p class="mt-4 text-blue-600 font-semibold" id="correct-count">Số câu đúng: 0/0</p>
-                <p id="save-status" class="text-xs text-gray-400 mt-2 italic">Đang lưu kết quả...</p>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4" id="finish-title">Hoàn thành!</h2>
+            <div class="bg-gray-50 rounded-xl p-6 mb-6 inline-block border border-gray-200 shadow-sm">
+                <p class="text-gray-600 mb-2 font-medium" id="result-student-info">Học sinh: ...</p>
+                <p class="text-6xl font-black text-green-500 mb-2" id="score-display">0.0</p>
+                <p class="text-gray-500 font-semibold">Điểm (Thang 10)</p>
+                <p class="mt-4 text-blue-600 font-bold" id="correct-count">Đúng ngay lần đầu: 0/20</p>
+                <p id="save-status" class="text-sm font-semibold text-gray-500 mt-3 bg-gray-200 inline-block px-4 py-1 rounded-full">⏳ Đang lưu kết quả...</p>
             </div>
-            <p class="text-gray-600 mb-8" id="feedback-message">Chúc mừng em đã hoàn thành xuất sắc!</p>
-            <button onclick="location.reload()" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition duration-200">
-                Làm lại
+            <p class="text-gray-700 font-medium mb-8" id="feedback-message"></p>
+            <button onclick="location.reload()" class="bg-blue-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-600 shadow-md transition duration-200">
+                Làm lại bài
             </button>
         </div>
 
     </div>
 
     <script>
-        
-        // --- BẢO MẬT: CHẶN COPY VÀ CHUỘT PHẢI ---
-        // 1. Chặn mở menu chuột phải
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
 
-        // 2. Chặn phím tắt Copy (Ctrl+C / Cmd+C)
-        document.addEventListener('copy', function(e) {
-            e.preventDefault();            
-        });
-
-        // 3. Chặn phím tắt Cut (Ctrl+X / Cmd+X)
-        document.addEventListener('cut', function(e) {
-            e.preventDefault();
-        });
-        // ----------------------------------------
-
-        // --- CẤU HÌNH GOOGLE SHEET ---
         const CONFIG = {
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec",
-            sheetName: "K7b6", // Tên Sheet cần lưu
-            topic: "Trang tính Excel"
+            sheetName: "K7b6", topic: "Trang tính Excel"
         };
 
-        // Dữ liệu 30 câu hỏi
-        const rawQuestions = [
-            // HĐ 2.1: SỔ TÍNH, TRANG TÍNH VÀ CÁC THÀNH PHẦN CƠ BẢN
-            { q: "Một tệp chương trình bảng tính Excel thường được gọi là gì?", options: ["Trang tính.", "Sổ tính (Workbook).", "Văn bản.", "Bài trình chiếu."], ans: "Sổ tính (Workbook)." },
-            { q: "Tên mặc định của một sổ tính mới mở là gì?", options: ["Document1.", "Presentation1.", "Book1.", "Sheet1."], ans: "Book1." },
-            { q: "Một sổ tính (Workbook) có thể chứa bao nhiêu trang tính (Sheet)?", options: ["Duy nhất 1.", "Tối đa 3.", "Nhiều trang tính.", "Không giới hạn nhưng không được quá 10."], ans: "Nhiều trang tính." },
-            { q: "Các cột của trang tính được sắp xếp theo thứ tự nào?", options: ["Các số 1, 2, 3...", "Các chữ cái A, B, C....", "Các ký tự đặc biệt.", "Tên do người dùng đặt."], ans: "Các chữ cái A, B, C...." },
-            { q: "Các hàng của trang tính được đánh thứ tự như thế nào?", options: ["Các số 1, 2, 3....", "Các chữ cái A, B, C...", "Các số La Mã.", "Theo bảng chữ cái tiếng Việt."], ans: "Các số 1, 2, 3...." },
-            { q: "Địa chỉ của một ô tính được xác định bởi:", options: ["Tên hàng trước, tên cột sau.", "Chỉ cần tên cột.", "Tên cột ghép với tên hàng.", "Số thứ tự của ô đó trong bảng."], ans: "Tên cột ghép với tên hàng." },
-            { q: "Ô nằm ở cột C và hàng 5 có địa chỉ là:", options: ["5C.", "C-5.", "C5.", "(C,5)."], ans: "C5." },
-            { q: "Thành phần nào hiển thị địa chỉ của ô đang được chọn?", options: ["Thanh công thức.", "Hộp địa chỉ (Name Box).", "Thanh trạng thái.", "Thanh cuộn dọc."], ans: "Hộp địa chỉ (Name Box)." },
-            { q: "Để thêm một trang tính mới vào sổ tính, em nháy chuột vào dấu nào?", options: ["Dấu “x”.", "Dấu “-”.", "Dấu “+”.", "Dấu mũi tên."], ans: "Dấu “+”." },
-            { q: "Tên trang tính (Sheet1, Sheet2...) nằm ở vị trí nào trên màn hình?", options: ["Phía trên cùng.", "Cạnh dưới bên trái màn hình (Thanh điều hướng).", "Bên phải thanh công thức.", "Trong dải lệnh Home."], ans: "Cạnh dưới bên trái màn hình (Thanh điều hướng)." },
-
-            // HĐ 2.2: THAO TÁC VỚI HÀNG VÀ CỘT
-            { q: "Để chọn (bôi đen) toàn bộ một cột, em nháy chuột vào vị trí nào?", options: ["Một ô bất kỳ trong cột.", "Tên hàng của hàng đầu tiên.", "Tên cột (chữ cái đầu cột).", "Thanh trạng thái."], ans: "Tên cột (chữ cái đầu cột)." },
-            { q: "Để thay đổi độ rộng của cột, em đưa con trỏ chuột vào đâu?", options: ["Giữa trang tính.", "Vạch phân chia giữa hai tên cột.", "Hộp địa chỉ.", "Thanh cuộn ngang."], ans: "Vạch phân chia giữa hai tên cột." },
-            { q: "Khi thực hiện lệnh chèn thêm hàng (Insert), hàng mới sẽ xuất hiện ở đâu?", options: ["Phía trên hàng đang chọn.", "Phía dưới hàng đang chọn.", "Ở cuối cùng của bảng tính.", "Ở hàng đầu tiên."], ans: "Phía trên hàng đang chọn." },
-            { q: "Lệnh Insert và Delete dùng để chèn hoặc xóa hàng/cột nằm trong nhóm lệnh nào?", options: ["Font.", "Alignment.", "Cells.", "Editing."], ans: "Cells." },
-            { q: "Để chọn nhiều hàng liền kề nhau, em thực hiện:", options: ["Nháy chuột vào từng hàng một.", "Nhấn giữ phím Ctrl và chọn.", "Nháy chọn hàng đầu, nhấn giữ Shift và chọn hàng cuối.", "Cả B và C đều đúng."], ans: "Nháy chọn hàng đầu, nhấn giữ Shift và chọn hàng cuối." },
-            { q: "Nếu muốn xóa hoàn toàn một cột ra khỏi trang tính, em chọn lệnh nào?", options: ["Nhấn phím Delete trên bàn phím.", "Nhấn phím Backspace.", "Chọn cột, nháy chuột phải chọn Delete.", "Chọn cột, vào dải lệnh Home chọn Clear."], ans: "Chọn cột, nháy chuột phải chọn Delete." },
-            { q: "Thao tác \"nháy đúp chuột vào vạch phân cách tên cột\" có tác dụng gì?", options: ["Xóa cột đó.", "Ẩn cột đó.", "Tự động điều chỉnh độ rộng cột vừa khít với dữ liệu.", "Chèn thêm một cột mới."], ans: "Tự động điều chỉnh độ rộng cột vừa khít với dữ liệu." },
-            { q: "Để chọn toàn bộ trang tính, em nháy chuột vào:", options: ["Ô A1.", "Nút giao giữa tên hàng và tên cột (góc trên bên trái bảng).", "Tên trang tính.", "Thanh trạng thái."], ans: "Nút giao giữa tên hàng và tên cột (góc trên bên trái bảng)." },
-            { q: "Có thể thay đổi độ cao của nhiều hàng cùng một lúc không?", options: ["Không, phải làm từng hàng.", "Có, bằng cách chọn các hàng đó rồi kéo thả vạch phân cách tên hàng.", "Chỉ thực hiện được nếu các hàng đó trống.", "Chỉ thực hiện được bằng lệnh Format."], ans: "Có, bằng cách chọn các hàng đó rồi kéo thả vạch phân cách tên hàng." },
-            { q: "Lệnh nào dùng để đổi tên một trang tính?", options: ["Nháy đúp chuột vào tên trang tính (Sheet1...) và gõ tên mới.", "Nháy chuột vào ô A1.", "Nháy vào File -> Save As.", "Không thể đổi tên trang tính."], ans: "Nháy đúp chuột vào tên trang tính (Sheet1...) và gõ tên mới." },
-
-            // HĐ 2.3: NHẬP, SỬA VÀ XÓA DỮ LIỆU
-            { q: "Dữ liệu kiểu văn bản (chữ) mặc định sẽ được căn lề nào trong ô?", options: ["Căn giữa.", "Căn biên phải.", "Căn biên trái.", "Căn đều hai bên."], ans: "Căn biên trái." },
-            { q: "Dữ liệu kiểu số mặc định sẽ được trang tính căn lề nào?", options: ["Căn biên trái.", "Căn biên phải.", "Căn giữa.", "Tùy theo độ lớn của số."], ans: "Căn biên phải." },
-            { q: "Sau khi gõ dữ liệu vào một ô, phím nào giúp em kết thúc việc nhập và di chuyển xuống ô dưới?", options: ["Phím Tab.", "Phím Enter.", "Phím Space.", "Phím Esc."], ans: "Phím Enter." },
-            { q: "Để di chuyển sang ô bên phải sau khi nhập dữ liệu, em sử dụng phím nào?", options: ["Enter.", "Backspace.", "Tab.", "Shift."], ans: "Tab." },
-            { q: "Phím tắt nào dùng để đưa ô tính vào chế độ sửa dữ liệu (con trỏ xuất hiện trong ô)?", options: ["F1.", "F2.", "F4.", "F5."], ans: "F2." },
-            { q: "Nếu muốn sửa một phần nội dung trong ô mà không muốn gõ lại toàn bộ, em thực hiện:", options: ["Nháy chuột 1 lần vào ô.", "Nháy đúp chuột vào ô tính.", "Nhấn phím Delete rồi gõ lại.", "Nháy chuột vào tên cột."], ans: "Nháy đúp chuột vào ô tính." },
-            { q: "Để xóa nội dung trong một hoặc nhiều ô đang chọn, em sử dụng phím:", options: ["Delete.", "Alt.", "Ctrl.", "Caps Lock."], ans: "Delete." },
-            { q: "Khi em chọn một ô và gõ nội dung mới, nội dung cũ trong ô đó sẽ như thế nào?", options: ["Được đẩy sang ô bên cạnh.", "Vẫn giữ nguyên, nội dung mới nối tiếp vào.", "Bị xóa đi và thay thế bằng nội dung mới.", "Excel sẽ báo lỗi."], ans: "Bị xóa đi và thay thế bằng nội dung mới." },
-            { q: "Em có thể quan sát và sửa nội dung của ô tính ở đâu ngoài việc thao tác trực tiếp tại ô?", options: ["Hộp địa chỉ.", "Thanh công thức.", "Thanh trạng thái.", "Dải lệnh Design."], ans: "Thanh công thức." },
-            { q: "Cách nào sau đây giúp em nhập dữ liệu nhanh cho các ô liền kề có cùng nội dung?", options: ["Gõ từng ô một.", "Sử dụng thao tác Copy và Paste.", "Sử dụng tính năng kéo thả nút điền (ô vuông nhỏ ở góc dưới bên phải ô đang chọn).", "Cả B và C đều đúng."], ans: "Cả B và C đều đúng." }
-        ];
-
+        const TOTAL_QUESTIONS = 20;
+        const TIME_LIMIT = 5 * 60; 
+        
+        let allQuizData = [];
         let questions = [];
+        let questionStates = []; // Mảng quan trọng để ghi nhớ trạng thái từng câu
         let currentQuestionIndex = 0;
-        let scoreCount = 0;
-        let selectedAnswer = null;
-        let userAnswers = []; // Mảng lưu lịch sử trả lời của học sinh
+        let scoreCount = 0; 
+        
+        let timeLeft = TIME_LIMIT;
+        let timerInterval;
+        let userMistakes = []; 
 
-        // Biến toàn cục lưu thông tin học sinh
-        let studentClass = "";
-        let studentId = "";
-        let studentName = "";
+        let studentClass = "", studentId = "", studentName = "";
 
-        // Các thành phần DOM
         const loginScreen = document.getElementById('login-screen');
         const quizScreen = document.getElementById('quiz-screen');
         const resultScreen = document.getElementById('result-screen');
-        const infoForm = document.getElementById('info-form');
-        const nextBtn = document.getElementById('next-btn');
 
-        // Hàm xáo trộn mảng (Fisher-Yates)
         function shuffleArray(array) {
-            let curId = array.length;
-            while (0 !== curId) {
-                let randId = Math.floor(Math.random() * curId);
-                curId -= 1;
-                let tmp = array[curId];
-                array[curId] = array[randId];
-                array[randId] = tmp;
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
             }
-            return array;
+            return arr;
         }
 
-        // Xử lý khi Submit Form nhập thông tin
-        infoForm.addEventListener('submit', function(e) {
+        infoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            // Lấy thông tin
             studentClass = document.getElementById('class-input').value;
             studentId = document.getElementById('id-input').value;
             studentName = document.getElementById('name-input').value;
 
-            if(!studentClass) {
-                alert("Vui lòng chọn lớp!");
-                return;
+            const startBtn = document.getElementById('start-btn');
+            startBtn.textContent = "Đang tải dữ liệu..."; startBtn.disabled = true;
+
+            try {
+                const response = await fetch('t7cdEb6.json');
+                if (!response.ok) throw new Error("Không tìm thấy file JSON");
+                allQuizData = await response.json();
+
+                document.getElementById('display-name').textContent = `Học sinh: ${studentName}`;
+                document.getElementById('display-class').textContent = `Lớp: ${studentClass}`;
+                document.getElementById('display-id').textContent = `STT: ${studentId}`;
+                document.getElementById('result-student-info').textContent = `${studentName} - Lớp ${studentClass} - STT ${studentId}`;
+
+                // Trộn câu hỏi và khởi tạo trạng thái
+                questions = selectQuestions();
+                
+                // Chuẩn bị biến state để lưu vết thao tác của học sinh
+                questionStates = questions.map(q => {
+                    let opts = q.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
+                    return {
+                        passed: false,          // Đã vượt qua câu này chưa?
+                        wrongFirstTry: false,   // Có chọn sai ngay lần chạm đầu không?
+                        clickedWrongIdxs: [],   // Lưu các đáp án sai đã bấm
+                        shuffledOptions: shuffleArray(opts) // Xáo trộn cố định cho riêng câu này
+                    };
+                });
+
+                currentQuestionIndex = 0;
+                scoreCount = 0; userMistakes = []; timeLeft = TIME_LIMIT;
+
+                loginScreen.classList.add('hidden-screen');
+                quizScreen.classList.remove('hidden-screen');
+                quizScreen.classList.add('flex');
+
+                startTimer();
+                loadQuestion();
+
+            } catch (error) {
+                alert("Lỗi: " + error.message);
+                startBtn.textContent = "Bắt đầu làm bài"; startBtn.disabled = false;
             }
-
-            // Hiển thị lên Header màn hình làm bài
-            document.getElementById('display-name').textContent = `Học sinh: ${studentName}`;
-            document.getElementById('display-class').textContent = `Lớp: ${studentClass}`;
-            document.getElementById('display-id').textContent = `STT: ${studentId}`;
-            document.getElementById('result-student-info').textContent = `${studentName} - Lớp ${studentClass} - STT ${studentId}`;
-
-            // Chuẩn bị câu hỏi: Xáo trộn mảng câu hỏi gốc và lấy 20 câu đầu tiên
-            questions = shuffleArray([...rawQuestions]).slice(0, 20);;
-            userAnswers = []; // Reset câu trả lời
-            scoreCount = 0;
-
-            // Chuyển màn hình
-            loginScreen.classList.add('hidden-screen');
-            quizScreen.classList.remove('hidden-screen');
-            quizScreen.classList.add('flex');
-
-            loadQuestion();
         });
 
-        // Tải câu hỏi hiện tại
-        function loadQuestion() {
-            selectedAnswer = null;
-            nextBtn.disabled = true;
-            nextBtn.textContent = (currentQuestionIndex === questions.length - 1) ? "Nộp bài ❯" : "Câu tiếp theo ❯";
+        function selectQuestions() {
+            let stats = JSON.parse(localStorage.getItem('excelStats_THCS')) || {};
+            let scoredQuestions = allQuizData.map(q => {
+                let stat = stats[q.id] || { attempts: 0, wrongFirstTry: 0 };
+                let priorityScore = (stat.attempts === 0) ? 100 : (stat.wrongFirstTry / stat.attempts) * 50;
+                return { question: q, score: priorityScore + Math.random() * 10 };
+            });
+            scoredQuestions.sort((a, b) => b.score - a.score);
+            let count = Math.min(TOTAL_QUESTIONS, allQuizData.length);
+            return shuffleArray(scoredQuestions.slice(0, count).map(sq => sq.question));
+        }
 
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer-display');
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
+                timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                if(timeLeft <= 30) {
+                    timerDisplay.classList.add('bg-red-500', 'text-white');
+                    timerDisplay.classList.remove('bg-red-100', 'text-red-600');
+                }
+                if (timeLeft <= 0) finishQuiz("Hết thời gian làm bài!");
+            }, 1000);
+        }
+
+        // --- TẢI CÂU HỎI VÀ KHÔI PHỤC TRẠNG THÁI ---
+        function loadQuestion() {
             const qData = questions[currentQuestionIndex];
+            const state = questionStates[currentQuestionIndex];
             
             document.getElementById('question-number').textContent = `Câu ${currentQuestionIndex + 1}/${questions.length}`;
-            document.getElementById('question-text').textContent = qData.q;
-
+            document.getElementById('question-text').textContent = qData.question;
+            
+            const feedbackBox = document.getElementById('feedback-text');
             const optionsContainer = document.getElementById('options-container');
+            
             optionsContainer.innerHTML = '';
+            feedbackBox.innerHTML = '';
 
-            // Xáo trộn thứ tự đáp án (A,B,C,D) để học sinh không học vẹt
-            const shuffledOptions = shuffleArray([...qData.options]);
+            const letters = ['A', 'B', 'C', 'D'];
 
-            // Tạo các nút đáp án
-            shuffledOptions.forEach((optionText, index) => {
+            // Lấy lại danh sách đáp án đã trộn từ trước để khi Quay lại không bị đổi vị trí
+            state.shuffledOptions.forEach((optObj, index) => {
                 const btn = document.createElement('button');
-                // Gán chữ A, B, C, D động dựa vào index
-                const letters = ['A', 'B', 'C', 'D'];
+                btn.className = "option-btn w-full text-left p-4 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-800 font-medium hover:bg-blue-50 focus:outline-none";
+                btn.innerHTML = `<span class="font-bold text-blue-600 mr-2">${letters[index]}.</span> ${optObj.text}`;
                 
-                btn.className = "option-btn w-full text-left p-4 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-700 font-medium hover:bg-blue-50 hover:border-blue-200";
-                btn.innerHTML = `<span class="font-bold mr-2">${letters[index]}.</span> ${optionText}`;
-                
-                btn.onclick = () => selectOption(btn, optionText);
+                // Khôi phục trạng thái nếu câu này đã làm
+                if (state.passed) {
+                    btn.disabled = true; // Khóa toàn bộ nút
+                    if (optObj.originalIndex === qData.correctIndex) {
+                        btn.classList.add('correct'); // Bôi xanh đáp án đúng
+                        feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Em đã hoàn thành câu này.</span>";
+                    }
+                } else if (state.clickedWrongIdxs.includes(optObj.originalIndex)) {
+                    btn.classList.add('wrong'); // Bôi đỏ các nút đã từng bấm sai
+                    btn.disabled = true;
+                }
+
+                btn.onclick = () => checkAnswer(btn, optObj.originalIndex, qData.correctIndex, qData.id, optObj.text);
                 optionsContainer.appendChild(btn);
             });
+
+            updateNavigationButtons(state.passed);
         }
 
-        // Xử lý khi học sinh click chọn 1 đáp án
-        function selectOption(clickedBtn, optionText) {
-            // Xóa trạng thái selected của các nút khác
-            const allBtns = document.querySelectorAll('.option-btn');
-            allBtns.forEach(btn => {
-                btn.classList.remove('selected');
-                btn.classList.add('bg-gray-50', 'text-gray-700', 'border-gray-200');
-            });
+        function checkAnswer(btn, selectedIdx, correctIdx, qId, optionText) {
+            if (btn.disabled) return;
 
-            // Thêm trạng thái selected cho nút vừa click
-            clickedBtn.classList.add('selected');
-            clickedBtn.classList.remove('bg-gray-50', 'text-gray-700', 'border-gray-200');
+            let stats = JSON.parse(localStorage.getItem('excelStats_THCS')) || {};
+            if (!stats[qId]) stats[qId] = { attempts: 0, wrongFirstTry: 0 };
+            
+            const state = questionStates[currentQuestionIndex];
+            const feedbackBox = document.getElementById('feedback-text');
 
-            selectedAnswer = optionText;
-            nextBtn.disabled = false; // Bật nút đi tiếp
-        }
+            if (selectedIdx === correctIdx) {
+                btn.classList.add('correct');
+                state.passed = true;
+                feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Chính xác! Nhấn nút 'Câu tiếp' để đi tiếp.</span>";
 
-        // Xử lý khi bấm nút "Câu tiếp theo / Nộp bài"
-        nextBtn.addEventListener('click', () => {
-            const currentQ = questions[currentQuestionIndex];
-            const isCorrect = (selectedAnswer === currentQ.ans);
+                document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
 
-            // 1. Lưu kết quả câu trả lời
-            userAnswers.push({
-                questionId: currentQuestionIndex + 1,
-                userChoice: selectedAnswer,
-                correctChoice: currentQ.ans,
-                isCorrect: isCorrect
-            });
+                if (!state.wrongFirstTry) {
+                    scoreCount++;
+                    stats[qId].attempts++;
+                    localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
+                }
+                
+                updateNavigationButtons(true);
+            } 
+            else {
+                btn.classList.add('wrong');
+                btn.disabled = true;
+                state.clickedWrongIdxs.push(selectedIdx);
+                feedbackBox.innerHTML = "<span class='text-red-600 font-bold animate-pulse'>❌ Chưa đúng, em hãy chọn lại!</span>";
 
-            // 2. Tính điểm
-            if (isCorrect) {
-                scoreCount++;
+                if (!state.wrongFirstTry) {
+                    state.wrongFirstTry = true;
+                    stats[qId].attempts++;
+                    stats[qId].wrongFirstTry++;
+                    localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
+                    userMistakes.push(`Câu ${currentQuestionIndex + 1} (Chọn sai: ${optionText})`);
+                }
             }
+        }
 
-            currentQuestionIndex++;
+        // --- XỬ LÝ NÚT ĐIỀU HƯỚNG ---
+        function updateNavigationButtons(isCurrentPassed) {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
 
-            if (currentQuestionIndex < questions.length) {
+            // Xử lý nút Câu trước
+            if (currentQuestionIndex > 0) prevBtn.classList.remove('invisible');
+            else prevBtn.classList.add('invisible');
+
+            // Xử lý nút Câu tiếp
+            if (isCurrentPassed) {
+                nextBtn.classList.remove('invisible');
+                if (currentQuestionIndex === questions.length - 1) {
+                    nextBtn.textContent = "Nộp bài 🏁";
+                    nextBtn.classList.replace('bg-blue-500', 'bg-green-600');
+                    nextBtn.classList.replace('hover:bg-blue-600', 'hover:bg-green-700');
+                } else {
+                    nextBtn.textContent = "Câu tiếp ➡️";
+                    nextBtn.classList.replace('bg-green-600', 'bg-blue-500');
+                    nextBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-600');
+                }
+            } else {
+                nextBtn.classList.add('invisible');
+            }
+        }
+
+        function goPrev() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function goNext() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
                 loadQuestion();
             } else {
-                finishQuiz();
+                finishQuiz("Hoàn thành bài thi!");
             }
-        });
+        }
 
-        // Kết thúc bài và tính điểm
-        function finishQuiz() {
-            quizScreen.classList.remove('flex');
-            quizScreen.classList.add('hidden-screen');
+        function finishQuiz(msgTitle) {
+            clearInterval(timerInterval);
+            quizScreen.classList.remove('flex'); quizScreen.classList.add('hidden-screen');
             resultScreen.classList.remove('hidden-screen');
 
-            // Tính điểm thang 10: (Số câu đúng / Tổng câu) * 10
-            const maxScore = 10;
-            const finalScoreVal = (scoreCount / questions.length) * maxScore;
-            const finalScoreFixed = finalScoreVal.toFixed(2); // Dùng 2 số thập phân
+            document.getElementById('finish-title').textContent = msgTitle;
+            const finalScoreVal = (scoreCount / questions.length) * 10;
+            const finalScoreFixed = finalScoreVal.toFixed(1);
 
-            // Hiển thị kết quả
             document.getElementById('score-display').textContent = finalScoreFixed;
-            document.getElementById('correct-count').textContent = `Số câu đúng: ${scoreCount}/${questions.length}`;
+            document.getElementById('correct-count').textContent = `Đúng ngay lần đầu: ${scoreCount}/${questions.length}`;
 
             const feedback = document.getElementById('feedback-message');
-            if (finalScoreVal >= 8) {
-                feedback.textContent = "Xuất sắc! Em nắm kiến thức Excel rất vững.";
-                feedback.className = "text-green-600 font-medium mb-8";
-            } else if (finalScoreVal >= 5) {
-                feedback.textContent = "Khá tốt! Em cố gắng ôn tập thêm một chút nữa nhé.";
-                feedback.className = "text-blue-600 font-medium mb-8";
-            } else {
-                feedback.textContent = "Em cần xem lại bài giảng Excel nhiều hơn nhé. Cố lên!";
-                feedback.className = "text-red-500 font-medium mb-8";
-            }
+            if (finalScoreVal >= 8) { feedback.textContent = "Xuất sắc! Em nắm kiến thức rất tốt."; feedback.className = "text-green-600 font-bold text-lg mb-8"; } 
+            else if (finalScoreVal >= 5) { feedback.textContent = "Khá tốt! Hãy xem lại những câu làm sai nhé."; feedback.className = "text-blue-600 font-bold text-lg mb-8"; } 
+            else { feedback.textContent = "Đừng nản, làm lại sẽ nhớ ngay!"; feedback.className = "text-red-500 font-bold text-lg mb-8"; }
 
-            // --- GỬI DỮ LIỆU LÊN GOOGLE SHEET ---
             sendToGoogleSheet(finalScoreFixed);
         }
 
         function sendToGoogleSheet(score) {
             const statusText = document.getElementById('save-status');
+            const details = userMistakes.length > 0 ? userMistakes.join(" || ") : "Đúng 100% lần đầu";
             
-            // 1. Tạo chuỗi chi tiết lỗi sai
-            // Format: Câu 1(Sai: A | Đúng: B) || Câu 2...
-            let analysisResult = [];
-            userAnswers.forEach((ans, idx) => {
-                if (!ans.isCorrect) {
-                    analysisResult.push(`Câu ${idx + 1}(Sai: ${ans.userChoice} | Đúng: ${ans.correctChoice})`);
-                }
-            });
-
-            const details = analysisResult.length > 0 ? analysisResult.join(" || ") : "Hoàn thành xuất sắc";
-
-            // 2. Chuẩn bị FormData
             const formData = new URLSearchParams();
             formData.append("sheetName", CONFIG.sheetName);
             formData.append("topic", CONFIG.topic);
-            formData.append("userClass", "'" + studentClass); // Thêm dấu ' để Excel không tự format ngày tháng
+            formData.append("userClass", "'" + studentClass); 
             formData.append("stt", studentId);
             formData.append("name", studentName);
             formData.append("score", score);
             formData.append("totalQuestions", questions.length);
             formData.append("questionIds", details);
 
-            // 3. Gửi Fetch
-            fetch(CONFIG.googleSheetURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: formData.toString()
-            })
+            fetch(CONFIG.googleSheetURL, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: formData.toString() })
             .then(response => response.text())
             .then(responseText => {
                 if (responseText.includes("OK") || responseText.includes("Success")) {
-                    console.log("✅ Đã lưu kết quả thành công!");
                     statusText.innerText = "✅ Kết quả đã được lưu vào hệ thống.";
-                    statusText.classList.replace("text-gray-400", "text-green-600");
-                } else {
-                    console.log("⚠️ Phản hồi server: " + responseText);
-                    statusText.innerText = "Đã gửi dữ liệu.";
-                }
+                    statusText.classList.replace("bg-gray-200", "bg-green-100");
+                    statusText.classList.replace("text-gray-500", "text-green-700");
+                } else statusText.innerText = "Đã gửi dữ liệu.";
             })
             .catch(err => {
-                console.error("❌ Lỗi mạng:", err);
-                statusText.innerText = "❌ Không thể lưu kết quả (Lỗi mạng).";
-                statusText.classList.replace("text-gray-400", "text-red-500");
+                statusText.innerText = "❌ Lỗi mạng: Không thể gửi kết quả.";
+                statusText.classList.replace("bg-gray-200", "bg-red-100");
+                statusText.classList.replace("text-gray-500", "text-red-700");
             });
         }
     </script>
