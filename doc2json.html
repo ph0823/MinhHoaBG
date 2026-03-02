@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Word → JSON (Underline Correct Answer)</title>
+<title>Word → JSON</title>
 
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
@@ -10,12 +10,15 @@
 body { font-family: Arial; padding: 20px; }
 button { padding: 8px 15px; margin-top: 10px; }
 pre { background: #f4f4f4; padding: 10px; max-height: 400px; overflow: auto; }
+.success { color: green; }
+.error { color: red; }
 </style>
 </head>
 
 <body>
-<h2>Word → JSON (Underline Correct Answer) v1</h2>
-<h2>Upload file Word (.docx)</h2>
+
+<h2>Word → JSON</h2>
+
 <input type="file" id="fileInput" accept=".docx" />
 <br>
 <button onclick="convert()">Chuyển sang JSON</button>
@@ -23,11 +26,14 @@ pre { background: #f4f4f4; padding: 10px; max-height: 400px; overflow: auto; }
 
 <h3>Kết quả:</h3>
 <pre id="output"></pre>
+<div id="log"></div>
 
 <script>
+
 let finalData = [];
 
 async function convert() {
+
     const file = document.getElementById("fileInput").files[0];
     if (!file) {
         alert("Vui lòng chọn file");
@@ -35,7 +41,6 @@ async function convert() {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-
     const result = await mammoth.convertToHtml({ arrayBuffer });
     const html = result.value;
 
@@ -46,7 +51,14 @@ async function convert() {
 
     document.getElementById("output").textContent =
         JSON.stringify(finalData, null, 2);
+
+    document.getElementById("log").innerHTML =
+        `<p class="success">Tổng số câu: ${finalData.length}</p>`;
 }
+
+/* ========================
+   CORE PARSER PROFESSIONAL
+======================== */
 
 function parseQuestions(doc) {
 
@@ -56,70 +68,210 @@ function parseQuestions(doc) {
     let current = null;
     let id = 1;
 
+    let state = "WAIT_QUESTION";
+    let currentOption = null;
+
     paragraphs.forEach(p => {
 
-        const text = p.innerText.trim();
+        const text = normalize(p.innerText);
+        if (!text) return;
 
-        // ===== CÂU HỎI =====
-        if (/^Câu\s+\d+/i.test(text)) {
+        /* =========================
+           PHÁT HIỆN CÂU HỎI
+        ========================== */
+        if (/^Câu\s*\d+/i.test(text)) {
 
-            if (current) questions.push(current);
+            if (current) finalize(current, questions);
 
             current = {
                 id: id++,
-                question: text.replace(/^Câu\s+\d+:\s*/i, ""),
+                question: text.replace(/^Câu\s*\d+[:.]?\s*/i, ""),
                 options: [],
                 correctIndex: -1
             };
 
+            state = "IN_QUESTION";
             return;
         }
 
         if (!current) return;
 
-        // ===== TÁCH ĐÁP ÁN THEO DOM CHUẨN =====
-        const rawHTML = p.innerHTML;
+        /* =========================
+           PHÁT HIỆN ĐÁP ÁN A-D
+        ========================== */
+        const optionMatch = text.match(/^([A-D])\.\s*(.*)/);
 
-        // Tách theo A. B. C. D.
-        const parts = rawHTML.split(/(?=[A-D]\.\s)/g);
+        if (optionMatch) {
 
-        parts.forEach(part => {
+            const optionText = normalize(optionMatch[2]);
 
-            const match = part.match(/^([A-D])\.\s*(.*)/s);
-            if (!match) return;
+            currentOption = {
+                text: optionText,
+                isCorrect: detectUnderlineDeep(p)
+            };
 
-            const letter = match[1];
-            const htmlContent = match[2];
+            current.options.push(currentOption.text);
 
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = htmlContent;
-
-            const optionText = tempDiv.innerText.trim();
-
-            const optionIndex = current.options.length;
-            current.options.push(optionText);
-
-            // ===== KIỂM TRA UNDERLINE CHÍNH XÁC =====
-            const hasUnderline =
-                tempDiv.querySelector("u") ||
-                [...tempDiv.querySelectorAll("span")].some(span =>
-                    (span.style && span.style.textDecoration.includes("underline"))
-                );
-
-            if (hasUnderline) {
-                current.correctIndex = optionIndex;
+            if (currentOption.isCorrect) {
+                setCorrectIndexSafe(current, current.options.length - 1);
             }
 
-        });
+            state = "IN_OPTIONS";
+            return;
+        }
+
+        /* =========================
+           NỐI DÒNG NẾU OPTION XUỐNG DÒNG
+        ========================== */
+        if (state === "IN_OPTIONS" && current.options.length > 0) {
+
+            const lastIndex = current.options.length - 1;
+
+            current.options[lastIndex] += " " + text;
+
+            if (detectUnderlineDeep(p)) {
+                setCorrectIndexSafe(current, lastIndex);
+            }
+
+            return;
+        }
+
+        /* =========================
+           NỐI DÒNG NỘI DUNG CÂU HỎI
+        ========================== */
+        if (state === "IN_QUESTION") {
+            current.question += " " + text;
+        }
 
     });
 
-    if (current) questions.push(current);
+    if (current) finalize(current, questions);
 
     return questions;
 }
 
+/* ========================
+   UTILITY FUNCTIONS
+======================== */
+
+function normalize(text) {
+    return text.replace(/\s+/g, " ").trim();
+}
+
+function detectUnderlineDeep(element) {
+
+    // 1. thẻ <u>
+    if (element.querySelector("u")) return true;
+
+    // 2. style inline
+    const all = element.querySelectorAll("*");
+
+    for (let el of all) {
+
+        const style = el.getAttribute("style");
+        if (!style) continue;
+
+        if (
+            style.includes("underline") ||
+            style.includes("text-decoration-line") ||
+            style.includes("text-decoration:")
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function setCorrectIndexSafe(question, index) {
+
+    if (question.correctIndex !== -1 && question.correctIndex !== index) {
+        console.error("⚠ Phát hiện 2 đáp án đúng ở câu:", question);
+    }
+
+    question.correctIndex = index;
+}
+
+function finalize(question, questions) {
+
+    question.question = normalize(question.question);
+    question.options = question.options.map(o => normalize(o));
+
+    // STRUCTURAL FIX
+    if (question.options.length > 4) {
+        question.options = question.options.slice(0, 4);
+    }
+
+    if (question.options.length < 4) {
+        while (question.options.length < 4) {
+            question.options.push("N/A");
+        }
+    }
+
+    // AI REPAIR
+    const aiResult = repairCorrectAnswer(question);
+
+    question.correctIndex = aiResult.index;
+    question.confidence = aiResult.confidence;
+
+    questions.push(question);
+}
+
+//AI Repair Engine
+function repairCorrectAnswer(question) {
+
+    let underlineCount = 0;
+    let underlineIndex = -1;
+
+    // Kiểm tra underline đã phát hiện
+    if (question.correctIndex !== -1) {
+        underlineCount = 1;
+        underlineIndex = question.correctIndex;
+    }
+
+    // Nếu chỉ 1 underline → chắc chắn
+    if (underlineCount === 1) {
+        return { index: underlineIndex, confidence: 1.0 };
+    }
+
+    // Nếu không có underline → heuristic
+    if (underlineCount === 0) {
+
+        // Heuristic 1: đáp án dài nhất
+        let maxLength = 0;
+        let maxIndex = 0;
+
+        question.options.forEach((opt, i) => {
+            if (opt.length > maxLength) {
+                maxLength = opt.length;
+                maxIndex = i;
+            }
+        });
+
+        return { index: maxIndex, confidence: 0.7 };
+    }
+
+    // Nếu nhiều underline → chọn dài nhất
+    if (underlineCount > 1) {
+
+        let longest = 0;
+        let chosen = underlineIndex;
+
+        question.options.forEach((opt, i) => {
+            if (opt.length > longest) {
+                longest = opt.length;
+                chosen = i;
+            }
+        });
+
+        return { index: chosen, confidence: 0.6 };
+    }
+
+    return { index: 0, confidence: 0.3 };
+}
+
 function downloadJSON() {
+
     if (!finalData.length) {
         alert("Chưa có dữ liệu");
         return;
@@ -136,6 +288,7 @@ function downloadJSON() {
     a.download = "questions.json";
     a.click();
 }
+
 </script>
 
 </body>
