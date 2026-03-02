@@ -152,6 +152,7 @@
         const loginScreen = document.getElementById('login-screen');
         const quizScreen = document.getElementById('quiz-screen');
         const resultScreen = document.getElementById('result-screen');
+        const infoForm = document.getElementById('info-form');
 
         function shuffleArray(array) {
             let arr = [...array];
@@ -260,15 +261,21 @@
                 btn.innerHTML = `<span class="font-bold text-blue-600 mr-2">${letters[index]}.</span> ${optObj.text}`;
                 
                 // Khôi phục trạng thái nếu câu này đã làm
+                // Thay thế đoạn khôi phục trạng thái cũ bằng đoạn này:
+            
+                // 1. LUÔN BÔI ĐỎ CÁC ĐÁP ÁN ĐÃ TỪNG BẤM SAI (Nếu có)
+                if (state.clickedWrongIdxs.includes(optObj.originalIndex)) {
+                    btn.classList.add('wrong');
+                    btn.disabled = true;
+                }
+
+                // 2. KHÓA TẤT CẢ VÀ BÔI XANH ĐÁP ÁN ĐÚNG NẾU CÂU ĐÃ ĐƯỢC VƯỢT QUA
                 if (state.passed) {
                     btn.disabled = true; // Khóa toàn bộ nút
                     if (optObj.originalIndex === qData.correctIndex) {
                         btn.classList.add('correct'); // Bôi xanh đáp án đúng
                         feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Em đã hoàn thành câu này.</span>";
                     }
-                } else if (state.clickedWrongIdxs.includes(optObj.originalIndex)) {
-                    btn.classList.add('wrong'); // Bôi đỏ các nút đã từng bấm sai
-                    btn.disabled = true;
                 }
 
                 btn.onclick = () => checkAnswer(btn, optObj.originalIndex, qData.correctIndex, qData.id, optObj.text);
@@ -279,41 +286,54 @@
         }
 
         function checkAnswer(btn, selectedIdx, correctIdx, qId, optionText) {
+            // Ngăn việc click đúp hoặc click các nút đang bị khóa
             if (btn.disabled) return;
 
+            // Lấy dữ liệu thống kê từ LocalStorage
             let stats = JSON.parse(localStorage.getItem('excelStats_THCS')) || {};
             if (!stats[qId]) stats[qId] = { attempts: 0, wrongFirstTry: 0 };
             
+            // Lấy trạng thái và dữ liệu của câu hỏi hiện tại
             const state = questionStates[currentQuestionIndex];
             const feedbackBox = document.getElementById('feedback-text');
+            const qData = questions[currentQuestionIndex]; 
 
+            // 1. NẾU CHỌN ĐÚNG
             if (selectedIdx === correctIdx) {
                 btn.classList.add('correct');
                 state.passed = true;
                 feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Chính xác! Nhấn nút 'Câu tiếp' để đi tiếp.</span>";
 
+                // Vô hiệu hóa tất cả các nút ngay lập tức
                 document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
 
+                // Tính điểm nếu đây là lần chạm đầu tiên
                 if (!state.wrongFirstTry) {
                     scoreCount++;
                     stats[qId].attempts++;
                     localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
                 }
                 
+                // Cập nhật hiển thị nút điều hướng
                 updateNavigationButtons(true);
             } 
+            // 2. NẾU CHỌN SAI
             else {
                 btn.classList.add('wrong');
-                btn.disabled = true;
-                state.clickedWrongIdxs.push(selectedIdx);
-                feedbackBox.innerHTML = "<span class='text-red-600 font-bold animate-pulse'>❌ Chưa đúng, em hãy chọn lại!</span>";
+                btn.disabled = true; // Khóa đáp án sai này lại
+                state.clickedWrongIdxs.push(selectedIdx); // Lưu vết nút sai đã bấm
+                feedbackBox.innerHTML = "<span class='text-red-600 font-bold animate-pulse'>❌ Chưa chính xác, em hãy chọn lại!</span>";
 
+                // Ghi nhận lịch sử sai ngay lần chạm đầu
                 if (!state.wrongFirstTry) {
                     state.wrongFirstTry = true;
                     stats[qId].attempts++;
                     stats[qId].wrongFirstTry++;
                     localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
-                    userMistakes.push(`Câu ${currentQuestionIndex + 1} (Chọn sai: ${optionText})`);
+                    
+                    // LƯU ID CÂU HỎI, ĐÁP ÁN SAI VÀ ĐÁP ÁN ĐÚNG LÊN GOOGLE SHEETS
+                    let correctText = qData.options[qData.correctIndex];
+                    userMistakes.push(`[ID: ${qId} | Sai: ${optionText} | Đúng: ${correctText}]`);
                 }
             }
         }
