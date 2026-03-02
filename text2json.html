@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Công cụ chuyển đổi Câu hỏi</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        textarea { width: 100%; height: 200px; padding: 10px; font-size: 14px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
+        #output { background: #f4f4f4; padding: 15px; margin-top: 20px; white-space: pre-wrap; font-family: monospace; border: 1px solid #ccc; height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h2>Tool Chuyển Đổi Word Sang Code Ứng Dụng</h2>
+    <p>Dán văn bản câu hỏi của bạn vào đây (Đảm bảo định dạng "Câu X:" và các đáp án "A.", "B.", "C.", "D."):</p>
+    <textarea id="input-text"></textarea>
+    <button onclick="convertText()">Chuyển đổi sang JavaScript</button>
+    
+    <div id="output">Kết quả Code sẽ hiển thị ở đây...</div>
+
+    <script>
+        function convertText() {
+            let text = document.getElementById('input-text').value;
+            // Tách các câu dựa vào cụm từ "Câu"
+            let blocks = text.split(/Câu \d+:/).filter(b => b.trim().length > 0);
+            
+            let resultData = blocks.map((block, index) => {
+                let id = index + 21; // Bắt đầu từ ID 21 tiếp nối 20 câu đầu
+                let idxA = block.indexOf('A.');
+                let idxB = block.indexOf('B.');
+                let idxC = block.indexOf('C.');
+                let idxD = block.indexOf('D.');
+                
+                if (idxA === -1 || idxB === -1 || idxC === -1 || idxD === -1) {
+                    return `  // Lỗi định dạng ở câu có ID ${id}`;
+                }
+
+                // Cắt lọc rác, bỏ ký tự xuống dòng
+                let qText = block.substring(0, idxA).replace(/\n|\t/g, ' ').trim();
+                let aText = block.substring(idxA + 2, idxB).replace(/\n|\t/g, ' ').trim();
+                let bText = block.substring(idxB + 2, idxC).replace(/\n|\t/g, ' ').trim();
+                let cText = block.substring(idxC + 2, idxD).replace(/\n|\t/g, ' ').trim();
+                let dText = block.substring(idxD + 2).replace(/\n|\t/g, ' ').trim();
+
+                return `  { id: ${id}, question: "${qText}", options: ["${aText}", "${bText}", "${cText}", "${dText}"], correctIndex: 0 }`;
+            });
+
+            document.getElementById('output').innerText = resultData.join(",\n");
+            alert("Chuyển đổi hoàn tất! Lưu ý: Tool đang đặt correctIndex = 0 (tức là đáp án A) cho mọi câu. Bạn nhớ copy kết quả này và sửa lại số 0 thành đáp án đúng (0=A, 1=B, 2=C, 3=D) nhé!");
+        }
+    </script>
+</body>
+</html>
