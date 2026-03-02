@@ -14,7 +14,7 @@ pre { background: #f4f4f4; padding: 10px; max-height: 400px; overflow: auto; }
 </head>
 
 <body>
-<h2>Word → JSON (Underline Correct Answer)</h2>
+<h2>Word → JSON (Underline Correct Answer) v1</h2>
 <h2>Upload file Word (.docx)</h2>
 <input type="file" id="fileInput" accept=".docx" />
 <br>
@@ -50,87 +50,67 @@ async function convert() {
 
 function parseQuestions(doc) {
 
-    const textContent = doc.body.innerHTML;
-
-    // Chuẩn hóa xuống dòng
-    const blocks = textContent
-        .replace(/<\/p>/g, "\n")
-        .replace(/<br\s*\/?>/g, "\n");
-
-    const container = document.createElement("div");
-    container.innerHTML = blocks;
-
-    const nodes = [...container.childNodes];
+    const paragraphs = [...doc.querySelectorAll("p")];
 
     let questions = [];
     let current = null;
     let id = 1;
 
-    nodes.forEach(node => {
+    paragraphs.forEach(p => {
 
-        if (node.nodeType !== 1) return;
-
-        const rawText = node.innerText.trim();
+        const text = p.innerText.trim();
 
         // ===== CÂU HỎI =====
-        if (/^Câu\s+\d+/i.test(rawText)) {
+        if (/^Câu\s+\d+/i.test(text)) {
 
             if (current) questions.push(current);
 
             current = {
                 id: id++,
-                question: rawText.replace(/^Câu\s+\d+:\s*/i, ""),
+                question: text.replace(/^Câu\s+\d+:\s*/i, ""),
                 options: [],
                 correctIndex: -1
             };
+
+            return;
         }
 
-        // ===== PHÂN TÍCH ĐÁP ÁN (Có thể nhiều đáp án trong 1 paragraph) =====
-        else if (current) {
+        if (!current) return;
 
-            const optionRegex = /([A-D])\.\s*([^A-D]+)/g;
-            let match;
+        // ===== TÁCH ĐÁP ÁN THEO DOM CHUẨN =====
+        const rawHTML = p.innerHTML;
 
-            while ((match = optionRegex.exec(rawText)) !== null) {
+        // Tách theo A. B. C. D.
+        const parts = rawHTML.split(/(?=[A-D]\.\s)/g);
 
-                const letter = match[1];
-                const optionText = match[2].trim();
+        parts.forEach(part => {
 
-                const indexBeforePush = current.options.length;
+            const match = part.match(/^([A-D])\.\s*(.*)/s);
+            if (!match) return;
 
-                current.options.push(optionText);
+            const letter = match[1];
+            const htmlContent = match[2];
 
-                // ===== KIỂM TRA UNDERLINE =====
-                const letterPattern = new RegExp(letter + "\\.\\s*" + optionText);
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = htmlContent;
 
-                const htmlSegment = node.innerHTML;
+            const optionText = tempDiv.innerText.trim();
 
-                if (
-                    htmlSegment.includes("<u>") ||
-                    htmlSegment.includes("text-decoration") ||
-                    htmlSegment.includes("<strong>")
-                ) {
-                    // kiểm tra kỹ xem đoạn đó có nằm trong underline không
-                    const tempDiv = document.createElement("div");
-                    tempDiv.innerHTML = htmlSegment;
+            const optionIndex = current.options.length;
+            current.options.push(optionText);
 
-                    const underlined = [...tempDiv.querySelectorAll("u, strong, span")]
-                        .some(el => {
-                            const style = el.getAttribute("style") || "";
-                            return (
-                                el.innerText.includes(optionText) &&
-                                (el.tagName === "U" ||
-                                 el.tagName === "STRONG" ||
-                                 style.includes("underline"))
-                            );
-                        });
+            // ===== KIỂM TRA UNDERLINE CHÍNH XÁC =====
+            const hasUnderline =
+                tempDiv.querySelector("u") ||
+                [...tempDiv.querySelectorAll("span")].some(span =>
+                    (span.style && span.style.textDecoration.includes("underline"))
+                );
 
-                    if (underlined) {
-                        current.correctIndex = indexBeforePush;
-                    }
-                }
+            if (hasUnderline) {
+                current.correctIndex = optionIndex;
             }
-        }
+
+        });
 
     });
 
