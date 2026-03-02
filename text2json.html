@@ -6,102 +6,141 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f8f9fa; }
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        /* Vùng nhập văn bản định dạng Rich Text */
+        
         #input-editor { 
             width: 100%; min-height: 250px; padding: 15px; font-size: 15px; 
             margin-bottom: 15px; border: 2px dashed #1a73e8; border-radius: 8px; 
             overflow-y: auto; background-color: #fafafa; box-sizing: border-box;
         }
         #input-editor:focus { outline: none; border-style: solid; background-color: white; }
-        button { padding: 12px 25px; background: #137333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background: #0f5c29; }
-        #output { background: #202124; color: #5ee56a; padding: 15px; margin-top: 20px; white-space: pre-wrap; font-family: 'Consolas', monospace; border-radius: 5px; height: 300px; overflow-y: auto; }
-        .hint { color: #d93025; font-size: 0.9em; font-weight: bold; }
+        
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        button { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
+        .btn-convert { background: #1a73e8; color: white; }
+        .btn-convert:hover { background: #1557b0; }
+        .btn-copy { background: #fbbc04; color: #202124; }
+        .btn-copy:hover { background: #e0a800; }
+        .btn-download { background: #137333; color: white; }
+        .btn-download:hover { background: #0f5c29; }
+        
+        #output-container { display: none; margin-top: 20px; }
+        #output { background: #202124; color: #5ee56a; padding: 15px; white-space: pre-wrap; font-family: 'Consolas', monospace; border-radius: 5px; height: 300px; overflow-y: auto; }
+        .hint { color: #d93025; font-size: 0.9em; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="color: #1a73e8;">Tool Chuyển Đổi Word Sang Code Ứng Dụng (Giữ định dạng)</h2>
-        <p>1. Copy câu hỏi từ Word.<br>2. Dán vào khung bên dưới. <b>(Đảm bảo đáp án đúng đang được gạch chân (<u>U</u>) hoặc bôi đỏ)</b></p>
+        <h2 style="color: #1a73e8;">Tool Chuyển Đổi Word Sang Code Ứng Dụng</h2>
+        <p>1. Copy câu hỏi từ Word (giữ nguyên gạch chân đáp án đúng).<br>2. Dán vào khung bên dưới.</p>
         
         <div id="input-editor" contenteditable="true" spellcheck="false">
             <span style="color: #70757a;">Dán nội dung từ Word vào đây... (Xóa dòng chữ này trước khi dán)</span>
         </div>
         
-        <button onclick="convertText()">⚡ Chuyển đổi & Nhận diện Đáp án</button>
+        <button class="btn-convert" onclick="convertText()">⚡ Chuyển đổi & Nhận diện Đáp án</button>
         <p class="hint" id="status-msg"></p>
         
-        <div id="output">// Kết quả Code Array sẽ hiển thị ở đây...</div>
+        <div id="output-container">
+            <div class="btn-group">
+                <button class="btn-copy" onclick="copyCode()">📋 Copy Code</button>
+                <button class="btn-download" onclick="downloadJSON()">💾 Tải file JSON</button>
+            </div>
+            <div id="output" style="margin-top: 10px;"></div>
+        </div>
     </div>
 
     <script>
+        let finalJsonString = ""; // Biến toàn cục để lưu chuỗi kết quả
+
         function convertText() {
             const editor = document.getElementById('input-editor');
             const output = document.getElementById('output');
             const statusMsg = document.getElementById('status-msg');
+            const outputContainer = document.getElementById('output-container');
             
-            // 1. Lấy toàn bộ văn bản để tách thành các câu
             let rawText = editor.innerText || editor.textContent;
             let blocks = rawText.split(/(?=Câu \d+:)/g).filter(b => b.trim().length > 0);
             
-            // 2. Tìm tất cả các thẻ có định dạng "gạch chân" hoặc "màu đỏ" để tìm đáp án đúng
-            // Phủ sóng các thẻ Word thường dùng: <u>, style có underline, font màu đỏ...
-            let markedElements = editor.querySelectorAll('u, span[style*="underline"], span[style*="color: red"], span[style*="color:#FF0000"], font[color="red"]');
+            let markedElements = editor.querySelectorAll('u, span[style*="underline"], span[style*="color: red"], font[color="red"]');
             
             let answerKeys = [];
             markedElements.forEach(el => {
                 let text = (el.innerText || el.textContent).trim();
-                // Bắt chữ cái đầu tiên (A, B, C, D)
                 if (text.startsWith('A')) answerKeys.push(0);
                 else if (text.startsWith('B')) answerKeys.push(1);
                 else if (text.startsWith('C')) answerKeys.push(2);
                 else if (text.startsWith('D')) answerKeys.push(3);
             });
 
-            let resultData = [];
-            let errors = 0;
+            let resultObjects = [];
             
             blocks.forEach((block, index) => {
                 let id = index + 1; 
+                let idxA = block.indexOf('A.'); let idxB = block.indexOf('B.');
+                let idxC = block.indexOf('C.'); let idxD = block.indexOf('D.');
                 
-                // Tìm vị trí các đáp án
-                let idxA = block.indexOf('A.');
-                let idxB = block.indexOf('B.');
-                let idxC = block.indexOf('C.');
-                let idxD = block.indexOf('D.');
-                
-                if (idxA === -1 || idxB === -1 || idxC === -1 || idxD === -1) {
-                    resultData.push(`  // Lỗi định dạng ở câu có ID ${id}`);
-                    errors++;
-                    return;
-                }
+                if (idxA === -1 || idxB === -1 || idxC === -1 || idxD === -1) return;
 
-                // Cắt văn bản, xóa chữ "Câu X:" và làm sạch
                 let qText = block.substring(0, idxA).replace(/\n|\t/g, ' ').replace(/Câu \d+:\s*/, '').replace(/"/g, '\\"').trim();
                 let aText = block.substring(idxA + 2, idxB).replace(/\n|\t/g, ' ').replace(/"/g, '\\"').trim();
                 let bText = block.substring(idxB + 2, idxC).replace(/\n|\t/g, ' ').replace(/"/g, '\\"').trim();
                 let cText = block.substring(idxC + 2, idxD).replace(/\n|\t/g, ' ').replace(/"/g, '\\"').trim();
                 let dText = block.substring(idxD + 2).replace(/\n|\t/g, ' ').replace(/"/g, '\\"').trim();
 
-                // Lấy đáp án đúng từ mảng answerKeys (mặc định là 0 nếu không tìm thấy)
                 let correctIdx = answerKeys[index] !== undefined ? answerKeys[index] : 0;
 
-                resultData.push(`  { id: ${id}, question: "${qText}", options: ["${aText}", "${bText}", "${cText}", "${dText}"], correctIndex: ${correctIdx} }`);
+                // Tạo object chuẩn JSON
+                resultObjects.push({
+                    id: id,
+                    question: qText,
+                    options: [aText, bText, cText, dText],
+                    correctIndex: correctIdx
+                });
             });
 
-            output.innerText = "const allQuizData = [\n" + resultData.join(",\n") + "\n];";
+            // Format thành chuỗi JSON đẹp mắt (thụt lề 2 space)
+            finalJsonString = JSON.stringify(resultObjects, null, 2);
             
-            // Báo cáo kết quả
+            // Hiển thị ra màn hình dạng biến JS cho dễ nhìn
+            output.innerText = "const allQuizData = " + finalJsonString + ";";
+            outputContainer.style.display = "block"; // Hiện khu vực kết quả
+            
             if (answerKeys.length === 0) {
-                statusMsg.innerText = "⚠️ Không tìm thấy đáp án được gạch chân hoặc bôi đỏ nào. Hãy chắc chắn bạn copy định dạng đúng từ Word.";
-                statusMsg.style.color = "#d93025";
-            } else if (answerKeys.length < blocks.length) {
-                statusMsg.innerText = `⚠️ Nhận diện được ${answerKeys.length} đáp án trên tổng số ${blocks.length} câu. Các câu không nhận diện được tự động chọn A.`;
-                statusMsg.style.color = "#e37400";
+                statusMsg.innerText = "⚠️ Không tìm thấy đáp án được đánh dấu."; statusMsg.style.color = "#d93025";
             } else {
-                statusMsg.innerText = `✅ Nhận diện hoàn hảo! Đã chuyển đổi ${blocks.length} câu hỏi và tự động gán chính xác đáp án.`;
-                statusMsg.style.color = "#137333";
+                statusMsg.innerText = `✅ Đã chuyển đổi thành công ${resultObjects.length} câu hỏi!`; statusMsg.style.color = "#137333";
             }
+        }
+
+        // Hàm 1: Copy vào bộ nhớ tạm
+        function copyCode() {
+            const textToCopy = document.getElementById('output').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("Đã copy thành công! Bạn có thể dán (Ctrl+V) vào file của mình");
+            }).catch(err => {
+                alert("Lỗi copy: " + err);
+            });
+        }
+
+        // Hàm 2: Tải xuống dưới dạng file .json
+        function downloadJSON() {
+            if (!finalJsonString) {
+                alert("Chưa có dữ liệu để tải!"); return;
+            }
+            // Tạo một Blob (đối tượng file ảo) chứa chuỗi JSON
+            const blob = new Blob([finalJsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            // Tạo thẻ <a> ẩn để kích hoạt tải xuống
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "quiz_data.json"; // Tên file khi tải về
+            document.body.appendChild(a);
+            a.click(); // Giả lập hành động click
+            
+            // Dọn dẹp bộ nhớ sau khi tải xong
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
