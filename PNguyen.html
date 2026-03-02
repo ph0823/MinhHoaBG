@@ -220,7 +220,7 @@
             setTimeout(() => {
                 currentQuestionIndex++;
                 if (currentQuestionIndex < currentQuestions.length) loadQuestion();
-                else endQuiz("Bạn đã hoàn thành bài thi!");
+                else endQuiz("Nguyên đã hoàn thành bài ôn!");
             }, 1000);
             
         } else {
@@ -255,7 +255,7 @@
         document.getElementById('stats-container').classList.remove('hidden');
 
         let total = currentQuestions.length;
-        document.getElementById('run-score').innerHTML = `Số câu trả lời đúng ngay lần đầu: <b><span style="color:#1a73e8">${correctFirstTryCount}</span>/${total}</b> câu.`;
+        document.getElementById('run-score').innerHTML = `Số câu trả lời đúng: <b><span style="color:#1a73e8">${correctFirstTryCount}</span>/${total}</b> câu.`;
 
         let mistakesHtml = '';
         if (currentRunMistakes.length > 0) {
