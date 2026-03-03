@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ Soạn Thảo Đề Thi JSON</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { transition: all 0.3s; }
+        .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .correct-radio:checked + span { color: #16a34a; font-weight: bold; }
+        .correct-radio:checked + span::after { content: " (Đúng)"; font-size: 0.8em; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <div class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-700"><i class="fas fa-edit"></i> Trình biên tập Đề thi</h1>
+            <div class="flex space-x-2">
+                <label class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded cursor-pointer transition">
+                    <i class="fas fa-upload"></i> Mở File JSON
+                    <input type="file" id="file-input" accept=".json" class="hidden" onchange="loadJsonFile()">
+                </label>
+                <button onclick="downloadJson()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    <i class="fas fa-download"></i> Tải File về
+                </button>
+            </div>
+        </div>
+        <div class="bg-blue-50 text-center py-2 text-sm text-blue-800 border-b border-blue-100">
+            <span id="status-text">Chưa có dữ liệu. Hãy tải file JSON lên hoặc tạo mới.</span>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 py-8" id="container">
+        </div>
+
+    <div class="fixed bottom-8 right-8">
+        <button onclick="addQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-16 h-16 shadow-lg flex items-center justify-center text-2xl transition transform hover:scale-110" title="Thêm câu hỏi mới">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <script>
+        let quizData = [];
+
+        // 1. TẢI FILE JSON
+        function loadJsonFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        quizData = JSON.parse(e.target.result);
+                        renderQuestions();
+                        document.getElementById('status-text').innerText = `✅ Đã tải thành công ${quizData.length} câu hỏi.`;
+                    } catch (error) {
+                        alert("Lỗi đọc file JSON: " + error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // 2. HIỂN THỊ DANH SÁCH CÂU HỎI
+        function renderQuestions() {
+            const container = document.getElementById('container');
+            container.innerHTML = "";
+
+            quizData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = "card bg-white rounded-lg shadow p-6 mb-6 border-l-4 border-blue-500 relative";
+                
+                // Nút Xóa
+                const deleteBtn = `<button onclick="deleteQuestion(${index})" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" title="Xóa câu này"><i class="fas fa-trash-alt fa-lg"></i></button>`;
+
+                // Nội dung câu hỏi
+                let html = `
+                    ${deleteBtn}
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Câu hỏi số ${index + 1} (ID: ${q.id})</label>
+                        <textarea oninput="updateData(${index}, 'question', this.value)" class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 text-lg text-gray-800" rows="2">${q.question}</textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                `;
+
+                // 4 Đáp án
+                q.options.forEach((opt, optIndex) => {
+                    const isCorrect = (q.correctIndex === optIndex);
+                    html += `
+                        <div class="flex items-center bg-gray-50 p-2 rounded border hover:border-blue-300">
+                            <input type="radio" name="correct-${index}" class="correct-radio w-5 h-5 text-green-600 focus:ring-green-500 cursor-pointer" 
+                                ${isCorrect ? 'checked' : ''} 
+                                onchange="updateCorrect(${index}, ${optIndex})">
+                            <input type="text" value="${opt}" oninput="updateOption(${index}, ${optIndex}, this.value)" 
+                                class="ml-2 w-full bg-transparent border-none focus:outline-none text-gray-700" placeholder="Nhập đáp án...">
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        // 3. CẬP NHẬT DỮ LIỆU KHI GÕ
+        function updateData(index, field, value) {
+            quizData[index][field] = value;
+        }
+
+        function updateOption(qIndex, optIndex, value) {
+            quizData[qIndex].options[optIndex] = value;
+        }
+
+        function updateCorrect(qIndex, correctIndex) {
+            quizData[qIndex].correctIndex = correctIndex;
+            // Re-render để thấy hiệu ứng màu xanh (tùy chọn, ở đây CSS đã xử lý visual)
+        }
+
+        // 4. THÊM CÂU HỎI MỚI
+        function addQuestion() {
+            // Tự động sinh ID mới lớn nhất + 1
+            const maxId = quizData.length > 0 ? Math.max(...quizData.map(q => q.id)) : 0;
+            
+            const newQ = {
+                id: maxId + 1,
+                question: "Nhập câu hỏi mới vào đây...",
+                options: ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
+                correctIndex: 0
+            };
+            
+            quizData.push(newQ);
+            renderQuestions();
+            // Cuộn xuống cuối trang
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        // 5. XÓA CÂU HỎI
+        function deleteQuestion(index) {
+            if (confirm("Bạn có chắc chắn muốn xóa câu hỏi này không?")) {
+                quizData.splice(index, 1);
+                renderQuestions();
+            }
+        }
+
+        // 6. TẢI FILE JSON VỀ (Quan trọng: Đánh lại ID cho sạch đẹp)
+        function downloadJson() {
+            if (quizData.length === 0) {
+                alert("Chưa có dữ liệu để tải!");
+                return;
+            }
+
+            // Đánh lại số thứ tự ID từ 1 đến hết để đảm bảo không bị trùng hoặc nhảy cóc
+            const cleanData = quizData.map((q, idx) => {
+                return { ...q, id: idx + 1 };
+            });
+
+            const dataStr = JSON.stringify(cleanData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "data_tracnghiem_moi.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
