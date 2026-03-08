@@ -8,7 +8,7 @@
   {
     "id": "PPT_02",
     "q": "Để chèn thêm một trang chiếu mới, em sử dụng tổ hợp phím nào?",
-    "options": ["Sử dụng tổ hợp phím tắt Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"],
+    "options": ["Ctrl + N", "Ctrl + M", "Ctrl + P", "Ctrl + S"],
     "correct": 1
   },
   {
@@ -111,10 +111,10 @@
     "id": "PPT_19",
     "q": "Thứ tự các bước hợp lý để tạo một bài trình chiếu là gì?",
     "options": [
-      "Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang -> Trình diễn",
-      "Trình diễn -> Tạo trang -> Chuẩn bị",
-      "Đầu tiên là chọn phần mềm -> Sau đó trình diễn thử -> Cuối cùng tạo trang chiếu",
-      "Tạo trang -> Chuẩn bị -> Trình diễn"
+      "Chuẩn bị nội dung -> Chọn phần mềm -> Tạo trang chiếu -> Trình chiếu",
+      "Trình diễn -> Tạo trang -> Chuẩn bị -> Trình chiếu",
+      "Đầu tiên là chọn phần mềm -> Sau đó trình chiếu thử -> Cuối cùng tạo trang chiếu",
+      "Tạo trang -> Chuẩn bị -> Trình chiếu"
     ],
     "correct": 0
   },
@@ -127,7 +127,7 @@
   {
     "id": "PPT_21",
     "q": "Để in các trang chiếu ra giấy, em sử dụng tổ hợp phím tắt nào?",
-    "options": ["Sử dụng tổ hợp phím tắt Ctrl + S", "Ctrl + P", "Ctrl + N", "Ctrl + I"],
+    "options": ["Ctrl + S", "Ctrl + P", "Ctrl + N", "Ctrl + I"],
     "correct": 1
   },
   {
@@ -137,7 +137,7 @@
       "Start -> All Programs -> Microsoft Office -> Microsoft PowerPoint",
       "Nháy đúp chuột vào biểu tượng PowerPoint trên màn hình Desktop",
       "Gõ lệnh \"powerpnt\" trong hộp thoại Run (Windows + R)",
-      "Tất cả các cách trên đều đúng"
+      "Tất cả các cách được liệt kê đều đúng"
     ],
     "correct": 3
   },
@@ -161,14 +161,14 @@
   },
   {
     "id": "PPT_26",
-    "q": "Để chèn thêm một trang chiếu (Slide) mới bằng thao tác trên thanh công cụ, em chọn dải lệnh Home rồi chọn lệnh nào?",
-    "options": ["Nút lệnh Layout (Bố cục)", "New Slide", "Section", "Reset"],
+    "q": "Để chèn thêm một trang chiếu mới bằng thanh công cụ, em chọn dải lệnh Home rồi chọn lệnh nào?",
+    "options": ["Layout", "New Slide", "Section", "Reset"],
     "correct": 1
   },
   {
     "id": "PPT_27",
     "q": "Chế độ hiển thị nào cho phép xem tất cả các slide dưới dạng các hình ảnh nhỏ (thumbnails)?",
-    "options": ["Chế độ xem mặc định Normal View", "Slide Sorter View", "Reading View", "Notes Page"],
+    "options": ["Chế độ mặc định Normal View", "Slide Sorter View", "Reading View", "Notes Page"],
     "correct": 1
   },
   {
