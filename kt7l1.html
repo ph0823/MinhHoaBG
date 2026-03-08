@@ -124,6 +124,9 @@
     </div>
 
     <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
         const QUIZ_CONFIG = {
             topic: "KT CDE2-Bai1",
             timeLimitMinutes: 10,
