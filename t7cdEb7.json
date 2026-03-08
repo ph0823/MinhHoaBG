@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "question": "Thành phần nằm ở phía bên trái thanh công thức và hiển thị địa chỉ của ô đang được chọn gọi là gì?",
+    "options": ["Hộp tên.", "Thanh trạng thái nằm ở dưới cùng.", "Hộp công thức.", "Ô tiêu đề."],
+    "correctIndex": 0
+  },
+  {
+    "id": 2,
+    "question": "Để chọn nhanh đến ô ABC123 trong bảng tính mà không cần dùng chuột kéo thanh cuộn, em nên làm gì?",
+    "options": ["Nháy đúp chuột trái nhiều lần vào khu vực thanh công thức trên màn hình.", "Gõ địa chỉ ô vào hộp tên rồi nhấn Enter.", "Nhấn tổ hợp phím Ctrl + F.", "Khởi động lại phần mềm Excel."],
+    "correctIndex": 1
+  },
+  {
+    "id": 3,
+    "question": "Thanh công thức (Formula Bar) dùng để làm gì?",
+    "options": ["Hiển thị địa chỉ chính xác của ô đang được chọn trên trang tính.", "Nhập địa chỉ ô để di chuyển nhanh.", "Hiển thị nội dung thực sự của ô đang được chọn.", "Chỉ dùng để định dạng màu sắc cho ô."],
+    "correctIndex": 2
+  },
+  {
+    "id": 4,
+    "question": "Khi em chọn một ô tính, điều gì sẽ xuất hiện trong Hộp tên?",
+    "options": ["Nội dung của ô đó.", "Địa chỉ của ô đó (ví dụ: F3).", "Tên của người dùng máy tính.", "Kết quả của các phép tính toán được thực hiện trong ô."],
+    "correctIndex": 1
+  },
+  {
+    "id": 5,
+    "question": "Một nội dung trong ô tính bắt đầu bằng dấu nào sau đây thì được coi là một công thức?",
+    "options": ["Dấu chấm (.).", "Dấu cộng (+).", "Dấu gạch ngang (-).", "Dấu bằng (=)."],
+    "correctIndex": 3
+  },
+  {
+    "id": 6,
+    "question": "Nếu ô A1 chứa dữ liệu là '=10+20', thanh công thức sẽ hiển thị nội dung gì khi em chọn ô đó?",
+    "options": ["30.", "=10+20.", "A1.", "(Trống)."],
+    "correctIndex": 1
+  },
+  {
+    "id": 7,
+    "question": "Dữ liệu được nhập vào ô mà không bắt đầu bằng dấu '=' thì được gọi là gì?",
+    "options": ["Dữ liệu gián tiếp được lấy từ nơi khác.", "Dữ liệu công thức.", "Dữ liệu trực tiếp.", "Dữ liệu tự động."],
+    "correctIndex": 2
+  },
+  {
+    "id": 8,
+    "question": "Trong Hình 1 trang 42 SGK, khi Hộp tên hiển thị F3, điều đó có nghĩa là gì?",
+    "options": ["Ô nằm ở vị trí giao giữa cột 3 và hàng F đang được chọn.", "Có 3 ô tính đang được chọn.", "Ô ở cột F, hàng 3 đang được chọn.", "Dữ liệu trong ô là số 3."],
+    "correctIndex": 2
+  },
+  {
+    "id": 9,
+    "question": "Khi em gõ nội dung mới vào thanh công thức, nội dung trong ô tính tương ứng sẽ:",
+    "options": ["Không thay đổi.", "Tự động cập nhật theo nội dung trên thanh công thức.", "Bị xóa đi vĩnh viễn.", "Chỉ thay đổi nội dung khi em nhấn phím Esc trên bàn phím máy tính."],
+    "correctIndex": 1
+  },
+  {
+    "id": 10,
+    "question": "Để sửa nội dung một ô mà không muốn gõ lại từ đầu, em có thể thực hiện thao tác nào?",
+    "options": ["Nháy chuột vào thanh công thức và sửa.", "Nháy đúp chuột vào thanh công thức để xóa.", "Thanh công thức không cho phép sửa nội dung.", "Nhấn phím Alt + thanh công thức."],
+    "correctIndex": 0
+  },
+  {
+    "id": 11,
+    "question": "Một nhóm các ô liền kề nhau tạo thành một vùng hình chữ nhật trên trang tính gọi là gì?",
+    "options": ["Một hàng dữ liệu.", "Một vùng (khối) ô.", "Một trang tính (Sheet).", "Một sổ tính (Workbook)."],
+    "correctIndex": 1
+  },
+  {
+    "id": 12,
+    "question": "Địa chỉ của một khối ô được xác định bởi địa chỉ của:",
+    "options": ["Ô nằm ở góc trên cùng bên trái và ô nằm ở góc trên cùng bên phải của khối.", "Tất cả các ô có trong khối đó.", "Ô góc trên bên trái và ô góc dưới bên phải.", "Chỉ cần ô góc dưới bên trái."],
+    "correctIndex": 2
+  },
+  {
+    "id": 13,
+    "question": "Ký hiệu nào được dùng để ngăn cách giữa hai địa chỉ ô trong một địa chỉ khối?",
+    "options": ["Dấu phẩy (,).", "Dấu chấm phẩy (;).", "Dấu hai chấm (:).", "Dấu gạch chéo (/)."],
+    "correctIndex": 2
+  },
+  {
+    "id": 14,
+    "question": "Khối ô có địa chỉ C4:E6 bao gồm bao nhiêu ô tính?",
+    "options": ["3 ô.", "6 ô.", "9 ô.", "12 ô."],
+    "correctIndex": 2
+  },
+  {
+    "id": 15,
+    "question": "Để chọn một khối ô bằng chuột, em thực hiện thao tác gì?",
+    "options": ["Nháy chuột trái vào ô đầu tiên sau đó tiếp tục nháy chuột trái vào ô cuối cùng.", "Nhấn giữ phím Shift và nháy chuột vào từng ô.", "Nhấn giữ và kéo thả chuột từ ô góc này đến ô góc đối diện.", "Nháy chuột phải vào các ô cần chọn."],
+    "correctIndex": 2
+  },
+  {
+    "id": 16,
+    "question": "Địa chỉ nào sau đây là địa chỉ của một khối ô?",
+    "options": ["A1 và B2.", "A1:C10.", "A1;C10.", "A1-C10."],
+    "correctIndex": 1
+  },
+  {
+    "id": 17,
+    "question": "Khối ô được chọn trong Hình 2 trang 43 SGK bao gồm các ô nằm từ hàng mấy đến hàng mấy?",
+    "options": ["Hàng 3 đến hàng 4.", "Hàng 1 đến hàng 10.", "Chỉ hàng 3.", "Tất cả các hàng trong trang tính."],
+    "correctIndex": 0
+  },
+  {
+    "id": 18,
+    "question": "Một khối ô nằm hoàn toàn trên một cột (ví dụ A1:A10) được gọi là gì?",
+    "options": ["Một khối hàng.", "Một khối cột.", "Một khối hỗn hợp.", "Không gọi là khối ô."],
+    "correctIndex": 1
+  },
+  {
+    "id": 19,
+    "question": "Nếu em chọn khối B2:D2, khối này bao gồm bao nhiêu hàng?",
+    "options": ["1 hàng.", "Bao gồm 3 hàng.", "2 hàng.", "4 hàng."],
+    "correctIndex": 0
+  },
+  {
+    "id": 20,
+    "question": "Ý nghĩa của việc sử dụng khối ô trong bảng tính là gì?",
+    "options": ["Giúp thực hiện thao tác với nhiều ô cùng lúc.", "Giúp cho toàn bộ trang tính trông đẹp mắt và sinh động hơn rất nhiều.", "Giúp Excel chạy nhanh hơn.", "Không có ý nghĩa gì đặc biệt."],
+    "correctIndex": 0
+  },
+  {
+    "id": 21,
+    "question": "Thao tác 'nhân bản' dữ liệu từ vị trí này sang vị trí khác gọi là:",
+    "options": ["Di chuyển (Move).", "Sao chép (Copy).", "Xóa (Delete).", "Lưu trữ (Save)."],
+    "correctIndex": 1
+  },
+  {
+    "id": 22,
+    "question": "Tổ hợp phím tắt nào dùng để Sao chép một khối ô?",
+    "options": ["Phím Ctrl + X.", "Ctrl + V.", "Ctrl + C.", "Ctrl + Z."],
+    "correctIndex": 2
+  },
+  {
+    "id": 23,
+    "question": "Tổ hợp phím tắt nào dùng để Dán dữ liệu vào vị trí mới?",
+    "options": ["Phím Ctrl + C.", "Ctrl + V.", "Ctrl + P.", "Ctrl + S."],
+    "correctIndex": 1
+  },
+  {
+    "id": 24,
+    "question": "Thao tác Di chuyển (Move) một khối ô được thực hiện bằng lệnh nào?",
+    "options": ["Lệnh Copy và Paste.", "Lệnh Cut và Paste.", "Lệnh Delete và Paste.", "Lệnh Insert và Paste."],
+    "correctIndex": 1
+  },
+  {
+    "id": 25,
+    "question": "Sự khác biệt giữa Sao chép và Di chuyển là gì?",
+    "options": ["Sao chép làm mất dữ liệu ở vị trí cũ.", "Sao chép giữ lại dữ liệu cũ, di chuyển thì không.", "Cả hai đều làm mất dữ liệu ở vị trí cũ.", "Cả hai thao tác này đều có tác dụng giữ nguyên toàn bộ dữ liệu ở vị trí cũ."],
+    "correctIndex": 1
+  },
+  {
+    "id": 26,
+    "question": "Khi sao chép một ô tính có chứa công thức, điều gì thường xảy ra?",
+    "options": ["Toàn bộ công thức ban đầu sẽ ngay lập tức biến thành định dạng văn bản.", "Excel sẽ báo lỗi.", "Các địa chỉ ô trong công thức có thể tự động điều chỉnh.", "Kết quả luôn bằng 0."],
+    "correctIndex": 2
+  },
+  {
+    "id": 27,
+    "question": "Tổ hợp phím tắt nào dùng để thực hiện lệnh Cắt (Cut)?",
+    "options": ["Ctrl + C.", "Ctrl + X.", "Ctrl + Alt.", "Ctrl + D."],
+    "correctIndex": 1
+  },
+  {
+    "id": 28,
+    "question": "Để di chuyển một khối bằng kéo thả chuột, em đưa con trỏ vào đâu?",
+    "options": ["Vào giữa khối.", "Vào biên của khối cho đến khi xuất hiện mũi tên 4 chiều.", "Vào biểu tượng ô vuông nhỏ nằm ở vị trí góc dưới cùng bên phải của khối ô.", "Vào tiêu đề cột."],
+    "correctIndex": 1
+  },
+  {
+    "id": 29,
+    "question": "Nếu em sao chép một khối ô vào vị trí đã có dữ liệu, điều gì sẽ xảy ra?",
+    "options": ["Phần mềm Excel sẽ tự động chèn thêm các hàng mới để chứa toàn bộ dữ liệu.", "Dữ liệu mới sẽ đè lên và thay thế dữ liệu cũ.", "Excel sẽ báo lỗi và tắt.", "Dữ liệu mới sẽ nối vào sau dữ liệu cũ."],
+    "correctIndex": 1
+  },
+  {
+    "id": 30,
+    "question": "Sau khi nhấn lệnh Copy (Ctrl + C), khối ô được chọn sẽ có biểu tượng gì?",
+    "options": ["Một đường viền đứt đoạn chuyển động xung quanh.", "Toàn bộ khu vực khối ô vừa được chọn sẽ ngay lập tức chuyển sang màu đỏ tươi.", "Khối ô biến mất.", "Máy tính phát ra tiếng kêu."],
+    "correctIndex": 0
+  }
+]
