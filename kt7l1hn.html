@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIỂM TRA THƯỜNG XUYÊN</title>
+    <title>KIỂM TRA THƯỜNG XUYÊN HN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -51,23 +51,12 @@
             
             <div class="w-full space-y-4 max-w-sm">
                 <div class="text-left">
-                    <label class="block text-base font-semibold text-slate-700 mb-2">Thông tin học sinh:</label>
-                    <select id="user-class" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3 bg-white text-lg">
-                        <option value="" disabled selected>Chọn lớp</option>
-                        <option value="7.1">7.1</option>
-                        <option value="7.2">7.2</option>
-                        <option value="7.3">7.3</option>
-                        <option value="7.4">7.4</option>
-                        <option value="7.5">7.5</option>
-                        <option value="7.6">7.6</option>
-                        <option value="7.7">7.7</option>
-                        <option value="7.8">7.8</option>
-                        <option value="7.9">7.9</option>
-                        <option value="7.10">7.10</option>
-                        <option value="7.11">7.11</option>
+                    <label class="block text-base font-semibold text-slate-700 mb-2">Chọn tên học sinh:</label>
+                    <select id="student-select" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3 bg-white text-lg">
+                        <option value="" disabled selected>-- Bấm vào đây để chọn tên --</option>
+                        <option value="7.4|06|Nguyễn Quốc Gia Bảo">7.4 - 06. Nguyễn Quốc Gia Bảo</option>
+                        <option value="7.11|12|Lê Nam Đông">7.11 - 12. Lê Nam Đông</option>
                     </select>
-                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3 text-lg">
-                    <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-lg">
                 </div>
                 <div class="bg-blue-50 p-4 rounded-xl text-base text-blue-700 text-left flex items-start gap-3">
                     <i class="fa-solid fa-circle-info mt-1"></i>
@@ -183,20 +172,19 @@
         }
 
         async function startQuiz() {
-            userClass = document.getElementById('user-class').value;
-            userStt = document.getElementById('user-stt').value.trim();
-            userName = document.getElementById('user-name').value.trim();
+            // Lấy giá trị từ danh sách chọn duy nhất
+            const studentSelect = document.getElementById('student-select').value;
 
-            if (!userName || !userClass || !userStt) {
-                alert("Vui lòng nhập đầy đủ Lớp, STT và Họ tên!");
+            if (!studentSelect) {
+                alert("Em vui lòng chọn tên của mình nhé!");
                 return;
             }
 
-            const stt = parseInt(userStt);
-            if (isNaN(stt) || stt < 1 || stt > 52) {
-                alert("STT không hợp lệ (1–52)");
-                return;
-            }
+            // Tách chuỗi value (ví dụ: "7.4|06|Nguyễn Quốc Gia Bảo") thành mảng dựa trên dấu "|"
+            const studentData = studentSelect.split('|');
+            userClass = studentData[0];
+            userStt = studentData[1];
+            userName = studentData[2];
 
             if (allQuestions.length === 0) await loadQuestions();
 
