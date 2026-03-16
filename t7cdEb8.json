@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "question": "Khi mở một trang tính mới, định dạng hiển thị mặc định của các ô tính là gì?",
+    "options": ["Number.", "General.", "Currency.", "Text."],
+    "correctIndex": 1
+  },
+  {
+    "id": 2,
+    "question": "Nhóm lệnh nào trên dải lệnh Home chứa các công cụ định dạng số?",
+    "options": ["Font.", "Cells.", "Number.", "Alignment."],
+    "correctIndex": 2
+  },
+  {
+    "id": 3,
+    "question": "Nút lệnh có biểu tượng dấu phẩy (,) trong Excel dùng để làm gì?",
+    "options": ["Ngăn cách các nghìn.", "Xóa chữ số thập phân.", "Chèn thêm cột mới.", "Định dạng phần trăm."],
+    "correctIndex": 0
+  },
+  {
+    "id": 4,
+    "question": "Để hiển thị dữ liệu dưới dạng phần trăm, em chọn nút lệnh nào?",
+    "options": ["Biểu tượng $.", "Biểu tượng ,.", "Biểu tượng %.", "Biểu tượng .00."],
+    "correctIndex": 2
+  },
+  {
+    "id": 5,
+    "question": "Tác dụng của nút lệnh Increase Decimal là gì?",
+    "options": ["Tăng số chữ số thập phân.", "Giảm số chữ số thập phân.", "Tăng kích thước phông chữ.", "Nhân dữ liệu với 10."],
+    "correctIndex": 0
+  },
+  {
+    "id": 6,
+    "question": "Để giảm bớt số chữ số ở phần thập phân, em sử dụng nút lệnh nào?",
+    "options": ["Decrease Decimal.", "Increase Decimal.", "Comma Style.", "Percent Style."],
+    "correctIndex": 0
+  },
+  {
+    "id": 7,
+    "question": "Định dạng Currency (tiền tệ) mặc định trong Excel thường đi kèm ký hiệu nào?",
+    "options": ["Ký hiệu £.", "Ký hiệu $.", "Ký hiệu €.", "Ký hiệu ¥."],
+    "correctIndex": 1
+  },
+  {
+    "id": 8,
+    "question": "Thao tác định dạng hiển thị có làm thay đổi giá trị thực tế của ô dữ liệu không?",
+    "options": ["Có thay đổi vĩnh viễn.", "Có nhưng chỉ khi lưu tệp.", "Không làm thay đổi giá trị.", "Chỉ thay đổi với kiểu số."],
+    "correctIndex": 2
+  },
+  {
+    "id": 9,
+    "question": "Mục đích chính của việc thực hiện định dạng dữ liệu số là gì?",
+    "options": ["Để dữ liệu dễ đọc hơn.", "Để máy tính tính nhanh hơn.", "Để tiết kiệm bộ nhớ máy.", "Để khóa các ô dữ liệu số."],
+    "correctIndex": 0
+  },
+  {
+    "id": 10,
+    "question": "Nếu muốn có thêm nhiều tùy chọn định dạng chi tiết hơn, em cần mở hộp thoại nào?",
+    "options": ["Page Setup.", "Font Settings.", "Format Cells.", "Paragraph."],
+    "correctIndex": 2
+  },
+  {
+    "id": 11,
+    "question": "Theo hướng dẫn thực hành BMI, cột 'Chiều cao' nên để bao nhiêu chữ số thập phân?",
+    "options": ["0 chữ số.", "1 chữ số.", "2 chữ số.", "3 chữ số."],
+    "correctIndex": 1
+  },
+  {
+    "id": 12,
+    "question": "Cột 'Cân nặng' trong bài thực hành BMI được yêu cầu định dạng như thế nào?",
+    "options": ["Có 1 chữ số thập phân.", "Có 2 chữ số thập phân.", "Không có chữ số thập phân.", "Hiển thị dưới dạng tiền tệ."],
+    "correctIndex": 2
+  },
+  {
+    "id": 13,
+    "question": "Định dạng nào quy định cách hiển thị số liệu không áp dụng tính toán (như số điện thoại)?",
+    "options": ["Number.", "Currency.", "Text.", "Percentage."],
+    "correctIndex": 2
+  },
+  {
+    "id": 14,
+    "question": "Biểu tượng '.00 -> .0' trên nút lệnh trong nhóm Number có ý nghĩa là gì?",
+    "options": ["Xóa hết phần thập phân.", "Giảm một chữ số thập phân.", "Tăng một chữ số thập phân.", "Làm tròn số lên hàng chục."],
+    "correctIndex": 1
+  },
+  {
+    "id": 15,
+    "question": "Sau khi chọn định dạng Comma Style cho số 1000, kết quả hiển thị mặc định sẽ là:",
+    "options": ["1,000.00.", "1000%.", "$1,000.", "1.000,00."],
+    "correctIndex": 0
+  },
+  {
+    "id": 16,
+    "question": "Để định dạng số tiền Việt Nam (VND), em nên vào đâu trong hộp thoại Format Cells?",
+    "options": ["Thẻ Font.", "Thẻ Alignment.", "Mục Symbol của Currency.", "Mục Decimal của Number."],
+    "correctIndex": 2
+  },
+  {
+    "id": 17,
+    "question": "Trong Excel, kiểu dữ liệu số mặc định được trang tính căn lề nào trong ô?",
+    "options": ["Căn biên trái.", "Căn giữa.", "Căn biên phải.", "Căn đều hai biên."],
+    "correctIndex": 2
+  },
+  {
+    "id": 18,
+    "question": "Lệnh 'Accounting Number Format' trên dải lệnh Home có biểu tượng là gì?",
+    "options": ["Dấu phần trăm (%).", "Dấu phẩy (,).", "Dấu đô la ($).", "Chữ Abc."],
+    "correctIndex": 2
+  },
+  {
+    "id": 19,
+    "question": "Nếu một ô tính hiển thị dãy ký tự '#######', nguyên nhân thường gặp nhất là gì?",
+    "options": ["Ô đó bị lỗi công thức.", "Độ rộng cột quá hẹp.", "Dữ liệu trong ô đã bị xóa.", "Định dạng số bị sai kiểu."],
+    "correctIndex": 1
+  },
+  {
+    "id": 20,
+    "question": "Khi nhập tỉ lệ 0.12 vào ô tính và nhấn nút lệnh Percentage Style, kết quả là:",
+    "options": ["1.2%.", "12%.", "0.12%.", "120%."],
+    "correctIndex": 1
+  },
+  {
+    "id": 21,
+    "question": "Tại sao cột 'Chi phí' nên được trình bày lại thay vì để dạng số thông thường?",
+    "options": ["Để phân biệt với số lượng.", "Để tự động cộng tiền.", "Để phù hợp số tiền thực tế.", "Để máy tính nhận biết là tiền."],
+    "correctIndex": 2
+  },
+  {
+    "id": 22,
+    "question": "Thẻ nào trong hộp thoại Format Cells cho phép người dùng chọn kiểu hiển thị số âm?",
+    "options": ["Alignment.", "Number.", "Border.", "Fill."],
+    "correctIndex": 1
+  },
+  {
+    "id": 23,
+    "question": "Nút lệnh tăng/giảm số chữ số thập phân nằm ở vị trí nào của nhóm lệnh Number?",
+    "options": ["Bên phải.", "Bên trái.", "Phía trên.", "Phía dưới."],
+    "correctIndex": 0
+  },
+  {
+    "id": 24,
+    "question": "Việc sử dụng dấu phân cách hàng nghìn mang lại lợi ích gì cho người xem?",
+    "options": ["Tính toán nhanh hơn.", "Tránh nhầm lẫn hàng đơn vị.", "Dễ quan sát số liệu lớn.", "Làm đẹp bảng tính hơn."],
+    "correctIndex": 2
+  },
+  {
+    "id": 25,
+    "question": "Định dạng hiển thị giúp dữ liệu chuyên nghiệp hơn, nhưng điều quan trọng nhất là:",
+    "options": ["Phải dùng phông màu đỏ.", "Phải phù hợp với nội dung.", "Phải dùng nhiều ký hiệu $.", "Phải có ít nhất 2 chữ số lẻ."],
+    "correctIndex": 1
+  },
+  {
+    "id": 26,
+    "question": "Nếu ô A1 có giá trị 5.678, sau khi dùng Decrease Decimal để hiện 0 chữ số thập phân, giá trị hiện là:",
+    "options": ["Số 5.", "Số 6.", "Số 5.6.", "Số 5.7."],
+    "correctIndex": 1
+  },
+  {
+    "id": 27,
+    "question": "Điểm khác biệt nhất khi áp dụng định dạng số so với việc gõ trực tiếp ký hiệu $ vào ô là?",
+    "options": ["Giúp ô vẫn có thể tính toán.", "Giúp ký hiệu đẹp hơn.", "Giúp căn lề trái tự động.", "Giúp tiết kiệm thời gian gõ."],
+    "correctIndex": 0
+  },
+  {
+    "id": 28,
+    "question": "Kết quả ô là 0.982142857. Để hiển thị thành 98.21%, em thực hiện thao tác nào?",
+    "options": ["Nhấn nút % rồi giảm 2 lần lẻ.", "Nhấn nút % rồi tăng 2 lần lẻ.", "Gõ lại số 98.21 và thêm dấu %.", "Nhấn Comma Style rồi nhân 100."],
+    "correctIndex": 1
+  },
+  {
+    "id": 29,
+    "question": "Trong Format Cells, nếu chọn 'Use 1000 Separator' và decimals là 2, số 1234567 hiện là:",
+    "options": ["1,234,567.00.", "1.234.567,00.", "1,234,567.", "1.234.567."],
+    "correctIndex": 0
+  },
+  {
+    "id": 30,
+    "question": "Một ô hiện 10.5 (định dạng 1 chữ số lẻ) từ giá trị gốc 10.46. Nếu nhân ô này với 2, kết quả là:",
+    "options": ["21.0.", "20.92.", "20.9.", "21.1."],
+    "correctIndex": 1
+  }
+]
