@@ -1,0 +1,483 @@
+[
+  {
+    "topic": "if2",
+    "id": 1,
+    "q": "Theo bảng giải thích thuật ngữ, hàm IF lồng nhau là gì?",
+    "options": [
+      "Là hàm IF có tham số chứa một hàm IF khác.",
+      "Là việc sử dụng nhiều hàm IF rời rạc trong cùng một bảng tính.",
+      "Là hàm IF có chứa các phép toán cộng, trừ, nhân, chia phức tạp.",
+      "Là một loại hàm thống kê có điều kiện tương tự như COUNTIF."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if2",
+    "id": 2,
+    "q": "Mục đích chính của việc sử dụng các hàm IF lồng nhau là gì?",
+    "options": [
+      "Để thực hiện các phép tính nhân và chia dữ liệu nhanh hơn.",
+      "Để điền dữ liệu tự động khi có nhiều hơn hai giá trị lựa chọn.",
+      "Để thay thế hoàn toàn việc sử dụng các hàm logic AND và OR.",
+      "Để kiểm tra tính đúng đắn của kiểu dữ liệu ngày tháng năm."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 3,
+    "q": "Cú pháp để chọn một trong ba giá trị bằng hai hàm IF lồng nhau là gì?",
+    "options": [
+      "=IF(<DK1>, <DK2>, <GT1>, <GT2>, <GT3>)",
+      "=IF(<DK1>, <GT1>, <GT2>) + IF(<DK2>, <GT3>)",
+      "=IF(<DK1>, <GT1>, IF(<DK2>, <GT2>, <GT3>))",
+      "=IF(<DK1>; <GT1>; <DK2>; <GT2>; <GT3>)"
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if2",
+    "id": 4,
+    "q": "Trong quy tắc thực hiện hàm lồng nhau, nếu <DK1> đúng (TRUE) thì kết quả là gì?",
+    "options": [
+      "Trả về <GT2>.",
+      "Trả về <GT3>.",
+      "Xét tiếp <DK2>.",
+      "Trả về <GT1>."
+    ],
+    "correct": 3
+  },
+  {
+    "topic": "if2",
+    "id": 5,
+    "q": "Nếu kết quả của <DK1> là SAI (FALSE), phần mềm sẽ thực hiện bước nào tiếp theo?",
+    "options": [
+      "Dừng lệnh.",
+      "Xét tiếp <DK2>.",
+      "Trả về <GT1>.",
+      "Báo lỗi cú pháp."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 6,
+    "q": "Kết quả của hàm lồng nhau sẽ là <GT2> khi nào?",
+    "options": [
+      "Khi <DK1> đúng.",
+      "Khi <DK2> sai.",
+      "Khi <DK1> sai và <DK2> đúng.",
+      "Khi cả hai điều kiện đều sai."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if2",
+    "id": 7,
+    "q": "Để xếp loại học sinh thành 5 mức khác nhau, ta cần sử dụng bao nhiêu hàm IF lồng nhau?",
+    "options": [
+      "4 hàm IF.",
+      "5 hàm IF.",
+      "3 hàm IF.",
+      "2 hàm IF."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if2",
+    "id": 8,
+    "q": "Mối quan hệ giữa số lượng điều kiện (<DK>) và số lượng hàm IF lồng nhau là gì?",
+    "options": [
+      "Số hàm IF ít hơn số điều kiện là 1.",
+      "Số hàm IF bằng số lượng điều kiện.",
+      "Số hàm IF gấp đôi số lượng điều kiện.",
+      "Số hàm IF luôn mặc định là hai hàm."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 9,
+    "q": "Công thức nào sau đây viết đúng quy tắc xếp loại học sinh theo 3 mức tại ô I3 (SGK trang 42)?",
+    "options": [
+      "=IF(G3>=27, \"Xuất sắc\", IF(G3>=24, \"Giỏi\", \"---\"))",
+      "=IF(G3>=27, Xuất sắc, IF(G3>=24, Giỏi, ---))",
+      "=IF(G3>=27; \"Xuất sắc\"; \"Giỏi\"; \"---\")",
+      "=IF(G3>=27, \"Xuất sắc\", \"Giỏi\", \"---\")"
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if2",
+    "id": 10,
+    "q": "Kết quả của hàm IF lồng nhau có thể thuộc kiểu dữ liệu nào?",
+    "options": [
+      "Chỉ kiểu văn bản.",
+      "Chỉ kiểu số học.",
+      "Nhiều kiểu dữ liệu khác nhau.",
+      "Chỉ kiểu logic TRUE/FALSE."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if2",
+    "id": 11,
+    "q": "Trong sơ đồ khối Hình 1 (trang 41), nếu Tổng điểm là 25.5 thì xếp loại là gì?",
+    "options": [
+      "Xuất sắc.",
+      "Giỏi.",
+      "---",
+      "Yếu."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 12,
+    "q": "Điều gì xảy ra khi sao chép công thức hàm IF lồng nhau sử dụng địa chỉ tương đối?",
+    "options": [
+      "Địa chỉ ô sẽ không thay đổi.",
+      "Bảng tính sẽ hiện lỗi #REF!.",
+      "Địa chỉ ô thay đổi tương ứng.",
+      "Công thức sẽ bị xóa hoàn toàn."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if2",
+    "id": 13,
+    "q": "Tham số cuối cùng (<GT3>) trong cú pháp hai hàm IF lồng nhau có thể chứa yếu tố nào?",
+    "options": [
+      "Một hàm IF khác.",
+      "Một dấu phẩy đơn.",
+      "Chỉ giá trị bằng 0.",
+      "Một hàm tính tổng."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if2",
+    "id": 14,
+    "q": "Quy tắc tính Giảm giá: SL >= 5 giảm 30%, SL từ 3 đến < 5 giảm 10%, còn lại giảm 0. Công thức đúng là:",
+    "options": [
+      "=IF(C3>=5, 30%, 10%, 0)",
+      "=IF(C3>=5, E3*30%, IF(C3>=3, E3*10%, 0))",
+      "=IF(C3>=5, E3*30%) + IF(C3>=3, E3*10%)",
+      "=IF(C3<3, 0, E3*30%, E3*10%)"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 15,
+    "q": "Lợi ích của hàm IF lồng nhau so với hàm IF đơn là gì?",
+    "options": [
+      "Xử lý được nhiều phương án.",
+      "Công thức ngắn gọn hơn.",
+      "Tốc độ tính toán nhanh hơn.",
+      "Dễ viết công thức hơn."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if2",
+    "id": 16,
+    "q": "Trong bài thực hành tính Phần thưởng (trang 42), kết quả 50.000 tương ứng với điều kiện nào?",
+    "options": [
+      "I3 = \"Xuất sắc\"",
+      "I3 = \"Giỏi\"",
+      "I3 = \"---\"",
+      "I3 = \"Khá\""
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 17,
+    "q": "Nhận định nào sau đây là ĐÚNG về số lượng giá trị trả về của hàm IF lồng nhau?",
+    "options": [
+      "Luôn chỉ có hai giá trị.",
+      "Tối đa là ba giá trị.",
+      "Tùy thuộc vào số điều kiện.",
+      "Chỉ trả về giá trị số."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if2",
+    "id": 18,
+    "q": "Khi sử dụng hàm IF lồng nhau để xếp loại 5 mức, ta cần bao nhiêu điều kiện kiểm tra?",
+    "options": [
+      "2 điều kiện.",
+      "4 điều kiện.",
+      "5 điều kiện.",
+      "1 điều kiện."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 19,
+    "q": "Trong công thức xếp loại 5 mức (trang 43), nếu G21 bằng 18 thì kết quả là gì?",
+    "options": [
+      "Khá.",
+      "Trung bình.",
+      "Yếu.",
+      "Giỏi."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if2",
+    "id": 20,
+    "q": "Khi dùng 3 hàm IF lồng nhau, ta có thể điền tối đa bao nhiêu giá trị khác nhau cho một ô?",
+    "options": [
+      "Bốn giá trị.",
+      "Ba giá trị.",
+      "Năm giá trị.",
+      "Hai giá trị."
+    ],
+    "correct": 0
+  },
+
+  {
+    "topic": "if1",
+    "id": 1,
+    "q": "Hàm IF trong bảng tính được sử dụng nhằm mục đích gì?",
+    "options": [
+      "Tính tổng các ô thỏa mãn điều kiện.",
+      "Điền dữ liệu tự động dựa trên điều kiện.",
+      "Sắp xếp dữ liệu theo thứ tự tăng dần.",
+      "Xác thực dữ liệu khi nhập vào bảng tính."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 2,
+    "q": "Cú pháp đúng của hàm IF là gì?",
+    "options": [
+      "=IF(<ĐK>, <GT1>, <GT2>)",
+      "=IF(<GT1>, <GT2>, <ĐK>)",
+      "=IF(<ĐK>; <GT1> + <GT2>)",
+      "=IF(<ĐK>, <GT1>)"
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if1",
+    "id": 3,
+    "q": "Tham số <ĐK> trong hàm IF thường là loại biểu thức nào?",
+    "options": [
+      "Biểu thức số học.",
+      "Biểu thức văn bản.",
+      "Biểu thức so sánh.",
+      "Biểu thức thống kê."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 4,
+    "q": "Hàm IF thực hiện tính toán tham số nào đầu tiên?",
+    "options": [
+      "Tham số <GT1>.",
+      "Tham số <GT2>.",
+      "Tham số <ĐK>.",
+      "Cả ba tham số cùng lúc."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 5,
+    "q": "Kí hiệu nào sau đây đại diện cho phép toán 'So sánh khác'?",
+    "options": [
+      "==",
+      "<>",
+      "!=",
+      "><"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 6,
+    "q": "Hàm logic AND trả về giá trị TRUE khi nào?",
+    "options": [
+      "Khi có ít nhất một biểu thức là TRUE.",
+      "Khi tất cả các biểu thức là TRUE.",
+      "Khi tất cả các biểu thức là FALSE.",
+      "Khi biểu thức đầu tiên là TRUE."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 7,
+    "q": "Hàm logic OR trả về giá trị FALSE khi nào?",
+    "options": [
+      "Khi tất cả các biểu thức là FALSE.",
+      "Khi có ít nhất một biểu thức là FALSE.",
+      "Khi biểu thức cuối cùng là FALSE.",
+      "Khi tổng các biểu thức là FALSE."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if1",
+    "id": 8,
+    "q": "Kết quả của hàm IF có thể thuộc kiểu dữ liệu nào?",
+    "options": [
+      "Chỉ kiểu số.",
+      "Chỉ kiểu văn bản.",
+      "Văn bản, số, ngày tháng, tiền tệ.",
+      "Chỉ kiểu logic TRUE/FALSE."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 9,
+    "q": "Trong công thức =IF(G3>=27, 'Tặng vở', '-'), nếu G3 bằng 28, kết quả là gì?",
+    "options": [
+      "28",
+      "'-'",
+      "TRUE",
+      "'Tặng vở'"
+    ],
+    "correct": 3
+  },
+  {
+    "topic": "if1",
+    "id": 10,
+    "q": "Toán tử '>=' có ý nghĩa là gì?",
+    "options": [
+      "Lớn hơn hoặc bằng.",
+      "Nhỏ hơn hoặc bằng.",
+      "Lớn hơn.",
+      "Bằng hoặc khác."
+    ],
+    "correct": 0
+  },
+  {
+    "topic": "if1",
+    "id": 11,
+    "q": "Công thức =AND(8>=8, 7>=8, 9>=8) trả về kết quả nào?",
+    "options": [
+      "TRUE",
+      "FALSE",
+      "#VALUE!",
+      "8"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 12,
+    "q": "Công thức =OR(9>=9, 8>=9, 7>=9) trả về kết quả nào?",
+    "options": [
+      "FALSE",
+      "9",
+      "TRUE",
+      "#REF!"
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 13,
+    "q": "Khi giá trị cần điền là kí tự văn bản trong hàm IF, ta cần đặt chúng trong dấu gì?",
+    "options": [
+      "Dấu ngoặc đơn ( ).",
+      "Dấu ngoặc kép \" \".",
+      "Dấu ngoặc nhọn { }.",
+      "Dấu ngoặc vuông [ ]."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 14,
+    "q": "Trong hàm IF, nếu điều kiện <ĐK> có giá trị FALSE thì kết quả là gì?",
+    "options": [
+      "Giá trị <GT1>.",
+      "Giá trị <GT2>.",
+      "Giá trị 0.",
+      "Thông báo lỗi."
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 15,
+    "q": "Hàm AND và OR thường được dùng làm gì trong hàm IF?",
+    "options": [
+      "Làm tham số <GT1>.",
+      "Làm tham số <GT2>.",
+      "Làm tham số <ĐK>.",
+      "Làm tên hàm thay thế cho IF."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 16,
+    "q": "Toán tử nào dùng để so sánh 'Nhỏ hơn hoặc bằng'?",
+    "options": [
+      "=<",
+      "<=",
+      "=<=",
+      "<"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 17,
+    "q": "Kết quả của công thức =IF(10<5, 100, 200) là bao nhiêu?",
+    "options": [
+      "100",
+      "200",
+      "TRUE",
+      "FALSE"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 18,
+    "q": "Điều gì xảy ra khi sao chép công thức hàm IF chứa địa chỉ tương đối xuống hàng dưới?",
+    "options": [
+      "Địa chỉ ô giữ nguyên.",
+      "Công thức bị lỗi #REF!.",
+      "Địa chỉ ô thay đổi tương ứng.",
+      "Giá trị trả về luôn là <GT1>."
+    ],
+    "correct": 2
+  },
+  {
+    "topic": "if1",
+    "id": 19,
+    "q": "Hàm AND(TRUE, TRUE, FALSE) trả về giá trị nào?",
+    "options": [
+      "TRUE",
+      "FALSE",
+      "None",
+      "#N/A"
+    ],
+    "correct": 1
+  },
+  {
+    "topic": "if1",
+    "id": 20,
+    "q": "Hàm OR(FALSE, FALSE, TRUE) trả về giá trị nào?",
+    "options": [
+      "TRUE",
+      "FALSE",
+      "0",
+      "1"
+    ],
+    "correct": 0
+  }
+]

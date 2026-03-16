@@ -1,0 +1,319 @@
+[
+  {
+    "topic": "ppt",
+    "id": 1,
+    "question": "Trong PowerPoint, một trang trình chiếu được gọi là gì?",
+    "options": ["Page", "Slide", "Sheet", "Document"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 2,
+    "question": "Để chèn thêm một Slide mới vào bài trình chiếu, ta sử dụng tổ hợp phím nào?",
+    "options": ["Ctrl + N", "Ctrl + M", "Ctrl + S", "Ctrl + O"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 3,
+    "question": "Thẻ (Tab) nào chứa các lệnh để thay đổi nền Slide và chủ đề (Theme)?",
+    "options": ["Home", "Insert", "Design", "Transitions"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "ppt",
+    "id": 4,
+    "question": "Sự khác biệt giữa Transitions và Animations là gì?",
+    "options": [
+      "Transitions là hiệu ứng cho các đối tượng trên trang, Animations là hiệu ứng chuyển trang", 
+      "Transitions là hiệu ứng chuyển trang, Animations là hiệu ứng cho các đối tượng trên trang", 
+      "Cả hai đều giống nhau", 
+      "Transitions chỉ dành cho văn bản, Animations chỉ dành cho hình ảnh"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 5,
+    "question": "Để bắt đầu trình chiếu từ Slide đang chọn (Slide hiện hành), ta nhấn tổ hợp phím nào?",
+    "options": ["F5", "Ctrl + F5", "Shift + F5", "Alt + F5"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "ppt",
+    "id": 6,
+    "question": "Lệnh \"Hyperlink\" (Ctrl + K) dùng để làm gì?",
+    "options": [
+      "Tạo hiệu ứng chữ bay tới một trang web", 
+      "Tạo liên kết tới một trang web, một tệp tin hoặc một Slide khác trong bài", 
+      "Kiểm tra virus trong tệp PowerPoint", 
+      "Đóng gói toàn bộ bài trình chiếu thành một tệp video hoàn chỉnh để phát độc lập"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 7,
+    "question": "Để lưu một bài trình chiếu hiện có với một tên khác, ta sử dụng lệnh nào?",
+    "options": ["File -> Save", "File -> Save As", "File -> New", "File -> Print"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 8,
+    "question": "Để tạo một bản trình bày mới hoàn toàn trống, ta chọn mục nào?",
+    "options": ["New Slide", "Blank Presentation", "Design Template", "Layout"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 9,
+    "question": "Để thay đổi bố cục (cách sắp xếp tiêu đề, văn bản, hình ảnh) của một slide, ta chọn lệnh nào?",
+    "options": ["New Slide", "Reset", "Layout", "Section"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "ppt",
+    "id": 10,
+    "question": "Để bắt đầu trình chiếu từ Slide đầu tiên, ta nhấn phím nào?",
+    "options": ["F1", "F5", "Shift + F5", "Ctrl + F5"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 11,
+    "question": "Trong khi đang trình chiếu, muốn kết thúc buổi diễn thuyết và quay lại màn hình chỉnh sửa, ta nhấn phím nào?",
+    "options": ["Enter", "Esc", "Tab", "Delete"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "ppt",
+    "id": 12,
+    "question": "Để vẽ các hình khối như hình vuông, hình tròn, mũi tên, ta vào thẻ Insert và chọn mục nào?",
+    "options": ["Pictures", "Icons", "Shapes", "Screenshot"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 13,
+    "question": "Trong Excel, cụm từ \"Workbook\" dùng để chỉ:",
+    "options": [
+      "Một trang tính nằm bên trong tệp tin, nơi chứa các ô dữ liệu theo hàng và cột.", 
+      "Một tập hợp các ô tính.", 
+      "Một tệp tin Excel (bao gồm nhiều Sheet).", 
+      "Một biểu đồ."
+    ],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 14,
+    "question": "Trong Excel, các cột được ký hiệu bằng:",
+    "options": ["Số (1, 2, 3...).", "Chữ cái (A, B, C...).", "Ký hiệu đặc biệt (@, #, $...).", "Cả số và chữ cái."],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 15,
+    "question": "Công thức trong Excel luôn bắt đầu bằng dấu nào?",
+    "options": ["Dấu cộng (+)", "Dấu cách ( )", "Dấu bằng (=)", "Dấu ngoặc đơn (()"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 16,
+    "question": "Hàm nào dùng để đếm các ô có chứa dữ liệu kiểu số?",
+    "options": ["COUNT", "COUNTA", "COUNTIF", "COUNTBLANK"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 17,
+    "question": "Để tìm giá trị lớn nhất trong vùng dữ liệu A1:A10, ta dùng hàm:",
+    "options": ["=MIN(A1:A10)", "=LARGE(A1:A10)", "=MAX(A1:A10)", "=SUM(A1:A10)"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 18,
+    "question": "Để gộp nhiều ô thành một ô và căn giữa văn bản, ta chọn lệnh nào?",
+    "options": ["Wrap Text", "Merge & Center", "Format Painter", "Conditional Formatting"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 19,
+    "question": "Lỗi ##### trong Excel có nghĩa là gì?",
+    "options": [
+      "Công thức toán học hoặc logic vừa nhập bị sai cú pháp.", 
+      "Dữ liệu nhập vào quá dài so với độ rộng của ô.", 
+      "Không tìm thấy dữ liệu.", 
+      "Kiểu dữ liệu không hợp lệ."
+      ],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 20,
+    "question": "Trong Excel, địa chỉ $A1 là loại địa chỉ nào?",
+    "options": ["Tuyệt đối cột, tương đối dòng.", "Tuyệt đối dòng, tương đối cột.", "Tuyệt đối toàn phần.", "Tương đối toàn phần."],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 21,
+    "question": "Để di chuyển nhanh về ô A1, ta nhấn tổ hợp phím:",
+    "options": ["Ctrl + End", "Ctrl + Home", "Page Up", "Page Down"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 22,
+    "question": "Công cụ Filter trong thẻ Data dùng để:",
+    "options": [
+      "Sắp xếp dữ liệu theo thứ tự.", 
+      "Lọc dữ liệu theo điều kiện.", 
+      "Xóa dữ liệu.", 
+      "Định dạng dữ liệu."
+    ],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 23,
+    "question": "Để sắp xếp dữ liệu theo thứ tự tăng dần, ta chọn biểu tượng:",
+    "options": ["Sort A to Z", "Sort Z to A", "Filter", "Clear"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 24,
+    "question": "Phần mở rộng mặc định của tệp Excel từ phiên bản 2007 trở đi là gì?",
+    "options": [".xls", ".xlsx", ".doc", ".txt"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 25,
+    "question": "Địa chỉ ô $B$3 được gọi là loại địa chỉ nào?",
+    "options": ["Địa chỉ tương đối.", "Địa chỉ tuyệt đối.", "Địa chỉ hỗn hợp.", "Địa chỉ sai."],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 26,
+    "question": "Để chèn thêm một Sheet mới trong Excel, bạn sử dụng tổ hợp phím nào?",
+    "options": ["Shift + F11", "Ctrl + N", "Alt + F4", "Ctrl + Shift + N"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 27,
+    "question": "Hàm nào dùng để tính tổng các giá trị trong một phạm vi?",
+    "options": ["COUNT", "AVERAGE", "SUM", "MAX"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 28,
+    "question": "Lỗi #NAME? thường xảy ra khi:",
+    "options": [
+      "Sai tên hàm hoặc sai tên vùng dữ liệu.", 
+      "Chia cho 0.", 
+      "Kiểu dữ liệu không hợp lệ.", 
+      "Công thức toán học hoặc logic vừa nhập bị sai cú pháp."
+    ],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 29,
+    "question": "Để xuống dòng trong cùng một ô, ta dùng tổ hợp phím:",
+    "options": ["Enter", "Shift + Enter", "Alt + Enter", "Ctrl + Enter"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e30",
+    "id": 30,
+    "question": "Để lọc dữ liệu nhanh, ta sử dụng chức năng nào trong thẻ Data?",
+    "options": ["Sort", "Filter", "Validation", "Consolidate"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 31,
+    "question": "Kết quả của công thức =ROUND(125.456, 1) là:",
+    "options": ["125.4", "125.5", "125", "126"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e30",
+    "id": 32,
+    "question": "Phím tắt để chọn toàn bộ bảng tính là:",
+    "options": ["Ctrl + A", "Ctrl + S", "Ctrl + C", "Ctrl + V"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 33,
+    "question": "Để ẩn một cột trong Excel, ta thực hiện:",
+    "options": [
+      "Chuột phải vào tên cột -> Hide.", 
+      "Nhấp chọn tên cột -> nhấn phím Delete.", 
+      "Vào thẻ Insert -> chọn tên cột -> chọn Hide.", 
+      "Vào thẻ Home -> chọn Hide -> chọn tên cột."],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e30",
+    "id": 34,
+    "question": "Hàm nào trả về giá trị nhỏ nhất trong một vùng dữ liệu?",
+    "options": ["MIN", "MAX", "SMALL", "AVERAGE"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e32",
+    "id": 35,
+    "question": "Kết quả của công thức =IF(5>3, \"Đúng\", \"Sai\") là:",
+    "options": ["Đúng", "Sai", "5", "3"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e32",
+    "id": 36,
+    "question": "Kết quả của công thức =IF(5>8, \"Đạt\", \"Không đạt\") là:",
+    "options": ["Đạt", "Không đạt", "5", "8"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e32",
+    "id": 37,
+    "question": "Cấu trúc của hàm IF là:",
+    "options": ["=IF(Điều kiện, Giá trị đúng, Giá trị sai)", "=IF(Giá trị đúng, Giá trị sai, Điều kiện)", "=IF(Điều kiện, Giá trị sai, Giá trị đúng)", "=IF(Điều kiện; Giá trị sai; Giá trị đúng)"],
+    "correctIndex": 0
+  },
+  {
+    "topic": "e34",
+    "id": 38,
+    "question": "Hàm nào dùng để đếm các ô thỏa mãn một điều kiện cho trước?",
+    "options": ["COUNT", "COUNTA", "COUNTIF", "SUMIF"],
+    "correctIndex": 2
+  },
+  {
+    "topic": "e34",
+    "id": 39,
+    "question": "Để tính tổng các giá trị thỏa mãn một điều kiện, ta dùng hàm:",
+    "options": ["SUM", "SUMIF", "COUNTIF", "AVERAGEIF"],
+    "correctIndex": 1
+  },
+  {
+    "topic": "e34",
+    "id": 40,
+    "question": "Hàm RANK trong Excel dùng để làm gì?",
+    "options": [
+      "Tính tổng.", 
+      "Xếp hạng.", 
+      "Đếm dữ liệu.", 
+      "Tính luỹ thừa."],
+    "correctIndex": 1
+  }
+]
