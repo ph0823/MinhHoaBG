@@ -46,17 +46,17 @@
                     <label class="block text-gray-700 font-semibold mb-1">Lớp:</label>
                     <select id="class-input" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
                         <option value="" disabled selected>Chọn lớp...</option>
-                        <option value="7.1">7.1</option>
-                        <option value="7.2">7.2</option>
-                        <option value="7.3">7.3</option>
-                        <option value="7.4">7.4</option>
-                        <option value="7.5">7.5</option>                        
-                        <option value="7.6">7.6</option>
-                        <option value="7.7">7.7</option>
-                        <option value="7.8">7.8</option>
-                        <option value="7.9">7.9</option>
-                        <option value="7.10">7.10</option>
-                        <option value="7.11">7.11</option>
+                        <option value="7a1">7.1</option>
+                        <option value="7a2">7.2</option>
+                        <option value="7a3">7.3</option>
+                        <option value="7a4">7.4</option>
+                        <option value="7a5">7.5</option>                        
+                        <option value="7a6">7.6</option>
+                        <option value="7a7">7.7</option>
+                        <option value="7a8">7.8</option>
+                        <option value="7a9">7.9</option>
+                        <option value="7a10">7.10</option>
+                        <option value="7a11">7.11</option>
                     </select>
                 </div>
                 <div>
@@ -165,10 +165,50 @@
 
         infoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             studentClass = document.getElementById('class-input').value;
-            studentId = document.getElementById('id-input').value;
-            studentName = document.getElementById('name-input').value;
+            let rawId = document.getElementById('id-input').value.trim();
+            let rawName = document.getElementById('name-input').value.trim();
 
+            // --- 1. KIỂM TRA SỐ THỨ TỰ (STT) ---
+            // Phải là số nguyên và nằm trong khoảng 1 - 52
+            let sttNum = parseInt(rawId, 10);
+            if (!/^\d+$/.test(rawId) || sttNum < 1 || sttNum > 52) {
+                alert("STT không hợp lệ! Vui lòng chỉ nhập số nguyên từ 1 đến 52.");
+                document.getElementById('id-input').focus();
+                return;
+            }
+            studentId = rawId;
+
+            // --- 2. CHUẨN HOÁ HỌ TÊN (Tự động viết hoa, xóa khoảng trắng) ---
+            studentName = rawName
+                .replace(/\s+/g, ' ') 
+                .toLowerCase()        
+                .replace(/(^|\s)\S/g, function(letter) { return letter.toUpperCase(); });
+
+            // --- 3. KIỂM TRA HỌ VÀ TÊN (Bằng Regex) ---
+            const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/;
+            
+            if (!nameRegex.test(studentName)) {
+                alert("Họ và tên không hợp lệ! Vui lòng chỉ nhập chữ cái tiếng Việt (không dùng số hay ký hiệu đặc biệt).");
+                document.getElementById('name-input').focus();
+                return;
+            }
+
+            if (studentName.length < 3 || studentName.length > 50) {
+                alert("Họ và tên phải có độ dài từ 3 đến 50 ký tự.");
+                document.getElementById('name-input').focus();
+                return;
+            }
+
+            // Ngăn chặn gõ lặp lại 1 ký tự 4 lần liên tiếp (VD: aaaa, hahahahaha)
+            if (/(.)\1{3,}/.test(studentName.replace(/\s/g, ''))) {
+                alert("Họ và tên không hợp lệ (phát hiện ký tự gõ lặp lại bất thường)!");
+                document.getElementById('name-input').focus();
+                return;
+            }
+
+            // Nếu vượt qua kiểm tra tính hợp lệ thông tin học sinh thì mới bắt đầu tải dữ liệu
             const startBtn = document.getElementById('start-btn');
             startBtn.textContent = "Đang tải dữ liệu..."; startBtn.disabled = true;
 

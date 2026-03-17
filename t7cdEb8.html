@@ -46,17 +46,17 @@
                     <label class="block text-gray-700 font-semibold mb-1">Lớp:</label>
                     <select id="class-input" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
                         <option value="" disabled selected>Chọn lớp...</option>
-                        <option value="7.1">7.1</option>
-                        <option value="7.2">7.2</option>
-                        <option value="7.3">7.3</option>
-                        <option value="7.4">7.4</option>
-                        <option value="7.5">7.5</option>                        
-                        <option value="7.6">7.6</option>
-                        <option value="7.7">7.7</option>
-                        <option value="7.8">7.8</option>
-                        <option value="7.9">7.9</option>
-                        <option value="7.10">7.10</option>
-                        <option value="7.11">7.11</option>
+                        <option value="7a1">7.1</option>
+                        <option value="7a2">7.2</option>
+                        <option value="7a3">7.3</option>
+                        <option value="7a4">7.4</option>
+                        <option value="7a5">7.5</option>                        
+                        <option value="7a6">7.6</option>
+                        <option value="7a7">7.7</option>
+                        <option value="7a8">7.8</option>
+                        <option value="7a9">7.9</option>
+                        <option value="7a10">7.10</option>
+                        <option value="7a11">7.11</option>
                     </select>
                 </div>
                 <div>
@@ -126,8 +126,20 @@
     </div>
 
     <script>
+        // --- CHỐNG GIAN LẬN TOÀN DIỆN ---
+        // 1. Chặn click chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
+        // 2. Chặn Copy & Cut bằng chuột
         document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        // 3. Chặn các phím tắt nguy hiểm (Ctrl+C, Ctrl+X, Ctrl+U, Ctrl+P, F12)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') { e.preventDefault(); }
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'x' || e.key === 'u' || e.key === 'p' || 
+                              e.key === 'C' || e.key === 'X' || e.key === 'U' || e.key === 'P')) {
+                e.preventDefault();
+            }
+        });
 
         const CONFIG = {
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec",
@@ -139,7 +151,7 @@
         
         let allQuizData = [];
         let questions = [];
-        let questionStates = []; // Mảng quan trọng để ghi nhớ trạng thái từng câu
+        let questionStates = []; 
         let currentQuestionIndex = 0;
         let scoreCount = 0; 
         
@@ -165,9 +177,43 @@
 
         infoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             studentClass = document.getElementById('class-input').value;
-            studentId = document.getElementById('id-input').value;
-            studentName = document.getElementById('name-input').value;
+            let rawId = document.getElementById('id-input').value.trim();
+            let rawName = document.getElementById('name-input').value.trim();
+
+            let sttNum = parseInt(rawId, 10);
+            if (!/^\d+$/.test(rawId) || sttNum < 1 || sttNum > 60) {
+                alert("STT không hợp lệ! Vui lòng chỉ nhập số nguyên từ 1 đến 60.");
+                document.getElementById('id-input').focus();
+                return;
+            }
+            studentId = rawId;
+
+            studentName = rawName
+                .replace(/\s+/g, ' ') 
+                .toLowerCase()        
+                .replace(/(^|\s)\S/g, function(letter) { return letter.toUpperCase(); });
+
+            const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/;
+            
+            if (!nameRegex.test(studentName)) {
+                alert("Họ và tên không hợp lệ! Vui lòng chỉ nhập chữ cái tiếng Việt (không dùng số hay ký hiệu đặc biệt).");
+                document.getElementById('name-input').focus();
+                return;
+            }
+
+            if (studentName.length < 3 || studentName.length > 50) {
+                alert("Họ và tên phải có độ dài từ 3 đến 50 ký tự.");
+                document.getElementById('name-input').focus();
+                return;
+            }
+
+            if (/(.)\1{3,}/.test(studentName.replace(/\s/g, ''))) {
+                alert("Họ và tên không hợp lệ (phát hiện ký tự gõ lặp lại bất thường)!");
+                document.getElementById('name-input').focus();
+                return;
+            }
 
             const startBtn = document.getElementById('start-btn');
             startBtn.textContent = "Đang tải dữ liệu..."; startBtn.disabled = true;
@@ -182,17 +228,15 @@
                 document.getElementById('display-id').textContent = `STT: ${studentId}`;
                 document.getElementById('result-student-info').textContent = `${studentName} - Lớp ${studentClass} - STT ${studentId}`;
 
-                // Trộn câu hỏi và khởi tạo trạng thái
                 questions = selectQuestions();
                 
-                // Chuẩn bị biến state để lưu vết thao tác của học sinh
                 questionStates = questions.map(q => {
                     let opts = q.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
                     return {
-                        passed: false,          // Đã vượt qua câu này chưa?
-                        wrongFirstTry: false,   // Có chọn sai ngay lần chạm đầu không?
-                        clickedWrongIdxs: [],   // Lưu các đáp án sai đã bấm
-                        shuffledOptions: shuffleArray(opts) // Xáo trộn cố định cho riêng câu này
+                        passed: false,          
+                        wrongFirstTry: false,   
+                        clickedWrongIdxs: [],   
+                        shuffledOptions: shuffleArray(opts) 
                     };
                 });
 
@@ -238,7 +282,6 @@
             }, 1000);
         }
 
-        // --- TẢI CÂU HỎI VÀ KHÔI PHỤC TRẠNG THÁI ---
         function loadQuestion() {
             const qData = questions[currentQuestionIndex];
             const state = questionStates[currentQuestionIndex];
@@ -254,26 +297,20 @@
 
             const letters = ['A', 'B', 'C', 'D'];
 
-            // Lấy lại danh sách đáp án đã trộn từ trước để khi Quay lại không bị đổi vị trí
             state.shuffledOptions.forEach((optObj, index) => {
                 const btn = document.createElement('button');
                 btn.className = "option-btn w-full text-left p-4 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-800 font-medium hover:bg-blue-50 focus:outline-none";
                 btn.innerHTML = `<span class="font-bold text-blue-600 mr-2">${letters[index]}.</span> ${optObj.text}`;
-                
-                // Khôi phục trạng thái nếu câu này đã làm
-                // Thay thế đoạn khôi phục trạng thái cũ bằng đoạn này:
             
-                // 1. LUÔN BÔI ĐỎ CÁC ĐÁP ÁN ĐÃ TỪNG BẤM SAI (Nếu có)
                 if (state.clickedWrongIdxs.includes(optObj.originalIndex)) {
                     btn.classList.add('wrong');
                     btn.disabled = true;
                 }
 
-                // 2. KHÓA TẤT CẢ VÀ BÔI XANH ĐÁP ÁN ĐÚNG NẾU CÂU ĐÃ ĐƯỢC VƯỢT QUA
                 if (state.passed) {
-                    btn.disabled = true; // Khóa toàn bộ nút
+                    btn.disabled = true; 
                     if (optObj.originalIndex === qData.correctIndex) {
-                        btn.classList.add('correct'); // Bôi xanh đáp án đúng
+                        btn.classList.add('correct'); 
                         feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Em đã hoàn thành câu này.</span>";
                     }
                 }
@@ -286,68 +323,55 @@
         }
 
         function checkAnswer(btn, selectedIdx, correctIdx, qId, optionText) {
-            // Ngăn việc click đúp hoặc click các nút đang bị khóa
             if (btn.disabled) return;
 
-            // Lấy dữ liệu thống kê từ LocalStorage
             let stats = JSON.parse(localStorage.getItem('excelStats_THCS')) || {};
             if (!stats[qId]) stats[qId] = { attempts: 0, wrongFirstTry: 0 };
             
-            // Lấy trạng thái và dữ liệu của câu hỏi hiện tại
             const state = questionStates[currentQuestionIndex];
             const feedbackBox = document.getElementById('feedback-text');
             const qData = questions[currentQuestionIndex]; 
 
-            // 1. NẾU CHỌN ĐÚNG
             if (selectedIdx === correctIdx) {
                 btn.classList.add('correct');
                 state.passed = true;
                 feedbackBox.innerHTML = "<span class='text-green-600 font-bold'>✅ Chính xác! Nhấn nút 'Câu tiếp' để đi tiếp.</span>";
 
-                // Vô hiệu hóa tất cả các nút ngay lập tức
                 document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
 
-                // Tính điểm nếu đây là lần chạm đầu tiên
                 if (!state.wrongFirstTry) {
                     scoreCount++;
                     stats[qId].attempts++;
                     localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
                 }
                 
-                // Cập nhật hiển thị nút điều hướng
                 updateNavigationButtons(true);
             } 
-            // 2. NẾU CHỌN SAI
             else {
                 btn.classList.add('wrong');
-                btn.disabled = true; // Khóa đáp án sai này lại
-                state.clickedWrongIdxs.push(selectedIdx); // Lưu vết nút sai đã bấm
+                btn.disabled = true; 
+                state.clickedWrongIdxs.push(selectedIdx); 
                 feedbackBox.innerHTML = "<span class='text-red-600 font-bold animate-pulse'>❌ Chưa chính xác, em hãy chọn lại!</span>";
 
-                // Ghi nhận lịch sử sai ngay lần chạm đầu
                 if (!state.wrongFirstTry) {
                     state.wrongFirstTry = true;
                     stats[qId].attempts++;
                     stats[qId].wrongFirstTry++;
                     localStorage.setItem('excelStats_THCS', JSON.stringify(stats));
                     
-                    // LƯU ID CÂU HỎI, ĐÁP ÁN SAI VÀ ĐÁP ÁN ĐÚNG LÊN GOOGLE SHEETS
                     let correctText = qData.options[qData.correctIndex];
                     userMistakes.push(`[ID: ${qId} | Sai: ${optionText} | Đúng: ${correctText}]`);
                 }
             }
         }
 
-        // --- XỬ LÝ NÚT ĐIỀU HƯỚNG ---
         function updateNavigationButtons(isCurrentPassed) {
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
 
-            // Xử lý nút Câu trước
             if (currentQuestionIndex > 0) prevBtn.classList.remove('invisible');
             else prevBtn.classList.add('invisible');
 
-            // Xử lý nút Câu tiếp
             if (isCurrentPassed) {
                 nextBtn.classList.remove('invisible');
                 if (currentQuestionIndex === questions.length - 1) {
