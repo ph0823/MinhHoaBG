@@ -375,18 +375,21 @@
             const title = document.getElementById('result-title');
             const msg = document.getElementById('result-message');
 
-            if (scoreCount === totalQuestions) {
+            if (score === totalQuestions) {
                 document.getElementById('app').classList.add('perfect-bg');
                 title.innerText = "XUẤT SẮC!";
                 icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
-                msg.innerText = "Chúc mừng! Em đã hoàn thành bài thi một cách hoàn hảo.";
+                // Đã thêm tên học sinh vào đây
+                msg.innerText = `Chúc mừng! ${userName} đã hoàn thành xuất sắc.`;
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            } else if (finalScoreVal >= 5) {
+            } else if (ratio >= 0.5) {
                 icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
-                msg.innerText = "Làm tốt lắm! Lần sau cố gắng đúng ngay từ lần đầu chọn nhé.";
+                // Đã thêm tên học sinh vào đây (và sửa nhẹ lại lỗi dư khoảng trắng chữ "nắm vững")
+                msg.innerText = `Làm tốt lắm! Bạn ${userName} đã nắm vững kiến thức.`;
             } else {
                 icon.innerHTML = '<i class="fa-solid fa-book-open text-6xl text-orange-500"></i>';
-                msg.innerText = "Đừng nản, hãy ôn tập lại.";
+                // Đã thêm tên học sinh vào đây
+                msg.innerText = `Đừng nản ${userName}, hãy ôn tập lại.`;
             }
 
             // Gửi dữ liệu về Sheet

@@ -419,7 +419,7 @@
             const feedback = document.getElementById('feedback-message');
             if (finalScoreVal >= 8) { feedback.textContent = "Xuất sắc! Em nắm kiến thức rất tốt."; feedback.className = "text-green-600 font-bold text-lg mb-8"; } 
             else if (finalScoreVal >= 5) { feedback.textContent = "Khá tốt! Hãy xem lại những câu làm sai nhé."; feedback.className = "text-blue-600 font-bold text-lg mb-8"; } 
-            else { feedback.textContent = "Đừng nản, làm lại sẽ nhớ ngay!"; feedback.className = "text-red-500 font-bold text-lg mb-8"; }
+            else { feedback.textContent = `Đừng nản, ${userName} làm lại sẽ nhớ ngay!`; feedback.className = "text-red-500 font-bold text-lg mb-8"; }            
 
             sendToGoogleSheet(finalScoreFixed);
         }
@@ -431,7 +431,7 @@
             const formData = new URLSearchParams();
             formData.append("sheetName", CONFIG.sheetName);
             formData.append("topic", CONFIG.topic);
-            formData.append("userClass", "'" + studentClass); 
+            formData.append("userClass", studentClass); 
             formData.append("stt", studentId);
             formData.append("name", studentName);
             formData.append("score", score);
