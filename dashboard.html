@@ -34,14 +34,14 @@
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Lớp</label>
                     <select id="filter-class" class="px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
                         <option value="all">Tất cả các lớp</option>
-                        <option value="9.1">9.1</option>
-                        <option value="9.2">9.2</option>
-                        <option value="9.3">9.3</option>
-                        <option value="9.4">9.4</option>
-                        <option value="9.5">9.5</option>
-                        <option value="9.14">9.14</option>
-                        <option value="9.15">9.15</option>
-                        <option value="9.16">9.16</option>
+                        <option value="9a1">9.1</option>
+                        <option value="9a2">9.2</option>
+                        <option value="9a3">9.3</option>
+                        <option value="9a4">9.4</option>
+                        <option value="9a5">9.5</option>
+                        <option value="9a14">9.14</option>
+                        <option value="9a15">9.15</option>
+                        <option value="9a16">9.16</option>
                     </select>
                 </div>
             </div>
@@ -81,7 +81,7 @@
 
     <script>
     // --- 1. CẤU HÌNH API ---
-    // !!! QUAN TRỌNG: Thay URL dưới đây bằng Web App URL của bạn !!!
+    
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
 
     let allData = []; // Chứa dữ liệu tải về từ Google Sheet
@@ -175,12 +175,22 @@
         data.forEach(row => {
             let scoreColor = row.score >= 8 ? 'text-green-600' : (row.score >= 5 ? 'text-amber-500' : 'text-red-500');
             
-            // Xử lý hiển thị phần chi tiết câu sai
+            // Xử lý hiển thị phần chi tiết câu sai            
             let detailsHtml = "";
-            if (!row.details || row.details.trim() === "") {
-                detailsHtml = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Không sai câu nào</span>`;
+
+            if (row.score === 10) {
+                // Điểm 10 không có lỗi sai, hiển thị huy hiệu Tuyệt đối cho đẹp mắt
+                detailsHtml = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> Tuyệt đối</span>`;
+            } else if (row.score <= 5) {
+                // Điểm <= 5 thì khóa xem chi tiết
+                detailsHtml = `<span class="text-slate-400 text-xs italic"><i class="fa-solid fa-eye-slash mr-1"></i>Không hỗ trợ xem chi tiết</span>`;
             } else {
-                detailsHtml = `<span class="text-xs text-slate-600">${row.details}</span>`;
+                // Các trường hợp > 5 và < 10 thì hiển thị lỗi bình thường
+                if (!row.details || row.details.trim() === "") {
+                    detailsHtml = `<span class="text-slate-400 text-xs">Không có dữ liệu</span>`;
+                } else {
+                    detailsHtml = `<span class="text-xs text-slate-600 leading-relaxed block">${row.details}</span>`;
+                }
             }
 
             let tr = document.createElement('tr');
