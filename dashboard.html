@@ -47,25 +47,20 @@
             </div>
         </div>
 
-        <div id="missing-stt-container" class="mt-4 p-4 bg-orange-50 rounded-xl border border-orange-100 hidden transition-all">
+        <div id="missing-stt-container" class="mt-4 p-4 bg-orange-50 rounded-xl border border-orange-100 hidden transition-all mx-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <h3 class="font-bold text-slate-700"><i class="fa-solid fa-user-clock text-orange-500 mr-2"></i>Học sinh chưa nộp bài (STT):</h3>
                 
                 <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm w-fit">
                     <label for="max-students" class="text-sm font-semibold text-slate-500 whitespace-nowrap">Sĩ số lớp:</label>
-                    <input type="number" id="max-students" value="50" min="1" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-blue-600 font-bold focus:ring-2 focus:ring-blue-500 outline-none" oninput="applyFilters()">
+                    <input type="number" id="max-students" value="50" min="1" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-blue-600 font-bold focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateView()">
                 </div>
             </div>
             <div id="missing-stt-list" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <div class="p-6 bg-slate-50 flex justify-between items-start border-b">
-            <div class="w-2/3">
-                <h3 class="text-sm font-bold text-red-600 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Học sinh chưa làm bài (Dựa trên STT từ 1-52):</h3>
-                <div id="missing-students" class="flex flex-wrap gap-2 text-sm font-medium text-slate-600">
-                    </div>
-            </div>
-            <div class="flex flex-col gap-2 w-1/3 items-end">
+        <div class="p-6 bg-slate-50 flex justify-end items-center border-b">
+            <div class="flex flex-col gap-2 items-end">
                 <span class="text-sm font-bold text-slate-700">Sắp xếp theo:</span>
                 <div class="flex bg-slate-200 p-1 rounded-lg">
                     <button onclick="sortData('stt')" id="btn-sort-stt" class="px-3 py-1 text-sm rounded bg-white shadow-sm font-bold text-blue-600 transition-all">STT Tăng dần</button>
@@ -86,29 +81,25 @@
                     </tr>
                 </thead>
                 <tbody id="table-body" class="text-slate-700">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
 
     <script>
     // --- 1. CẤU HÌNH API ---
-    
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
 
-    let allData = []; // Chứa dữ liệu tải về từ Google Sheet
+    let allData = []; 
     let currentSort = 'stt'; 
 
     // --- 2. HÀM KHỞI TẠO & LẮNG NGHE SỰ KIỆN ---
-    // Lắng nghe thay đổi khi chọn Sheet mới -> Tải lại dữ liệu từ Server
     document.getElementById('filter-sheet').addEventListener('change', (e) => {
         fetchDataFromServer(e.target.value);
     });
     
-    // Lắng nghe thay đổi lớp -> Chỉ cần lọc lại dữ liệu đã tải
     document.getElementById('filter-class').addEventListener('change', updateView);
 
-    // Chạy lần đầu tiên: Lấy dữ liệu của sheet mặc định đang hiển thị
     const initialSheet = document.getElementById('filter-sheet').value;
     fetchDataFromServer(initialSheet);
 
@@ -118,18 +109,14 @@
         tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-blue-500 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu từ hệ thống...</td></tr>`;
         
         try {
-            // Gọi hàm doGet của Apps Script với tham số sheet
             const response = await fetch(`${SCRIPT_URL}?sheet=${sheetName}`);
             const rawJson = await response.json();
 
-            // Nếu Script trả về lỗi (ví dụ: Không tìm thấy thẻ)
             if (rawJson.error) {
                 console.warn(rawJson.error);
                 allData = [];
             } else {
-                // Ánh xạ (Map) dữ liệu từ cột tiếng Việt sang Object chuẩn để dễ quản lý
                 allData = rawJson.map(row => {
-                    // Xử lý loại bỏ dấu nháy đơn (') ở đầu tên lớp do Apps Script thêm vào
                     let rawClass = row["Lớp"] ? row["Lớp"].toString() : "";
                     if (rawClass.startsWith("'")) rawClass = rawClass.substring(1);
 
@@ -144,7 +131,6 @@
                 });
             }
             
-            // Cập nhật giao diện sau khi có dữ liệu
             updateView();
             
         } catch (error) {
@@ -157,21 +143,19 @@
     function updateView() {
         const selectedClass = document.getElementById('filter-class').value;
 
-        // Lọc theo lớp (Sheet đã được lọc từ lúc gọi API)
         let filtered = [...allData];
         if (selectedClass !== 'all') {
             filtered = filtered.filter(item => item.userClass === selectedClass);
         }
 
-        // Sắp xếp dữ liệu hiện tại
         if (currentSort === 'stt') {
             filtered.sort((a, b) => a.stt - b.stt);
         } else {
-            filtered.sort((a, b) => b.score - a.score); // Sắp xếp giảm dần
+            filtered.sort((a, b) => b.score - a.score); 
         }
 
         renderTable(filtered);
-        renderMissingStudents(filtered, selectedClass);
+        updateMissingStts(filtered); 
     }
 
     // --- 5. HÀM HIỂN THỊ BẢNG ĐIỂM ---
@@ -187,17 +171,13 @@
         data.forEach(row => {
             let scoreColor = row.score >= 8 ? 'text-green-600' : (row.score >= 5 ? 'text-amber-500' : 'text-red-500');
             
-            // Xử lý hiển thị phần chi tiết câu sai            
             let detailsHtml = "";
 
             if (row.score === 10) {
-                // Điểm 10 không có lỗi sai, hiển thị huy hiệu Tuyệt đối cho đẹp mắt
                 detailsHtml = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> Tuyệt đối</span>`;
             } else if (row.score <= 5) {
-                // Điểm <= 5 thì khóa xem chi tiết
                 detailsHtml = `<span class="text-slate-400 text-xs italic"><i class="fa-solid fa-eye-slash mr-1"></i>Không hỗ trợ xem chi tiết</span>`;
             } else {
-                // Các trường hợp > 5 và < 10 thì hiển thị lỗi bình thường
                 if (!row.details || row.details.trim() === "") {
                     detailsHtml = `<span class="text-slate-400 text-xs">Không có dữ liệu</span>`;
                 } else {
@@ -223,8 +203,8 @@
         const missingContainer = document.getElementById('missing-stt-container');
         const missingDiv = document.getElementById('missing-stt-list');
         
-        // Lấy giá trị sĩ số lớp từ ô input (mặc định là 50)
         const maxStudents = parseInt(document.getElementById('max-students').value) || 50;
+        const currentClass = document.getElementById('filter-class').value;
 
         if (currentClass === 'all') {
             missingContainer.classList.add('hidden');
@@ -241,7 +221,6 @@
         const submittedStts = data.map(item => item.stt);
         let missing = [];
 
-        // Dò từ STT 1 đến maxStudents (thay vì fix cứng số 52)
         for (let i = 1; i <= maxStudents; i++) {
             if (!submittedStts.includes(i)) {
                 missing.push(i);
@@ -274,7 +253,6 @@
 
         updateView();
     }
-</script>
-        
+    </script>
 </body>
 </html>
