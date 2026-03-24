@@ -47,6 +47,18 @@
             </div>
         </div>
 
+        <div id="missing-stt-container" class="mt-4 p-4 bg-orange-50 rounded-xl border border-orange-100 hidden transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <h3 class="font-bold text-slate-700"><i class="fa-solid fa-user-clock text-orange-500 mr-2"></i>Học sinh chưa nộp bài (STT):</h3>
+                
+                <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm w-fit">
+                    <label for="max-students" class="text-sm font-semibold text-slate-500 whitespace-nowrap">Sĩ số lớp:</label>
+                    <input type="number" id="max-students" value="50" min="1" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-blue-600 font-bold focus:ring-2 focus:ring-blue-500 outline-none" oninput="applyFilters()">
+                </div>
+            </div>
+            <div id="missing-stt-list" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <div class="p-6 bg-slate-50 flex justify-between items-start border-b">
             <div class="w-2/3">
                 <h3 class="text-sm font-bold text-red-600 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Học sinh chưa làm bài (Dựa trên STT từ 1-52):</h3>
@@ -207,19 +219,30 @@
     }
 
     // --- 6. HÀM TÌM HỌC SINH CHƯA LÀM BÀI ---
-    function renderMissingStudents(data, currentClass) {
-        const missingDiv = document.getElementById('missing-students');
+    function updateMissingStts(data) {
+        const missingContainer = document.getElementById('missing-stt-container');
+        const missingDiv = document.getElementById('missing-stt-list');
         
+        // Lấy giá trị sĩ số lớp từ ô input (mặc định là 50)
+        const maxStudents = parseInt(document.getElementById('max-students').value) || 50;
+
         if (currentClass === 'all') {
-            missingDiv.innerHTML = "<span class='text-slate-400 italic'>Vui lòng chọn 1 lớp cụ thể (vd: 9.1) để phần mềm tự động dò tìm STT thiếu.</span>";
+            missingContainer.classList.add('hidden');
+            return;
+        }
+
+        missingContainer.classList.remove('hidden');
+
+        if (data.length === 0) {
+            missingDiv.innerHTML = "<span class='text-slate-500 italic'>Chưa có dữ liệu để thống kê.</span>";
             return;
         }
 
         const submittedStts = data.map(item => item.stt);
         let missing = [];
 
-        // Dò từ STT 1 đến 52
-        for (let i = 1; i <= 52; i++) {
+        // Dò từ STT 1 đến maxStudents (thay vì fix cứng số 52)
+        for (let i = 1; i <= maxStudents; i++) {
             if (!submittedStts.includes(i)) {
                 missing.push(i);
             }
