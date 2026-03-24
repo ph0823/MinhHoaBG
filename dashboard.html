@@ -59,7 +59,16 @@
             <div id="missing-stt-list" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <div class="p-6 bg-slate-50 flex justify-end items-center border-b">
+        <div class="p-6 bg-slate-50 flex flex-wrap justify-between items-center border-b gap-4">
+            
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-slate-700">Lọc điểm trùng lặp:</span>
+                <select id="score-method" class="px-3 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-medium text-blue-700 shadow-sm transition-all" onchange="updateView()">
+                    <option value="highest">Lấy điểm cao nhất</option>
+                    <option value="first">Lấy điểm làm lần đầu</option>
+                </select>
+            </div>
+
             <div class="flex flex-col gap-2 items-end">
                 <span class="text-sm font-bold text-slate-700">Sắp xếp theo:</span>
                 <div class="flex bg-slate-200 p-1 rounded-lg">
@@ -139,23 +148,61 @@
         }
     }
 
-    // --- 4. HÀM CẬP NHẬT GIAO DIỆN CHÍNH ---
+    // --- 4. HÀM CẬP NHẬT GIAO DIỆN CHÍNH (Đã xử lý gộp STT) ---
     function updateView() {
         const selectedClass = document.getElementById('filter-class').value;
+        const scoreMethod = document.getElementById('score-method').value; // 'highest' hoặc 'first'
 
+        // 4.1 Lọc theo lớp
         let filtered = [...allData];
         if (selectedClass !== 'all') {
             filtered = filtered.filter(item => item.userClass === selectedClass);
         }
 
+        // 4.2 Gộp dữ liệu học sinh làm nhiều lần
+        const studentMap = new Map();
+
+        filtered.forEach(row => {
+            // Tạo khóa duy nhất cho mỗi học sinh: Lớp + STT
+            const uniqueKey = `${row.userClass}-${row.stt}`;
+            
+            if (!studentMap.has(uniqueKey)) {
+                // Lần đầu tiên bắt gặp học sinh này trong danh sách
+                studentMap.set(uniqueKey, { ...row, attemptCount: 1 });
+            } else {
+                // Học sinh đã tồn tại (làm lại lần 2, lần 3...)
+                let existingRecord = studentMap.get(uniqueKey);
+                let newAttemptCount = existingRecord.attemptCount + 1; // Tăng bộ đếm
+                
+                if (scoreMethod === 'highest') {
+                    // Nếu chế độ lấy điểm cao nhất và điểm lần này cao hơn hiện tại
+                    if (row.score > existingRecord.score) {
+                        studentMap.set(uniqueKey, { ...row, attemptCount: newAttemptCount });
+                    } else {
+                        // Điểm thấp hơn thì giữ nguyên bài làm tốt nhất, nhưng vẫn cập nhật số lần làm
+                        existingRecord.attemptCount = newAttemptCount;
+                    }
+                } else if (scoreMethod === 'first') {
+                    // Nếu chế độ lấy lần đầu, ta giữ nguyên existingRecord vì nó là bản ghi đầu tiên,
+                    // chỉ cập nhật tổng số lần làm bài.
+                    existingRecord.attemptCount = newAttemptCount;
+                }
+            }
+        });
+
+        // Chuyển kết quả đã gộp từ Map về lại Array
+        let processedData = Array.from(studentMap.values());
+
+        // 4.3 Sắp xếp dữ liệu sau khi gộp
         if (currentSort === 'stt') {
-            filtered.sort((a, b) => a.stt - b.stt);
+            processedData.sort((a, b) => a.stt - b.stt);
         } else {
-            filtered.sort((a, b) => b.score - a.score); 
+            processedData.sort((a, b) => b.score - a.score); 
         }
 
-        renderTable(filtered);
-        updateMissingStts(filtered); 
+        // 4.4 Cập nhật bảng và thống kê
+        renderTable(processedData);
+        updateMissingStts(processedData); 
     }
 
     // --- 5. HÀM HIỂN THỊ BẢNG ĐIỂM ---
@@ -172,7 +219,6 @@
             let scoreColor = row.score >= 8 ? 'text-green-600' : (row.score >= 5 ? 'text-amber-500' : 'text-red-500');
             
             let detailsHtml = "";
-
             if (row.score === 10) {
                 detailsHtml = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> Tuyệt đối</span>`;
             } else if (row.score <= 5) {
@@ -185,12 +231,17 @@
                 }
             }
 
+            // Tạo nhãn (Badge) nếu học sinh làm bài nhiều hơn 1 lần
+            let attemptBadge = row.attemptCount > 1 
+                ? `<span class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full" title="Học sinh này đã làm bài ${row.attemptCount} lần"><i class="fa-solid fa-rotate-right mr-1"></i> Làm ${row.attemptCount} lần</span>` 
+                : '';
+
             let tr = document.createElement('tr');
             tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
             tr.innerHTML = `
                 <td class="py-3 px-4 font-semibold">${row.userClass}</td>
                 <td class="py-3 px-4 text-slate-500 font-mono">${row.stt}</td>
-                <td class="py-3 px-4 font-bold text-slate-800">${row.name}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${row.name} ${attemptBadge}</td>
                 <td class="py-3 px-4 font-black ${scoreColor} text-lg">${row.score.toFixed(1)}</td>
                 <td class="py-3 px-4 max-w-xs truncate" title="${row.details}">${detailsHtml}</td>
             `;
