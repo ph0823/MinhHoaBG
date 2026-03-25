@@ -101,6 +101,24 @@
         </div>
     </div>
 
+    <div id="details-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-lg text-slate-800">
+                    <i class="fa-solid fa-clipboard-question text-blue-600 mr-2"></i>Chi tiết lỗi sai - <span id="modal-student-name" class="text-blue-600"></span>
+                </h3>
+                <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="modal-wrong-list" class="p-4 overflow-y-auto flex-1 bg-white space-y-3">
+                </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-right">
+                <button onclick="closeDetailsModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-sm transition-colors">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // --- 1. CẤU HÌNH API ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec"; 
@@ -109,6 +127,15 @@
     let currentSort = 'stt'; 
     let autoUpdateTimer;
     let isAutoUpdateEnabled = true;
+
+    let questionBank = [];
+    let currentViewData = [];
+
+    // Tải ngân hàng câu hỏi từ file JSON
+    fetch('t9OnGk2.json')
+        .then(res => res.json())
+        .then(data => questionBank = data)
+        .catch(err => console.error("Không thể tải ngân hàng câu hỏi:", err));
 
     // --- 2. HÀM KHỞI TẠO & LẮNG NGHE SỰ KIỆN ---
     document.getElementById('filter-sheet').addEventListener('change', (e) => {
@@ -211,6 +238,7 @@
 
     // --- 5. HÀM HIỂN THỊ BẢNG ĐIỂM ---
     function renderTable(data) {
+        currentViewData = data; // Lưu lại để dùng cho Modal
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
 
@@ -219,9 +247,10 @@
             return;
         }
 
-        data.forEach(row => {
+        data.forEach((row, index) => {
             let scoreColor = row.score >= 8 ? 'text-green-600' : (row.score >= 5 ? 'text-amber-500' : 'text-red-500');
             
+            // --- ĐOẠN SỬA LẠI ĐỂ HIỂN THỊ NÚT BẤM ---
             let detailsHtml = "";
             if (row.score === 10) {
                 detailsHtml = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> Tuyệt đối</span>`;
@@ -231,9 +260,10 @@
                 if (!row.details || row.details.trim() === "") {
                     detailsHtml = `<span class="text-slate-400 text-xs">Không có dữ liệu</span>`;
                 } else {
-                    detailsHtml = `<span class="text-xs text-slate-600 leading-relaxed block">${row.details}</span>`;
+                    detailsHtml = `<button onclick="openDetailsModal(${index})" class="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-2"><i class="fa-solid fa-list-ul"></i> Xem câu sai</button>`;
                 }
             }
+            // ----------------------------------------
 
             let attemptBadge = row.attemptCount > 1 
                 ? `<span class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full" title="Học sinh này đã làm bài ${row.attemptCount} lần"><i class="fa-solid fa-rotate-right mr-1"></i> Làm ${row.attemptCount} lần</span>` 
@@ -246,7 +276,7 @@
                 <td class="py-3 px-4 text-slate-500 font-mono">${row.stt}</td>
                 <td class="py-3 px-4 font-bold text-slate-800">${row.name} ${attemptBadge}</td>
                 <td class="py-3 px-4 font-black ${scoreColor} text-lg">${row.score.toFixed(1)}</td>
-                <td class="py-3 px-4 max-w-xs truncate" title="${row.details}">${detailsHtml}</td>
+                <td class="py-3 px-4 max-w-xs">${detailsHtml}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -329,6 +359,61 @@
                 timeLabel.innerHTML = `<i class="fa-solid fa-circle-pause mr-1 text-slate-400"></i> <span class="text-slate-500">Đã tạm dừng cập nhật tự động.</span>`;
             }
         }
+    }
+
+    // --- 9. XỬ LÝ MODAL XEM CHI TIẾT LỖI SAI ---
+    function openDetailsModal(index) {
+        const row = currentViewData[index];
+        const detailsStr = row.details;
+        if (!detailsStr) return;
+
+        const items = detailsStr.split('||').map(s => s.trim());
+        let wrongItemsHtml = '';
+
+        items.forEach(item => {
+            if (item.includes('| Sai:')) {
+                // Tách ID và phần nội dung
+                let idStr = item.substring(0, item.indexOf('|')).trim();
+                let qId = parseInt(idStr.replace(/\D/g, '')); // Chỉ lấy số ID
+                
+                // Tách phần Sai và Đúng
+                let wrongText = "";
+                let correctText = "";
+                let saiIndex = item.indexOf('Sai:');
+                let dungIndex = item.indexOf('| Đúng:');
+                
+                if (saiIndex !== -1 && dungIndex !== -1) {
+                    wrongText = item.substring(saiIndex + 4, dungIndex).trim();
+                    correctText = item.substring(dungIndex + 7).trim();
+                }
+
+                // Tìm nội dung câu hỏi từ Ngân hàng câu hỏi (questionBank)
+                const qData = questionBank.find(q => q.id === qId);
+                const qText = qData ? qData.question : `(Không tìm thấy nội dung câu hỏi ID: ${qId})`;
+
+                wrongItemsHtml += `
+                    <div class="p-3 bg-red-50 border border-red-100 rounded-lg shadow-sm">
+                        <p class="font-bold text-slate-800 text-sm mb-2"><span class="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] mr-1">Câu ${qId}</span> ${qText}</p>
+                        <div class="flex flex-col gap-1 mt-2">
+                            <p class="text-xs text-red-600 bg-red-100/50 p-1.5 rounded"><i class="fa-solid fa-xmark mr-1"></i> <b>Đã chọn:</b> ${wrongText}</p>
+                            <p class="text-xs text-green-700 bg-green-100/50 p-1.5 rounded"><i class="fa-solid fa-check mr-1"></i> <b>Đáp án đúng:</b> ${correctText}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        if (wrongItemsHtml === '') {
+            wrongItemsHtml = '<p class="text-sm text-slate-500 text-center py-4">Không có dữ liệu câu sai chi tiết định dạng chuẩn.</p>';
+        }
+
+        document.getElementById('modal-student-name').innerText = row.name;
+        document.getElementById('modal-wrong-list').innerHTML = wrongItemsHtml;
+        document.getElementById('details-modal').classList.remove('hidden');
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('details-modal').classList.add('hidden');
     }
 
     function startAutoUpdate() {
