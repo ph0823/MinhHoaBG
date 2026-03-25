@@ -374,25 +374,33 @@
             // itemIndex bắt đầu từ 0, nên cộng 1 sẽ ra đúng số thứ tự câu trong đề
             let seqNumber = itemIndex + 1; 
 
-            if (item.includes('| Sai:')) {
-                // Tách lấy ID để tìm nội dung câu hỏi từ questionBank
-                let idStr = item.substring(0, item.indexOf('|')).trim();
+            // Kiểm tra xem item có chứa dấu '|' để tách ID và Đáp án sai không
+            if (item.includes('|')) {
+                // Tách ID và phần Đáp án sai
+                let parts = item.split('|').map(s => s.trim());
+                let idStr = parts[0];
                 let qId = parseInt(idStr.replace(/\D/g, '')); 
                 
-                // Tách phần Sai và Đúng
-                let wrongText = "";
-                let correctText = "";
-                let saiIndex = item.indexOf('Sai:');
-                let dungIndex = item.indexOf('| Đúng:');
-                
-                if (saiIndex !== -1 && dungIndex !== -1) {
-                    wrongText = item.substring(saiIndex + 4, dungIndex).trim();
-                    correctText = item.substring(dungIndex + 7).trim();
-                }
+                // Lấy đáp án sai học sinh đã chọn (loại bỏ chữ "Sai:" nếu có để hiển thị đẹp hơn)
+                let wrongText = parts[1] ? parts[1].replace('Sai:', '').trim() : "(Không rõ)";
 
-                // Tìm nội dung câu hỏi từ Ngân hàng câu hỏi
+                // Tìm câu hỏi gốc từ Ngân hàng câu hỏi (questionBank)
                 const qData = questionBank.find(q => q.id === qId);
                 const qText = qData ? qData.question : `(Không tìm thấy nội dung câu hỏi ID: ${qId})`;
+                
+                // TỰ ĐỘNG TRA CỨU ĐÁP ÁN ĐÚNG
+                let correctText = "(Không tìm thấy đáp án)";
+                if (qData) {
+                    // Tùy thuộc vào cách bạn khai báo questionBank. 
+                    // Thông thường là: qData.options[qData.correctIndex]
+                    if (qData.options && qData.correctIndex !== undefined) {
+                        correctText = qData.options[qData.correctIndex];
+                    } 
+                    // Hoặc nếu bạn lưu trực tiếp text đáp án đúng vào biến correctAnswer
+                    else if (qData.correctAnswer) {
+                        correctText = qData.correctAnswer;
+                    }
+                }
 
                 wrongItemsHtml += `
                     <div class="p-3 bg-red-50 border border-red-100 rounded-lg shadow-sm">
