@@ -370,11 +370,14 @@
         const items = detailsStr.split('||').map(s => s.trim());
         let wrongItemsHtml = '';
 
-        items.forEach(item => {
+        items.forEach((item, itemIndex) => {
+            // itemIndex bắt đầu từ 0, nên cộng 1 sẽ ra đúng số thứ tự câu trong đề
+            let seqNumber = itemIndex + 1; 
+
             if (item.includes('| Sai:')) {
-                // Tách ID và phần nội dung
+                // Tách lấy ID để tìm nội dung câu hỏi từ questionBank
                 let idStr = item.substring(0, item.indexOf('|')).trim();
-                let qId = parseInt(idStr.replace(/\D/g, '')); // Chỉ lấy số ID
+                let qId = parseInt(idStr.replace(/\D/g, '')); 
                 
                 // Tách phần Sai và Đúng
                 let wrongText = "";
@@ -387,13 +390,16 @@
                     correctText = item.substring(dungIndex + 7).trim();
                 }
 
-                // Tìm nội dung câu hỏi từ Ngân hàng câu hỏi (questionBank)
+                // Tìm nội dung câu hỏi từ Ngân hàng câu hỏi
                 const qData = questionBank.find(q => q.id === qId);
                 const qText = qData ? qData.question : `(Không tìm thấy nội dung câu hỏi ID: ${qId})`;
 
                 wrongItemsHtml += `
                     <div class="p-3 bg-red-50 border border-red-100 rounded-lg shadow-sm">
-                        <p class="font-bold text-slate-800 text-sm mb-2"><span class="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] mr-1">Câu ${qId}</span> ${qText}</p>
+                        <p class="font-bold text-slate-800 text-sm mb-2">
+                            <span class="bg-red-500 text-white px-2 py-0.5 rounded text-xs mr-1">Câu ${seqNumber}</span> 
+                            ${qText}
+                        </p>
                         <div class="flex flex-col gap-1 mt-2">
                             <p class="text-xs text-red-600 bg-red-100/50 p-1.5 rounded"><i class="fa-solid fa-xmark mr-1"></i> <b>Đã chọn:</b> ${wrongText}</p>
                             <p class="text-xs text-green-700 bg-green-100/50 p-1.5 rounded"><i class="fa-solid fa-check mr-1"></i> <b>Đáp án đúng:</b> ${correctText}</p>
