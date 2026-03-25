@@ -20,6 +20,12 @@
             <div>
                 <h1 class="text-2xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>Bảng Điểm Học Sinh</h1>
                 <p class="text-sm text-slate-500">Quản lý và theo dõi tiến độ làm bài trắc nghiệm</p>
+                <div class="flex items-center gap-3 mt-2">
+                    <p id="last-update-time" class="text-xs font-semibold text-green-600"><i class="fa-solid fa-rotate mr-1 fa-spin-pulse"></i> Đang đợi cập nhật...</p>
+                    <button id="btn-toggle-update" onclick="toggleAutoUpdate()" class="px-2 py-1 text-[10px] font-bold rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors border border-green-200 shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-pause"></i> Tạm dừng cập nhật
+                    </button>
+                </div>
             </div>
             
             <div class="flex gap-4">
@@ -101,21 +107,28 @@
 
     let allData = []; 
     let currentSort = 'stt'; 
+    let autoUpdateTimer;
+    let isAutoUpdateEnabled = true;
 
     // --- 2. HÀM KHỞI TẠO & LẮNG NGHE SỰ KIỆN ---
     document.getElementById('filter-sheet').addEventListener('change', (e) => {
         fetchDataFromServer(e.target.value);
+        if (isAutoUpdateEnabled) startAutoUpdate(); // Reset bộ đếm khi tự đổi sheet
     });
     
     document.getElementById('filter-class').addEventListener('change', updateView);
 
     const initialSheet = document.getElementById('filter-sheet').value;
     fetchDataFromServer(initialSheet);
+    startAutoUpdate();
 
     // --- 3. HÀM GỌI DỮ LIỆU TỪ GOOGLE APPS SCRIPT ---
-    async function fetchDataFromServer(sheetName) {
+    async function fetchDataFromServer(sheetName, isBackground = false) {
         const tbody = document.getElementById('table-body');
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-blue-500 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu từ hệ thống...</td></tr>`;
+        
+        if (!isBackground) {
+            tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-blue-500 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu từ hệ thống...</td></tr>`;
+        }
         
         try {
             const response = await fetch(`${SCRIPT_URL}?sheet=${sheetName}`);
@@ -123,7 +136,7 @@
 
             if (rawJson.error) {
                 console.warn(rawJson.error);
-                allData = [];
+                if (!isBackground) allData = [];
             } else {
                 allData = rawJson.map(row => {
                     let rawClass = row["Lớp"] ? row["Lớp"].toString() : "";
@@ -141,66 +154,57 @@
             }
             
             updateView();
+            updateLastRefreshTime();
             
         } catch (error) {
             console.error("Lỗi khi tải dữ liệu:", error);
-            tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">❌ Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại đường dẫn Web App.</td></tr>`;
+            if (!isBackground) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">❌ Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại đường dẫn Web App.</td></tr>`;
+            }
         }
     }
 
-    // --- 4. HÀM CẬP NHẬT GIAO DIỆN CHÍNH (Đã xử lý gộp STT) ---
+    // --- 4. HÀM CẬP NHẬT GIAO DIỆN CHÍNH ---
     function updateView() {
         const selectedClass = document.getElementById('filter-class').value;
-        const scoreMethod = document.getElementById('score-method').value; // 'highest' hoặc 'first'
+        const scoreMethod = document.getElementById('score-method').value;
 
-        // 4.1 Lọc theo lớp
         let filtered = [...allData];
         if (selectedClass !== 'all') {
             filtered = filtered.filter(item => item.userClass === selectedClass);
         }
 
-        // 4.2 Gộp dữ liệu học sinh làm nhiều lần
         const studentMap = new Map();
 
         filtered.forEach(row => {
-            // Tạo khóa duy nhất cho mỗi học sinh: Lớp + STT
             const uniqueKey = `${row.userClass}-${row.stt}`;
             
             if (!studentMap.has(uniqueKey)) {
-                // Lần đầu tiên bắt gặp học sinh này trong danh sách
                 studentMap.set(uniqueKey, { ...row, attemptCount: 1 });
             } else {
-                // Học sinh đã tồn tại (làm lại lần 2, lần 3...)
                 let existingRecord = studentMap.get(uniqueKey);
-                let newAttemptCount = existingRecord.attemptCount + 1; // Tăng bộ đếm
+                let newAttemptCount = existingRecord.attemptCount + 1;
                 
                 if (scoreMethod === 'highest') {
-                    // Nếu chế độ lấy điểm cao nhất và điểm lần này cao hơn hiện tại
                     if (row.score > existingRecord.score) {
                         studentMap.set(uniqueKey, { ...row, attemptCount: newAttemptCount });
                     } else {
-                        // Điểm thấp hơn thì giữ nguyên bài làm tốt nhất, nhưng vẫn cập nhật số lần làm
                         existingRecord.attemptCount = newAttemptCount;
                     }
                 } else if (scoreMethod === 'first') {
-                    // Nếu chế độ lấy lần đầu, ta giữ nguyên existingRecord vì nó là bản ghi đầu tiên,
-                    // chỉ cập nhật tổng số lần làm bài.
                     existingRecord.attemptCount = newAttemptCount;
                 }
             }
         });
 
-        // Chuyển kết quả đã gộp từ Map về lại Array
         let processedData = Array.from(studentMap.values());
 
-        // 4.3 Sắp xếp dữ liệu sau khi gộp
         if (currentSort === 'stt') {
             processedData.sort((a, b) => a.stt - b.stt);
         } else {
             processedData.sort((a, b) => b.score - a.score); 
         }
 
-        // 4.4 Cập nhật bảng và thống kê
         renderTable(processedData);
         updateMissingStts(processedData); 
     }
@@ -231,7 +235,6 @@
                 }
             }
 
-            // Tạo nhãn (Badge) nếu học sinh làm bài nhiều hơn 1 lần
             let attemptBadge = row.attemptCount > 1 
                 ? `<span class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full" title="Học sinh này đã làm bài ${row.attemptCount} lần"><i class="fa-solid fa-rotate-right mr-1"></i> Làm ${row.attemptCount} lần</span>` 
                 : '';
@@ -303,6 +306,49 @@
         }
 
         updateView();
+    }
+
+    // --- 8. TỰ ĐỘNG CẬP NHẬT 30 GIÂY/LẦN ---
+    function toggleAutoUpdate() {
+        isAutoUpdateEnabled = !isAutoUpdateEnabled;
+        const btn = document.getElementById('btn-toggle-update');
+        const timeLabel = document.getElementById('last-update-time');
+
+        if (isAutoUpdateEnabled) {
+            btn.innerHTML = `<i class="fa-solid fa-pause"></i> Tạm dừng cập nhật`;
+            btn.className = "px-2 py-1 text-[10px] font-bold rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors border border-green-200 shadow-sm flex items-center gap-1";
+            startAutoUpdate();
+            // Lập tức fetch ngầm để làm mới ngay khi bật lại
+            const currentSheet = document.getElementById('filter-sheet').value;
+            fetchDataFromServer(currentSheet, true);
+        } else {
+            btn.innerHTML = `<i class="fa-solid fa-play"></i> Bật cập nhật lại`;
+            btn.className = "px-2 py-1 text-[10px] font-bold rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors border border-slate-200 shadow-sm flex items-center gap-1";
+            if (autoUpdateTimer) clearInterval(autoUpdateTimer);
+            if (timeLabel) {
+                timeLabel.innerHTML = `<i class="fa-solid fa-circle-pause mr-1 text-slate-400"></i> <span class="text-slate-500">Đã tạm dừng cập nhật tự động.</span>`;
+            }
+        }
+    }
+
+    function startAutoUpdate() {
+        if (autoUpdateTimer) clearInterval(autoUpdateTimer);
+        if (!isAutoUpdateEnabled) return;
+        
+        autoUpdateTimer = setInterval(() => {
+            const currentSheet = document.getElementById('filter-sheet').value;
+            fetchDataFromServer(currentSheet, true); 
+        }, 30000);
+    }
+
+    function updateLastRefreshTime() {
+        if (!isAutoUpdateEnabled) return;
+        const timeLabel = document.getElementById('last-update-time');
+        if (timeLabel) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN');
+            timeLabel.innerHTML = `<i class="fa-solid fa-clock mr-1"></i> Cập nhật ngầm lần cuối: ${timeString} (Làm mới sau mỗi 30s)`;
+        }
     }
     </script>
 </body>
