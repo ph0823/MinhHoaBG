@@ -121,7 +121,7 @@
         const QUIZ_CONFIG = {
             topic: "KTGK2",
             sheetName: "K8GK2", 
-            timeLimitMinutes: 15,
+            timeLimitMinutes: 30,
             googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec" 
         };
         
@@ -622,9 +622,9 @@
             return arr;
         }
 
-        // Đã sửa: Vì data mới không có trường topic, ta sẽ trộn và bốc ngẫu nhiên 20 câu từ tổng ngân hàng
+        // trộn và bốc ngẫu nhiên 40 câu từ tổng ngân hàng
         function selectQuestions() {
-            return shuffle(allQuestions).slice(0, 20); 
+            return shuffle(allQuestions).slice(0, 40); 
         }
 
         function startQuiz() {
@@ -729,7 +729,7 @@
                 prevBtn.classList.add('hidden');
             }
 
-            // Đã sửa: Render UI đáp án hỗ trợ cả ảnh và chữ
+            // Render UI đáp án hỗ trợ cả ảnh và chữ
             state.shuffledOptions.forEach((optObj, index) => {
                 const btn = document.createElement('div');
                 btn.className = 'option-card group flex items-center p-4 border-2 border-slate-100 rounded-xl cursor-pointer bg-white transition-all';
@@ -823,7 +823,7 @@
                     scoreCount++;
                     detailedResults.push(qId);
                 } else {
-                    // Đã sửa: Trích xuất đúng thuộc tính .text của object thay vì lấy nguyên cục object
+                    // Trích xuất đúng thuộc tính .text của object thay vì lấy nguyên cục object
                     let wrongText = "Không chọn";
                     if (state.userSelectedIdx !== null && state.userSelectedIdx !== undefined && state.userSelectedIdx !== -1) {
                         wrongText = q.options[state.userSelectedIdx].text || "Hình ảnh";
