@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIỂM TRA GIỮA KÌ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-card:hover:not(.disabled) { transform: translateY(-2px); border-color: #3b82f6; background-color: #eff6ff; }
+        .selected-exam { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
+        .selected-exam .marker-circle { background-color: #3b82f6 !important; color: white !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .perfect-bg { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; }
+        .timer-warning { color: #ef4444; animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .disabled { pointer-events: none; opacity: 0.6; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 select-none">
+
+    <div id="app" class="max-w-2xl w-full glass rounded-2xl shadow-2xl overflow-hidden min-h-[550px] flex flex-col relative">
+        
+        <div id="start-screen" class="p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-graduation-cap text-3xl text-blue-600"></i>
+            </div>
+            <h1 id="main-topic-title" class="text-2xl font-bold text-slate-800 mb-2">KIỂM TRA GIỮA KÌ</h1>
+            <p id="sub-topic-title" class="text-slate-500 mb-8 font-medium"></p>
+            
+            <div class="w-full space-y-4 max-w-sm">
+                <div class="text-left">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Thông tin học sinh:</label>
+                    <select id="user-class" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3 bg-white">
+                        <option value="" disabled selected>Chọn lớp</option>
+                        <option value="8a8">8.8</option>
+                        <option value="8a11">8.11</option>
+                    </select>
+
+                    <input type="number" id="user-stt" placeholder="Số thứ tự (1-52)" min="1" max="52" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                    <input type="text" id="user-name" placeholder="Họ và tên học sinh" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none mb-3">                    
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-left flex items-start gap-3 mt-4">
+                    <i class="fa-solid fa-clock mt-1"></i>
+                    <span>Thời gian làm bài: <strong id="time-display-limit"></strong> phút.</span>
+                </div>
+                <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 mt-4">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="hidden flex-1 flex flex-col fade-in">
+            <div class="px-8 py-4 bg-slate-50 flex justify-between items-center border-b">
+                <div class="flex flex-col">
+                    <span id="display-info" class="text-sm font-bold text-slate-700"></span>
+                    <span id="progress-text" class="text-xs text-slate-500"></span>
+                </div>
+                <div id="timer-box" class="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border">
+                    <i class="fa-solid fa-stopwatch text-blue-500"></i>
+                    <span id="timer-text" class="font-mono font-bold text-lg text-slate-700">00:00</span>
+                </div>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200">
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300"></div>
+            </div>
+
+            <div class="p-8 flex-1 flex flex-col overflow-y-auto">
+                <h2 id="question-text" class="text-xl font-bold text-slate-800 mb-4 leading-relaxed">Đang tải câu hỏi...</h2>
+                
+                <div id="question-image-container" class="mb-6 hidden flex justify-center">
+                    <img id="question-image" src="" alt="Hình minh họa" class="max-h-56 rounded-xl shadow-md border border-slate-200">
+                </div>
+
+                <div id="options-list" class="space-y-3 flex-1"></div>
+                
+                <div class="mt-8 flex justify-between items-center">
+                    <button id="prev-btn" onclick="goPrev()" class="hidden bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl shadow-md transition-all">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Câu trước
+                    </button>
+                    <button id="next-btn" onclick="goNext()" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all ml-auto">
+                        Câu tiếp <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden p-8 flex-1 flex flex-col justify-center items-center text-center fade-in">
+            <div id="result-icon" class="mb-6"></div>
+            <h1 id="result-title" class="text-3xl font-bold text-slate-800 mb-2">Kết quả bài thi</h1>
+            <p id="result-user" class="text-slate-600 mb-6 font-medium"></p>
+            <div id="score-container" class="bg-slate-50 rounded-2xl p-6 w-full max-w-sm mb-4 border border-slate-200">
+                <div class="text-5xl font-black text-blue-600 mb-2" id="final-score">0.0</div>
+                <div class="text-sm text-slate-500 uppercase font-bold tracking-widest mb-3">Điểm (Thang 10)</div>
+                <div class="text-md text-slate-700 font-semibold" id="correct-count">Số câu đúng: 0/20</div>
+            </div>
+            <p id="save-status" class="text-sm font-semibold text-slate-500 mb-4 bg-slate-200 inline-block px-4 py-1 rounded-full">⏳ Đang lưu kết quả...</p>
+            <p id="result-message" class="text-lg font-medium text-slate-700 mb-8 px-4"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- CHỐNG GIAN LẬN ---
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') { e.preventDefault(); }
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'x' || e.key === 'u' || e.key === 'p' || 
+                              e.key === 'C' || e.key === 'X' || e.key === 'U' || e.key === 'P')) {
+                e.preventDefault();
+            }
+        });
+
+        const QUIZ_CONFIG = {
+            topic: "KTGK2",
+            sheetName: "K8GK2", 
+            timeLimitMinutes: 15,
+            googleSheetURL: "https://script.google.com/macros/s/AKfycbyN-3m_Z_-3Z6yaj_FO1NhGAlICmheLfCG-_LfPWgKOLYHixbvvJzlH2KN9vy97Z7oc/exec" 
+        };
+        
+        // DANH SÁCH CÂU HỎI TỪ JSON MỚI
+        const allQuestions = [
+            {
+                "id": 1,
+                "question": "Chương trình máy tính được định nghĩa là gì?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Là nhiều dãy các lệnh điều khiển máy tính thực hiện một kịch bản." },
+                    { "image": "", "text": "Là một dãy các lệnh điều khiển máy tính thực hiện một kịch bản." },
+                    { "image": "", "text": "Là nhiều dãy các lệnh điều khiển máy tính thực hiện một thuật toán." },
+                    { "image": "", "text": "Là một dãy các lệnh điều khiển máy tính thực hiện một thuật toán." }
+                ],
+                "correctIndex": 3
+            },
+            {
+                "id": 2,
+                "question": "Điều gì sẽ xảy ra khi ta thay đổi thứ tự các bước trong một thuật toán?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Chương trình thuật toán không thay đổi." },
+                    { "image": "", "text": "Chương trình sẽ chạy hay và nhanh hơn." },
+                    { "image": "", "text": "Làm thay đổi thuật toán và thể hiện một kịch bản khác." },
+                    { "image": "", "text": "Máy tính sẽ tự động sắp xếp lại cho đúng." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 3,
+                "question": "Trong kịch bản \"Mèo bị lạnh\", bước thứ 3 được mô tả là hành động nào?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Mèo kêu “Lò sưởi ở đâu nhỉ?”." },
+                    { "image": "", "text": "Mèo chạy một đoạn (10 bước)." },
+                    { "image": "", "text": "Mèo kêu “Không có cái nào!”." },
+                    { "image": "", "text": "Mèo kêu “Grừ, Grừ… lạnh quá!”." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 4,
+                "question": "Khối lệnh say ... for 2 seconds trong Scratch dùng để thể hiện thuật toán nào?",
+                "image": "https://i.postimg.cc/Mf5T4d6d/say-Hello-c4.png",
+                "options": [
+                    { "image": "", "text": "Nhân vật suy nghĩ trong 2 giây." },
+                    { "image": "", "text": "Nhân vật di chuyển trong 2 giây." },
+                    { "image": "", "text": "Nhân vật nói Hello trong 2 giây." },
+                    { "image": "", "text": "Nhân vật biến mất sau 2 giây." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 5,
+                "question": "Một kịch bản có thể được chuẩn bị để lập trình bằng cách nào?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Vẽ một bức tranh." },
+                    { "image": "", "text": "Viết một bài văn dài." },
+                    { "image": "", "text": "Mô tả dưới dạng các bước tuần tự của một thuật toán." },
+                    { "image": "", "text": "Ghi âm lời nói." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 6,
+                "question": "Phát biểu nào sau đây là SAI khi nói về cấu trúc tuần tự?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Thứ tự thực hiện các bước trong kịch bản rất quan trọng." },
+                    { "image": "", "text": "Trong mô tả thuật toán, thứ tự các bước không quan trọng." },
+                    { "image": "", "text": "Thay đổi thứ tự các bước sẽ làm thay đổi kịch bản câu chuyện." },
+                    { "image": "", "text": "Các lệnh kế tiếp nhau trong chương trình thực hiện các bước tuần tự." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 7,
+                "question": "Để tạo một biến mới trong Scratch, ta thực hiện thao tác nào tại nhóm lệnh Variables?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Chọn lệnh set ... to ...." },
+                    { "image": "", "text": "Chọn nút \"Make a Variable\"." },
+                    { "image": "", "text": "Chọn lệnh change ... by ...." },
+                    { "image": "", "text": "Chọn lệnh show variable." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 8,
+                "question": "Khối lệnh sau có tác dụng gì?",
+                "image": "https://i.postimg.cc/0KnQ3ckV/set-Diem-c8.png",
+                "options": [
+                    { "image": "", "text": "Tăng biến Điểm thêm 0 đơn vị." },
+                    { "image": "", "text": "Xóa bỏ biến Điểm khỏi chương trình." },
+                    { "image": "", "text": "Gán giá trị 0 cho biến Điểm." },
+                    { "image": "", "text": "Hiển thị biến Điểm lên màn hình sân khấu." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 9,
+                "question": "Khối lệnh sau có tác dụng gì?",
+                "image": "https://i.postimg.cc/y3jd5v1p/change-Diem-c9.png",
+                "options": [
+                    { "image": "", "text": "Luôn đặt biến Điểm bằng 1." },
+                    { "image": "", "text": "Tăng biến Điểm một lượng là 1." },
+                    { "image": "", "text": "Hiển thị biến Điểm trong 1 giây." },
+                    { "image": "", "text": "Tạo ra một biến mới tên là 1." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 10,
+                "question": "Tên biến nên được đặt như thế nào là tốt nhất?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Đặt tùy ý như a, b, c cho nhanh." },
+                    { "image": "", "text": "Đặt tên thật dài để giải thích chương trình." },
+                    { "image": "", "text": "Đặt tên có ý nghĩa, gợi nhớ đến dữ liệu mà nó lưu trữ (ví dụ: Diem, Tong, So_lan)." },
+                    { "image": "", "text": "Không cần đặt tên, máy tính sẽ tự đặt." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 11,
+                "question": "Sau khi thực hiện khối lệnh sau, hỏi giá trị của biến \"i\" là bao nhiêu?",
+                "image": "https://i.postimg.cc/9wbMSJmp/set-I-c11.png",
+                "options": [
+                    { "image": "", "text": "10" },
+                    { "image": "", "text": "25" },
+                    { "image": "", "text": "28" },
+                    { "image": "", "text": "3" }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 12,
+                "question": "Biến thường được sử dụng trong những trường hợp nào sau đây?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Lưu điểm số của người chơi trong trò chơi." },
+                    { "image": "", "text": "Lưu số lượt trả lời đúng của học sinh." },
+                    { "image": "", "text": "Lưu kết quả của các phép tính toán." },
+                    { "image": "", "text": "Tất cả các phương án trên." }
+                ],
+                "correctIndex": 3
+            },
+            {
+                "id": 13,
+                "question": "Trong Scratch, nhóm lệnh nào chứa các khối thao tác với biến?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Motion." },
+                    { "image": "", "text": "Sensing." },
+                    { "image": "", "text": "Variables." },
+                    { "image": "", "text": "Control." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 14,
+                "question": "Nếu muốn giảm giá trị của biến \"Mạng\" đi 1, ta dùng lệnh nào?",
+                "image": "",
+                "options": [
+                    { "image": "https://i.postimg.cc/8fzVfsZz/set-M-c14a.png", "text": "" },
+                    { "image": "https://i.postimg.cc/RJZzJqgF/set-M-c14b.png", "text": "" },
+                    { "image": "https://i.postimg.cc/RJZzJqg0/set-M-c14c.png", "text": "" },
+                    { "image": "https://i.postimg.cc/Pv5kvNSr/set-M-c14d.png", "text": "" }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 15,
+                "question": "Biểu thức là sự kết hợp của những yếu tố nào sau đây qua các phép toán?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Chỉ bao gồm các con số." },
+                    { "image": "", "text": "Chỉ bao gồm các biến." },
+                    { "image": "", "text": "Bao gồm các hằng số, biến số và các phép toán." },
+                    { "image": "", "text": "Chỉ bao gồm các câu lệnh di chuyển." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 16,
+                "question": "Trong lập trình, các phép toán số học cơ bản bao gồm những ký hiệu nào?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "+, -, x, :" },
+                    { "image": "", "text": "+, -, *, /" },
+                    { "image": "", "text": "add, sub, mul, div" },
+                    { "image": "", "text": "+, -, x, /" }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 17,
+                "question": "Kết quả của một biểu thức so sánh (ví dụ: a > b) luôn trả về giá trị nào?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Một con số bất kỳ." },
+                    { "image": "", "text": "Một chuỗi văn bản." },
+                    { "image": "", "text": "Đúng hoặc Sai." },
+                    { "image": "", "text": "Tên của nhân vật." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 18,
+                "question": "Phép toán nào dùng để lấy phần dư của một phép chia?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Phép toán /" },
+                    { "image": "", "text": "Phép toán div" },
+                    { "image": "", "text": "Phép toán mod" },
+                    { "image": "", "text": "Phép toán *" }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 19,
+                "question": "Trong Scratch, các khối lệnh biểu thức số học (cộng, trừ, nhân, chia) có hình dạng gì?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Hình lục giác." },
+                    { "image": "", "text": "Hình tròn/oval." },
+                    { "image": "", "text": "Hình chữ nhật." },
+                    { "image": "", "text": "Hình thoi." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 20,
+                "question": "Biểu thức logic sau chỉ trả về giá trị Đúng khi nào?",
+                "image": "https://i.postimg.cc/876Fkdth/btlogic-c20.png",
+                "options": [
+                    { "image": "", "text": "Khi cả hai biểu thức thành phần đều Đúng." },
+                    { "image": "", "text": "Khi ít nhất một trong hai biểu thức thành phần Đúng." },
+                    { "image": "", "text": "Khi cả hai biểu thức thành phần đều Sai." },
+                    { "image": "", "text": "Khi biểu thức thứ nhất Đúng, biểu thức thứ hai Sai." }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 21,
+                "question": "Khối lệnh biểu thức so sánh trong Scratch có hình dạng lục giác. Điều này có ý nghĩa gì?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Để lắp vào các ô chứa số." },
+                    { "image": "", "text": "Để lắp vào các ô điều kiện." },
+                    { "image": "", "text": "Để thay đổi màu sắc nhân vật." },
+                    { "image": "", "text": "Để lưu trữ tên biến." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 22,
+                "question": "Phép toán sau có tác dụng gì đối với một giá trị logic?",
+                "image": "https://i.postimg.cc/hXdJ48p8/btlogic-c22.png",
+                "options": [
+                    { "image": "", "text": "Giữ nguyên giá trị đó." },
+                    { "image": "", "text": "Làm cho giá trị đó luôn luôn Đúng." },
+                    { "image": "", "text": "Đảo ngược giá trị." },
+                    { "image": "", "text": "Xóa bỏ giá trị đó." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 23,
+                "question": "Thứ tự ưu tiên thực hiện các phép toán trong biểu thức số học của lập trình là:",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Phép toán cộng trừ trước, sau đó thực hiện phép toán nhân chia." },
+                    { "image": "", "text": "Thực hiện từ phải sang trái." },
+                    { "image": "", "text": "Nhân chia trước, cộng trừ sau (trong ngoặc thực hiện trước)." },
+                    { "image": "", "text": "Thực hiện ngẫu nhiên." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 24,
+                "question": "Giả sử biến a = 4, b = 3. Kết quả của biểu thức (a + b) * 2 là:",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "20" },
+                    { "image": "", "text": "15" },
+                    { "image": "", "text": "14" },
+                    { "image": "", "text": "15" }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 25,
+                "question": "Cấu trúc rẽ nhánh được sử dụng khi nào trong lập trình?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Khi muốn các lệnh luôn thực hiện tuần tự từ trên xuống dưới." },
+                    { "image": "", "text": "Khi muốn lặp lại một hành động nhiều lần trong cấu trúc rẻ nhánh của chương trình." },
+                    { "image": "", "text": "Khi một việc chỉ được thực hiện nếu một điều kiện nào đó được thỏa mãn." },
+                    { "image": "", "text": "Khi muốn xóa bỏ tất cả các biến số trong chương trình." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 26,
+                "question": "Trong Scratch, cấu trúc rẽ nhánh dạng thiếu được thể hiện bằng khối lệnh nào?",
+                "image": "",
+                "options": [
+                    { "image": "https://i.postimg.cc/zLNfJsy0/renhanh-c26a.png", "text": "" },
+                    { "image": "https://i.postimg.cc/GBRpcWBw/renhanh-c26b.png", "text": "" },
+                    { "image": "https://i.postimg.cc/bGPvz7Z7/renhanh-c26c.png", "text": "[" },
+                    { "image": "https://i.postimg.cc/cKWJspKN/renhanh-c26d.png", "text": "" }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 27,
+                "question": "Biểu thức nằm trong ô lục giác của khối lệnh if được gọi là gì?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Biểu thức số học (cộng, trừ, nhân, chia)." },
+                    { "image": "", "text": "Biểu thức điều kiện (biểu thức logic)." },
+                    { "image": "", "text": "Biểu thức hằng số." },
+                    { "image": "", "text": "Tên của biến." }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 28,
+                "question": "Nếu điều kiện trong khối if <điều kiện> then là SAI, máy tính sẽ làm gì?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Dừng toàn bộ chương trình ngay lập tức không thực hiện công việc tiếp theo." },
+                    { "image": "", "text": "Báo lỗi và yêu cầu thực hiện lại chương trình mới phù hợp cho điều kiện." },
+                    { "image": "", "text": "Bỏ qua các lệnh bên trong khối if và thực hiện lệnh kế tiếp phía dưới." },
+                    { "image": "", "text": "Tự động sửa điều kiện cho đúng." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 29,
+                "question": "Khối lệnh sau là ví dụ của:",
+                "image": "https://i.postimg.cc/sBz2VkBC/renhanh-c29.png",
+                "options": [
+                    { "image": "", "text": "Rẽ nhánh dạng thiếu." },
+                    { "image": "", "text": "Rẽ nhánh dạng đủ." },
+                    { "image": "", "text": "Cấu trúc tuần tự." },
+                    { "image": "", "text": "Cấu trúc lặp." }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 30,
+                "question": "Trong bài toán kiểm tra số n là chẵn hay lẻ, ta nên dùng cấu trúc nào để tối ưu nhất?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Hai khối lệnh tuần tự." },
+                    { "image": "", "text": "Cấu trúc rẽ nhánh dạng thiếu." },
+                    { "image": "", "text": "Cấu trúc rẽ nhánh dạng đủ." },
+                    { "image": "", "text": "Khối lệnh lặp 10 lần." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 31,
+                "question": "Điều kiện trong cấu trúc rẽ nhánh Scratch có thể là:",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Các phép so sánh (>, <, =)." },
+                    { "image": "", "text": "Các phép toán logic (and, or, not)." },
+                    { "image": "", "text": "Các lệnh cảm biến (đang chạm nhân vật, chạm màu...)." },
+                    { "image": "", "text": "So sánh, logic, cảm biến." }
+                ],
+                "correctIndex": 3
+            },
+            {
+                "id": 32,
+                "question": "\"Nếu trời mưa thì mang áo mưa, ngược lại thì mang mũ\". Đây là ví dụ thực tế của cấu trúc nào?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Cấu trúc tuần tự." },
+                    { "image": "", "text": "Cấu trúc rẽ nhánh dạng thiếu." },
+                    { "image": "", "text": "Cấu trúc rẽ nhánh dạng đủ." },
+                    { "image": "", "text": "Cấu trúc lặp." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 33,
+                "question": "Scratch cung cấp bao nhiêu khối lệnh cơ bản để thể hiện cấu trúc lặp trong bài học này?",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "1 khối lệnh." },
+                    { "image": "", "text": "2 khối lệnh." },
+                    { "image": "", "text": "3 khối lệnh." },
+                    { "image": "", "text": "4 khối lệnh." }
+                ],
+                "correctIndex": 2
+            },
+            {
+                "id": 34,
+                "question": "Khối lệnh sau dùng để thể hiện cấu trúc lặp nào?",
+                "image": "https://i.postimg.cc/3Wk3H8Ly/repeat-c34.png",
+                "options": [
+                    { "image": "", "text": "Lặp với số lần biết trước." },
+                    { "image": "", "text": "Lặp cho đến khi thỏa mãn điều kiện." },
+                    { "image": "", "text": "Lặp vô hạn." },
+                    { "image": "", "text": "Rẽ nhánh dạng thiếu." }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 35,
+                "question": "Trong vòng lặp repeat until <điều kiện>, nếu ngay từ đầu điều kiện đã ĐÚNG thì các lệnh bên trong sẽ được thực hiện bao nhiêu lần?",
+                "image": "https://i.postimg.cc/3Wk3H8L4/repeat-c35.png",
+                "options": [
+                    { "image": "", "text": "0 lần." },
+                    { "image": "", "text": "1 lần." },
+                    { "image": "", "text": "10 lần." },
+                    { "image": "", "text": "Vô hạn lần." }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 36,
+                "question": "Khi lập trình nhân vật Mèo chạy, nếu ta kéo khối lệnh move 5 steps ra khỏi khối repeat 10 và đặt xuống dưới, nhân vật Mèo vẫn sẽ thực hiện hành động chạy mượt mà như cũ.",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Đúng" },
+                    { "image": "", "text": "Sai" }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 37,
+                "question": "Việc sử dụng khối lệnh repeat 10 (lặp lại 10 lần) để diễn tả hành động \"chạy một đoạn\" là minh chứng cho việc một bước trong thuật toán có thể được thể hiện bằng một khối lệnh gồm nhiều lệnh con.",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Đúng" },
+                    { "image": "", "text": "Sai" }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 38,
+                "question": "Để nhân vật xuất hiện ở tọa độ x: -171, y: -99 ngay khi bắt đầu, lệnh go to x: -171 y: -99 phải được thực hiện sau lệnh nhân vật nói để đảm bảo đúng cấu trúc tuần tự.",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Đúng" },
+                    { "image": "", "text": "Sai" }
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": 39,
+                "question": "Nếu hai nhân vật Mèo và Hươu cùng thực hiện lệnh say tại Bước 2 mà không có lệnh wait, kết quả trên sân khấu sẽ là cả hai nói cùng lúc, điều này làm sai lệch kịch bản hội thoại tuần tự.",
+                "image": "",
+                "options": [
+                    { "image": "", "text": "Đúng" },
+                    { "image": "", "text": "Sai" }
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": 40,
+                "question": "Khối lệnh sau sẽ cho kết quả là “Đáp án A”:",
+                "image": "https://i.postimg.cc/4nYXTf8H/if-c40.png",
+                "options": [
+                    { "image": "", "text": "Đúng" },
+                    { "image": "", "text": "Sai" }
+                ],
+                "correctIndex": 1
+            }
+        ];
+
+        let questions = [];
+        let questionStates = []; 
+        let currentQuestionIndex = 0;
+        let scoreCount = 0; 
+        let userMistakes = []; 
+        
+        let userName = "", userClass = "", userStt = "";
+        let timerInterval;
+        let timeLeft;
+        let isSubmitted = false;
+
+        document.getElementById('sub-topic-title').innerText = QUIZ_CONFIG.topic;
+        document.getElementById('time-display-limit').innerText = QUIZ_CONFIG.timeLimitMinutes;
+
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Đã sửa: Vì data mới không có trường topic, ta sẽ trộn và bốc ngẫu nhiên 20 câu từ tổng ngân hàng
+        function selectQuestions() {
+            return shuffle(allQuestions).slice(0, 20); 
+        }
+
+        function startQuiz() {
+            userClass = document.getElementById('user-class').value;
+            let rawStt = document.getElementById('user-stt').value.trim();
+            let rawName = document.getElementById('user-name').value.trim();
+
+            if (!userClass) { alert("Vui lòng chọn lớp!"); return; }
+
+            let sttNum = parseInt(rawStt, 10);
+            if (!/^\d+$/.test(rawStt) || sttNum < 1 || sttNum > 50) {
+                alert("STT không hợp lệ! Vui lòng chỉ nhập số nguyên từ 1 đến 50.");
+                return;
+            }
+            userStt = rawStt;
+
+            userName = rawName.replace(/\s+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+
+            if (userName.length < 3 || userName.length > 50) {
+                alert("Họ và tên không hợp lệ (độ dài 3-50, không dùng số/ký hiệu đặc biệt).");
+                return;
+            }
+
+            questions = selectQuestions();
+            
+            // Đã sửa: Trích xuất text và image từ mảng options object
+            questionStates = questions.map(q => {
+                let opts = q.options.map((opt, idx) => ({ 
+                    text: opt.text || "", 
+                    image: opt.image || "", 
+                    originalIndex: idx 
+                }));
+                return {
+                    userSelectedIdx: null,
+                    userSelectedText: "",
+                    shuffledOptions: shuffle(opts) 
+                };
+            });
+
+            currentQuestionIndex = 0; scoreCount = 0; userMistakes = []; isSubmitted = false;
+            timeLeft = QUIZ_CONFIG.timeLimitMinutes * 60;
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('display-info').innerText = `${userName} - Lớp: ${userClass}`;
+
+            startTimer();
+            loadQuestion();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--; updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Hết giờ làm bài! Hệ thống tự động thu bài.");
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const min = Math.floor(timeLeft / 60); const sec = timeLeft % 60;
+            const timerElem = document.getElementById('timer-text');
+            timerElem.innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            if (timeLeft <= 30) timerElem.classList.add('timer-warning');
+            else timerElem.classList.remove('timer-warning');
+        }
+
+        function loadQuestion() {
+            const qData = questions[currentQuestionIndex];
+            const state = questionStates[currentQuestionIndex];
+
+            // Hiển thị chữ câu hỏi
+            document.getElementById('question-text').innerText = qData.question;
+            
+            // Xử lý hiển thị ảnh cho câu hỏi
+            const qImgContainer = document.getElementById('question-image-container');
+            const qImg = document.getElementById('question-image');
+            if (qData.image && qData.image.trim() !== "") {
+                // Sửa lỗi cú pháp [https... nếu có trong JSON mẫu
+                let imgUrl = qData.image.replace(/^\[/, ''); 
+                qImg.src = imgUrl;
+                qImgContainer.classList.remove('hidden');
+            } else {
+                qImgContainer.classList.add('hidden');
+                qImg.src = "";
+            }
+
+            document.getElementById('progress-text').innerText = `Câu ${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            const list = document.getElementById('options-list');
+            list.innerHTML = '';
+            
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            const prevBtn = document.getElementById('prev-btn');
+            if (currentQuestionIndex > 0) {
+                prevBtn.classList.remove('hidden');
+            } else {
+                prevBtn.classList.add('hidden');
+            }
+
+            // Đã sửa: Render UI đáp án hỗ trợ cả ảnh và chữ
+            state.shuffledOptions.forEach((optObj, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card group flex items-center p-4 border-2 border-slate-100 rounded-xl cursor-pointer bg-white transition-all';
+                
+                let optContent = "";
+                if (optObj.image && optObj.image.trim() !== "") {
+                    optContent += `<img src="${optObj.image}" alt="Option Image" class="max-h-20 rounded shadow-sm border border-slate-200 mr-3">`;
+                }
+                if (optObj.text && optObj.text.trim() !== "") {
+                    optContent += `<span class="flex-1 font-medium text-slate-700">${optObj.text}</span>`;
+                }
+
+                btn.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center font-bold mr-4 marker-circle text-slate-600 transition-colors shrink-0">
+                        ${String.fromCharCode(65 + index)}
+                    </div>
+                    ${optContent}
+                `;
+
+                if (state.userSelectedIdx === optObj.originalIndex) {
+                    btn.classList.add('selected-exam');
+                }
+
+                btn.onclick = () => checkAnswer(btn, optObj.originalIndex, optObj.text);
+                list.appendChild(btn);
+            });
+
+            if (state.userSelectedIdx !== null) {
+                showNextButton();
+            }
+        }
+
+        function checkAnswer(btn, selectedIdx, optionText) {
+            const state = questionStates[currentQuestionIndex];
+
+            document.querySelectorAll('.option-card').forEach(b => {
+                b.classList.remove('selected-exam');
+            });
+
+            btn.classList.add('selected-exam');
+
+            state.userSelectedIdx = selectedIdx;
+            state.userSelectedText = optionText;
+
+            showNextButton();
+        }
+
+        function showNextButton() {
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.classList.remove('hidden');
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerHTML = 'Nộp bài thi <i class="fa-solid fa-paper-plane ml-2"></i>';
+                nextBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                nextBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+            } else {
+                nextBtn.innerHTML = 'Câu tiếp <i class="fa-solid fa-arrow-right ml-2"></i>';
+                nextBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                nextBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+            }
+        }
+
+        function goNext() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function goPrev() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResult() {
+            if (isSubmitted) return;
+            isSubmitted = true;
+            clearInterval(timerInterval);
+            
+            scoreCount = 0;
+            let detailedResults = []; 
+            
+            questions.forEach((q, index) => {
+                const state = questionStates[index];
+                let qId = q.id;
+                
+                if (state.userSelectedIdx === q.correctIndex) {
+                    scoreCount++;
+                    detailedResults.push(qId);
+                } else {
+                    // Đã sửa: Trích xuất đúng thuộc tính .text của object thay vì lấy nguyên cục object
+                    let wrongText = "Không chọn";
+                    if (state.userSelectedIdx !== null && state.userSelectedIdx !== undefined && state.userSelectedIdx !== -1) {
+                        wrongText = q.options[state.userSelectedIdx].text || "Hình ảnh";
+                    }
+                    
+                    detailedResults.push(`${qId}|${wrongText}`);
+                }
+            });
+
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const totalQuestions = questions.length;
+            const originalScore = (scoreCount / totalQuestions) * 10;
+            
+            let displayScoreCount = scoreCount;
+            if (displayScoreCount < totalQuestions / 2) {
+                displayScoreCount = totalQuestions / 2;
+            }
+
+            const finalScoreVal = (displayScoreCount / totalQuestions) * 10;
+            const finalScoreFixed = finalScoreVal.toFixed(1);
+
+            document.getElementById('final-score').innerText = finalScoreFixed;
+            document.getElementById('correct-count').innerText = `Số câu đúng: ${displayScoreCount}/${totalQuestions}`;
+            document.getElementById('result-user').innerText = `${userName} - Lớp ${userClass} - STT ${userStt}`;
+
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const msg = document.getElementById('result-message');
+
+            if (displayScoreCount === totalQuestions) {
+                document.getElementById('app').classList.add('perfect-bg');
+                title.innerText = "XUẤT SẮC!";
+                icon.innerHTML = '<div class="animate-bounce"><i class="fa-solid fa-crown text-7xl text-amber-500"></i></div>';
+                msg.innerText = `Chúc mừng! ${userName} đã hoàn thành bài thi xuất sắc.`;
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-trophy text-6xl text-green-500"></i>';
+                msg.innerText = `Làm tốt lắm! Bạn ${userName} đã vượt qua bài kiểm tra.`;
+            }
+
+            const statusText = document.getElementById('save-status');
+            const details = detailedResults.join(" || ");
+            
+            if (QUIZ_CONFIG.googleSheetURL && QUIZ_CONFIG.googleSheetURL.includes("script.google.com")) {
+                const formData = new URLSearchParams();
+                formData.append("sheetName", QUIZ_CONFIG.sheetName);
+                formData.append("topic", QUIZ_CONFIG.topic);
+                formData.append("userClass", userClass);
+                formData.append("stt", userStt);
+                formData.append("name", userName);
+                formData.append("score", finalScoreFixed);
+                formData.append("totalQuestions", totalQuestions);
+                
+                const hiddenRealScore = ` [Câu đúng: ${originalScore.toFixed(1)}]`;
+                formData.append("questionIds", details + hiddenRealScore);
+
+                fetch(QUIZ_CONFIG.googleSheetURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
+                })
+                .then(response => response.text())
+                .then(res => {
+                    statusText.innerText = "✅ Kết quả thi đã được lưu trên hệ thống!";
+                    statusText.classList.replace("bg-slate-200", "bg-green-100");
+                    statusText.classList.replace("text-slate-500", "text-green-700");
+                })
+                .catch(err => {
+                    statusText.innerText = "❌ Lỗi mạng: Không thể nộp kết quả.";
+                    statusText.classList.replace("bg-slate-200", "bg-red-100");
+                    statusText.classList.replace("text-slate-500", "text-red-700");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
