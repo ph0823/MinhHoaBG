@@ -194,19 +194,31 @@
 
     async function fetchMovies(key, baseUrl) {
         try {
-            const res = await fetch(`${baseUrl}?page=${state[key].page}`);
+            // SỬA LỖI URL: Kiểm tra xem URL đã có dấu '?' chưa để nối tham số '&page=' cho đúng
+            const separator = baseUrl.includes('?') ? '&' : '?';
+            const res = await fetch(`${baseUrl}${separator}page=${state[key].page}`);
             const json = await res.json();
+
+            // SỬA LỖI: Xử lý trường hợp tìm kiếm không có kết quả
+            if (!json.data || !json.data.items || json.data.items.length === 0) {
+                document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #cbd5e1; padding: 20px;">Không tìm thấy phim nào phù hợp!</div>';
+                document.getElementById(`${key.replace('_','-')}-info`).innerText = `Trang 0 / 0`;
+                return;
+            }
+
             const pagination = json.data.params.pagination;
             state[key].total = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
 
-            // PhimAPI trả về chung, ta có thể lọc type ở client nếu API không hỗ trợ sâu
             let items = json.data.items;
             if (key === 'k_series') items = items.filter(m => m.type === 'series' || m.type === 'hoathinh');
             if (key === 'k_movies') items = items.filter(m => m.type === 'single');
 
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ef4444;">Lỗi tải dữ liệu, vui lòng thử lại!</div>';
+        }
     }
 
     function renderGrid(items, gridId) {
@@ -217,7 +229,7 @@
                 <img src="${m.thumb_url.startsWith('http') ? m.thumb_url : IMG_DOMAIN + m.thumb_url}" onerror="this.src='https://placehold.co/200x300?text=No+Poster'">
                 <div class="movie-info">
                     <h3>${m.name}</h3>
-                    <small>${m.year} • ${m.lang}</small>
+                    <small>${m.year} • ${m.lang || 'Vietsub'}</small>
                 </div>
             </div>
         `).join('');
@@ -244,7 +256,8 @@
         document.getElementById('filter-content').style.display = 'block';
         document.getElementById('filter-title').innerText = title;
         
-        state.filter.url = `${API_DOMAIN}${type}/${slug}`;
+        // SỬA LỖI DƯ DẤU '/': Nếu không có slug (khi tìm kiếm) thì không thêm dấu '/'
+        state.filter.url = slug ? `${API_DOMAIN}${type}/${slug}` : `${API_DOMAIN}${type}`;
         state.filter.page = 1;
         showLoading(true);
         await fetchMovies('filter', state.filter.url);
@@ -253,16 +266,30 @@
 
     // Tìm kiếm
     function initSearch() {
-        const kw = document.getElementById('search-input').value;
+        const kw = document.getElementById('search-input').value.trim();
         if(!kw) return;
         loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), '', 'Kết quả tìm kiếm: ' + kw);
     }
+
+    // Bắt sự kiện phím Enter cho ô tìm kiếm
+    document.getElementById('search-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            initSearch();
+        }
+    });
 
     async function playMovie(slug) {
         try {
             const res = await fetch(API_DETAIL + slug);
             const data = await res.json();
             const movie = data.movie;
+            
+            // Xử lý lỗi nếu phim chưa có tập nào
+            if (!data.episodes || data.episodes.length === 0 || !data.episodes[0].server_data) {
+                alert("Phim này hiện chưa có link phát, vui lòng thử lại sau!");
+                return;
+            }
+
             const eps = data.episodes[0].server_data;
 
             document.getElementById('movie-title-display').innerText = movie.name;
@@ -274,13 +301,13 @@
 
             loadVideo(eps[0].link_embed, document.querySelector('.episode-btn'));
             document.getElementById('player-modal').style.display = 'flex';
-        } catch (e) { alert("Lỗi tải phim!"); }
+        } catch (e) { alert("Lỗi tải chi tiết phim!"); }
     }
 
     function loadVideo(url, btn) {
         document.getElementById('video-iframe').src = url;
         document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if(btn) btn.classList.add('active');
     }
 
     function closePlayer() {
