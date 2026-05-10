@@ -79,16 +79,15 @@
         }
         #player-container { width: 95%; max-width: 900px; aspect-ratio: 16/9; }
         #player-container iframe { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            width: 100%; height: 100%; border: none; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
         .episode-container { width: 95%; max-width: 900px; margin-top: 20px; background: var(--card-bg); padding: 20px; border-radius: 8px; }
-        .episode-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
-        .episode-btn { padding: 8px; background: #334155; border: none; color: white; cursor: pointer; border-radius: 4px; }
+        .episode-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        
+        .episode-btn { padding: 8px; background: #334155; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 0.9rem;}
         .episode-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
+        .server-btn { background: #0f172a; border: 1px solid #475569; } /* Màu phân biệt cho nút server */
+
         .close-btn { margin-top: 20px; padding: 10px 30px; background: #ef4444; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
 
         #loading { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--accent-color); }
@@ -102,6 +101,7 @@
         <li class="nav-item" onclick="location.reload()">Trang Chủ</li>
         <li class="nav-item">Quốc Gia
             <div class="dropdown">
+                <div class="dropdown-item" onclick="loadFilter('quoc-gia', 'hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
                 <div class="dropdown-item" onclick="loadFilter('quoc-gia', 'trung-quoc', 'Phim Trung Quốc')">Trung Quốc</div>
                 <div class="dropdown-item" onclick="loadFilter('quoc-gia', 'my', 'Phim Âu Mỹ')">Âu Mỹ</div>
                 <div class="dropdown-item" onclick="loadFilter('quoc-gia', 'nhat-ban', 'Phim Nhật Bản')">Nhật Bản</div>
@@ -172,6 +172,10 @@
         <h3 id="movie-title-display" style="color: var(--accent-color); margin: 0 0 10px;"></h3>
         <p id="movie-desc" style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;"></p>
         <hr style="border: 0.5px solid #475569; margin: 15px 0;">
+        
+        <strong style="color: #fbbf24;">CHỌN BẢN DỊCH / SERVER:</strong>
+        <div id="server-list" class="episode-list" style="margin-bottom: 20px;"></div>
+
         <strong>CHỌN TẬP PHIM:</strong>
         <div id="episode-list" class="episode-list"></div>
     </div>
@@ -188,10 +192,12 @@
         k_movies: { page: 1, total: 1, url: API_DOMAIN + "quoc-gia/han-quoc", type: 'single' },
         filter: { page: 1, total: 1, url: "", slug: "", type: "" }
     };
+    
+    // Biến toàn cục lưu danh sách tập phim để tiện chuyển đổi Server
+    let currentMovieEpisodes = [];
 
     async function init() {
         showLoading(true);
-        // Load đồng thời cả phim bộ và phim lẻ Hàn Quốc
         await Promise.all([
             fetchMovies('k_series', state.k_series.url),
             fetchMovies('k_movies', state.k_movies.url)
@@ -201,12 +207,10 @@
 
     async function fetchMovies(key, baseUrl) {
         try {
-            // SỬA LỖI URL: Kiểm tra xem URL đã có dấu '?' chưa để nối tham số '&page=' cho đúng
             const separator = baseUrl.includes('?') ? '&' : '?';
             const res = await fetch(`${baseUrl}${separator}page=${state[key].page}`);
             const json = await res.json();
 
-            // SỬA LỖI: Xử lý trường hợp tìm kiếm không có kết quả
             if (!json.data || !json.data.items || json.data.items.length === 0) {
                 document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #cbd5e1; padding: 20px;">Không tìm thấy phim nào phù hợp!</div>';
                 document.getElementById(`${key.replace('_','-')}-info`).innerText = `Trang 0 / 0`;
@@ -256,14 +260,12 @@
         document.getElementById(key.replace('_','-') + '-grid').scrollIntoView({behavior:'smooth'});
     }
 
-    // Xử lý bộ lọc (Quốc gia/Thể loại)
     async function loadFilter(type, slug, title) {
         window.scrollTo(0,0);
         document.getElementById('home-content').style.display = 'none';
         document.getElementById('filter-content').style.display = 'block';
         document.getElementById('filter-title').innerText = title;
         
-        // SỬA LỖI DƯ DẤU '/': Nếu không có slug (khi tìm kiếm) thì không thêm dấu '/'
         state.filter.url = slug ? `${API_DOMAIN}${type}/${slug}` : `${API_DOMAIN}${type}`;
         state.filter.page = 1;
         showLoading(true);
@@ -271,14 +273,12 @@
         showLoading(false);
     }
 
-    // Tìm kiếm
     function initSearch() {
         const kw = document.getElementById('search-input').value.trim();
         if(!kw) return;
         loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), '', 'Kết quả tìm kiếm: ' + kw);
     }
 
-    // Bắt sự kiện phím Enter cho ô tìm kiếm
     document.getElementById('search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             initSearch();
@@ -291,29 +291,54 @@
             const data = await res.json();
             const movie = data.movie;
             
-            // Xử lý lỗi nếu phim chưa có tập nào
             if (!data.episodes || data.episodes.length === 0 || !data.episodes[0].server_data) {
                 alert("Phim này hiện chưa có link phát, vui lòng thử lại sau!");
                 return;
             }
 
-            const eps = data.episodes[0].server_data;
+            // Lưu dữ liệu các servers/tập phim vào biến toàn cục
+            currentMovieEpisodes = data.episodes;
 
             document.getElementById('movie-title-display').innerText = movie.name;
             document.getElementById('movie-desc').innerText = movie.content.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
             
-            document.getElementById('episode-list').innerHTML = eps.map((e, i) => `
-                <button class="episode-btn ${i===0?'active':''}" onclick="loadVideo('${e.link_embed}', this)">${e.name}</button>
+            // Hiển thị danh sách Server (Vietsub, Lồng Tiếng, Thuyết Minh...)
+            document.getElementById('server-list').innerHTML = currentMovieEpisodes.map((ep, idx) => `
+                <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
             `).join('');
 
-            loadVideo(eps[0].link_embed, document.querySelector('.episode-btn'));
+            // Mặc định load danh sách tập của Server đầu tiên
+            selectServer(0, null);
+            
             document.getElementById('player-modal').style.display = 'flex';
         } catch (e) { alert("Lỗi tải chi tiết phim!"); }
     }
 
+    // Hàm chọn bản dịch (Server)
+    function selectServer(serverIndex, btnElement) {
+        // Cập nhật giao diện nút Server
+        if (btnElement) {
+            document.querySelectorAll('#server-list .episode-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        // Lấy danh sách tập phim của Server đã chọn
+        const eps = currentMovieEpisodes[serverIndex].server_data;
+        
+        // Hiển thị danh sách tập
+        document.getElementById('episode-list').innerHTML = eps.map((e, i) => `
+            <button class="episode-btn ${i === 0 ? 'active' : ''}" onclick="loadVideo('${e.link_embed}', this)">${e.name}</button>
+        `).join('');
+
+        // Tự động phát tập 1 của bản dịch đó
+        if (eps.length > 0) {
+            loadVideo(eps[0].link_embed, document.querySelector('#episode-list .episode-btn'));
+        }
+    }
+
     function loadVideo(url, btn) {
         document.getElementById('video-iframe').src = url;
-        document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#episode-list .episode-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
     }
 
