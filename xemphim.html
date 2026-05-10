@@ -145,15 +145,22 @@
     // 2. Hiển thị danh sách ra màn hình
     function displayMovies(movies) {
         const grid = document.getElementById('movie-grid');
-        grid.innerHTML = movies.map(movie => `
-            <div class="movie-card" onclick="playMovie('${movie.slug}')">
-                <img src="${IMG_DOMAIN}${movie.thumb_url}" alt="${movie.name}">
-                <div class="movie-info">
-                    <h3>${movie.name}</h3>
-                    <small>${movie.year}</small>
+        grid.innerHTML = movies.map(movie => {
+            // Kiểm tra nếu thumb_url đã có sẵn "http" thì dùng luôn, nếu chưa thì mới nối domain
+            const imageUrl = movie.thumb_url.startsWith('http') 
+                ? movie.thumb_url 
+                : `${IMG_DOMAIN}${movie.thumb_url}`;
+
+            return `
+                <div class="movie-card" onclick="playMovie('${movie.slug}')">
+                    <img src="${imageUrl}" alt="${movie.name}" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
+                    <div class="movie-info">
+                        <h3>${movie.name}</h3>
+                        <small>${movie.year}</small>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // 3. Lấy link phim và mở trình phát
