@@ -3,61 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tìm Kiếm Phim Diễn Viên</title>
+    <title>Thế Giới Phim</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --text-color: #f8fafc;
-            --accent-color: #fbbf24; /* Màu vàng hành động */
+            --accent-color: #fbbf24;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
+        header { text-align: center; margin-bottom: 30px; }
         h1 { color: var(--accent-color); margin-bottom: 20px; }
+        .section-title { margin: 40px 0 20px 0; border-left: 4px solid var(--accent-color); padding-left: 15px; text-transform: uppercase; }
 
         /* Search Bar */
-        .search-box {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        #search-input {
-            padding: 10px 15px;
-            width: 300px;
-            border-radius: 5px;
-            border: 1px solid var(--accent-color);
-            background: #1e293b;
-            color: white;
-        }
-
-        .search-btn {
-            padding: 10px 20px;
-            background: var(--accent-color);
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #000;
-        }
+        .search-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        #search-input { padding: 10px 15px; width: 300px; border-radius: 5px; border: 1px solid var(--accent-color); background: #1e293b; color: white; }
+        .search-btn { padding: 10px 20px; background: var(--accent-color); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: #000; }
 
         /* Movie Grid */
-        #movie-grid {
+        .movie-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
@@ -73,56 +47,51 @@
         }
 
         .movie-card:hover { transform: scale(1.05); }
-        .movie-card img { width: 100%; height: 260px; object-fit: cover; }
+        .movie-card img { width: 100%; height: 250px; object-fit: cover; }
         .movie-info { padding: 10px; text-align: center; }
-        .movie-info h3 { font-size: 0.9rem; margin: 5px 0; }
+        .movie-info h3 { font-size: 0.85rem; margin: 5px 0; height: 2.5em; overflow: hidden; }
 
         /* Player Modal */
         #player-modal {
-            display: none;
-            position: fixed;
+            display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            z-index: 1000; flex-direction: column;
+            align-items: center; justify-content: center;
         }
 
-        #player-container {
-            width: 90%;
-            max-width: 900px;
-            aspect-ratio: 16/9;
-            background: #000;
-        }
-
+        #player-container { width: 90%; max-width: 900px; aspect-ratio: 16/9; background: #000; }
         iframe { width: 100%; height: 100%; border: none; }
-        .close-btn {
-            margin-top: 20px;
-            padding: 10px 25px;
-            background: var(--accent-color);
-            border: none;
-            color: #000;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+        .close-btn { margin-top: 20px; padding: 10px 25px; background: var(--accent-color); border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
 
-        #loading { text-align: center; font-size: 1.2rem; }
+        #loading { text-align: center; font-size: 1.2rem; margin: 20px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>🎬 PHIM CỦA DIỄN VIÊN</h1>
+    <h1>🎬 THẾ GIỚI PHIM TRỰC TUYẾN</h1>
     <div class="search-box">
-        <input type="text" id="search-input" placeholder="Nhập tên diễn viên..." value="Thành Long">
+        <input type="text" id="search-input" placeholder="Tìm tên phim hoặc diễn viên..." value="Thành Long">
         <button class="search-btn" onclick="searchMovies()">TÌM KIẾM</button>
     </div>
 </header>
 
-<div id="loading" style="display:none;">Đang tìm phim...</div>
-<div id="movie-grid"></div>
+<div id="loading" style="display:none;">Đang tải dữ liệu...</div>
+
+<div id="default-content">
+    <h2 class="section-title">📺 Phim Bộ Hàn Quốc</h2>
+    <div id="korea-series-grid" class="movie-grid"></div>
+
+    <h2 class="section-title">⚔️ Phim Lẻ Hành Động</h2>
+    <div id="action-movies-grid" class="movie-grid"></div>
+</div>
+
+<div id="search-results" style="display:none;">
+    <h2 class="section-title">🔍 Kết quả tìm kiếm</h2>
+    <div id="search-grid" class="movie-grid"></div>
+    <button class="close-btn" style="display:block; margin: 20px auto;" onclick="backToHome()">QUAY LẠI TRANG CHỦ</button>
+</div>
 
 <div id="player-modal">
     <div id="player-container">
@@ -133,43 +102,62 @@
 
 <script>
     const API_SEARCH = "https://phimapi.com/v1/api/tim-kiem?keyword=";
+    const API_LIST = "https://phimapi.com/v1/api/danh-sach/";
     const API_DETAIL = "https://phimapi.com/phim/";
     const IMG_DOMAIN = "https://phimimg.com/";
 
-    // 1. Hàm thực hiện tìm kiếm
-    async function searchMovies() {
-        const keyword = document.getElementById('search-input').value;
-        const grid = document.getElementById('movie-grid');
-        const loading = document.getElementById('loading');
+    // 1. Tải danh sách mặc định khi mở trang
+    async function loadDefaultLists() {
+        document.getElementById('loading').style.display = 'block';
+        
+        // Lấy phim bộ Hàn Quốc
+        await fetchAndDisplay(`${API_LIST}phim-bo?country=han-quoc`, 'korea-series-grid');
+        
+        // Lấy phim lẻ Hành động
+        await fetchAndDisplay(`${API_LIST}phim-le?category=hanh-dong`, 'action-movies-grid');
+        
+        document.getElementById('loading').style.display = 'none';
+    }
 
-        if (!keyword) return;
-
-        loading.style.display = 'block';
-        grid.innerHTML = '';
-
+    async function fetchAndDisplay(url, gridId) {
         try {
-            // Encode từ khóa để tránh lỗi tiếng Việt
-            const response = await fetch(API_SEARCH + encodeURIComponent(keyword));
+            const response = await fetch(url);
             const result = await response.json();
-            
-            // API tìm kiếm trả về dữ liệu trong result.data.items
             const movies = result.data.items;
-
-            if (movies.length === 0) {
-                loading.innerText = "Không tìm thấy phim nào.";
-            } else {
-                displayMovies(movies);
-                loading.style.display = 'none';
-            }
+            displayMovies(movies, gridId);
         } catch (error) {
-            console.error("Lỗi:", error);
-            loading.innerText = "Lỗi khi tải dữ liệu.";
+            console.error("Lỗi tải danh sách:", error);
         }
     }
 
-    // 2. Hiển thị danh sách (Duy trì logic xử lý ảnh từ xemphim.html)
-    function displayMovies(movies) {
-        const grid = document.getElementById('movie-grid');
+    // 2. Hàm tìm kiếm
+    async function searchMovies() {
+        const keyword = document.getElementById('search-input').value;
+        if (!keyword) return;
+
+        document.getElementById('default-content').style.display = 'none';
+        document.getElementById('search-results').style.display = 'block';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('search-grid').innerHTML = '';
+
+        try {
+            const response = await fetch(API_SEARCH + encodeURIComponent(keyword));
+            const result = await response.json();
+            displayMovies(result.data.items, 'search-grid');
+            document.getElementById('loading').style.display = 'none';
+        } catch (error) {
+            alert("Lỗi tìm kiếm!");
+        }
+    }
+
+    function backToHome() {
+        document.getElementById('default-content').style.display = 'block';
+        document.getElementById('search-results').style.display = 'none';
+    }
+
+    // 3. Hiển thị danh sách phim vào container chỉ định
+    function displayMovies(movies, gridId) {
+        const grid = document.getElementById(gridId);
         grid.innerHTML = movies.map(movie => {
             const imageUrl = movie.thumb_url.startsWith('http') 
                 ? movie.thumb_url 
@@ -180,40 +168,32 @@
                     <img src="${imageUrl}" alt="${movie.name}" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
                     <div class="movie-info">
                         <h3>${movie.name}</h3>
-                        <small>${movie.origin_name} (${movie.year})</small>
+                        <small>${movie.year}</small>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // 3. Play phim (Giữ nguyên logic từ xemphim.html)
+    // 4. Trình phát phim
     async function playMovie(slug) {
         try {
             const response = await fetch(API_DETAIL + slug);
             const data = await response.json();
             const embedUrl = data.episodes[0].server_data[0].link_embed;
-            
-            const modal = document.getElementById('player-modal');
-            const iframe = document.getElementById('video-iframe');
-            
-            iframe.src = embedUrl;
-            modal.style.display = 'flex';
+            document.getElementById('video-iframe').src = embedUrl;
+            document.getElementById('player-modal').style.display = 'flex';
         } catch (error) {
-            alert("Lỗi khi lấy link phim!");
+            alert("Lỗi link phim!");
         }
     }
 
     function closePlayer() {
-        const modal = document.getElementById('player-modal');
-        const iframe = document.getElementById('video-iframe');
-        iframe.src = "";
-        modal.style.display = 'none';
+        document.getElementById('video-iframe').src = "";
+        document.getElementById('player-modal').style.display = 'none';
     }
 
-    // Tự động tìm kiếm ngay khi trang web tải xong
-    window.onload = searchMovies;
+    window.onload = loadDefaultLists;
 </script>
-
 </body>
 </html>
