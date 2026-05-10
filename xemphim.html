@@ -37,57 +37,43 @@
 
         .movie-card {
             background: var(--card-bg);
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s ease;
+            border-radius: 8px; overflow: hidden;
+            cursor: pointer; transition: transform 0.3s ease;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
-
         .movie-card:hover { transform: scale(1.05); }
         .movie-card img { width: 100%; height: 250px; object-fit: cover; }
         .movie-info { padding: 10px; text-align: center; }
         .movie-info h3 { font-size: 0.85rem; margin: 5px 0; height: 2.5em; overflow: hidden; }
 
-        /* Pagination Styling */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .page-btn {
-            padding: 6px 12px;
-            background: var(--card-bg);
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
+        .page-btn { padding: 6px 12px; background: var(--card-bg); border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .page-info { font-size: 0.9rem; font-weight: bold; }
 
         #player-modal {
             display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 1000; flex-direction: column;
-            align-items: center; justify-content: center;
+            align-items: center; overflow-y: auto; padding: 20px 0;
         }
 
         #player-container { width: 90%; max-width: 900px; aspect-ratio: 16/9; background: #000; }
         iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { margin-top: 20px; padding: 10px 25px; background: var(--accent-color); border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
 
+        .episode-container { width: 90%; max-width: 900px; margin-top: 20px; background: var(--card-bg); padding: 20px; border-radius: 8px; }
+        .episode-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
+        .episode-btn { padding: 8px; background: #334155; border: 1px solid #475569; color: white; text-align: center; cursor: pointer; border-radius: 4px; font-size: 0.85rem; }
+        .episode-btn:hover, .episode-btn.active { background: var(--accent-color); color: black; }
+
+        .close-btn { margin-top: 20px; padding: 10px 25px; background: #ef4444; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 5px; }
         #loading { text-align: center; font-size: 1.2rem; margin: 20px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>🎬 THẾ GIỚI PHIM TRỰC TUYẾN</h1>
+    <h1>🎬 THẾ GIỚI PHIM ĐA QUỐC GIA</h1>
     <div class="search-box">
         <input type="text" id="search-input" placeholder="Tìm tên phim hoặc diễn viên..." value="Thành Long">
         <button class="search-btn" onclick="initSearch()">TÌM KIẾM</button>
@@ -97,169 +83,144 @@
 <div id="loading" style="display:none;">Đang tải dữ liệu...</div>
 
 <div id="default-content">
-    <h2 class="section-title">📺 Phim Bộ Hàn Quốc</h2>
-    <div id="korea-series-grid" class="movie-grid"></div>
-    <div class="pagination">
-        <button id="korea-prev" class="page-btn" onclick="changeDefaultPage('korea', -1)">Trang trước</button>
-        <span id="korea-page-info" class="page-info">Trang 1</span>
-        <button id="korea-next" class="page-btn" onclick="changeDefaultPage('korea', 1)">Trang sau</button>
-    </div>
+    <h2 class="section-title">🇭🇰 Phim Hồng Kông</h2>
+    <div id="hongkong-grid" class="movie-grid"></div>
+    <div class="pagination"><button id="hongkong-prev" class="page-btn" onclick="changePage('hongkong', -1)">Trước</button><span id="hongkong-info"></span><button id="hongkong-next" class="page-btn" onclick="changePage('hongkong', 1)">Sau</button></div>
 
-    <h2 class="section-title">⚔️ Phim Lẻ Hành Động</h2>
-    <div id="action-movies-grid" class="movie-grid"></div>
-    <div class="pagination">
-        <button id="action-prev" class="page-btn" onclick="changeDefaultPage('action', -1)">Trang trước</button>
-        <span id="action-page-info" class="page-info">Trang 1</span>
-        <button id="action-next" class="page-btn" onclick="changeDefaultPage('action', 1)">Trang sau</button>
-    </div>
+    <h2 class="section-title">🇺🇸 Phim Mỹ</h2>
+    <div id="usa-grid" class="movie-grid"></div>
+    <div class="pagination"><button id="usa-prev" class="page-btn" onclick="changePage('usa', -1)">Trước</button><span id="usa-info"></span><button id="usa-next" class="page-btn" onclick="changePage('usa', 1)">Sau</button></div>
+
+    <h2 class="section-title">🇯🇵 Phim Nhật Bản</h2>
+    <div id="japan-grid" class="movie-grid"></div>
+    <div class="pagination"><button id="japan-prev" class="page-btn" onclick="changePage('japan', -1)">Trước</button><span id="japan-info"></span><button id="japan-next" class="page-btn" onclick="changePage('japan', 1)">Sau</button></div>
+
+    <h2 class="section-title">🇫🇷 Phim Pháp</h2>
+    <div id="france-grid" class="movie-grid"></div>
+    <div class="pagination"><button id="france-prev" class="page-btn" onclick="changePage('france', -1)">Trước</button><span id="france-info"></span><button id="france-next" class="page-btn" onclick="changePage('france', 1)">Sau</button></div>
+
+    <h2 class="section-title">🇵🇭 Phim Philippines</h2>
+    <div id="phil-grid" class="movie-grid"></div>
+    <div class="pagination"><button id="phil-prev" class="page-btn" onclick="changePage('phil', -1)">Trước</button><span id="phil-info"></span><button id="phil-next" class="page-btn" onclick="changePage('phil', 1)">Sau</button></div>
 </div>
 
 <div id="search-results" style="display:none;">
     <h2 class="section-title">🔍 Kết quả tìm kiếm</h2>
     <div id="search-grid" class="movie-grid"></div>
-    <div class="pagination">
-        <button id="search-prev" class="page-btn" onclick="changeSearchPage(-1)">Trang trước</button>
-        <span id="search-page-info" class="page-info">Trang 1</span>
-        <button id="search-next" class="page-btn" onclick="changeSearchPage(1)">Trang sau</button>
-    </div>
-    <button class="close-btn" style="display:block; margin: 20px auto;" onclick="backToHome()">QUAY LẠI TRANG CHỦ</button>
+    <div class="pagination"><button id="search-prev" class="page-btn" onclick="changeSearchPage(-1)">Trước</button><span id="search-info"></span><button id="search-next" class="page-btn" onclick="changeSearchPage(1)">Sau</button></div>
+    <button class="close-btn" style="display:block; margin: 20px auto; background: var(--accent-color); color: black;" onclick="backToHome()">QUAY LẠI TRANG CHỦ</button>
 </div>
 
 <div id="player-modal">
-    <div id="player-container">
-        <iframe id="video-iframe" src="" allowfullscreen></iframe>
+    <div id="player-container"><iframe id="video-iframe" src="" allowfullscreen></iframe></div>
+    <div class="episode-container">
+        <h3 id="movie-title-display" style="color: var(--accent-color);"></h3>
+        <p id="movie-desc" style="font-size: 0.85rem; color: #cbd5e1;"></p>
+        <hr style="border: 0.5px solid #475569;">
+        <strong>DANH SÁCH TẬP:</strong>
+        <div id="episode-list" class="episode-list"></div>
     </div>
     <button class="close-btn" onclick="closePlayer()">ĐÓNG</button>
 </div>
 
 <script>
     const API_SEARCH = "https://phimapi.com/v1/api/tim-kiem?keyword=";
-    const API_LIST = "https://phimapi.com/v1/api/danh-sach/";
+    const API_LIST = "https://phimapi.com/v1/api/danh-sach/phim-moi?country=";
     const API_DETAIL = "https://phimapi.com/phim/";
     const IMG_DOMAIN = "https://phimimg.com/";
 
-    // Quản lý trang cho từng danh mục
-    let pages = {
-        korea: 1,
-        action: 1,
-        search: 1
+    let pages = { hongkong: 1, usa: 1, japan: 1, france: 1, phil: 1, search: 1 };
+    let total = { hongkong: 1, usa: 1, japan: 1, france: 1, phil: 1, search: 1 };
+    let currentKeyword = "";
+
+    const countrySlugs = {
+        hongkong: 'hong-kong',
+        usa: 'my',
+        japan: 'nhat-ban',
+        france: 'phap',
+        phil: 'philippines'
     };
 
-    let totalPages = {
-        korea: 1,
-        action: 1,
-        search: 1
-    };
-
-    let currentSearchKeyword = "";
-
-    // 1. Tải danh sách mặc định
-    async function loadDefaultLists() {
+    async function loadHome() {
         document.getElementById('loading').style.display = 'block';
-        await Promise.all([
-            fetchAndDisplay(`${API_LIST}phim-bo?country=han-quoc&page=${pages.korea}`, 'korea-series-grid', 'korea'),
-            fetchAndDisplay(`${API_LIST}phim-le?category=hanh-dong&page=${pages.action}`, 'action-movies-grid', 'action')
-        ]);
+        const tasks = Object.keys(countrySlugs).map(key => 
+            fetchData(`${API_LIST}${countrySlugs[key]}&page=${pages[key]}`, key)
+        );
+        await Promise.all(tasks);
         document.getElementById('loading').style.display = 'none';
     }
 
-    async function fetchAndDisplay(url, gridId, type) {
+    async function fetchData(url, type) {
         try {
-            const response = await fetch(url);
-            const result = await response.json();
-            const movies = result.data.items;
-            const pagination = result.data.params.pagination;
+            const res = await fetch(url);
+            const json = await res.json();
+            const pagination = json.data.params.pagination;
+            total[type] = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
+            renderMovies(json.data.items, `${type}-grid`);
             
-            totalPages[type] = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
-            displayMovies(movies, gridId);
-            updatePaginationUI(type);
-        } catch (error) {
-            console.error(`Lỗi tải danh sách ${type}:`, error);
-        }
+            document.getElementById(`${type}-info`).innerText = `Trang ${pages[type]} / ${total[type]}`;
+            document.getElementById(`${type}-prev`).disabled = pages[type] <= 1;
+            document.getElementById(`${type}-next`).disabled = pages[type] >= total[type];
+        } catch (e) { console.error(e); }
     }
 
-    function updatePaginationUI(type) {
-        document.getElementById(`${type}-page-info`).innerText = `Trang ${pages[type]} / ${totalPages[type]}`;
-        document.getElementById(`${type}-prev`).disabled = (pages[type] <= 1);
-        document.getElementById(`${type}-next`).disabled = (pages[type] >= totalPages[type]);
-    }
-
-    async function changeDefaultPage(type, step) {
-        pages[type] += step;
-        const url = type === 'korea' 
-            ? `${API_LIST}phim-bo?country=han-quoc&page=${pages.korea}`
-            : `${API_LIST}phim-le?category=hanh-dong&page=${pages.action}`;
-        
-        await fetchAndDisplay(url, type === 'korea' ? 'korea-series-grid' : 'action-movies-grid', type);
-        // Cuộn nhẹ đến phần tiêu đề của danh mục đó
-        document.getElementById(type === 'korea' ? 'korea-series-grid' : 'action-movies-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // 2. Xử lý tìm kiếm
-    function initSearch() {
-        currentSearchKeyword = document.getElementById('search-input').value;
-        pages.search = 1;
-        executeSearch();
-    }
-
-    async function executeSearch() {
-        if (!currentSearchKeyword) return;
-        document.getElementById('default-content').style.display = 'none';
-        document.getElementById('search-results').style.display = 'block';
-        document.getElementById('loading').style.display = 'block';
-
-        const url = `${API_SEARCH}${encodeURIComponent(currentSearchKeyword)}&page=${pages.search}`;
-        await fetchAndDisplay(url, 'search-grid', 'search');
-        document.getElementById('loading').style.display = 'none';
-        window.scrollTo(0, 0);
-    }
-
-    function changeSearchPage(step) {
-        pages.search += step;
-        executeSearch();
-    }
-
-    function backToHome() {
-        document.getElementById('default-content').style.display = 'block';
-        document.getElementById('search-results').style.display = 'none';
-    }
-
-    // 3. Hiển thị & Trình phát
-    function displayMovies(movies, gridId) {
+    function renderMovies(movies, gridId) {
         const grid = document.getElementById(gridId);
-        if (!movies || movies.length === 0) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Không có dữ liệu.</p>";
-            return;
-        }
-        grid.innerHTML = movies.map(movie => {
-            const imageUrl = movie.thumb_url.startsWith('http') ? movie.thumb_url : `${IMG_DOMAIN}${movie.thumb_url}`;
-            return `
-                <div class="movie-card" onclick="playMovie('${movie.slug}')">
-                    <img src="${imageUrl}" alt="${movie.name}" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
-                    <div class="movie-info">
-                        <h3>${movie.name}</h3>
-                        <small>${movie.year}</small>
-                    </div>
-                </div>
-            `;
+        grid.innerHTML = movies.map(m => {
+            const img = m.thumb_url.startsWith('http') ? m.thumb_url : `${IMG_DOMAIN}${m.thumb_url}`;
+            return `<div class="movie-card" onclick="playMovie('${m.slug}')">
+                <img src="${img}" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
+                <div class="movie-info"><h3>${m.name}</h3><small>${m.year}</small></div>
+            </div>`;
         }).join('');
     }
 
+    function changePage(type, step) {
+        pages[type] += step;
+        fetchData(`${API_LIST}${countrySlugs[type]}&page=${pages[type]}`, type);
+        document.getElementById(`${type}-grid`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function initSearch() {
+        currentKeyword = document.getElementById('search-input').value;
+        pages.search = 1;
+        doSearch();
+    }
+
+    async function doSearch() {
+        if (!currentKeyword) return;
+        document.getElementById('default-content').style.display = 'none';
+        document.getElementById('search-results').style.display = 'block';
+        fetchData(`https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(currentKeyword)}&page=${pages.search}`, 'search');
+    }
+
+    function changeSearchPage(step) { pages.search += step; doSearch(); }
+    function backToHome() { document.getElementById('default-content').style.display = 'block'; document.getElementById('search-results').style.display = 'none'; }
+
     async function playMovie(slug) {
         try {
-            const response = await fetch(API_DETAIL + slug);
-            const data = await response.json();
-            document.getElementById('video-iframe').src = data.episodes[0].server_data[0].link_embed;
+            const res = await fetch(API_DETAIL + slug);
+            const data = await res.json();
+            const eps = data.episodes[0].server_data;
+            document.getElementById('movie-title-display').innerText = data.movie.name;
+            document.getElementById('movie-desc').innerText = data.movie.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + "...";
+            document.getElementById('episode-list').innerHTML = eps.map((e, i) => 
+                `<button class="episode-btn ${i===0?'active':''}" onclick="loadEp('${e.link_embed}', this)">${e.name}</button>`
+            ).join('');
+            loadEp(eps[0].link_embed, document.querySelector('.episode-btn'));
             document.getElementById('player-modal').style.display = 'flex';
-        } catch (error) { alert("Lỗi link phim!"); }
+        } catch (e) { alert("Lỗi tải phim!"); }
     }
 
-    function closePlayer() {
-        document.getElementById('video-iframe').src = "";
-        document.getElementById('player-modal').style.display = 'none';
+    function loadEp(url, btn) {
+        document.getElementById('video-iframe').src = url;
+        document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 
-    window.onload = loadDefaultLists;
+    function closePlayer() { document.getElementById('video-iframe').src = ""; document.getElementById('player-modal').style.display = 'none'; }
+
+    window.onload = loadHome;
 </script>
 </body>
 </html>
