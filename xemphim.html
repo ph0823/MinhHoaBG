@@ -23,12 +23,10 @@
         h1 { color: var(--accent-color); margin-bottom: 20px; }
         .section-title { margin: 40px 0 20px 0; border-left: 4px solid var(--accent-color); padding-left: 15px; text-transform: uppercase; }
 
-        /* Search Bar */
         .search-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
         #search-input { padding: 10px 15px; width: 300px; border-radius: 5px; border: 1px solid var(--accent-color); background: #1e293b; color: white; }
         .search-btn { padding: 10px 20px; background: var(--accent-color); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: #000; }
 
-        /* Movie Grid */
         .movie-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -51,7 +49,26 @@
         .movie-info { padding: 10px; text-align: center; }
         .movie-info h3 { font-size: 0.85rem; margin: 5px 0; height: 2.5em; overflow: hidden; }
 
-        /* Player Modal */
+        /* Pagination Styling */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .page-btn {
+            padding: 6px 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-info { font-size: 0.9rem; font-weight: bold; }
+
         #player-modal {
             display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -73,7 +90,7 @@
     <h1>🎬 THẾ GIỚI PHIM TRỰC TUYẾN</h1>
     <div class="search-box">
         <input type="text" id="search-input" placeholder="Tìm tên phim hoặc diễn viên..." value="Thành Long">
-        <button class="search-btn" onclick="searchMovies()">TÌM KIẾM</button>
+        <button class="search-btn" onclick="initSearch()">TÌM KIẾM</button>
     </div>
 </header>
 
@@ -82,14 +99,29 @@
 <div id="default-content">
     <h2 class="section-title">📺 Phim Bộ Hàn Quốc</h2>
     <div id="korea-series-grid" class="movie-grid"></div>
+    <div class="pagination">
+        <button id="korea-prev" class="page-btn" onclick="changeDefaultPage('korea', -1)">Trang trước</button>
+        <span id="korea-page-info" class="page-info">Trang 1</span>
+        <button id="korea-next" class="page-btn" onclick="changeDefaultPage('korea', 1)">Trang sau</button>
+    </div>
 
     <h2 class="section-title">⚔️ Phim Lẻ Hành Động</h2>
     <div id="action-movies-grid" class="movie-grid"></div>
+    <div class="pagination">
+        <button id="action-prev" class="page-btn" onclick="changeDefaultPage('action', -1)">Trang trước</button>
+        <span id="action-page-info" class="page-info">Trang 1</span>
+        <button id="action-next" class="page-btn" onclick="changeDefaultPage('action', 1)">Trang sau</button>
+    </div>
 </div>
 
 <div id="search-results" style="display:none;">
     <h2 class="section-title">🔍 Kết quả tìm kiếm</h2>
     <div id="search-grid" class="movie-grid"></div>
+    <div class="pagination">
+        <button id="search-prev" class="page-btn" onclick="changeSearchPage(-1)">Trang trước</button>
+        <span id="search-page-info" class="page-info">Trang 1</span>
+        <button id="search-next" class="page-btn" onclick="changeSearchPage(1)">Trang sau</button>
+    </div>
     <button class="close-btn" style="display:block; margin: 20px auto;" onclick="backToHome()">QUAY LẠI TRANG CHỦ</button>
 </div>
 
@@ -106,48 +138,85 @@
     const API_DETAIL = "https://phimapi.com/phim/";
     const IMG_DOMAIN = "https://phimimg.com/";
 
-    // 1. Tải danh sách mặc định khi mở trang
+    // Quản lý trang cho từng danh mục
+    let pages = {
+        korea: 1,
+        action: 1,
+        search: 1
+    };
+
+    let totalPages = {
+        korea: 1,
+        action: 1,
+        search: 1
+    };
+
+    let currentSearchKeyword = "";
+
+    // 1. Tải danh sách mặc định
     async function loadDefaultLists() {
         document.getElementById('loading').style.display = 'block';
-        
-        // Lấy phim bộ Hàn Quốc
-        await fetchAndDisplay(`${API_LIST}phim-bo?country=han-quoc`, 'korea-series-grid');
-        
-        // Lấy phim lẻ Hành động
-        await fetchAndDisplay(`${API_LIST}phim-le?category=hanh-dong`, 'action-movies-grid');
-        
+        await Promise.all([
+            fetchAndDisplay(`${API_LIST}phim-bo?country=han-quoc&page=${pages.korea}`, 'korea-series-grid', 'korea'),
+            fetchAndDisplay(`${API_LIST}phim-le?category=hanh-dong&page=${pages.action}`, 'action-movies-grid', 'action')
+        ]);
         document.getElementById('loading').style.display = 'none';
     }
 
-    async function fetchAndDisplay(url, gridId) {
+    async function fetchAndDisplay(url, gridId, type) {
         try {
             const response = await fetch(url);
             const result = await response.json();
             const movies = result.data.items;
+            const pagination = result.data.params.pagination;
+            
+            totalPages[type] = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
             displayMovies(movies, gridId);
+            updatePaginationUI(type);
         } catch (error) {
-            console.error("Lỗi tải danh sách:", error);
+            console.error(`Lỗi tải danh sách ${type}:`, error);
         }
     }
 
-    // 2. Hàm tìm kiếm
-    async function searchMovies() {
-        const keyword = document.getElementById('search-input').value;
-        if (!keyword) return;
+    function updatePaginationUI(type) {
+        document.getElementById(`${type}-page-info`).innerText = `Trang ${pages[type]} / ${totalPages[type]}`;
+        document.getElementById(`${type}-prev`).disabled = (pages[type] <= 1);
+        document.getElementById(`${type}-next`).disabled = (pages[type] >= totalPages[type]);
+    }
 
+    async function changeDefaultPage(type, step) {
+        pages[type] += step;
+        const url = type === 'korea' 
+            ? `${API_LIST}phim-bo?country=han-quoc&page=${pages.korea}`
+            : `${API_LIST}phim-le?category=hanh-dong&page=${pages.action}`;
+        
+        await fetchAndDisplay(url, type === 'korea' ? 'korea-series-grid' : 'action-movies-grid', type);
+        // Cuộn nhẹ đến phần tiêu đề của danh mục đó
+        document.getElementById(type === 'korea' ? 'korea-series-grid' : 'action-movies-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 2. Xử lý tìm kiếm
+    function initSearch() {
+        currentSearchKeyword = document.getElementById('search-input').value;
+        pages.search = 1;
+        executeSearch();
+    }
+
+    async function executeSearch() {
+        if (!currentSearchKeyword) return;
         document.getElementById('default-content').style.display = 'none';
         document.getElementById('search-results').style.display = 'block';
         document.getElementById('loading').style.display = 'block';
-        document.getElementById('search-grid').innerHTML = '';
 
-        try {
-            const response = await fetch(API_SEARCH + encodeURIComponent(keyword));
-            const result = await response.json();
-            displayMovies(result.data.items, 'search-grid');
-            document.getElementById('loading').style.display = 'none';
-        } catch (error) {
-            alert("Lỗi tìm kiếm!");
-        }
+        const url = `${API_SEARCH}${encodeURIComponent(currentSearchKeyword)}&page=${pages.search}`;
+        await fetchAndDisplay(url, 'search-grid', 'search');
+        document.getElementById('loading').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+
+    function changeSearchPage(step) {
+        pages.search += step;
+        executeSearch();
     }
 
     function backToHome() {
@@ -155,14 +224,15 @@
         document.getElementById('search-results').style.display = 'none';
     }
 
-    // 3. Hiển thị danh sách phim vào container chỉ định
+    // 3. Hiển thị & Trình phát
     function displayMovies(movies, gridId) {
         const grid = document.getElementById(gridId);
+        if (!movies || movies.length === 0) {
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Không có dữ liệu.</p>";
+            return;
+        }
         grid.innerHTML = movies.map(movie => {
-            const imageUrl = movie.thumb_url.startsWith('http') 
-                ? movie.thumb_url 
-                : `${IMG_DOMAIN}${movie.thumb_url}`;
-
+            const imageUrl = movie.thumb_url.startsWith('http') ? movie.thumb_url : `${IMG_DOMAIN}${movie.thumb_url}`;
             return `
                 <div class="movie-card" onclick="playMovie('${movie.slug}')">
                     <img src="${imageUrl}" alt="${movie.name}" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
@@ -175,17 +245,13 @@
         }).join('');
     }
 
-    // 4. Trình phát phim
     async function playMovie(slug) {
         try {
             const response = await fetch(API_DETAIL + slug);
             const data = await response.json();
-            const embedUrl = data.episodes[0].server_data[0].link_embed;
-            document.getElementById('video-iframe').src = embedUrl;
+            document.getElementById('video-iframe').src = data.episodes[0].server_data[0].link_embed;
             document.getElementById('player-modal').style.display = 'flex';
-        } catch (error) {
-            alert("Lỗi link phim!");
-        }
+        } catch (error) { alert("Lỗi link phim!"); }
     }
 
     function closePlayer() {
