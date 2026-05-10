@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phim Mới 2026</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--accent-color); }
+
+        /* Movie Grid */
+        #movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .movie-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .movie-info h3 {
+            font-size: 0.9rem;
+            margin: 5px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Player Modal */
+        #player-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #player-container {
+            width: 90%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .close-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: var(--accent-color);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #loading { text-align: center; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>PHIM MỚI CẬP NHẬT</h1>
+    <p>Dữ liệu từ PhimAPI</p>
+</header>
+
+<div id="loading">Đang tải phim...</div>
+<div id="movie-grid"></div>
+
+<div id="player-modal">
+    <div id="player-container">
+        <iframe id="video-iframe" src="" allowfullscreen></iframe>
+    </div>
+    <button class="close-btn" onclick="closePlayer()">ĐÓNG</button>
+</div>
+
+<script>
+    const API_LIST = "https://phimapi.com/danh-sach/phim-moi-cap-nhat?page=1";
+    const API_DETAIL = "https://phimapi.com/phim/";
+    const IMG_DOMAIN = "https://phimimg.com/";
+
+    // 1. Lấy danh sách phim khi trang web load
+    async function fetchMovies() {
+        try {
+            const response = await fetch(API_LIST);
+            const data = await response.json();
+            displayMovies(data.items);
+            document.getElementById('loading').style.display = 'none';
+        } catch (error) {
+            console.error("Lỗi:", error);
+            document.getElementById('loading').innerText = "Không thể tải dữ liệu.";
+        }
+    }
+
+    // 2. Hiển thị danh sách ra màn hình
+    function displayMovies(movies) {
+        const grid = document.getElementById('movie-grid');
+        grid.innerHTML = movies.map(movie => `
+            <div class="movie-card" onclick="playMovie('${movie.slug}')">
+                <img src="${IMG_DOMAIN}${movie.thumb_url}" alt="${movie.name}">
+                <div class="movie-info">
+                    <h3>${movie.name}</h3>
+                    <small>${movie.year}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 3. Lấy link phim và mở trình phát
+    async function playMovie(slug) {
+        try {
+            const response = await fetch(API_DETAIL + slug);
+            const data = await response.json();
+            
+            // Lấy link embed của tập phim đầu tiên
+            const embedUrl = data.episodes[0].server_data[0].link_embed;
+            
+            const modal = document.getElementById('player-modal');
+            const iframe = document.getElementById('video-iframe');
+            
+            iframe.src = embedUrl;
+            modal.style.display = 'flex';
+        } catch (error) {
+            alert("Lỗi khi lấy link phim!");
+        }
+    }
+
+    function closePlayer() {
+        const modal = document.getElementById('player-modal');
+        const iframe = document.getElementById('video-iframe');
+        iframe.src = ""; // Dừng video khi đóng
+        modal.style.display = 'none';
+    }
+
+    fetchMovies();
+</script>
+
+</body>
+</html>
