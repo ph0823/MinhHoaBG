@@ -78,6 +78,13 @@
             background: rgba(0,0,0,0.95); z-index: 1001; flex-direction: column; align-items: center; overflow-y: auto; padding: 20px 0;
         }
         #player-container { width: 95%; max-width: 900px; aspect-ratio: 16/9; }
+        #player-container iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
         .episode-container { width: 95%; max-width: 900px; margin-top: 20px; background: var(--card-bg); padding: 20px; border-radius: 8px; }
         .episode-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
         .episode-btn { padding: 8px; background: #334155; border: none; color: white; cursor: pointer; border-radius: 4px; }
@@ -160,7 +167,7 @@
 </div>
 
 <div id="player-modal">
-    <div id="player-container"><iframe id="video-iframe" src="" allowfullscreen></iframe></div>
+    <div id="player-container"><iframe id="video-iframe" src="" frameborder="0" allowfullscreen allow="autoplay; fullscreen" webkitallowfullscreen mozallowfullscreen></iframe></div>
     <div class="episode-container">
         <h3 id="movie-title-display" style="color: var(--accent-color); margin: 0 0 10px;"></h3>
         <p id="movie-desc" style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;"></p>
