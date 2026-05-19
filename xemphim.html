@@ -82,13 +82,33 @@
             width: 100%; height: 100%; border: none; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
         .episode-container { width: 95%; max-width: 900px; margin-top: 20px; background: var(--card-bg); padding: 20px; border-radius: 8px; }
-        .episode-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
         
-        .episode-btn { padding: 8px; background: #334155; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 0.9rem;}
-        .episode-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
-        .server-btn { background: #0f172a; border: 1px solid #475569; } /* Màu phân biệt cho nút server */
+        /* Cập nhật danh sách tập phim: Thêm thanh cuộn */
+        .episode-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+            gap: 10px; 
+            margin-top: 10px; 
+            max-height: 250px; 
+            overflow-y: auto; 
+            padding-right: 5px;
+        }
 
-        .close-btn { margin-top: 20px; padding: 10px 30px; background: #ef4444; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        /* Tùy chỉnh thanh cuộn */
+        .episode-list::-webkit-scrollbar { width: 6px; }
+        .episode-list::-webkit-scrollbar-track { background: var(--nav-bg); }
+        .episode-list::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
+        
+        .episode-btn { padding: 8px; background: #334155; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 0.9rem; transition: 0.2s;}
+        .episode-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
+        
+        /* Hiệu ứng hover cho nút tập phim */
+        .episode-btn:hover:not(.active) { background: #475569; }
+        
+        .server-btn { background: #0f172a; border: 1px solid #475569; }
+
+        .close-btn { margin-top: 20px; padding: 10px 30px; background: #ef4444; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.2s;}
+        .close-btn:hover { background: #dc2626; }
 
         #loading { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--accent-color); }
     </style>
@@ -174,7 +194,7 @@
         <hr style="border: 0.5px solid #475569; margin: 15px 0;">
         
         <strong style="color: #fbbf24;">CHỌN BẢN DỊCH / SERVER:</strong>
-        <div id="server-list" class="episode-list" style="margin-bottom: 20px;"></div>
+        <div id="server-list" class="episode-list" style="margin-bottom: 20px; overflow-y: visible;"></div>
 
         <strong>CHỌN TẬP PHIM:</strong>
         <div id="episode-list" class="episode-list"></div>
@@ -193,7 +213,6 @@
         filter: { page: 1, total: 1, url: "", slug: "", type: "" }
     };
     
-    // Biến toàn cục lưu danh sách tập phim để tiện chuyển đổi Server
     let currentMovieEpisodes = [];
 
     async function init() {
@@ -279,9 +298,11 @@
         loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), '', 'Kết quả tìm kiếm: ' + kw);
     }
 
+    // Cập nhật sự kiện Enter: Thêm blur() để ẩn bàn phím ảo
     document.getElementById('search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             initSearch();
+            this.blur(); 
         }
     });
 
@@ -296,41 +317,34 @@
                 return;
             }
 
-            // Lưu dữ liệu các servers/tập phim vào biến toàn cục
             currentMovieEpisodes = data.episodes;
 
             document.getElementById('movie-title-display').innerText = movie.name;
             document.getElementById('movie-desc').innerText = movie.content.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
             
-            // Hiển thị danh sách Server (Vietsub, Lồng Tiếng, Thuyết Minh...)
             document.getElementById('server-list').innerHTML = currentMovieEpisodes.map((ep, idx) => `
                 <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
             `).join('');
 
-            // Mặc định load danh sách tập của Server đầu tiên
             selectServer(0, null);
             
             document.getElementById('player-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Khóa cuộn trang nền khi mở modal
         } catch (e) { alert("Lỗi tải chi tiết phim!"); }
     }
 
-    // Hàm chọn bản dịch (Server)
     function selectServer(serverIndex, btnElement) {
-        // Cập nhật giao diện nút Server
         if (btnElement) {
             document.querySelectorAll('#server-list .episode-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
         }
 
-        // Lấy danh sách tập phim của Server đã chọn
         const eps = currentMovieEpisodes[serverIndex].server_data;
         
-        // Hiển thị danh sách tập
         document.getElementById('episode-list').innerHTML = eps.map((e, i) => `
             <button class="episode-btn ${i === 0 ? 'active' : ''}" onclick="loadVideo('${e.link_embed}', this)">${e.name}</button>
         `).join('');
 
-        // Tự động phát tập 1 của bản dịch đó
         if (eps.length > 0) {
             loadVideo(eps[0].link_embed, document.querySelector('#episode-list .episode-btn'));
         }
@@ -345,6 +359,15 @@
     function closePlayer() {
         document.getElementById('video-iframe').src = "";
         document.getElementById('player-modal').style.display = 'none';
+        document.body.style.overflow = 'auto'; // Mở lại cuộn trang nền
+    }
+
+    // Sự kiện click ra ngoài vùng đen để đóng trình phát
+    window.onclick = function(event) {
+        const modal = document.getElementById('player-modal');
+        if (event.target === modal) {
+            closePlayer();
+        }
     }
 
     function showLoading(status) {
