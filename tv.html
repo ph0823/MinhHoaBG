@@ -397,15 +397,32 @@
         }
     });
 
-    // Lắng nghe tính năng Recall qua phím cứng
+    // --- TẠO LOGIC NÚT BACK CHO MAGIC REMOTE LG (MR25GA) ---
+
+    // 1. Tạo một lịch sử duyệt web "giả" ngay khi trang vừa tải xong
+    window.history.pushState({ noExit: true }, '', window.location.href);
+
+    // 2. Lắng nghe sự kiện lùi trang (kích hoạt khi bấm nút Back trên remote tivi)
+    window.addEventListener('popstate', function(event) {
+        
+        // Gọi hàm quay lại kênh trước đó
+        recallChannel();
+
+        // Lập tức tạo lại lịch sử "giả" để chặn việc thoát trang cho lần bấm Back tiếp theo
+        window.history.pushState({ noExit: true }, '', window.location.href);
+    });
+
+    // 3. Lắng nghe tính năng Recall qua phím cứng để dùng cho bàn phím máy tính (phím Q, Backspace)
     document.addEventListener('keydown', (e) => {
-        if (e.keyCode === 461 || e.key === 'Backspace' || e.key === 'q' || e.key === 'Q') {
+        // Tivi LG đã được xử lý bằng popstate ở trên, nên chỉ cần bắt phím máy tính
+        if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q') {
             if (previousChannelIndex !== null) {
                 e.preventDefault();
                 recallChannel();
             }
         }
     });
+    
 </script>
 </body>
 </html>
