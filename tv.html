@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem trên webOS</title>
+    <title>Xem tivi qua internet - Hoàn chỉnh cho LG webOS</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -279,7 +279,7 @@
             hls.destroy();
         }
 
-        // Ưu tiên chạy Native HLS trước để Tivi chạy mượt
+        // Ưu tiên chạy Native HLS trước cho Tivi mượt mà
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = channel.url;
             video.play().catch(e => console.log("Cần tương tác"));
@@ -367,3 +367,4 @@
 </script>
 </body>
 </html>
+
