@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem tivi qua internet</title>
+    <title>Xem trên webOS</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -11,6 +11,7 @@
             --bg-color: #121212;
             --container-bg: #1e1e1e;
             --text-color: #ffffff;
+            --focus-color: #f1c40f; /* Màu viền khi focus bằng Remote */
         }
 
         body {
@@ -27,18 +28,16 @@
         .container {
             width: 95%;
             max-width: 1100px;
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
-        h1 { text-align: center; color: var(--primary-color); letter-spacing: 1px; }
+        h1 { text-align: center; color: var(--primary-color); letter-spacing: 1px; margin-bottom: 10px; }
 
         /* Video Wrapper */
         .player-container {
-            /* khi người dùng cuộn trang web thì màn hình tivi vẫn "dính" ở phía trên */
             position: sticky;
-            top: 10px;
+            top: 0;
             z-index: 100;
-
             background: #000;
             border-radius: 12px;
             overflow: hidden;
@@ -53,6 +52,12 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            outline: none;
+        }
+
+        /* Hiển thị viền vàng khi dùng phím điều hướng của remote chỉ vào video */
+        video:focus {
+            box-shadow: inset 0 0 0 4px var(--focus-color);
         }
 
         /* Visualizer - Sóng âm */
@@ -60,12 +65,13 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            display: none; /* Ẩn mặc định */
+            display: none;
             justify-content: center;
             align-items: center;
             gap: 4px;
             background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
             z-index: 2;
+            pointer-events: none; /* Tránh cản trở click vào video */
         }
 
         .bar {
@@ -83,32 +89,18 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 15px;
-            /* Thêm các dòng dưới đây */
-            max-height: 350px; /* Chiều cao tối đa của danh sách kênh */
-            overflow-y: auto;  /* Cho phép cuộn dọc */
-            padding: 10px;
+            max-height: 450px; 
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 15px;
             background: rgba(0,0,0,0.2);
             border-radius: 10px;
         }
 
-        /* Tùy chỉnh thanh cuộn cho đẹp hơn (Scrollbar) */
-        .channel-grid::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .channel-grid::-webkit-scrollbar-track {
-            background: #1e1e1e;
-            border-radius: 10px;
-        }
-
-        .channel-grid::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
-
-        .channel-grid::-webkit-scrollbar-thumb:hover {
-            background: #c0392b;
-        }
+        .channel-grid::-webkit-scrollbar { width: 8px; }
+        .channel-grid::-webkit-scrollbar-track { background: #1e1e1e; border-radius: 10px; }
+        .channel-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+        .channel-grid::-webkit-scrollbar-thumb:hover { background: #c0392b; }
 
         .channel-card {
             background: var(--container-bg);
@@ -116,20 +108,25 @@
             text-align: center;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid #333;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
             font-weight: 500;
+            outline: none;
         }
 
-        .channel-card:hover {
+        /* Màu nền khi di chuột qua hoặc Focus bằng D-pad */
+        .channel-card:hover, 
+        .channel-card:focus {
             background: var(--primary-color);
-            transform: translateY(-5px);
-            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            border-color: var(--focus-color);
+            box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4);
         }
 
         .active {
             background: var(--primary-color) !important;
             box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            border-color: #fff;
         }
 
         .tag {
@@ -139,6 +136,23 @@
             opacity: 0.7;
             text-transform: uppercase;
         }
+
+        .links-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .links-section a {
+            color: #3498db;
+            text-decoration: none;
+            padding: 10px;
+            display: inline-block;
+        }
+        
+        .links-section a:focus, .links-section a:hover {
+            color: var(--focus-color);
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -147,13 +161,16 @@
     <h1>TIVI <span style="color: #fff;">NGUYÊN</span> NHI</h1>
     
     <div class="player-container">
-        <div id="visualizer">
-            </div>
-        
-        <video id="video" controls crossorigin="anonymous"></video>
+        <div id="visualizer"></div>
+        <video id="video" controls playsinline></video>
     </div>
 
     <div class="channel-grid" id="playlist"></div>
+
+    <div class="links-section">
+        <h3><a href="xemphim.html" tabindex="0">Phim</a></h3>
+        <p><a href="https://www.vn2b.my/xem/phim-chuyen-tinh-harvard-tap-1-thuyet-minh-id-20369" tabindex="0">Chuyện tình Harvard</a></p>
+    </div>
 </div>
 
 <script>
@@ -170,40 +187,34 @@
         { name: "VTV3", url: "https://live.fptplay53.net/fnxch2/vtv3hd_abr.smil/chunklist_b1000000.m3u8", type: "tv" },
         { name: "VTV5", url: "https://live-a.fptplay53.net/live/media/VTV5HD/live_hls_avc/VTV5HD-avc1_600000=10004-mp4a_131600=20000.m3u8", type: "tv" },
         { name: "VTV9", url: "https://live.fptplay53.net/fnxhd1/vtv9_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },        
-        
-       
         { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
-        
         { name: "THVL1", url: "https://live.fptplay53.net/epzch2/vinhlong1_abr.smil/chunklist.m3u8", type: "tv" },
         { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8", type: "tv" },
         { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8", type: "tv" },
         { name: "THVL4", url: "https://live.fptplay53.net/epzhd2/vinhlong4hd_vhls.smil/chunklist.m3u8", type: "tv" },
-        
         { name: "VieGT", url: "https://freem3u.xyz/api/live/play.m3u8?vid=180", type: "tv" },
         { name: "VieDr", url: "https://freem3u.xyz/api/live/play.m3u8?vid=177", type: "tv" },        
         { name: "INFO", url: "https://freem3u.xyz/api/live/play.m3u8?vid=189", type: "tv" },
         { name: "Hollywood", url: "https://amg01076-lightningintern-actionhollywood-samsungnz-82rry.amagi.tv/playlist/amg01076-lightningintern-actionhollywood-samsungnz/playlist.m3u8", type: "tv" },
-        
-        /* { name: "CN", url: "https://cdn4.skygo.mn/live/disk1/Cartoon_Network/HLSv3-FTA/Cartoon_Network-avc1_2000000=10-mp4a_256000_eng=6.m3u8", type: "tv" },
-        { name: "HBO", url: "https://fl61.moveonjoy.com/HBO/tracks-v1a1/mono.ts.m3u8", type: "tv" },
-        { name: "Cinemax", url: "https://fl31.moveonjoy.com/CINEMAX/tracks-v1a1/mono.ts.m3u8", type: "tv" },
-        */
         { name: "VNToday", url: "https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
-        
         { name: "FM 99.9", url: "https://strm.voh.com.vn/radio/channel1/chunklist_w144246478.m3u8", type: "radio" },
         { name: "VOV GT", url: "https://tfsj1gr4nhct1gwzdrcttfa4urmmoptoz1musp75gq4mbp74go55qchz8c5o.100ycdn.com/play.vovgiaothong.vn/live/gthcm/playlist.m3u8", type: "radio" }
     ];
+
     const video = document.getElementById('video');
     const visualizer = document.getElementById('visualizer');
     const playlist = document.getElementById('playlist');
-    let hls = new Hls();
     
-    // Audio Context cho sóng âm
+    let hls = null;
+    let currentChannelIndex = 0;
+    let previousChannelIndex = null;
+    
+    // Audio Context
     let audioCtx, analyser, source;
     const barCount = 40;
     const bars = [];
+    let isVisualizerEnabled = true;
 
-    // Tạo các thanh bar cho visualizer
     for (let i = 0; i < barCount; i++) {
         const bar = document.createElement('div');
         bar.className = 'bar';
@@ -212,59 +223,91 @@
     }
 
     function initAudioVisualizer() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            source = audioCtx.createMediaElementSource(video);
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
-            analyser.fftSize = 256;
-            animate();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        if (!isVisualizerEnabled) return;
+        try {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) throw new Error("Trình duyệt không hỗ trợ");
+                
+                audioCtx = new AudioContext();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaElementSource(video);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                analyser.fftSize = 256;
+                animate();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch (error) {
+            console.warn("Visualizer bị tắt:", error);
+            isVisualizerEnabled = false;
+            visualizer.style.display = 'none';
         }
     }
 
     function animate() {
+        if (!isVisualizerEnabled) return;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
 
         for (let i = 0; i < barCount; i++) {
             const barHeight = dataArray[i * 2] || 0;
-            // Áp dụng độ cao cho các thanh bar
             bars[i].style.height = (barHeight / 2) + 10 + 'px';
-            // Đổi màu nhẹ dựa trên tần số
             bars[i].style.opacity = (barHeight / 255) + 0.3;
         }
         requestAnimationFrame(animate);
     }
 
     function playChannel(channel) {
-        // Tự động ẩn/hiện Visualizer
-        if (channel.type === "radio") {
+        if (channel.type === "radio" && isVisualizerEnabled) {
             visualizer.style.display = 'flex';
-            initAudioVisualizer();
+            setTimeout(initAudioVisualizer, 500); 
         } else {
             visualizer.style.display = 'none';
         }
 
-        // Kiểm tra link có hợp lệ không trước khi phát
         if (!channel.url.startsWith('http')) {
             alert("Link kênh không hợp lệ!");
             return;
         }
 
-        if (Hls.isSupported()) {
+        if (hls) {
             hls.destroy();
+        }
+
+        // Ưu tiên chạy Native HLS trước để Tivi chạy mượt
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = channel.url;
+            video.play().catch(e => console.log("Cần tương tác"));
+        } else if (Hls.isSupported()) {
             hls = new Hls();
             hls.loadSource(channel.url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log("Chờ tương tác người dùng")));
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = channel.url;
-            video.play();
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play().catch(e => console.log("Cần tương tác"));
+            });
+        }
+    }
+
+    // Nhấn đúp để Fullscreen
+    video.addEventListener('dblclick', toggleFullScreen);
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
         }
     }
 
@@ -272,19 +315,54 @@
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
-        // Chỉ hiển thị tag nếu type là "radio"
+        card.setAttribute('tabindex', '0'); // Thuộc tính giúp D-pad có thể focus được
         card.innerHTML = `${ch.name}${ch.type === 'radio' ? ' <span class="tag">radio</span>' : ''}`;
-        card.onclick = () => {
+        
+        const triggerPlay = () => {
+            // Lưu lại kênh trước đó nếu có sự chuyển đổi kênh
+            if (currentChannelIndex !== index) {
+                previousChannelIndex = currentChannelIndex;
+                currentChannelIndex = index;
+            }
+
             document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
             card.classList.add('active');
             playChannel(ch);
+            // Tự động cuộn lên xem video trên màn hình Tivi
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+
+        // Kích hoạt khi bấm chuột (Magic remote)
+        card.onclick = triggerPlay;
+        
+        // Kích hoạt khi bấm nút Enter/OK trên remote D-pad
+        card.onkeypress = (e) => {
+            if (e.key === 'Enter') triggerPlay();
+        };
+
         playlist.appendChild(card);
-        if(index === 0) { card.classList.add('active'); playChannel(ch); }
+        
+        if(index === 0) { 
+            card.classList.add('active'); 
+            playChannel(ch); 
+        }
+    });
+
+    // Lắng nghe tính năng Recall (quay lại kênh xem trước đó)
+    // Hoạt động với nút Back (Mã 461 trên Tivi LG) hoặc phím Q / Backspace (trên máy tính)
+    document.addEventListener('keydown', (e) => {
+        if (e.keyCode === 461 || e.key === 'Backspace' || e.key === 'q' || e.key === 'Q') {
+            if (previousChannelIndex !== null) {
+                e.preventDefault(); // Ngăn trình duyệt tự động lùi trang
+                
+                const previousCard = playlist.children[previousChannelIndex];
+                if (previousCard) {
+                    previousCard.focus(); // Focus vào kênh mới
+                    previousCard.click(); // Kích hoạt sự kiện bấm để chuyển kênh
+                }
+            }
+        }
     });
 </script>
-<h3><a href="xemphim.html">Phim</a></h3>
-<p><a href="https://www.vn2b.my/xem/phim-chuyen-tinh-harvard-tap-1-thuyet-minh-id-20369">Chuyen tinh harvard</a></p>
-
 </body>
 </html>
