@@ -342,30 +342,101 @@
 
     async function playMovie(slug) {
         try {
-            const res = await fetch(API_DETAIL + slug);
-            const data = await res.json();
-            const movie = data.movie;
-            
-            if (!data.episodes || data.episodes.length === 0 || !data.episodes[0].server_data) {
-                alert("Phim này hiện chưa có link phát, vui lòng thử lại sau!");
+            // Hiển thị modal ngay lập tức với trạng thái đang tải
+            document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
+            document.getElementById('movie-desc').innerText = "";
+            document.getElementById('server-list').innerHTML = "";
+            document.getElementById('episode-list').innerHTML = "";
+            document.getElementById('player-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+
+            currentMovieEpisodes = [];
+            let movieInfo = null;
+
+            // 1. Khởi tạo các request gọi API song song để tiết kiệm thời gian
+            const fetchKKPhim = fetch(`https://phimapi.com/phim/${slug}`).then(res => res.json()).catch(() => null);
+            const fetchOPhim = fetch(`https://ophim1.com/phim/${slug}`).then(res => res.json()).catch(() => null);
+            const fetchNguonC = fetch(`https://phim.nguonc.com/api/film/${slug}`).then(res => res.json()).catch(() => null);
+
+            // 2. Chờ cả 3 request hoàn thành
+            const [dataKK, dataOP, dataNC] = await Promise.all([fetchKKPhim, fetchOPhim, fetchNguonC]);
+
+            // 3. Ưu tiên lấy thông tin mô tả phim (Title, Content) từ nguồn nào gọi thành công
+            if (dataKK && dataKK.movie) movieInfo = dataKK.movie;
+            else if (dataOP && dataOP.movie) movieInfo = dataOP.movie;
+            else if (dataNC && dataNC.movie) movieInfo = dataNC.movie;
+
+            if (!movieInfo) {
+                alert("Không tìm thấy dữ liệu phim này trên cả 3 máy chủ!");
+                closePlayer();
                 return;
             }
 
-            currentMovieEpisodes = data.episodes;
-
-            document.getElementById('movie-title-display').innerText = movie.name;
-            document.getElementById('movie-desc').innerText = movie.content.replace(/<[^>]*>?/gm, '').substring(0, 300) + "...";
+            // 4. Gộp danh sách Server & Tập phim từ các nguồn
             
+            // Xử lý dữ liệu từ KKPhim
+            if (dataKK && dataKK.episodes) {
+                dataKK.episodes.forEach(server => {
+                    currentMovieEpisodes.push({
+                        server_name: `KKPhim: ${server.server_name}`,
+                        server_data: server.server_data
+                    });
+                });
+            }
+
+            // Xử lý dữ liệu từ OPhim
+            if (dataOP && dataOP.episodes) {
+                dataOP.episodes.forEach(server => {
+                    currentMovieEpisodes.push({
+                        server_name: `OPhim: ${server.server_name}`,
+                        server_data: server.server_data
+                    });
+                });
+            }
+
+            // Xử lý dữ liệu từ NguonC (Cấu trúc trả về của NguonC hơi khác so với 2 bên kia)
+            if (dataNC && dataNC.movie && dataNC.movie.episodes) {
+                dataNC.movie.episodes.forEach(server => {
+                    // NguonC dùng mảng 'items' thay vì 'server_data' và key 'embed' thay vì 'link_embed'
+                    const mappedData = (server.items || []).map(ep => ({
+                        name: ep.name,
+                        link_embed: ep.embed || ep.link_embed || ep.m3u8 // Fallback lấy link
+                    }));
+                    
+                    if (mappedData.length > 0) {
+                        currentMovieEpisodes.push({
+                            server_name: `NguonC: ${server.server_name}`,
+                            server_data: mappedData
+                        });
+                    }
+                });
+            }
+
+            // Kiểm tra nếu không có server nào có link
+            if (currentMovieEpisodes.length === 0) {
+                alert("Phim này hiện chưa có link phát (hoặc lỗi API), vui lòng thử lại sau!");
+                closePlayer();
+                return;
+            }
+
+            // 5. Hiển thị dữ liệu lên giao diện
+            document.getElementById('movie-title-display').innerText = movieInfo.name;
+            const desc = movieInfo.content || movieInfo.description || "";
+            document.getElementById('movie-desc').innerText = desc.replace(/<[^>]*>?/gm, '').substring(0, 300) + "...";
+            
+            // Render danh sách Server
             document.getElementById('server-list').innerHTML = currentMovieEpisodes.map((ep, idx) => `
                 <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" tabindex="0" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
             `).join('');
 
+            // Tự động load server đầu tiên
             selectServer(0, null);
             
-            document.getElementById('player-modal').style.display = 'flex';
-            document.body.style.overflow = 'hidden'; 
-            
-        } catch (e) { alert("Lỗi tải chi tiết phim!"); }
+        } catch (e) { 
+            console.error("Lỗi khi gọi API chi tiết:", e);
+            alert("Đã xảy ra lỗi khi tải phim!"); 
+            closePlayer();
+        }
     }
 
     function selectServer(serverIndex, btnElement) {
