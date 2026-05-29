@@ -58,6 +58,25 @@
         video:focus {
             box-shadow: inset 0 0 0 4px var(--focus-color);
         }
+        
+        /* Ẩn nút Fullscreen mặc định của trình duyệt để tránh bấm nhầm trên tivi */
+        video::-webkit-media-controls-fullscreen-button {
+            display: none !important;
+        }
+
+        /* Giao diện Fullscreen giả bằng CSS */
+        .player-container.fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            background: #000;
+        }
 
         #visualizer {
             position: absolute;
@@ -325,21 +344,18 @@
         }
     }
 
+    // Gắn sự kiện click đúp để vào Fullscreen giả
     video.addEventListener('dblclick', toggleFullScreen);
 
     function toggleFullScreen() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) {
-                video.webkitRequestFullscreen();
-            }
+        const player = document.querySelector('.player-container');
+        player.classList.toggle('fullscreen-mode');
+        
+        // Ẩn thanh cuộn của trang web khi đang xem toàn màn hình
+        if (player.classList.contains('fullscreen-mode')) {
+            document.body.style.overflow = 'hidden';
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
+            document.body.style.overflow = '';
         }
     }
 
@@ -348,13 +364,17 @@
         if (previousChannelIndex !== null) {
             const previousCard = playlist.children[previousChannelIndex];
             if (previousCard) {
-                previousCard.focus(); 
+                // Chỉ focus thẻ kênh nếu không ở chế độ Fullscreen
+                const isFS = document.querySelector('.player-container').classList.contains('fullscreen-mode');
+                if (!isFS) {
+                    previousCard.focus(); 
+                }
                 previousCard.click(); 
             }
         }
     }
 
-    // Gắn sự kiện cho nút bấm
+    // Gắn sự kiện cho nút bấm "Kênh vừa xem"
     btnRecall.addEventListener('click', recallChannel);
 
     // Render danh sách kênh
@@ -377,8 +397,11 @@
             card.classList.add('active');
             playChannel(ch);
             
-            // Tự động cuộn lên xem video trên màn hình Tivi
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Chỉ tự động cuộn lên xem video nếu không ở chế độ Fullscreen
+            const isFS = document.querySelector('.player-container').classList.contains('fullscreen-mode');
+            if (!isFS) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         };
 
         // Kích hoạt khi bấm chuột (Magic remote)
