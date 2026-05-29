@@ -91,30 +91,40 @@
         
         .page-btn:focus:not(:disabled), .search-btn:focus { background: var(--accent-color); color: #000; transform: scale(1.05); }
 
-        /* Player Modal */
+        /* --- KHU VỰC TỐI ƯU PLAYER CHO TIVI --- */
         #player-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.98); z-index: 1001; flex-direction: column; align-items: center; overflow-y: auto; padding: 20px 0;
+            background: #000; /* Đổi nền thành đen tuyền để xem phim sướng hơn */
+            z-index: 1001; flex-direction: column; align-items: center; overflow-y: auto; 
+            padding: 0; /* Bỏ padding để video có thể chạm đỉnh màn hình */
         }
         
-        /* ĐÃ SỬA: Tăng max-width từ 1000px lên 1600px để khung video bành trướng hết cỡ trên Tivi */
-        #player-container { width: 95%; max-width: 1600px; aspect-ratio: 16/9; }
+        #player-container { 
+            width: 100%; /* Chiếm 100% bề ngang Tivi */
+            max-width: 100%; /* Phá bỏ giới hạn, Tivi 4K cũng tràn viền */
+            aspect-ratio: 16/9; /* Tự động tính chiều cao để giữ form chuẩn */
+            background: #000;
+        }
+        
         #player-container iframe { 
-            width: 100%; height: 100%; border: none; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            width: 100%; height: 100%; border: none; 
+            /* Bỏ bo góc (border-radius) và đổ bóng, giả lập Fullscreen nguyên bản */
         }
         
-        /* ĐÃ SỬA: Tăng chiều rộng khu vực thông tin phim đồng bộ với khung video */
-        .episode-container { width: 95%; max-width: 1600px; margin-top: 25px; background: var(--card-bg); padding: 25px; border-radius: 8px; }
+        .episode-container { 
+            width: 95%; max-width: 1400px; 
+            margin-top: 40px; background: var(--card-bg); padding: 30px; border-radius: 8px; 
+            margin-bottom: 20px;
+        }
         
         .episode-list { 
             display: flex; 
             flex-wrap: wrap;
             gap: 12px; 
             margin-top: 15px; 
-            justify-content: flex-start; /* Giữ các nút nằm gọn bên trái */
+            justify-content: flex-start;
         }
         
-        /* ĐÃ SỬA: Xóa bỏ flex-grow: 1 để nút không bị giãn vô hạn, giới hạn padding vừa phải */
         .episode-btn { padding: 10px 25px; background: #334155; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-size: 1.1rem; transition: 0.2s; outline: none; text-align: center; min-width: 100px;}
         .episode-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
         
@@ -123,7 +133,7 @@
         
         .server-btn { background: #0f172a; border: 1px solid #475569; }
 
-        .close-btn { margin-top: 30px; margin-bottom: 50px; padding: 12px 40px; background: #ef4444; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 1.1rem; transition: 0.2s; outline: none;}
+        .close-btn { margin-top: 20px; margin-bottom: 60px; padding: 15px 40px; background: #ef4444; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 1.2rem; transition: 0.2s; outline: none;}
         .close-btn:hover, .close-btn:focus { background: #dc2626; border-color: white; transform: scale(1.05); }
 
         #loading { text-align: center; padding: 50px; font-size: 1.3rem; color: var(--accent-color); font-weight: bold;}
@@ -214,9 +224,9 @@
 <div id="player-modal">
     <div id="player-container"><iframe id="video-iframe" src="" frameborder="0" allowfullscreen allow="autoplay; fullscreen" webkitallowfullscreen mozallowfullscreen></iframe></div>
     <div class="episode-container">
-        <h3 id="movie-title-display" style="color: var(--accent-color); margin: 0 0 10px; font-size: 1.5rem;"></h3>
-        <p id="movie-desc" style="font-size: 1rem; color: #cbd5e1; line-height: 1.5;"></p>
-        <hr style="border: 0.5px solid #475569; margin: 20px 0;">
+        <h3 id="movie-title-display" style="color: var(--accent-color); margin: 0 0 10px; font-size: 1.8rem;"></h3>
+        <p id="movie-desc" style="font-size: 1.1rem; color: #cbd5e1; line-height: 1.6;"></p>
+        <hr style="border: 0.5px solid #475569; margin: 25px 0;">
         
         <strong style="color: #fbbf24; font-size: 1.1rem;">CHỌN BẢN DỊCH / SERVER:</strong>
         <div id="server-list" class="episode-list" style="margin-bottom: 25px;"></div>
@@ -344,7 +354,7 @@
             currentMovieEpisodes = data.episodes;
 
             document.getElementById('movie-title-display').innerText = movie.name;
-            document.getElementById('movie-desc').innerText = movie.content.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
+            document.getElementById('movie-desc').innerText = movie.content.replace(/<[^>]*>?/gm, '').substring(0, 300) + "...";
             
             document.getElementById('server-list').innerHTML = currentMovieEpisodes.map((ep, idx) => `
                 <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" tabindex="0" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
@@ -355,12 +365,6 @@
             document.getElementById('player-modal').style.display = 'flex';
             document.body.style.overflow = 'hidden'; 
             
-            // Tự động focus vào nút Đóng để người dùng dùng D-pad biết vị trí hiện tại
-            setTimeout(() => {
-                const closeBtn = document.querySelector('.close-btn');
-                if(closeBtn) closeBtn.focus();
-            }, 300);
-
         } catch (e) { alert("Lỗi tải chi tiết phim!"); }
     }
 
@@ -386,7 +390,7 @@
         document.querySelectorAll('#episode-list .episode-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
         
-        // Cuộn màn hình lên vị trí khung Player để người dùng tivi dễ nhìn
+        // Đã sửa: Bắt buộc màn hình cuộn lên sát đỉnh để khung phim tràn viền 100%
         document.getElementById('player-modal').scrollTo({ top: 0, behavior: 'smooth' });
     }
 
