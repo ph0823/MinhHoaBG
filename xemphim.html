@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mùa hè với TV - PC - Mobile</title>
+    <title>Thế Giới Phim - Giao diện TV & PC</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -184,7 +184,7 @@
 </nav>
 
 <header>
-    <h1>HÔM NAY CÓ GÌ?</h1>
+    <h1>HÔM NAY XEM GÌ?</h1>
     <div class="search-box">
         <input type="text" id="search-input" tabindex="0" placeholder="Tìm tên phim, diễn viên...">
         <button class="search-btn" tabindex="0" onclick="initSearch()">TÌM KIẾM</button>
@@ -192,7 +192,7 @@
 </header>
 
 <div class="container">
-    <div id="loading" style="display:none;">⏳ Đang tải dữ liệu ...</div>
+    <div id="loading" style="display:none;">⏳ Đang tải dữ liệu phim...</div>
 
     <div id="home-content">
         <div class="section-header">
@@ -206,7 +206,7 @@
         </div>
 
         <div class="section-header">
-            <h2 class="section-title">🎬 Phim Lẻ Hành Động Cập Nhật</h2>
+            <h2 class="section-title">🎬 Phim Hành Động Cập Nhật</h2>
         </div>
         <div id="k-movies-grid" class="movie-grid"></div>
         <div class="pagination">
@@ -251,7 +251,6 @@
     const API_DETAIL = "https://phimapi.com/phim/";
     const IMG_DOMAIN = "https://phimimg.com/";
 
-   
     let state = {
         k_series: { page: 1, total: 1, url: API_DOMAIN + "quoc-gia/han-quoc", type: 'series' },
         k_movies: { page: 1, total: 1, url: API_DOMAIN + "the-loai/hanh-dong", type: 'single' },
@@ -299,9 +298,11 @@
             state[key].total = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
 
             let items = json.data.items;
-            // Bộ lọc m.type === 'single' dưới đây sẽ chỉ giữ lại các phim lẻ từ danh sách Hành Động
+            
+            // Chỉ lọc loại phim cho danh sách k_series
             if (key === 'k_series') items = items.filter(m => m.type === 'series' || m.type === 'hoathinh');
-            if (key === 'k_movies') items = items.filter(m => m.type === 'single');
+            
+            // GHI CHÚ: Đã xóa bộ lọc phim lẻ của danh sách k_movies để hiển thị toàn bộ phim hành động
 
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
