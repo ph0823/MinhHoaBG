@@ -302,8 +302,6 @@
             // Chỉ lọc loại phim cho danh sách k_series
             if (key === 'k_series') items = items.filter(m => m.type === 'series' || m.type === 'hoathinh');
             
-            // GHI CHÚ: Đã xóa bộ lọc phim lẻ của danh sách k_movies để hiển thị toàn bộ phim hành động
-
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
         } catch (e) { 
@@ -368,6 +366,9 @@
 
     async function playMovie(slug) {
         try {
+            // Thêm dòng này để ghi nhận trạng thái mở phim vào lịch sử trình duyệt (Hỗ trợ phím Back)
+            history.pushState({ modal: 'player' }, "", "");
+            
             document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
             document.getElementById('movie-desc').innerText = "";
             document.getElementById('server-list').innerHTML = "";
@@ -477,11 +478,39 @@
     }
 
     function closePlayer() {
-        document.getElementById('video-iframe').src = "";
-        document.getElementById('player-modal').style.display = 'none';
-        document.body.style.overflow = 'auto'; 
+        // Kiểm tra xem lịch sử hiện tại có phải là đang mở player không
+        if (history.state && history.state.modal === 'player') {
+            history.back(); // Lùi lại 1 bước, nó sẽ tự động kích hoạt popstate
+        } else {
+            // Đóng thủ công nếu không có history
+            document.getElementById('video-iframe').src = "";
+            document.getElementById('player-modal').style.display = 'none';
+            document.body.style.overflow = 'auto'; 
+        }
     }
 
+    // Lắng nghe sự kiện bấm nút Back trên Remote Tivi, Điện thoại hoặc Trình duyệt
+    window.addEventListener('popstate', function(event) {
+        const modal = document.getElementById('player-modal');
+        if (modal.style.display === 'flex') {
+            // Tắt phim và ẩn khung xem
+            document.getElementById('video-iframe').src = "";
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    // Lắng nghe sự kiện bấm phím ESC trên bàn phím Máy tính
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape" || event.key === "Esc") {
+            const modal = document.getElementById('player-modal');
+            if (modal.style.display === 'flex') {
+                closePlayer(); // Gọi hàm đóng
+            }
+        }
+    });
+
+    // Thoát khi click ra ngoài khung video
     window.onclick = function(event) {
         const modal = document.getElementById('player-modal');
         if (event.target === modal) {
