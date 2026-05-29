@@ -352,8 +352,9 @@
 
             currentMovieEpisodes = [];
             let movieInfo = null;
+            let serverCount = 1; // Khởi tạo biến đếm để ẩn tên server gốc
 
-            // 1. Khởi tạo các request gọi API song song để tiết kiệm thời gian
+            // 1. Khởi tạo các request gọi API song song
             const fetchKKPhim = fetch(`https://phimapi.com/phim/${slug}`).then(res => res.json()).catch(() => null);
             const fetchOPhim = fetch(`https://ophim1.com/phim/${slug}`).then(res => res.json()).catch(() => null);
             const fetchNguonC = fetch(`https://phim.nguonc.com/api/film/${slug}`).then(res => res.json()).catch(() => null);
@@ -361,10 +362,10 @@
             // 2. Chờ cả 3 request hoàn thành
             const [dataKK, dataOP, dataNC] = await Promise.all([fetchKKPhim, fetchOPhim, fetchNguonC]);
 
-            // 3. Ưu tiên lấy thông tin mô tả phim (Title, Content) từ nguồn nào gọi thành công
-            if (dataKK && dataKK.movie) movieInfo = dataKK.movie;
+            // 3. ƯU TIÊN lấy thông tin mô tả phim từ NguonC trước, nếu không có mới lấy KKPhim hoặc OPhim
+            if (dataNC && dataNC.movie) movieInfo = dataNC.movie;
+            else if (dataKK && dataKK.movie) movieInfo = dataKK.movie;
             else if (dataOP && dataOP.movie) movieInfo = dataOP.movie;
-            else if (dataNC && dataNC.movie) movieInfo = dataNC.movie;
 
             if (!movieInfo) {
                 alert("Không tìm thấy dữ liệu phim này trên cả 3 máy chủ!");
@@ -372,43 +373,42 @@
                 return;
             }
 
-            // 4. Gộp danh sách Server & Tập phim từ các nguồn
+            // 4. Gộp danh sách Server & Tập phim (ƯU TIÊN NGUONC LÊN ĐẦU)
             
-            // Xử lý dữ liệu từ KKPhim
-            if (dataKK && dataKK.episodes) {
-                dataKK.episodes.forEach(server => {
-                    currentMovieEpisodes.push({
-                        server_name: `KKPhim: ${server.server_name}`,
-                        server_data: server.server_data
-                    });
-                });
-            }
-
-            // Xử lý dữ liệu từ OPhim
-            if (dataOP && dataOP.episodes) {
-                dataOP.episodes.forEach(server => {
-                    currentMovieEpisodes.push({
-                        server_name: `OPhim: ${server.server_name}`,
-                        server_data: server.server_data
-                    });
-                });
-            }
-
-            // Xử lý dữ liệu từ NguonC (Cấu trúc trả về của NguonC hơi khác so với 2 bên kia)
+            // [ƯU TIÊN 1] Xử lý dữ liệu từ NguonC
             if (dataNC && dataNC.movie && dataNC.movie.episodes) {
                 dataNC.movie.episodes.forEach(server => {
-                    // NguonC dùng mảng 'items' thay vì 'server_data' và key 'embed' thay vì 'link_embed'
                     const mappedData = (server.items || []).map(ep => ({
                         name: ep.name,
-                        link_embed: ep.embed || ep.link_embed || ep.m3u8 // Fallback lấy link
+                        link_embed: ep.embed || ep.link_embed || ep.m3u8 
                     }));
                     
                     if (mappedData.length > 0) {
                         currentMovieEpisodes.push({
-                            server_name: `NguonC: ${server.server_name}`,
+                            server_name: `Server ${serverCount++}`, // Đổi tên thành Server 1, 2...
                             server_data: mappedData
                         });
                     }
+                });
+            }
+
+            // [ƯU TIÊN 2] Xử lý dữ liệu từ KKPhim
+            if (dataKK && dataKK.episodes) {
+                dataKK.episodes.forEach(server => {
+                    currentMovieEpisodes.push({
+                        server_name: `Server ${serverCount++}`, // Đổi tên thành Server tiếp theo
+                        server_data: server.server_data
+                    });
+                });
+            }
+
+            // [ƯU TIÊN 3] Xử lý dữ liệu từ OPhim
+            if (dataOP && dataOP.episodes) {
+                dataOP.episodes.forEach(server => {
+                    currentMovieEpisodes.push({
+                        server_name: `Server ${serverCount++}`, // Đổi tên thành Server tiếp theo
+                        server_data: server.server_data
+                    });
                 });
             }
 
@@ -420,7 +420,7 @@
             }
 
             // 5. Hiển thị dữ liệu lên giao diện
-            document.getElementById('movie-title-display').innerText = movieInfo.name;
+            document.getElementById('movie-title-display').innerText = movieInfo.name || movieInfo.title;
             const desc = movieInfo.content || movieInfo.description || "";
             document.getElementById('movie-desc').innerText = desc.replace(/<[^>]*>?/gm, '').substring(0, 300) + "...";
             
@@ -429,7 +429,7 @@
                 <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" tabindex="0" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
             `).join('');
 
-            // Tự động load server đầu tiên
+            // Tự động load server đầu tiên (lúc này chắc chắn là server của NguonC nếu API NguonC có dữ liệu)
             selectServer(0, null);
             
         } catch (e) { 
