@@ -163,6 +163,16 @@
     <a href="#" class="nav-brand" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">🎬 PHIM K-WORLD</a>
     <ul class="nav-menu">
         <li class="nav-item" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">Trang Chủ</li>
+        
+        <li class="nav-item" tabindex="0">Loại Phim ▾
+            <div class="dropdown">
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'phim-bo', 'Danh Sách Phim Bộ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'phim-le', 'Danh Sách Phim Lẻ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'hoat-hinh', 'Phim Hoạt Hình')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'tv-shows', 'Chương Trình TV Shows')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
+            </div>
+        </li>
+
         <li class="nav-item" tabindex="0">Quốc Gia ▾
             <div class="dropdown">
                 <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'hong-kong', 'Phim Hồng Kông')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
@@ -366,7 +376,6 @@
 
     async function playMovie(slug) {
         try {
-            // Thêm dòng này để ghi nhận trạng thái mở phim vào lịch sử trình duyệt (Hỗ trợ phím Back)
             history.pushState({ modal: 'player' }, "", "");
             
             document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
@@ -478,39 +487,33 @@
     }
 
     function closePlayer() {
-        // Kiểm tra xem lịch sử hiện tại có phải là đang mở player không
         if (history.state && history.state.modal === 'player') {
-            history.back(); // Lùi lại 1 bước, nó sẽ tự động kích hoạt popstate
+            history.back(); 
         } else {
-            // Đóng thủ công nếu không có history
             document.getElementById('video-iframe').src = "";
             document.getElementById('player-modal').style.display = 'none';
             document.body.style.overflow = 'auto'; 
         }
     }
 
-    // Lắng nghe sự kiện bấm nút Back trên Remote Tivi, Điện thoại hoặc Trình duyệt
     window.addEventListener('popstate', function(event) {
         const modal = document.getElementById('player-modal');
         if (modal.style.display === 'flex') {
-            // Tắt phim và ẩn khung xem
             document.getElementById('video-iframe').src = "";
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
         }
     });
 
-    // Lắng nghe sự kiện bấm phím ESC trên bàn phím Máy tính
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape" || event.key === "Esc") {
             const modal = document.getElementById('player-modal');
             if (modal.style.display === 'flex') {
-                closePlayer(); // Gọi hàm đóng
+                closePlayer(); 
             }
         }
     });
 
-    // Thoát khi click ra ngoài khung video
     window.onclick = function(event) {
         const modal = document.getElementById('player-modal');
         if (event.target === modal) {
