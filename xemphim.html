@@ -95,17 +95,36 @@
             padding: 20px 0;
         }
         
-        /* GIAO DIỆN CHUNG & PC (MẶC ĐỊNH) */
+        /* GIAO DIỆN CHUNG & PC (Đã thêm Fallback 16:9 cho Tablet) */
         #player-container { 
+            position: relative;
             width: 100%; max-width: 1200px; 
-            aspect-ratio: 16/9; 
             background: #000;
             margin: 0 auto;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             overflow: hidden;
+            aspect-ratio: 16/9;
         }
-        #player-container iframe { width: 100%; height: 100%; border: none; }
+        
+        #player-container::before {
+            content: "";
+            display: block;
+            padding-top: 56.25%;
+        }
+
+        @supports (aspect-ratio: 16/9) {
+            #player-container::before {
+                display: none; 
+            }
+        }
+
+        #player-container iframe { 
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%; 
+            border: none; 
+        }
 
         /* --- TỐI ƯU GIAO DIỆN KHI XEM TRÊN TIVI --- */
         body.is-tv #player-modal { padding: 0; }
@@ -116,6 +135,10 @@
             max-width: none; 
             border-radius: 0; 
             box-shadow: none;
+        }
+
+        body.is-tv #player-container::before {
+            display: none; 
         }
 
         body.is-tv .episode-container { margin-top: 50px; padding-bottom: 100px; }
@@ -376,7 +399,14 @@
 
     async function playMovie(slug) {
         try {
-            history.pushState({ modal: 'player' }, "", "");
+            // Bọc pushState để không văng lỗi khi test file local trên Tablet
+            try {
+                if (window.location.protocol !== 'file:') {
+                    history.pushState({ modal: 'player' }, "", "");
+                }
+            } catch (err) {
+                console.warn("Bỏ qua pushState do đang chạy trên môi trường local.");
+            }
             
             document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
             document.getElementById('movie-desc').innerText = "";
