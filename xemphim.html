@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thế Giới Phim - Giao diện TV & PC</title>
+    <title>Thế Giới Thứ bảy</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -21,6 +21,23 @@
             padding-left: env(safe-area-inset-left, 15px);
             padding-right: env(safe-area-inset-right, 15px);
         }
+
+        /* --- TỐI ƯU UX CHO TIVI --- */
+        body.is-tv ::-webkit-scrollbar { display: none; }
+        body.is-tv { scrollbar-width: none; -ms-overflow-style: none; }
+
+        body.is-tv *:focus {
+            outline: 4px solid var(--accent-color) !important;
+            outline-offset: 4px;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+            transform: scale(1.05);
+            transition: all 0.2s ease-in-out;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.is-tv .nav-item:focus-within .dropdown { display: flex; flex-direction: column; }
+        body.is-tv .dropdown-item { padding: 15px 25px; font-size: 1.2rem; }
 
         /* Navbar & Menu */
         nav {
@@ -53,16 +70,38 @@
         #search-input { padding: 12px 15px; width: 400px; border-radius: 5px; border: 2px solid #475569; background: #1e293b; color: white; outline: none; font-size: 1rem; transition: 0.3s;}
         #search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
         
-        .search-btn { padding: 12px 25px; background: var(--accent-color); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1rem; outline: none; transition: 0.3s;}
+        .search-btn { padding: 12px 25px; background: var(--accent-color); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1rem; outline: none; transition: 0.3s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;}
 
         .container { max-width: 1300px; margin: 0 auto; padding: 30px 20px; }
         .section-header { display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--accent-color); padding-left: 15px; margin: 40px 0 20px; }
         .section-title { margin: 0; text-transform: uppercase; font-size: 1.3rem; }
 
+        /* --- TỐI ƯU GRID LƯỚI PHIM ĐA THIẾT BỊ --- */
         .movie-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .movie-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        }
+
+        @media (min-width: 1200px) {
+            .movie-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+            body { font-size: 1.15rem; }
+            .movie-info h3 { font-size: 1.1rem; }
+            .movie-card img { height: 300px; }
+            #search-input { width: 500px; font-size: 1.1rem; }
+            .section-title { font-size: 1.5rem; }
+        }
+
+        @media (min-width: 1600px) {
+            .container { max-width: 1600px; }
+            .movie-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; }
+            .movie-card img { height: 360px; }
+            body { font-size: 1.3rem; }
+            #search-input { width: 600px; }
         }
 
         .movie-card {
@@ -83,24 +122,24 @@
         .quality-tag { position: absolute; top: 10px; left: 10px; background: var(--accent-color); color: #000; padding: 3px 8px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; z-index: 2;}
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 40px 0; }
-        .page-btn { padding: 10px 20px; background: var(--card-bg); border: 2px solid var(--accent-color); color: var(--accent-color); border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; outline: none; transition: 0.2s;}
+        .page-btn { padding: 10px 20px; background: var(--card-bg); border: 2px solid var(--accent-color); color: var(--accent-color); border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; outline: none; transition: 0.2s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;}
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: #475569; color: #475569;}
         
         .page-btn:focus:not(:disabled), .search-btn:focus { background: var(--accent-color); color: #000; transform: scale(1.05); }
 
-        /* --- PLAYER MODAL --- */
+        /* --- TRÌNH PHÁT VIDEO (PLAYER MODAL) --- */
         #player-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1001; flex-direction: column; align-items: center; overflow-y: auto; 
-            padding: 20px 0;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(5px);
+            z-index: 1001; flex-direction: column; align-items: center; overflow-y: auto; 
+            padding: 40px 20px;
         }
         
-        /* KHẮC PHỤC DỨT ĐIỂM CHIỀU CAO CHO TABLET BẰNG PADDING HACK 16:9 */
         #player-container { 
             position: relative;
             width: 100%; 
             max-width: 1200px; 
-            padding-top: 56.25%; /* Ép khung hình chuẩn 16:9 mọi trình duyệt */
+            padding-top: 56.25%; 
             background: #000;
             margin: 0 auto;
             border-radius: 8px;
@@ -115,28 +154,6 @@
             border: none; 
         }
 
-        /* --- TỐI ƯU GIAO DIỆN KHI XEM TRÊN TIVI --- */
-        body.is-tv #player-modal { padding: 0; }
-        
-        body.is-tv #player-container {
-            width: 100vw; 
-            height: 100vh; 
-            max-width: none; 
-            padding-top: 0; /* Xóa hack tỷ lệ để Tivi dùng full 100vh */
-            border-radius: 0; 
-            box-shadow: none;
-        }
-
-        body.is-tv .episode-container { margin-top: 50px; padding-bottom: 100px; }
-
-        body.is-tv *:focus {
-            outline: 4px solid var(--accent-color) !important;
-            outline-offset: 4px;
-            transform: scale(1.05);
-            z-index: 100;
-        }
-        /* ------------------------------------------- */
-        
         .episode-container { 
             width: 95%; max-width: 1200px; 
             margin-top: 40px; background: var(--card-bg); padding: 30px; border-radius: 8px; 
@@ -145,7 +162,7 @@
         
         .episode-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; justify-content: flex-start; }
         
-        .episode-btn { padding: 10px 25px; background: #334155; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-size: 1.1rem; transition: 0.2s; outline: none; text-align: center; min-width: 100px;}
+        .episode-btn { padding: 10px 25px; background: #334155; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-size: 1.1rem; transition: 0.2s; outline: none; text-align: center; min-width: 100px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;}
         .episode-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
         .episode-btn:hover:not(.active), .episode-btn:focus:not(.active) { background: #475569; border-color: var(--accent-color); }
         .episode-btn:focus.active { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
@@ -157,13 +174,26 @@
 
         #loading { text-align: center; padding: 50px; font-size: 1.3rem; color: var(--accent-color); font-weight: bold;}
 
-        @media (min-width: 1200px) {
-            body { font-size: 1.15rem; }
-            .movie-info h3 { font-size: 1.1rem; }
-            .movie-card img { height: 320px; }
-            #search-input { width: 500px; font-size: 1.1rem; }
-            .section-title { font-size: 1.5rem; }
+        /* --- TỐI ƯU CỤ THỂ CHO TIVI QUAN TRỌNG --- */
+        body.is-tv #player-modal { padding: 0; background: #000; overflow: hidden; }
+        body.is-tv #player-container {
+            width: 100vw; height: 100vh; max-width: none;
+            padding-top: 0; position: fixed; top: 0; left: 0; z-index: 1; border-radius: 0;
         }
+        body.is-tv .episode-container {
+            position: relative; z-index: 2; margin-top: 80vh;
+            background: rgba(30, 41, 59, 0.9); border-radius: 20px 20px 0 0; padding: 40px;
+        }
+
+        /* --- TỐI ƯU GIAO DIỆN TABLET / MOBILE --- */
+        @media (max-width: 768px) {
+            #search-input { width: 100%; max-width: 300px; }
+            .search-box { flex-direction: column; align-items: center; }
+            .search-btn { width: 100%; max-width: 300px; }
+            .episode-container { width: 100%; padding: 15px; }
+            nav { padding: 10px 15px; justify-content: center; gap: 10px;}
+        }
+
     </style>
 </head>
 <body>
@@ -175,28 +205,29 @@
         
         <li class="nav-item" tabindex="0">Loại Phim ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'phim-bo', 'Danh Sách Phim Bộ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'phim-le', 'Danh Sách Phim Lẻ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'hoat-hinh', 'Phim Hoạt Hình')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach', 'tv-shows', 'Chương Trình TV Shows')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach', 'tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('phim-bo', 'Danh Sách Phim Bộ')" onkeypress="if(event.key==='Enter') loadFilter('phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('phim-le', 'Danh Sách Phim Lẻ')" onkeypress="if(event.key==='Enter') loadFilter('phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('hoat-hinh', 'Phim Hoạt Hình')" onkeypress="if(event.key==='Enter') loadFilter('hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('tv-shows', 'Chương Trình TV Shows')" onkeypress="if(event.key==='Enter') loadFilter('tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
             </div>
         </li>
 
         <li class="nav-item" tabindex="0">Quốc Gia ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'hong-kong', 'Phim Hồng Kông')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'trung-quoc', 'Phim Trung Quốc')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'trung-quoc', 'Phim Trung Quốc')">Trung Quốc</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'my', 'Phim Âu Mỹ')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'my', 'Phim Âu Mỹ')">Âu Mỹ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'nhat-ban', 'Phim Nhật Bản')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'nhat-ban', 'Phim Nhật Bản')">Nhật Bản</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia', 'thai-lan', 'Phim Thái Lan')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia', 'thai-lan', 'Phim Thái Lan')">Thái Lan</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')">Trung Quốc</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')">Âu Mỹ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/nhat-ban', 'Phim Nhật Bản')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/nhat-ban', 'Phim Nhật Bản')">Nhật Bản</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')">Hàn Quốc</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/thai-lan', 'Phim Thái Lan')" onkeypress="if(event.key==='Enter') loadFilter('quoc-gia/thai-lan', 'Phim Thái Lan')">Thái Lan</div>
             </div>
         </li>
         <li class="nav-item" tabindex="0">Thể Loại ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai', 'tinh-cam', 'Phim Tình Cảm')" onkeypress="if(event.key==='Enter') loadFilter('the-loai', 'tinh-cam', 'Phim Tình Cảm')">Tình Cảm</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai', 'hanh-dong', 'Phim Hành Động')" onkeypress="if(event.key==='Enter') loadFilter('the-loai', 'hanh-dong', 'Phim Hành Động')">Hành Động</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai', 'tam-ly', 'Phim Tâm Lý')" onkeypress="if(event.key==='Enter') loadFilter('the-loai', 'tam-ly', 'Phim Tâm Lý')">Tâm Lý</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai', 'co-trang', 'Phim Cổ Trang')" onkeypress="if(event.key==='Enter') loadFilter('the-loai', 'co-trang', 'Phim Cổ Trang')">Cổ Trang</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')" onkeypress="if(event.key==='Enter') loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')">Tình Cảm</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/hanh-dong', 'Phim Hành Động')" onkeypress="if(event.key==='Enter') loadFilter('the-loai/hanh-dong', 'Phim Hành Động')">Hành Động</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')" onkeypress="if(event.key==='Enter') loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')">Tâm Lý</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/co-trang', 'Phim Cổ Trang')" onkeypress="if(event.key==='Enter') loadFilter('the-loai/co-trang', 'Phim Cổ Trang')">Cổ Trang</div>
             </div>
         </li>
     </ul>
@@ -211,7 +242,7 @@
 </header>
 
 <div class="container">
-    <div id="loading" style="display:none;">⏳ Đang tải dữ liệu phim...</div>
+    <div id="loading" style="display:none;">⏳ Đang tải dữ liệu phim từ máy chủ...</div>
 
     <div id="home-content">
         <div class="section-header">
@@ -266,14 +297,13 @@
 </div>
 
 <script>
-    const API_DOMAIN = "https://phimapi.com/v1/api/";
-    const API_DETAIL = "https://phimapi.com/phim/";
-    const IMG_DOMAIN = "https://phimimg.com/";
+    // --- ĐỔI SANG API NGUONC TỐI ƯU ---
+    const API_DOMAIN = "https://phim.nguonc.com/api/films/";
 
     let state = {
-        k_series: { page: 1, total: 1, url: API_DOMAIN + "quoc-gia/han-quoc", type: 'series' },
-        k_movies: { page: 1, total: 1, url: API_DOMAIN + "the-loai/hanh-dong", type: 'single' },
-        filter: { page: 1, total: 1, url: "", slug: "", type: "" }
+        k_series: { page: 1, total: 1, url: API_DOMAIN + "quoc-gia/han-quoc" },
+        k_movies: { page: 1, total: 1, url: API_DOMAIN + "the-loai/hanh-dong" },
+        filter: { page: 1, total: 1, url: "", slug: "" }
     };
     
     let currentMovieEpisodes = [];
@@ -284,10 +314,9 @@
                      ua.includes("webos") || ua.includes("bravia") || ua.includes("viera") || ua.includes("netcast");
         if (isTV) {
             document.body.classList.add('is-tv');
-            console.log("Phát hiện thiết bị: Smart TV");
+            setTimeout(() => { document.querySelector('.nav-brand').focus(); }, 500);
         } else {
             document.body.classList.add('is-pc');
-            console.log("Phát hiện thiết bị: Máy tính / Điện thoại / Tablet");
         }
     }
 
@@ -307,20 +336,28 @@
             const res = await fetch(`${baseUrl}${separator}page=${state[key].page}`);
             const json = await res.json();
 
-            if (!json.data || !json.data.items || json.data.items.length === 0) {
+            let items = [];
+            let totalPages = 1;
+
+            // Xử lý thông minh lấy dữ liệu vì API nguonC đôi khi bọc trong "items" hoặc "data"
+            if (json.items) {
+                items = json.items;
+                totalPages = json.paginate?.total_page || 1;
+            } else if (json.data && Array.isArray(json.data)) {
+                items = json.data;
+                totalPages = json.paginate?.total_page || 1;
+            } else if (json.data && json.data.items) { // Backup form phimapi cũ nếu có xài chéo
+                items = json.data.items;
+                totalPages = Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage);
+            }
+
+            if (!items || items.length === 0) {
                 document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #cbd5e1; padding: 20px;">Không tìm thấy phim nào phù hợp!</div>';
                 document.getElementById(`${key.replace('_','-')}-info`).innerText = `Trang 0 / 0`;
                 return;
             }
 
-            const pagination = json.data.params.pagination;
-            state[key].total = Math.ceil(pagination.totalItems / pagination.totalItemsPerPage);
-
-            let items = json.data.items;
-            
-            // Chỉ lọc loại phim cho danh sách k_series
-            if (key === 'k_series') items = items.filter(m => m.type === 'series' || m.type === 'hoathinh');
-            
+            state[key].total = totalPages;
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
         } catch (e) { 
@@ -331,16 +368,20 @@
 
     function renderGrid(items, gridId) {
         const grid = document.getElementById(gridId);
-        grid.innerHTML = items.map(m => `
+        grid.innerHTML = items.map(m => {
+            // NguonC thường trả về url đầy đủ, nếu không có http thì tự fallback
+            const imgUrl = (m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url);
+            
+            return `
             <div class="movie-card" tabindex="0" onclick="playMovie('${m.slug}')" onkeypress="if(event.key === 'Enter') playMovie('${m.slug}')">
-                <span class="quality-tag">${m.quality || 'HD'}</span>
-                <img loading="lazy" src="${m.thumb_url.startsWith('http') ? m.thumb_url : IMG_DOMAIN + m.thumb_url}" onerror="this.src='https://placehold.co/200x300?text=No+Poster'">
+                <span class="quality-tag">${m.quality || m.lang || 'HD'}</span>
+                <img loading="lazy" src="${imgUrl}" onerror="this.src='https://placehold.co/200x300?text=No+Poster'">
                 <div class="movie-info">
                     <h3>${m.name}</h3>
-                    <small>${m.year} • ${m.lang || 'Vietsub'}</small>
+                    <small>${m.year || ''} ${m.language ? '• ' + m.language : ''}</small>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function updatePagination(key) {
@@ -357,13 +398,13 @@
         document.getElementById(key.replace('_','-') + '-grid').scrollIntoView({behavior:'smooth'});
     }
 
-    async function loadFilter(type, slug, title) {
+    async function loadFilter(path, title) {
         window.scrollTo(0,0);
         document.getElementById('home-content').style.display = 'none';
         document.getElementById('filter-content').style.display = 'block';
         document.getElementById('filter-title').innerText = title;
         
-        state.filter.url = slug ? `${API_DOMAIN}${type}/${slug}` : `${API_DOMAIN}${type}`;
+        state.filter.url = `${API_DOMAIN}${path}`;
         state.filter.page = 1;
         showLoading(true);
         await fetchMovies('filter', state.filter.url);
@@ -373,7 +414,8 @@
     function initSearch() {
         const kw = document.getElementById('search-input').value.trim();
         if(!kw) return;
-        loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), '', 'Kết quả tìm kiếm: ' + kw);
+        // Đổi đường dẫn tìm kiếm sang chuẩn của nguonC
+        loadFilter('search?keyword=' + encodeURIComponent(kw), 'Kết quả tìm kiếm: ' + kw);
     }
 
     document.getElementById('search-input').addEventListener('keypress', function (e) {
@@ -389,9 +431,7 @@
                 if (window.location.protocol !== 'file:') {
                     history.pushState({ modal: 'player' }, "", "");
                 }
-            } catch (err) {
-                console.warn("Bỏ qua pushState.");
-            }
+            } catch (err) { }
             
             document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
             document.getElementById('movie-desc').innerText = "";
@@ -404,22 +444,24 @@
             let movieInfo = null;
             let serverCount = 1; 
 
+            // Vẫn gọi API của 3 bên để dự phòng nếu 1 nguồn die (Ưu tiên lấy thông tin từ NguonC)
+            const fetchNguonC = fetch(`https://phim.nguonc.com/api/film/${slug}`).then(res => res.json()).catch(() => null);
             const fetchKKPhim = fetch(`https://phimapi.com/phim/${slug}`).then(res => res.json()).catch(() => null);
             const fetchOPhim = fetch(`https://ophim1.com/phim/${slug}`).then(res => res.json()).catch(() => null);
-            const fetchNguonC = fetch(`https://phim.nguonc.com/api/film/${slug}`).then(res => res.json()).catch(() => null);
 
-            const [dataKK, dataOP, dataNC] = await Promise.all([fetchKKPhim, fetchOPhim, fetchNguonC]);
+            const [dataNC, dataKK, dataOP] = await Promise.all([fetchNguonC, fetchKKPhim, fetchOPhim]);
 
             if (dataNC && dataNC.movie) movieInfo = dataNC.movie;
             else if (dataKK && dataKK.movie) movieInfo = dataKK.movie;
             else if (dataOP && dataOP.movie) movieInfo = dataOP.movie;
 
             if (!movieInfo) {
-                alert("Không tìm thấy dữ liệu phim này trên cả 3 máy chủ!");
+                alert("Không tìm thấy dữ liệu phim này trên các máy chủ!");
                 closePlayer();
                 return;
             }
 
+            // Parse server NguonC
             if (dataNC && dataNC.movie && dataNC.movie.episodes) {
                 dataNC.movie.episodes.forEach(server => {
                     const mappedData = (server.items || []).map(ep => ({
@@ -428,26 +470,28 @@
                     }));
                     if (mappedData.length > 0) {
                         currentMovieEpisodes.push({
-                            server_name: `Server ${serverCount++}`, 
+                            server_name: `NguonC Server ${serverCount++}`, 
                             server_data: mappedData
                         });
                     }
                 });
             }
 
+            // Parse server KKPhim
             if (dataKK && dataKK.episodes) {
                 dataKK.episodes.forEach(server => {
                     currentMovieEpisodes.push({
-                        server_name: `Server ${serverCount++}`, 
+                        server_name: `KK Server ${serverCount++}`, 
                         server_data: server.server_data
                     });
                 });
             }
 
+            // Parse server OPhim
             if (dataOP && dataOP.episodes) {
                 dataOP.episodes.forEach(server => {
                     currentMovieEpisodes.push({
-                        server_name: `Server ${serverCount++}`, 
+                        server_name: `OPhim Server ${serverCount++}`, 
                         server_data: server.server_data
                     });
                 });
