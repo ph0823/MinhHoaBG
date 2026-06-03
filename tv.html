@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem tivi qua internet - Hoàn chỉnh cho LG webOS</title>
+    <title>Xem Tin - Nguyen Nhi</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -40,7 +40,7 @@
             z-index: 100;
             background: #000;
             border-radius: 12px;
-            overflow: hidden; /* Cực kỳ quan trọng để Overlay không tràn ra ngoài viền */
+            overflow: hidden; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             aspect-ratio: 16 / 9;
             display: flex;
@@ -59,12 +59,10 @@
             box-shadow: inset 0 0 0 4px var(--focus-color);
         }
         
-        /* Ẩn nút Fullscreen mặc định của trình duyệt để tránh bấm nhầm trên tivi */
         video::-webkit-media-controls-fullscreen-button {
             display: none !important;
         }
 
-        /* Giao diện Fullscreen giả bằng CSS */
         .player-container.fullscreen-mode {
             position: fixed !important;
             top: 0 !important;
@@ -100,10 +98,10 @@
             box-shadow: 0 0 15px var(--primary-color);
         }
 
-        /* Giao diện Overlay Danh Sách Kênh Nổi Trên Khung Video */
+        /* Giao diện Overlay Danh Sách Kênh */
         .channel-grid {
             position: absolute;
-            bottom: 65px; /* Nằm cao hơn thanh controls mặc định của video một chút */
+            bottom: 65px; 
             left: 5%;
             width: 90%;
             max-height: 60%; 
@@ -113,21 +111,19 @@
             overflow-y: auto;
             overscroll-behavior: contain;
             padding: 15px;
-            background: rgba(20, 20, 20, 0.85); /* Nền bán trong suốt */
-            backdrop-filter: blur(8px); /* Hiệu ứng mờ nền chuẩn UI xịn */
+            background: rgba(20, 20, 20, 0.85); 
+            backdrop-filter: blur(8px); 
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000; /* Luôn nằm trên cùng */
+            z-index: 1000; 
             box-sizing: border-box;
             
-            /* Cấu hình ẩn mặc định - Chờ chuột lướt vào */
             opacity: 0;
-            pointer-events: none; /* Tránh cản thao tác bấm video khi đang ẩn */
+            pointer-events: none; 
             transform: translateY(30px);
             transition: all 0.3s ease-out;
         }
 
-        /* Khi hiển thị Overlay (bằng class show-overlay hoặc khi dùng điều hướng bàn phím focus vào) */
         .channel-grid.show-overlay,
         .channel-grid:focus-within {
             opacity: 1;
@@ -135,13 +131,11 @@
             transform: translateY(0);
         }
 
-        /* Chỉnh thanh cuộn dọc (Scrollbar) cho đẹp hơn trên máy tính bảng/PC */
         .channel-grid::-webkit-scrollbar { width: 8px; }
         .channel-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 10px; }
         .channel-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
         .channel-grid::-webkit-scrollbar-thumb:hover { background: #c0392b; }
 
-        /* Vị trí khi Player phóng to toàn màn hình */
         .player-container.fullscreen-mode .channel-grid {
             bottom: 90px;
             max-height: 70%;
@@ -181,7 +175,6 @@
             text-transform: uppercase;
         }
 
-        /* Nút Recall / Control Bar */
         .controls-bar {
             display: flex;
             justify-content: center;
@@ -290,8 +283,8 @@
     let hls = null;
     let currentChannelIndex = 0;
     let previousChannelIndex = null;
+    let hideOverlayTimeout; // Biến đếm thời gian tự động ẩn
     
-    // Audio Context
     let audioCtx, analyser, source;
     const barCount = 40;
     const bars = [];
@@ -304,26 +297,44 @@
         bars.push(bar);
     }
 
-    // --- LOGIC NHẬN DIỆN DI CHUỘT VÀO VÙNG DƯỚI ĐỂ HIỆN KÊNH ---
-    playerContainer.addEventListener('mousemove', (e) => {
-        const rect = playerContainer.getBoundingClientRect();
-        // Lấy vị trí tương đối của chuột tính từ cạnh trên cùng của khung video
-        const relativeY = e.clientY - rect.top;
+    // --- HIỆU ỨNG TOUCH/CLICK CHO TABLET & MOBILE ---
+    playerContainer.addEventListener('click', (e) => {
+        if (e.target.closest('.channel-grid')) {
+            resetHideTimeout();
+            return;
+        }
         
-        // Nếu chuột rơi vào khu vực 45% bên dưới cùng của khung video
-        if (relativeY > rect.height * 0.55) {
-            playlist.classList.add('show-overlay');
+        playlist.classList.toggle('show-overlay');
+        
+        if (playlist.classList.contains('show-overlay')) {
+            resetHideTimeout();
         } else {
-            // Khi kéo chuột vút lên trên màn hình, ẩn lớp phủ đi
-            playlist.classList.remove('show-overlay');
+            clearTimeout(hideOverlayTimeout);
         }
     });
 
-    // Khi di chuột hoàn toàn ra ngoài khu vực video thì cũng ẩn danh sách kênh
+    function resetHideTimeout() {
+        clearTimeout(hideOverlayTimeout);
+        hideOverlayTimeout = setTimeout(() => {
+            playlist.classList.remove('show-overlay');
+        }, 5000); 
+    }
+
+    // --- HIỆU ỨNG DI CHUỘT CHO PC & TIVI ---
+    playerContainer.addEventListener('mousemove', (e) => {
+        const rect = playerContainer.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        
+        if (relativeY > rect.height * 0.55) {
+            playlist.classList.add('show-overlay');
+            resetHideTimeout(); 
+        }
+    });
+
     playerContainer.addEventListener('mouseleave', () => {
         playlist.classList.remove('show-overlay');
+        clearTimeout(hideOverlayTimeout);
     });
-    // ------------------------------------------------------------
 
     function initAudioVisualizer() {
         if (!isVisualizerEnabled) return;
@@ -381,7 +392,6 @@
             hls.destroy();
         }
 
-        // Ưu tiên chạy Native HLS trước cho Tivi mượt mà
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = channel.url;
             video.play().catch(e => console.log("Cần tương tác"));
@@ -395,13 +405,11 @@
         }
     }
 
-    // Gắn sự kiện click đúp để vào Fullscreen giả
     video.addEventListener('dblclick', toggleFullScreen);
 
     function toggleFullScreen() {
         playerContainer.classList.toggle('fullscreen-mode');
         
-        // Ẩn thanh cuộn của trang web khi đang xem toàn màn hình
         if (playerContainer.classList.contains('fullscreen-mode')) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -409,13 +417,12 @@
         }
     }
 
-    // Hàm chuyển về kênh trước đó
     function recallChannel() {
         if (previousChannelIndex !== null) {
             const previousCard = playlist.children[previousChannelIndex];
             if (previousCard) {
-                // Đảm bảo overlay hiện lên khi back kênh
                 playlist.classList.add('show-overlay');
+                resetHideTimeout(); 
                 
                 const isFS = playerContainer.classList.contains('fullscreen-mode');
                 if (!isFS) {
@@ -426,10 +433,8 @@
         }
     }
 
-    // Gắn sự kiện cho nút bấm "Kênh vừa xem"
     btnRecall.addEventListener('click', recallChannel);
 
-    // Render danh sách kênh
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
@@ -437,11 +442,9 @@
         card.innerHTML = `${ch.name}${ch.type === 'radio' ? ' <span class="tag">radio</span>' : ''}`;
         
         const triggerPlay = () => {
-            // Lưu lại kênh trước đó nếu có sự chuyển đổi kênh
             if (currentChannelIndex !== index) {
                 previousChannelIndex = currentChannelIndex;
                 currentChannelIndex = index;
-                // Kích hoạt nút Recall khi đã có kênh để quay lại
                 btnRecall.disabled = false;
             }
 
@@ -449,14 +452,12 @@
             card.classList.add('active');
             playChannel(ch);
             
-            // Tự động ẩn danh sách sau khi bấm chọn kênh thành công
             playlist.classList.remove('show-overlay');
+            clearTimeout(hideOverlayTimeout);
         };
 
-        // Kích hoạt khi bấm chuột (Magic remote)
         card.onclick = triggerPlay;
         
-        // Kích hoạt khi bấm nút Enter/OK trên remote D-pad
         card.onkeypress = (e) => {
             if (e.key === 'Enter') triggerPlay();
         };
@@ -469,29 +470,18 @@
         }
     });
 
-    // --- TẠO LOGIC NÚT BACK CHO MAGIC REMOTE LG (MR25GA) ---
-
-    // 1. Tạo một lịch sử duyệt web "giả" ngay khi trang vừa tải xong
     window.history.pushState({ noExit: true }, '', window.location.href);
 
-    // 2. Lắng nghe sự kiện lùi trang (kích hoạt khi bấm nút Back trên remote tivi)
     window.addEventListener('popstate', function(event) {
-        
-        // Nếu đang ở màn hình lớn, nút Back sẽ thoát chế độ toàn màn hình trước
         if (playerContainer.classList.contains('fullscreen-mode')) {
             toggleFullScreen();
         } else {
-            // Gọi hàm quay lại kênh trước đó
             recallChannel();
         }
-
-        // Lập tức tạo lại lịch sử "giả" để chặn việc thoát trang cho lần bấm Back tiếp theo
         window.history.pushState({ noExit: true }, '', window.location.href);
     });
 
-    // 3. Lắng nghe tính năng Recall qua phím cứng để dùng cho bàn phím máy tính (phím Q, Backspace)
     document.addEventListener('keydown', (e) => {
-        // Tivi LG đã được xử lý bằng popstate ở trên, nên chỉ cần bắt phím máy tính
         if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q') {
             if (previousChannelIndex !== null) {
                 e.preventDefault();
@@ -499,7 +489,6 @@
             }
         }
     });
-    
 </script>
 </body>
 </html>
