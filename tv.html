@@ -463,7 +463,6 @@
             clearTimeout(hideOverlayTimeout);
             
             // CHUYỂN FOCUS SANG VIDEO ĐỂ HỦY BỎ :focus-within CỦA CSS 
-            // Đây là mấu chốt để bảng kênh biến mất sau khi chọn xong
             video.focus(); 
         };
 
@@ -484,16 +483,14 @@
     window.history.pushState({ noExit: true }, '', window.location.href);
 
     window.addEventListener('popstate', function(event) {
-        if (playerContainer.classList.contains('fullscreen-mode')) {
-            toggleFullScreen();
-        } else {
-            recallChannel();
-        }
+        // Luôn chuyển về kênh trước đó, giữ nguyên trạng thái fullscreen hiện tại
+        recallChannel();
         window.history.pushState({ noExit: true }, '', window.location.href);
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q') {
+        // Bổ sung e.keyCode === 461 là mã phím cứng của nút Back trên Remote tivi LG
+        if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q' || e.keyCode === 461) {
             if (previousChannelIndex !== null) {
                 e.preventDefault();
                 recallChannel();
