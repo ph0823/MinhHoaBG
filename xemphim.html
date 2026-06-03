@@ -95,30 +95,19 @@
             padding: 20px 0;
         }
         
-        /* GIAO DIỆN CHUNG & PC (Đã thêm Fallback 16:9 cho Tablet) */
+        /* KHẮC PHỤC DỨT ĐIỂM CHIỀU CAO CHO TABLET BẰNG PADDING HACK 16:9 */
         #player-container { 
             position: relative;
-            width: 100%; max-width: 1200px; 
+            width: 100%; 
+            max-width: 1200px; 
+            padding-top: 56.25%; /* Ép khung hình chuẩn 16:9 mọi trình duyệt */
             background: #000;
             margin: 0 auto;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             overflow: hidden;
-            aspect-ratio: 16/9;
         }
         
-        #player-container::before {
-            content: "";
-            display: block;
-            padding-top: 56.25%;
-        }
-
-        @supports (aspect-ratio: 16/9) {
-            #player-container::before {
-                display: none; 
-            }
-        }
-
         #player-container iframe { 
             position: absolute;
             top: 0; left: 0;
@@ -133,12 +122,9 @@
             width: 100vw; 
             height: 100vh; 
             max-width: none; 
+            padding-top: 0; /* Xóa hack tỷ lệ để Tivi dùng full 100vh */
             border-radius: 0; 
             box-shadow: none;
-        }
-
-        body.is-tv #player-container::before {
-            display: none; 
         }
 
         body.is-tv .episode-container { margin-top: 50px; padding-bottom: 100px; }
@@ -301,7 +287,7 @@
             console.log("Phát hiện thiết bị: Smart TV");
         } else {
             document.body.classList.add('is-pc');
-            console.log("Phát hiện thiết bị: Máy tính / Điện thoại");
+            console.log("Phát hiện thiết bị: Máy tính / Điện thoại / Tablet");
         }
     }
 
@@ -399,13 +385,12 @@
 
     async function playMovie(slug) {
         try {
-            // Bọc pushState để không văng lỗi khi test file local trên Tablet
             try {
                 if (window.location.protocol !== 'file:') {
                     history.pushState({ modal: 'player' }, "", "");
                 }
             } catch (err) {
-                console.warn("Bỏ qua pushState do đang chạy trên môi trường local.");
+                console.warn("Bỏ qua pushState.");
             }
             
             document.getElementById('movie-title-display').innerText = "⏳ Đang tìm kiếm nguồn phát...";
