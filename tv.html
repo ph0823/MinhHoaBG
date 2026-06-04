@@ -33,48 +33,33 @@
 
         h1 { text-align: center; color: var(--primary-color); letter-spacing: 1px; margin-bottom: 10px; }
 
-        /* Video Wrapper */
-        .player-container {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #000;
+        /* --- APP CONTAINER (Bọc toàn bộ Player và Playlist) --- */
+        /* Mặc định cho Mobile: Hiển thị dạng cột trên - dưới */
+        .app-container {
+            width: 100%;
+            background: #1a1a1a;
             border-radius: 12px;
-            overflow: hidden; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* --- PLAYER WRAPPER --- */
+        .player-wrapper {
+            width: 100%;
             aspect-ratio: 16 / 9;
+            background: #000;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 10;
         }
 
-        video {
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            outline: none;
-        }
-
-        video:focus {
-            box-shadow: inset 0 0 0 4px var(--focus-color);
-        }
-        
-        video::-webkit-media-controls-fullscreen-button {
-            display: none !important;
-        }
-
-        .player-container.fullscreen-mode {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: none !important;
-            border-radius: 0 !important;
-            z-index: 9999 !important;
-            margin: 0 !important;
-            background: #000;
-        }
+        video { width: 100%; height: 100%; z-index: 1; outline: none; }
+        video:focus { box-shadow: inset 0 0 0 4px var(--focus-color); }
+        video::-webkit-media-controls-fullscreen-button { display: none !important; }
 
         #visualizer {
             position: absolute;
@@ -90,58 +75,84 @@
         }
 
         .bar {
-            width: 8px;
-            height: 20px;
-            background: var(--primary-color);
-            border-radius: 4px;
-            transition: height 0.05s ease;
+            width: 8px; height: 20px; background: var(--primary-color);
+            border-radius: 4px; transition: height 0.05s ease;
             box-shadow: 0 0 15px var(--primary-color);
         }
 
-        /* GIAO DIỆN OVERLAY DANH SÁCH KÊNH MỚI (1/4 CHIỀU CAO) */
+        /* --- DANH SÁCH KÊNH (Mặc định cho Mobile) --- */
+        /* Luôn hiển thị, nằm ngay dưới Video, có thanh cuộn */
         .channel-grid {
-            position: absolute;
-            bottom: 0; /* Nằm sát đáy video */
-            left: 0;
-            width: 100%; /* Trải rộng full chiều ngang */
-            height: 25%; /* Chiếm đúng 1/4 chiều cao video */
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 15px;
-            overflow-y: auto;
-            overscroll-behavior: contain;
+            width: 100%;
             padding: 15px;
-            background: rgba(20, 20, 20, 0.85); 
-            backdrop-filter: blur(8px); 
-            border-radius: 0 0 12px 12px; /* Bo góc khớp với viền dưới của video */
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000; 
             box-sizing: border-box;
-            
-            /* Cấu hình ẩn mặc định */
-            opacity: 0;
-            pointer-events: none; 
-            transform: translateY(100%); /* Trượt hẳn xuống dưới để ẩn đi */
-            transition: all 0.3s ease-out;
-        }
-
-        /* Tắt bo góc khi ở chế độ Fullscreen */
-        .player-container.fullscreen-mode .channel-grid {
-            border-radius: 0;
-        }
-
-        .channel-grid.show-overlay,
-        .channel-grid:focus-within {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0); /* Trượt lên vị trí gốc */
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            max-height: 350px; /* Cho phép cuộn trên đt */
+            overflow-y: auto;
+            background: #1a1a1a;
         }
 
         .channel-grid::-webkit-scrollbar { width: 8px; }
         .channel-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 10px; }
         .channel-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
-        .channel-grid::-webkit-scrollbar-thumb:hover { background: #c0392b; }
 
+        /* --- CHẾ ĐỘ OVERLAY CHO TABLET / PC / TV (>= 768px) --- */
+        @media (min-width: 768px) {
+            .app-container {
+                display: block; /* Hủy flex để dùng Absolute overlay */
+                position: relative;
+            }
+
+            .channel-grid {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 35%; /* Chiếm 35% chiều cao video */
+                max-height: none;
+                background: rgba(20, 20, 20, 0.85); 
+                backdrop-filter: blur(8px); 
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0 0 12px 12px;
+                z-index: 1000; 
+                
+                /* Ẩn mặc định chờ vuốt/di chuột */
+                transform: translateY(100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.3s ease-out;
+            }
+
+            /* Hiệu ứng trồi lên */
+            .app-container.show-overlay .channel-grid,
+            .channel-grid:focus-within {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+
+        /* --- CHẾ ĐỘ TOÀN MÀN HÌNH CHUNG --- */
+        .app-container.fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+        }
+
+        .app-container.fullscreen-mode .player-wrapper {
+            height: 100%;
+            aspect-ratio: auto; /* Bỏ tỷ lệ để lấp đầy màn hình */
+        }
+        
+        .app-container.fullscreen-mode .channel-grid { border-radius: 0; }
+
+        /* --- NÚT BẤM KÊNH --- */
         .channel-card {
             background: var(--container-bg);
             padding: 20px 10px;
@@ -154,8 +165,7 @@
             outline: none;
         }
 
-        .channel-card:hover, 
-        .channel-card:focus {
+        .channel-card:hover, .channel-card:focus {
             background: var(--primary-color);
             transform: translateY(-3px);
             border-color: var(--focus-color);
@@ -168,19 +178,10 @@
             border-color: #fff;
         }
 
-        .tag {
-            display: block;
-            font-size: 10px;
-            margin-top: 5px;
-            opacity: 0.7;
-            text-transform: uppercase;
-        }
+        .tag { display: block; font-size: 10px; margin-top: 5px; opacity: 0.7; text-transform: uppercase; }
 
-        .controls-bar {
-            display: flex;
-            justify-content: center;
-            margin-top: 25px;
-        }
+        /* --- CONTROL BAR DƯỚI APP --- */
+        .controls-bar { display: flex; justify-content: center; margin-top: 25px; }
 
         .btn-recall {
             background-color: var(--container-bg);
@@ -198,22 +199,13 @@
             gap: 8px;
         }
 
-        .btn-recall:hover, 
-        .btn-recall:focus {
+        .btn-recall:hover, .btn-recall:focus {
             background-color: var(--primary-color);
             border-color: var(--focus-color);
-            box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4);
             transform: translateY(-2px);
         }
 
-        .btn-recall:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            border-color: #555;
-            background-color: #333;
-            transform: none;
-            box-shadow: none;
-        }
+        .btn-recall:disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; background-color: #333; transform: none; }
 
         .links-section { margin-top: 20px; text-align: center; }
         .links-section a { color: #3498db; text-decoration: none; padding: 10px; display: inline-block; }
@@ -225,9 +217,11 @@
 <div class="container">
     <h1>TIVI <span style="color: #fff;">NGUYÊN</span> NHI</h1>
     
-    <div class="player-container">
-        <div id="visualizer"></div>
-        <video id="video" controls playsinline></video>
+    <div class="app-container" id="appContainer">
+        <div class="player-wrapper">
+            <div id="visualizer"></div>
+            <video id="video" controls playsinline></video>
+        </div>
         
         <div class="channel-grid" id="playlist"></div>
     </div>
@@ -279,7 +273,7 @@
     const visualizer = document.getElementById('visualizer');
     const playlist = document.getElementById('playlist');
     const btnRecall = document.getElementById('btnRecall');
-    const playerContainer = document.querySelector('.player-container');
+    const appContainer = document.getElementById('appContainer'); 
     
     let hls = null;
     let currentChannelIndex = 0;
@@ -298,46 +292,56 @@
         bars.push(bar);
     }
 
-    // --- HIỆU ỨNG TOUCH/CLICK ---
-    playerContainer.addEventListener('click', (e) => {
+    // --- XỬ LÝ SỰ KIỆN CHUỘT & CHẠM TAY CHO MÀN HÌNH LỚN ---
+    function triggerOverlay(yPosition) {
+        if (window.innerWidth < 768) return; // Không can thiệp nếu là Mobile
+        
+        const rect = appContainer.getBoundingClientRect();
+        // Nếu chuột/tay nằm ở nửa dưới của video -> Hiện overlay
+        if (yPosition > rect.height * 0.5) {
+            appContainer.classList.add('show-overlay');
+            resetHideTimeout(); 
+        }
+    }
+
+    // Dành cho PC / Chuột
+    appContainer.addEventListener('mousemove', (e) => {
+        const relativeY = e.clientY - appContainer.getBoundingClientRect().top;
+        triggerOverlay(relativeY);
+    });
+
+    appContainer.addEventListener('mouseleave', () => {
+        if (window.innerWidth >= 768) {
+            appContainer.classList.remove('show-overlay');
+            clearTimeout(hideOverlayTimeout);
+        }
+    });
+
+    // Dành cho Touch trên Tablet
+    appContainer.addEventListener('click', (e) => {
+        if (window.innerWidth < 768) return; 
+
+        // Nếu click vào danh sách thì chỉ reset thời gian ẩn
         if (e.target.closest('.channel-grid')) {
             resetHideTimeout();
             return;
         }
         
-        playlist.classList.toggle('show-overlay');
-        
-        if (playlist.classList.contains('show-overlay')) {
+        // Nếu click vào video, bật/tắt overlay thủ công
+        appContainer.classList.toggle('show-overlay');
+        if (appContainer.classList.contains('show-overlay')) {
             resetHideTimeout();
-        } else {
-            clearTimeout(hideOverlayTimeout);
         }
     });
 
     function resetHideTimeout() {
         clearTimeout(hideOverlayTimeout);
         hideOverlayTimeout = setTimeout(() => {
-            playlist.classList.remove('show-overlay');
+            appContainer.classList.remove('show-overlay');
         }, 5000); 
     }
 
-    // --- HIỆU ỨNG DI CHUỘT ---
-    playerContainer.addEventListener('mousemove', (e) => {
-        const rect = playerContainer.getBoundingClientRect();
-        const relativeY = e.clientY - rect.top;
-        
-        // Điều chỉnh lại vùng kích hoạt là 40% dưới đáy
-        if (relativeY > rect.height * 0.6) {
-            playlist.classList.add('show-overlay');
-            resetHideTimeout(); 
-        }
-    });
-
-    playerContainer.addEventListener('mouseleave', () => {
-        playlist.classList.remove('show-overlay');
-        clearTimeout(hideOverlayTimeout);
-    });
-
+    // --- VISUALIZER CHO RADIO ---
     function initAudioVisualizer() {
         if (!isVisualizerEnabled) return;
         try {
@@ -353,9 +357,7 @@
                 analyser.fftSize = 256;
                 animate();
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         } catch (error) {
             console.warn("Visualizer bị tắt:", error);
             isVisualizerEnabled = false;
@@ -377,6 +379,7 @@
         requestAnimationFrame(animate);
     }
 
+    // --- LOGIC PHÁT VIDEO ---
     function playChannel(channel) {
         if (channel.type === "radio" && isVisualizerEnabled) {
             visualizer.style.display = 'flex';
@@ -385,14 +388,7 @@
             visualizer.style.display = 'none';
         }
 
-        if (!channel.url.startsWith('http')) {
-            alert("Link kênh không hợp lệ!");
-            return;
-        }
-
-        if (hls) {
-            hls.destroy();
-        }
+        if (hls) hls.destroy();
 
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = channel.url;
@@ -407,27 +403,24 @@
         }
     }
 
+    // FULLSCREEN CHO APP ĐỂ BAO GỒM CẢ OVERLAY
     video.addEventListener('dblclick', toggleFullScreen);
 
     function toggleFullScreen() {
-        playerContainer.classList.toggle('fullscreen-mode');
-        
-        if (playerContainer.classList.contains('fullscreen-mode')) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+        appContainer.classList.toggle('fullscreen-mode');
+        document.body.style.overflow = appContainer.classList.contains('fullscreen-mode') ? 'hidden' : '';
     }
 
+    // --- RECALL KÊNH VỪA XEM ---
     function recallChannel() {
         if (previousChannelIndex !== null) {
             const previousCard = playlist.children[previousChannelIndex];
             if (previousCard) {
-                playlist.classList.add('show-overlay');
-                resetHideTimeout(); 
-                
-                const isFS = playerContainer.classList.contains('fullscreen-mode');
-                if (!isFS) {
+                if (window.innerWidth >= 768) {
+                    appContainer.classList.add('show-overlay');
+                    resetHideTimeout(); 
+                }
+                if (!appContainer.classList.contains('fullscreen-mode')) {
                     previousCard.focus(); 
                 }
                 previousCard.click(); 
@@ -437,6 +430,7 @@
 
     btnRecall.addEventListener('click', recallChannel);
 
+    // --- RENDER DANH SÁCH KÊNH ---
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
@@ -444,9 +438,7 @@
         card.innerHTML = `${ch.name}${ch.type === 'radio' ? ' <span class="tag">radio</span>' : ''}`;
         
         const triggerPlay = (e) => {
-            if (e) {
-                e.stopPropagation();
-            }
+            if (e) e.stopPropagation();
 
             if (currentChannelIndex !== index) {
                 previousChannelIndex = currentChannelIndex;
@@ -458,19 +450,15 @@
             card.classList.add('active');
             playChannel(ch);
             
-            // Xóa hiệu ứng hiển thị
-            playlist.classList.remove('show-overlay');
+            // Ẩn overlay sau khi chọn kênh
+            appContainer.classList.remove('show-overlay');
             clearTimeout(hideOverlayTimeout);
             
-            // CHUYỂN FOCUS SANG VIDEO ĐỂ HỦY BỎ :focus-within CỦA CSS 
             video.focus(); 
         };
 
         card.onclick = triggerPlay;
-        
-        card.onkeypress = (e) => {
-            if (e.key === 'Enter') triggerPlay(e);
-        };
+        card.onkeypress = (e) => { if (e.key === 'Enter') triggerPlay(e); };
 
         playlist.appendChild(card);
         
@@ -480,16 +468,14 @@
         }
     });
 
+    // --- XỬ LÝ PHÍM ĐIỀU HƯỚNG ---
     window.history.pushState({ noExit: true }, '', window.location.href);
-
     window.addEventListener('popstate', function(event) {
-        // Luôn chuyển về kênh trước đó, giữ nguyên trạng thái fullscreen hiện tại
         recallChannel();
         window.history.pushState({ noExit: true }, '', window.location.href);
     });
 
     document.addEventListener('keydown', (e) => {
-        // Bổ sung e.keyCode === 461 là mã phím cứng của nút Back trên Remote tivi LG
         if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q' || e.keyCode === 461) {
             if (previousChannelIndex !== null) {
                 e.preventDefault();
