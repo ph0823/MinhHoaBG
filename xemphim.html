@@ -13,6 +13,11 @@
             --nav-bg: #1e293b;
         }
 
+        /* Tinh chỉnh 1: Thêm box-sizing để các thẻ input/padding không làm vỡ layout ngang */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
@@ -155,7 +160,7 @@
         }
 
         .episode-container { 
-            width: 95%; max-width: 1200px; 
+            width: 100%; max-width: 1200px; 
             margin-top: 40px; background: var(--card-bg); padding: 30px; border-radius: 8px; 
             margin-bottom: 20px;
         }
@@ -181,7 +186,9 @@
             padding-top: 0; position: fixed; top: 0; left: 0; z-index: 1; border-radius: 0;
         }
         body.is-tv .episode-container {
-            position: relative; z-index: 2; margin-top: 80vh;
+            position: relative; z-index: 2; 
+            /* Tinh chỉnh 2: Lùi xuống 90vh để không che sub video */
+            margin-top: 90vh;
             background: rgba(30, 41, 59, 0.9); border-radius: 20px 20px 0 0; padding: 40px;
         }
 
@@ -339,14 +346,13 @@
             let items = [];
             let totalPages = 1;
 
-            // Xử lý thông minh lấy dữ liệu vì API nguonC đôi khi bọc trong "items" hoặc "data"
             if (json.items) {
                 items = json.items;
                 totalPages = json.paginate?.total_page || 1;
             } else if (json.data && Array.isArray(json.data)) {
                 items = json.data;
                 totalPages = json.paginate?.total_page || 1;
-            } else if (json.data && json.data.items) { // Backup form phimapi cũ nếu có xài chéo
+            } else if (json.data && json.data.items) { 
                 items = json.data.items;
                 totalPages = Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage);
             }
@@ -369,7 +375,6 @@
     function renderGrid(items, gridId) {
         const grid = document.getElementById(gridId);
         grid.innerHTML = items.map(m => {
-            // NguonC thường trả về url đầy đủ, nếu không có http thì tự fallback
             const imgUrl = (m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url);
             
             return `
@@ -414,7 +419,6 @@
     function initSearch() {
         const kw = document.getElementById('search-input').value.trim();
         if(!kw) return;
-        // Đổi đường dẫn tìm kiếm sang chuẩn của nguonC
         loadFilter('search?keyword=' + encodeURIComponent(kw), 'Kết quả tìm kiếm: ' + kw);
     }
 
@@ -444,7 +448,6 @@
             let movieInfo = null;
             let serverCount = 1; 
 
-            // Vẫn gọi API của 3 bên để dự phòng nếu 1 nguồn die (Ưu tiên lấy thông tin từ NguonC)
             const fetchNguonC = fetch(`https://phim.nguonc.com/api/film/${slug}`).then(res => res.json()).catch(() => null);
             const fetchKKPhim = fetch(`https://phimapi.com/phim/${slug}`).then(res => res.json()).catch(() => null);
             const fetchOPhim = fetch(`https://ophim1.com/phim/${slug}`).then(res => res.json()).catch(() => null);
@@ -461,7 +464,6 @@
                 return;
             }
 
-            // Parse server NguonC
             if (dataNC && dataNC.movie && dataNC.movie.episodes) {
                 dataNC.movie.episodes.forEach(server => {
                     const mappedData = (server.items || []).map(ep => ({
@@ -477,7 +479,6 @@
                 });
             }
 
-            // Parse server KKPhim
             if (dataKK && dataKK.episodes) {
                 dataKK.episodes.forEach(server => {
                     currentMovieEpisodes.push({
@@ -487,7 +488,6 @@
                 });
             }
 
-            // Parse server OPhim
             if (dataOP && dataOP.episodes) {
                 dataOP.episodes.forEach(server => {
                     currentMovieEpisodes.push({
