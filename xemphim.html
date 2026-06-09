@@ -233,7 +233,7 @@
 
     <div id="home-content">
         <div class="section-header">
-            <h2 class="section-title">🇰🇷 Phim Bộ Hàn Quốc Mới</h2>
+            <h2 class="section-title">📺 Phim Bộ Mới Cập Nhật</h2>
         </div>
         <div id="k-series-grid" class="movie-grid"></div>
         <div class="pagination">
@@ -293,13 +293,13 @@
     const API_DOMAIN = "https://phim.nguonc.com/api/films/";
 
     let state = {
-        k_series: { page: 1, total: 1, url: API_DOMAIN + "quoc-gia/han-quoc" },
+        // Đã cập nhật url từ quoc-gia/han-quoc thành phim-bo
+        k_series: { page: 1, total: 1, url: API_DOMAIN + "phim-bo" },
         k_movies: { page: 1, total: 1, url: API_DOMAIN + "the-loai/hanh-dong" },
         filter: { page: 1, total: 1, url: "", slug: "" }
     };
     
     let currentMovieEpisodes = [];
-    // Thêm biến theo dõi Server và Tập đang chiếu
     let currentServerIdx = 0;
     let currentEpIdx = 0;
 
@@ -325,7 +325,6 @@
         showLoading(false);
     }
 
-    // Hàm tiện ích: Fetch với thời gian chờ (Timeout) để tránh nghẽn khi server sập
     const fetchWithTimeout = async (url, ms = 4000) => {
         try {
             const controller = new AbortController();
@@ -334,7 +333,7 @@
             clearTimeout(timeoutId);
             return await res.json();
         } catch (e) {
-            return null; // Trả về null nếu quá 4s hoặc lỗi
+            return null; 
         }
     };
 
@@ -420,7 +419,6 @@
     function initSearch() {
         const kw = document.getElementById('search-input').value.trim();
         if(!kw) return;
-        // Cập nhật đường dẫn tìm kiếm đúng của NguonC
         loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), 'Kết quả tìm kiếm: ' + kw);
     }
 
@@ -454,7 +452,6 @@
             let movieInfo = null;
             let serverCount = 1; 
 
-            // Sử dụng Fetch có Timeout 4 giây
             const [dataNC, dataKK, dataOP] = await Promise.all([
                 fetchWithTimeout(`https://phim.nguonc.com/api/film/${slug}`),
                 fetchWithTimeout(`https://phimapi.com/phim/${slug}`),
@@ -465,13 +462,12 @@
             else if (dataKK && dataKK.movie) movieInfo = dataKK.movie;
             else if (dataOP && dataOP.movie) movieInfo = dataOP.movie;
 
-            // Xử lý CƠ CHẾ FALLBACK TÌM KIẾM THEO TÊN NẾU SAI SLUG
             if (!movieInfo && !isFallback) {
                 const searchFallback = await fetchWithTimeout(`https://phim.nguonc.com/api/films/tim-kiem?keyword=${slug}`);
                 if (searchFallback && searchFallback.items && searchFallback.items.length > 0) {
                     const trueSlug = searchFallback.items[0].slug;
                     if (trueSlug !== slug) {
-                        return playMovie(trueSlug, true); // Thử gọi lại với slug đúng
+                        return playMovie(trueSlug, true); 
                     }
                 }
                 
@@ -567,7 +563,6 @@
         allBtns.forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
         
-        // Cập nhật trạng thái cho nút Chuyển Tập
         const eps = currentMovieEpisodes[currentServerIdx].server_data;
         document.getElementById('btn-prev-ep').disabled = currentEpIdx === 0;
         document.getElementById('btn-next-ep').disabled = currentEpIdx === eps.length - 1;
