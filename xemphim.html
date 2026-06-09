@@ -317,17 +317,38 @@
             const separator = baseUrl.includes('?') ? '&' : '?';
             const res = await fetch(`${baseUrl}${separator}page=${state[key].page}`);
             const json = await res.json();
-            let items = json.items || (Array.isArray(json.data) ? json.data : (json.data?.items || []));
-            let totalPages = json.paginate?.total_page || (json.data?.params ? Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage) : 1);
+
+            let items = json.items
+                || (Array.isArray(json.data) ? json.data : null)
+                || json.data?.items
+                || [];
+
+            // Hỗ trợ nhiều tên field khác nhau của từng API
+            let totalPages = json.paginate?.total_page
+                || json.paginate?.totalPages
+                || json.paginate?.total_pages
+                || json.total_page
+                || json.totalPages
+                || (json.data?.params?.pagination
+                    ? Math.ceil(
+                        json.data.params.pagination.totalItems /
+                        json.data.params.pagination.totalItemsPerPage
+                      )
+                    : null)
+                || 1;
+
+            // Debug: ghi ra console để dễ theo dõi cấu trúc API
+            console.log(`[${key}] page=${state[key].page} total=${totalPages}`, json);
 
             if (!items.length) {
                 document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Không có phim!</div>';
+                updatePagination(key);
                 return;
             }
             state[key].total = totalPages;
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error('fetchMovies error:', e); }
     }
 
     function renderGrid(items, gridId) {
@@ -366,9 +387,11 @@
         document.getElementById(`${idBase}-next`).disabled = state[key].page >= state[key].total;
     }
 
-    function changePage(key, step) {
+    async function changePage(key, step) {
         state[key].page += step;
-        fetchMovies(key, key === 'filter' ? state.filter.url : state[key].url);
+        showLoading(true);
+        await fetchMovies(key, key === 'filter' ? state.filter.url : state[key].url);
+        showLoading(false);
         document.getElementById(key.replace('_','-') + '-grid').scrollIntoView({behavior:'smooth'});
     }
 
