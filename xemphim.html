@@ -192,10 +192,10 @@
         
         <li class="nav-item" tabindex="0">Loại Phim ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('phim-bo', 'Danh Sách Phim Bộ')" onkeypress="if(event.key==='Enter') loadFilter('phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('phim-le', 'Danh Sách Phim Lẻ')" onkeypress="if(event.key==='Enter') loadFilter('phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('hoat-hinh', 'Phim Hoạt Hình')" onkeypress="if(event.key==='Enter') loadFilter('hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('tv-shows', 'Chương Trình TV Shows')" onkeypress="if(event.key==='Enter') loadFilter('tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')" onkeypress="if(event.key==='Enter') loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
             </div>
         </li>
 
@@ -233,7 +233,7 @@
 
     <div id="home-content">
         <div class="section-header">
-            <h2 class="section-title">📺 Phim Bộ Mới Cập Nhật</h2>
+            <h2 class="section-title">🔥 Phim Mới Cập Nhật</h2>
         </div>
         <div id="k-series-grid" class="movie-grid"></div>
         <div class="pagination">
@@ -293,8 +293,8 @@
     const API_DOMAIN = "https://phim.nguonc.com/api/films/";
 
     let state = {
-        // Đã cập nhật url từ quoc-gia/han-quoc thành phim-bo
-        k_series: { page: 1, total: 1, url: API_DOMAIN + "phim-bo" },
+        // Sử dụng endpoint phim-moi-cap-nhat đảm bảo 100% ra dữ liệu
+        k_series: { page: 1, total: 1, url: API_DOMAIN + "phim-moi-cap-nhat" },
         k_movies: { page: 1, total: 1, url: API_DOMAIN + "the-loai/hanh-dong" },
         filter: { page: 1, total: 1, url: "", slug: "" }
     };
@@ -325,6 +325,7 @@
         showLoading(false);
     }
 
+    // Cơ chế Timeout chống sập trang khi API lỗi
     const fetchWithTimeout = async (url, ms = 4000) => {
         try {
             const controller = new AbortController();
