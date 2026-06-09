@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thế Giới Thứ bảy</title>
+    <title>Phim K-World – Xem Phim Online</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -141,6 +141,9 @@
         .episode-btn:focus.active { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
         .server-btn { background: #0f172a; border: 1px solid #475569; }
 
+        /* PC-specific tweaks */
+        body.is-pc .movie-card:hover { transform: translateY(-8px); }
+
         .close-btn { margin-top: 20px; margin-bottom: 60px; padding: 15px 40px; background: #ef4444; border: 2px solid transparent; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 1.2rem; transition: 0.2s; outline: none;}
         .close-btn:hover, .close-btn:focus { background: #dc2626; border-color: white; transform: scale(1.05); }
 
@@ -169,26 +172,26 @@
         <li class="nav-item" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">Trang Chủ</li>
         <li class="nav-item" tabindex="0">Loại Phim ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')" onkeydown="if(event.key==='Enter')loadFilter('danh-sach/phim-bo','Danh Sách Phim Bộ')">Phim Bộ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')" onkeydown="if(event.key==='Enter')loadFilter('danh-sach/phim-le','Danh Sách Phim Lẻ')">Phim Lẻ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')" onkeydown="if(event.key==='Enter')loadFilter('danh-sach/hoat-hinh','Phim Hoạt Hình')">Hoạt Hình</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')" onkeydown="if(event.key==='Enter')loadFilter('danh-sach/tv-shows','Chương Trình TV Shows')">TV Shows</div>
             </div>
         </li>
         <li class="nav-item" tabindex="0">Quốc Gia ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')">Trung Quốc</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')">Âu Mỹ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')">Hàn Quốc</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')" onkeydown="if(event.key==='Enter')loadFilter('quoc-gia/hong-kong','Phim Hồng Kông')">Hồng Kông</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')" onkeydown="if(event.key==='Enter')loadFilter('quoc-gia/trung-quoc','Phim Trung Quốc')">Trung Quốc</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')" onkeydown="if(event.key==='Enter')loadFilter('quoc-gia/au-my','Phim Âu Mỹ')">Âu Mỹ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')" onkeydown="if(event.key==='Enter')loadFilter('quoc-gia/han-quoc','Phim Hàn Quốc')">Hàn Quốc</div>
             </div>
         </li>
         <li class="nav-item" tabindex="0">Thể Loại ▾
             <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')">Tình Cảm</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/hanh-dong', 'Phim Hành Động')">Hành Động</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')">Tâm Lý</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/co-trang', 'Phim Cổ Trang')">Cổ Trang</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')" onkeydown="if(event.key==='Enter')loadFilter('the-loai/tinh-cam','Phim Tình Cảm')">Tình Cảm</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/hanh-dong', 'Phim Hành Động')" onkeydown="if(event.key==='Enter')loadFilter('the-loai/hanh-dong','Phim Hành Động')">Hành Động</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')" onkeydown="if(event.key==='Enter')loadFilter('the-loai/tam-ly','Phim Tâm Lý')">Tâm Lý</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/co-trang', 'Phim Cổ Trang')" onkeydown="if(event.key==='Enter')loadFilter('the-loai/co-trang','Phim Cổ Trang')">Cổ Trang</div>
             </div>
         </li>
     </ul>
@@ -331,17 +334,29 @@
         const grid = document.getElementById(gridId);
         grid.innerHTML = items.map(m => {
             const imgUrl = (m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url);
-            
+            const slug = (m.slug || '').replace(/"/g, '');
             return `
-            <div class="movie-card" tabindex="0" onclick="playMovie('${m.slug}')">
+            <div class="movie-card" tabindex="0" data-slug="${slug}" role="button" aria-label="${(m.name||'').replace(/"/g,'')}">
                 <span class="quality-tag">${m.quality || m.lang || 'HD'}</span>
-                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.src='https://placehold.co/200x300?text=No+Poster'">
+                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.src='https://placehold.co/200x300/1e293b/fbbf24?text=No+Poster'">
                 <div class="movie-info">
                     <h3>${m.name}</h3>
                     <small>${m.year || ''} ${m.language ? '• ' + m.language : ''}</small>
                 </div>
             </div>
         `}).join('');
+
+        // Event delegation: handles both click and Enter key
+        grid.onclick = e => {
+            const card = e.target.closest('.movie-card');
+            if (card?.dataset.slug) playMovie(card.dataset.slug);
+        };
+        grid.onkeydown = e => {
+            if (e.key === 'Enter') {
+                const card = e.target.closest('.movie-card');
+                if (card?.dataset.slug) playMovie(card.dataset.slug);
+            }
+        };
     }
 
     function updatePagination(key) {
@@ -374,7 +389,7 @@
         if(kw) loadFilter('tim-kiem?keyword=' + encodeURIComponent(kw), 'Kết quả tìm kiếm: ' + kw);
     }
 
-    document.getElementById('search-input').addEventListener('keypress', e => { if(e.key === 'Enter') initSearch(); });
+    document.getElementById('search-input').addEventListener('keydown', e => { if(e.key === 'Enter') initSearch(); });
 
     async function playMovie(slug, isFallback = false) {
         try {
@@ -554,7 +569,7 @@
         if (modal.style.display === 'flex') closePlayer();
     });
 
-    document.addEventListener('keydown', e => { if (e.key === "Escape" || e.key === "Esc") closePlayer(); });
+    document.addEventListener('keydown', e => { if (e.key === "Escape") closePlayer(); });
     window.onclick = e => { if (e.target === document.getElementById('player-modal')) closePlayer(); }
 
     function showLoading(status) { document.getElementById('loading').style.display = status ? 'block' : 'none'; }
