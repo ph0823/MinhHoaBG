@@ -120,7 +120,6 @@
             position: relative; width: 100%; max-width: 1200px; padding-top: 56.25%; 
             background: #000; margin: 0 auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
         }
-        /* Cả iframe (dự phòng) và video tag (cho hls) */
         #player-container iframe, #player-container video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; background: #000;
         }
@@ -310,21 +309,24 @@
         }
     };
 
-    // Hàm fetch an toàn chống sập ứng dụng (Đã được nâng cấp để sửa lỗi tìm kiếm)
-    const safeFetch = async (url) => {
+    // Hàm fetch an toàn TỐI ƯU NHẤT: Chống sập + Chống treo (Timeout 5 giây)
+    const safeFetch = async (url, ms = 5000) => {
         try {
-            const res = await fetch(url);
-            if (!res.ok) return null; // Bỏ qua nếu server báo lỗi 404, 500, 503...
-            const data = await res.json(); // Thử đọc JSON
-            return data;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), ms);
+            
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (!res.ok) return null; 
+            return await res.json(); 
         } catch (error) {
-            // Bắt mọi lỗi HTML Parsing từ Cloudflare hoặc network error
             return null;
         }
     };
 
     // ==========================================
-    // 🔍 THUẬT TOÁN TÌM KIẾM ĐA NGUỒN (ĐÃ ĐƯỢC VÁ LỖI)
+    // 🔍 THUẬT TOÁN TÌM KIẾM ĐA NGUỒN 
     // ==========================================
     async function executeSearch(keyword, page = 1) {
         window.scrollTo(0,0);
@@ -338,7 +340,6 @@
         let domain = 'https://img.nguonc.com';
 
         try {
-            // Nguồn 1: Tìm bên NguonC
             let jsonNC = await safeFetch(`https://phim.nguonc.com/api/films/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}`);
             
             if (jsonNC && jsonNC.items && jsonNC.items.length > 0) {
@@ -346,7 +347,6 @@
                 totalPages = jsonNC.paginate?.total_page || 1;
             } 
             else {
-                // Nguồn 2: Nếu NguonC hỏng hoặc không có phim, qua PhimAPI
                 let jsonKK = await safeFetch(`https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&limit=24`); 
                 if (jsonKK && jsonKK.data && jsonKK.data.items && jsonKK.data.items.length > 0) {
                     items = jsonKK.data.items;
@@ -354,7 +354,6 @@
                     domain = jsonKK.data.APP_DOMAIN_CDN_IMAGE || 'https://img.phimapi.com';
                 }
                 else {
-                    // Nguồn 3: Tiếp tục dự phòng bằng Ophim1
                     let jsonOP = await safeFetch(`https://ophim1.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
                     if (jsonOP && jsonOP.data && jsonOP.data.items && jsonOP.data.items.length > 0) {
                         items = jsonOP.data.items;
@@ -368,7 +367,6 @@
                 document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size:1.3rem; color:#ef4444; margin-top: 30px;">Không tìm thấy phim nào phù hợp với từ khóa!</div>';
                 document.querySelector('#filter-content .pagination').style.display = 'none';
             } else {
-                // Chuẩn hóa đường dẫn hình ảnh cho mọi API
                 const normalizedItems = items.map(m => {
                     let imgUrl = m.thumb_url || m.poster_url || '';
                     if (!imgUrl.startsWith('http')) {
@@ -397,7 +395,6 @@
                 }, 300);
             }
         } catch(e) {
-            console.error("Lỗi thuật toán tìm kiếm:", e);
             document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444;">Đã xảy ra lỗi mạng khi tìm kiếm, vui lòng thử lại!</div>';
         }
         showLoading(false);
@@ -423,7 +420,7 @@
         if(e.key === 'Enter') {
             e.preventDefault();
             initSearch();
-            document.activeElement.blur(); // Tắt bàn phím Tivi
+            document.activeElement.blur(); 
         }
     });
 
@@ -453,10 +450,12 @@
         grid.innerHTML = items.map(m => {
             const imgUrl = m.full_img_url || ((m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url));
             
+            // Fix 2: Dùng nháy đơn ' cho onclick và JSON.stringify xử lý slug chứa dấu nháy
+            // Fix 4: Thêm this.onerror=null để chặn lặp vô hạn khi ảnh fallback cũng lỗi
             return `
-            <div class="movie-card" tabindex="0" onclick="playMovie('${m.slug}')">
+            <div class="movie-card" tabindex="0" onclick='playMovie(${JSON.stringify(m.slug)})'>
                 <span class="quality-tag">${m.quality || m.lang || 'HD'}</span>
-                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.src='https://placehold.co/200x300?text=No+Poster'">
+                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.onerror=null; this.src='https://placehold.co/200x300?text=No+Poster'">
                 <div class="movie-info">
                     <h3>${m.name}</h3>
                     <small>${m.year || ''} ${m.language ? '• ' + m.language : ''}</small>
@@ -576,6 +575,12 @@
     }
 
     function loadVideo(url, btn, epIndex) {
+        // Fix 1: Chặn lỗi URL rỗng hoặc undefined
+        if (!url) {
+            autoSwitchServer();
+            return;
+        }
+
         currentEpIdx = epIndex;
         document.getElementById('auto-switch-msg').style.display = "none";
         
@@ -603,7 +608,10 @@
                 });
             } else if (videoTag.canPlayType('application/vnd.apple.mpegurl')) {
                 videoTag.src = url;
-                videoTag.addEventListener('loadedmetadata', () => videoTag.play().catch(()=>{}));
+                // Fix 3: Ghi đè event thay vì cộng dồn (tránh memory leak)
+                videoTag.onloadedmetadata = () => {
+                    videoTag.play().catch(()=>{});
+                };
                 videoTag.onerror = autoSwitchServer;
             }
         } else {
