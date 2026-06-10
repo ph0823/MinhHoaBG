@@ -97,6 +97,7 @@
         .movie-card { background: var(--card-bg); border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.3s; position: relative; outline: none; }
         .movie-card:hover, .movie-card:focus { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.8); outline: 3px solid var(--accent-color); outline-offset: 2px; z-index: 10;}
         
+        /* Hiệu ứng load ảnh mượt mà cho lazy load */
         .movie-card img { width: 100%; height: 260px; object-fit: cover; background: #0f172a; transition: opacity 0.5s ease-in-out; opacity: 0; }
         .movie-card img.loaded { opacity: 1; }
         
@@ -119,6 +120,7 @@
             position: relative; width: 100%; max-width: 1200px; padding-top: 56.25%; 
             background: #000; margin: 0 auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
         }
+        /* Cả iframe (dự phòng) và video tag (cho hls) */
         #player-container iframe, #player-container video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; background: #000;
         }
@@ -162,9 +164,9 @@
 <body>
 
 <nav>
-    <a href="#" class="nav-brand" tabindex="0" onclick="location.reload()">🎬 PHIM K-WORLD</a>
+    <a href="#" class="nav-brand" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">🎬 PHIM K-WORLD</a>
     <ul class="nav-menu">
-        <li class="nav-item" tabindex="0" onclick="location.reload()">Trang Chủ</li>
+        <li class="nav-item" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">Trang Chủ</li>
         <li class="nav-item" tabindex="0">Loại Phim ▾
             <div class="dropdown">
                 <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
@@ -295,6 +297,7 @@
         showLoading(false);
     }
 
+    // Hàm fetch toàn cục có bắt lỗi time-out
     const fetchWithTimeout = async (url, ms = 5000) => {
         try {
             const controller = new AbortController();
@@ -307,8 +310,21 @@
         }
     };
 
+    // Hàm fetch an toàn chống sập ứng dụng (Đã được nâng cấp để sửa lỗi tìm kiếm)
+    const safeFetch = async (url) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return null; // Bỏ qua nếu server báo lỗi 404, 500, 503...
+            const data = await res.json(); // Thử đọc JSON
+            return data;
+        } catch (error) {
+            // Bắt mọi lỗi HTML Parsing từ Cloudflare hoặc network error
+            return null;
+        }
+    };
+
     // ==========================================
-    // 🔍 THUẬT TOÁN TÌM KIẾM ĐA NGUỒN (ĐÃ NÂNG CẤP)
+    // 🔍 THUẬT TOÁN TÌM KIẾM ĐA NGUỒN (ĐÃ ĐƯỢC VÁ LỖI)
     // ==========================================
     async function executeSearch(keyword, page = 1) {
         window.scrollTo(0,0);
@@ -323,35 +339,32 @@
 
         try {
             // Nguồn 1: Tìm bên NguonC
-            let res = await fetch(`https://phim.nguonc.com/api/films/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}`).catch(()=>null);
-            let json = res ? await res.json() : null;
+            let jsonNC = await safeFetch(`https://phim.nguonc.com/api/films/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}`);
             
-            if (json && json.items && json.items.length > 0) {
-                items = json.items;
-                totalPages = json.paginate?.total_page || 1;
+            if (jsonNC && jsonNC.items && jsonNC.items.length > 0) {
+                items = jsonNC.items;
+                totalPages = jsonNC.paginate?.total_page || 1;
             } 
             else {
-                // Nguồn 2: Nếu NguonC không có, tìm dự phòng bên PhimAPI
-                res = await fetch(`https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&limit=24`).catch(()=>null); 
-                json = res ? await res.json() : null;
-                if (json && json.data && json.data.items && json.data.items.length > 0) {
-                    items = json.data.items;
-                    totalPages = json.data.params?.pagination?.totalPages || 1;
-                    domain = json.data.APP_DOMAIN_CDN_IMAGE || 'https://img.phimapi.com';
+                // Nguồn 2: Nếu NguonC hỏng hoặc không có phim, qua PhimAPI
+                let jsonKK = await safeFetch(`https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&limit=24`); 
+                if (jsonKK && jsonKK.data && jsonKK.data.items && jsonKK.data.items.length > 0) {
+                    items = jsonKK.data.items;
+                    totalPages = jsonKK.data.params?.pagination?.totalPages || 1;
+                    domain = jsonKK.data.APP_DOMAIN_CDN_IMAGE || 'https://img.phimapi.com';
                 }
                 else {
-                    // Nguồn 3: Tìm dự phòng bên Ophim1
-                    res = await fetch(`https://ophim1.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`).catch(()=>null);
-                    json = res ? await res.json() : null;
-                    if (json && json.data && json.data.items && json.data.items.length > 0) {
-                        items = json.data.items;
-                        totalPages = json.data.params?.pagination?.totalPages || 1;
-                        domain = json.data.APP_DOMAIN_CDN_IMAGE || 'https://ophim1.com/uploads/movies';
+                    // Nguồn 3: Tiếp tục dự phòng bằng Ophim1
+                    let jsonOP = await safeFetch(`https://ophim1.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
+                    if (jsonOP && jsonOP.data && jsonOP.data.items && jsonOP.data.items.length > 0) {
+                        items = jsonOP.data.items;
+                        totalPages = jsonOP.data.params?.pagination?.totalPages || 1;
+                        domain = jsonOP.data.APP_DOMAIN_CDN_IMAGE || 'https://ophim1.com/uploads/movies';
                     }
                 }
             }
 
-            if (!items.length) {
+            if (!items || items.length === 0) {
                 document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size:1.3rem; color:#ef4444; margin-top: 30px;">Không tìm thấy phim nào phù hợp với từ khóa!</div>';
                 document.querySelector('#filter-content .pagination').style.display = 'none';
             } else {
@@ -378,14 +391,14 @@
                 btnPrev.disabled = page <= 1;
                 btnNext.disabled = page >= totalPages;
 
-                // Tự động focus vào kết quả đầu tiên cho Tivi dễ điều khiển
                 setTimeout(() => {
                     const firstMovie = document.querySelector('#filter-grid .movie-card');
                     if(firstMovie) firstMovie.focus();
                 }, 300);
             }
         } catch(e) {
-            document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Lỗi khi kết nối máy chủ tìm kiếm!</div>';
+            console.error("Lỗi thuật toán tìm kiếm:", e);
+            document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444;">Đã xảy ra lỗi mạng khi tìm kiếm, vui lòng thử lại!</div>';
         }
         showLoading(false);
     }
@@ -395,29 +408,27 @@
         if(kw) executeSearch(kw, 1);
     }
 
-    // Tối ưu hóa cho Tivi: Lắng nghe phím Enter trên Remote hoặc bàn phím
+    // Tối ưu hóa điều khiển tivi và phím ảo
     document.addEventListener('keydown', e => { 
         if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 461 || e.keyCode === 10009) {
             closePlayer(); 
         }
-        // Giả lập click khi bấm Enter trên mọi nút/ảnh đang focus
         if (e.key === "Enter" && document.activeElement && document.activeElement.tagName !== 'INPUT') {
             e.preventDefault();
             document.activeElement.click();
         }
     });
 
-    // Bắt phím Enter trong ô tìm kiếm, tự động thu nhỏ bàn phím Tivi
     document.getElementById('search-input').addEventListener('keypress', e => { 
         if(e.key === 'Enter') {
             e.preventDefault();
             initSearch();
-            document.activeElement.blur(); // Tắt bàn phím ảo
+            document.activeElement.blur(); // Tắt bàn phím Tivi
         }
     });
 
     // ==========================================
-    // CÁC HÀM XỬ LÝ KHÁC (Được giữ nguyên & tinh chỉnh)
+    // CÁC HÀM XỬ LÝ KHÁC 
     // ==========================================
     async function fetchMovies(key, baseUrl) {
         try {
@@ -440,7 +451,6 @@
     function renderGrid(items, gridId) {
         const grid = document.getElementById(gridId);
         grid.innerHTML = items.map(m => {
-            // Hỗ trợ hiển thị URL đầy đủ từ hệ thống tìm kiếm đa nguồn
             const imgUrl = m.full_img_url || ((m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url));
             
             return `
@@ -503,7 +513,6 @@
             else if (dataOP?.movie) movieInfo = dataOP.movie;
 
             if (!movieInfo && !isFallback) {
-                // Cải tiến hệ thống tự sửa lỗi slug khi API trả sai tên
                 const fallbackSearch = await fetchWithTimeout(`https://phimapi.com/v1/api/tim-kiem?keyword=${slug}`);
                 if (fallbackSearch?.data?.items?.[0]?.slug && fallbackSearch.data.items[0].slug !== slug) {
                     return playMovie(fallbackSearch.data.items[0].slug, true); 
