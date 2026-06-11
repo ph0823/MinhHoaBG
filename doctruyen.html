@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thư Viện Tiên Hiệp</title>
+    <title>Thư Viện OTruyen</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -41,25 +41,42 @@
         
         .container { max-width: 900px; margin: 0 auto; padding: 15px; }
 
-        /* --- THANH CÔNG CỤ (TOOLBAR) --- */
+        /* --- THANH CÔNG CỤ (TOOLBAR) & TÌM KIẾM --- */
         .toolbar {
             position: sticky;
             top: 0;
             background-color: var(--card-bg);
             padding: 10px 15px;
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 100;
+            gap: 10px;
         }
         .toolbar-title { font-weight: bold; color: var(--primary); font-size: 1.2em; margin: 0; }
-        .toolbar-actions button {
+        
+        .search-box {
+            display: flex;
+            gap: 5px;
+            flex-grow: 1;
+            max-width: 300px;
+        }
+        .search-box input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+        .search-box button, .toolbar-actions button {
             background-color: var(--btn-bg); color: var(--text-color);
             border: none; padding: 8px 12px; border-radius: 5px;
-            cursor: pointer; font-weight: bold; margin-left: 5px;
+            cursor: pointer; font-weight: bold;
         }
-        .toolbar-actions button:hover { background-color: var(--btn-hover); }
+        .search-box button:hover, .toolbar-actions button:hover { background-color: var(--btn-hover); }
 
         /* --- QUẢN LÝ MÀN HÌNH (ROUTING) --- */
         .view-section { display: none; animation: fadeIn 0.3s ease; }
@@ -90,8 +107,9 @@
         .chapter-list li a { display: block; padding: 12px 15px; border-bottom: 1px solid var(--border); }
         .chapter-list li a:hover { background: var(--btn-bg); color: var(--primary); }
         
-        #chapter-content { font-size: 22px; text-align: justify; margin-top: 20px; }
-        #chapter-content p { margin-bottom: 15px; }
+        #chapter-content { font-size: 22px; text-align: center; margin-top: 20px; }
+        #chapter-content p { margin-bottom: 15px; text-align: justify; }
+        #chapter-content img { width: 100%; max-width: 800px; display: block; margin: 0 auto; }
         
         .loading { text-align: center; padding: 40px; font-style: italic; opacity: 0.7; }
 
@@ -100,13 +118,20 @@
             .grid { grid-template-columns: repeat(2, 1fr); }
             .content-box { padding: 15px; border-radius: 0; margin-top: 10px; }
             #chapter-content { font-size: 20px; }
+            .search-box { max-width: 100%; order: 3; margin-top: 10px; }
         }
     </style>
 </head>
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">Tiên Hiệp Quán</a>
+        <a href="#/" class="toolbar-title">OTruyen Quán</a>
+        
+        <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
+            <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
+            <button type="submit">Tìm</button>
+        </form>
+
         <div class="toolbar-actions" id="reader-tools" style="display: none;">
             <button onclick="changeFontSize(-2)">A-</button>
             <button onclick="changeFontSize(2)">A+</button>
@@ -116,7 +141,7 @@
 
     <div class="container">
         <div id="view-list" class="view-section active">
-            <h2>Truyện Mới Cập Nhật</h2>
+            <h2 id="list-title">Truyện Mới Cập Nhật</h2>
             <div id="story-grid" class="grid">
                 <div class="loading">Đang tải dữ liệu...</div>
             </div>
@@ -150,12 +175,13 @@
 
     <script>
         // --- CẤU HÌNH API ---
-        const BASE_API = 'https://truyenapi.com/v1/api';
+        const BASE_API = 'https://otruyenapi.com/v1/api';
 
         // --- CÁC BIẾN TOÀN CỤC ---
         let currentFontSize = 22;
         const contentArea = document.getElementById('chapter-content');
         const readerTools = document.getElementById('reader-tools');
+        const searchInput = document.getElementById('searchInput');
 
         // --- HỆ THỐNG ROUTER ---
         function router() {
@@ -165,20 +191,28 @@
             readerTools.style.display = 'none';
 
             if (!hash || hash === '' || hash === '#/') {
+                document.getElementById('list-title').innerText = "Truyện Mới Cập Nhật";
                 switchView('view-list');
-                fetchNewStories();
+                fetchList(`${BASE_API}/danh-sach/truyen-moi`);
+            } else if (hash.startsWith('#/tim-kiem/')) {
+                const keyword = decodeURIComponent(hash.replace('#/tim-kiem/', ''));
+                document.getElementById('list-title').innerText = `Kết quả tìm kiếm: "${keyword}"`;
+                searchInput.value = keyword;
+                switchView('view-list');
+                fetchList(`${BASE_API}/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
             } else if (hash.startsWith('#/truyen/')) {
                 const slug = hash.replace('#/truyen/', '');
                 switchView('view-detail');
                 fetchStoryDetail(slug);
             } else if (hash.startsWith('#/chuong/')) {
-                const parts = hash.replace('#/chuong/', '').split('?truyen=');
-                const chapterSlug = parts[0];
-                const storySlug = parts[1] || ''; // Lấy slug truyện để gán nút back
+                const urlParams = new URLSearchParams(hash.split('?')[1]);
+                const apiUrl = urlParams.get('api');
+                const storySlug = urlParams.get('truyen');
+                const chapName = urlParams.get('name');
                 
-                readerTools.style.display = 'block'; // Hiện công cụ chỉnh chữ
+                readerTools.style.display = 'block'; 
                 switchView('view-reader');
-                fetchChapterContent(chapterSlug, storySlug);
+                fetchChapterContent(apiUrl, storySlug, chapName);
             }
         }
 
@@ -194,13 +228,22 @@
             window.scrollTo(0, 0); 
         }
 
+        // Xử lý Tìm kiếm
+        function handleSearch() {
+            const keyword = searchInput.value.trim();
+            if(keyword) {
+                window.location.hash = `#/tim-kiem/${encodeURIComponent(keyword)}`;
+            }
+        }
+
         // --- GỌI API ---
 
-        // 1. Lấy danh sách truyện mới
-        async function fetchNewStories() {
+        // 1. Lấy danh sách truyện (Dùng chung cho Trang chủ & Tìm kiếm)
+        async function fetchList(apiUrl) {
             const grid = document.getElementById('story-grid');
+            grid.innerHTML = '<div class="loading">Đang tải dữ liệu...</div>';
             try {
-                const res = await fetch(`${BASE_API}/danh-sach/truyen-moi`);
+                const res = await fetch(apiUrl);
                 const data = await res.json();
                 grid.innerHTML = ''; 
                 
@@ -208,7 +251,7 @@
                 const domainCdn = data.data?.domain_cdn || '';
 
                 if(items.length === 0) {
-                    grid.innerHTML = '<p>Không có dữ liệu.</p>';
+                    grid.innerHTML = '<p>Không có dữ liệu phù hợp.</p>';
                     return;
                 }
 
@@ -224,12 +267,11 @@
                     `;
                 });
             } catch (error) {
-                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối API! Có thể do API bị lỗi hoặc chặn CORS. Vui lòng kiểm tra F12 (Console).</div>';
-                console.error("Lỗi fetch danh sách:", error);
+                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối API!</div>';
             }
         }
 
-        // 2. Lấy chi tiết truyện
+        // 2. Lấy chi tiết truyện (Sử dụng endpoint /truyen-tranh/)
         async function fetchStoryDetail(slug) {
             const titleEl = document.getElementById('detail-title');
             const descEl = document.getElementById('detail-desc');
@@ -241,7 +283,7 @@
             btnContinue.style.display = 'none';
 
             try {
-                const res = await fetch(`${BASE_API}/truyen/${slug}`);
+                const res = await fetch(`${BASE_API}/truyen-tranh/${slug}`);
                 const data = await res.json();
                 const story = data.data?.item;
 
@@ -250,67 +292,82 @@
                 titleEl.innerText = story.name;
                 descEl.innerHTML = story.content || "Chưa có giới thiệu.";
 
-                // Xử lý nút Đọc tiếp (Kiểm tra LocalStorage)
-                const savedChapter = localStorage.getItem(`history_${slug}`);
-                if (savedChapter) {
+                // Xử lý nút Đọc tiếp
+                const savedChapterApi = localStorage.getItem(`history_api_${slug}`);
+                const savedChapterName = localStorage.getItem(`history_name_${slug}`);
+                if (savedChapterApi) {
                     btnContinue.style.display = 'inline-block';
-                    btnContinue.onclick = () => window.location.hash = `#/chuong/${savedChapter}?truyen=${slug}`;
+                    btnContinue.onclick = () => window.location.hash = `#/chuong/?api=${encodeURIComponent(savedChapterApi)}&truyen=${slug}&name=${encodeURIComponent(savedChapterName || 'Đọc tiếp')}`;
                 }
 
                 const chapters = story.chapters?.[0]?.server_data || [];
                 chaptersUl.innerHTML = '';
                 
                 chapters.forEach(chap => {
-                    // Trích xuất slug chương từ chapter_api_data nếu cần, hoặc dùng trực tiếp file name/slug của truyenapi
-                    // Giả định `chap.chapter_name` chứa URL hoặc slug của chương
-                    const chapSlug = chap.chapter_api_data.split('/').pop(); // Lấy đoạn cuối URL làm slug
-                    
+                    // Trích xuất API data của chương để truyền sang màn hình đọc
+                    const chapApiUrl = chap.chapter_api_data;
                     chaptersUl.innerHTML += `
-                        <li><a href="#/chuong/${chapSlug}?truyen=${slug}">${chap.filename}</a></li>
+                        <li><a href="#/chuong/?api=${encodeURIComponent(chapApiUrl)}&truyen=${slug}&name=${encodeURIComponent(chap.filename)}">Chương ${chap.chapter_name || chap.filename}</a></li>
                     `;
                 });
             } catch (error) {
                 titleEl.innerText = "Lỗi tải truyện";
                 chaptersUl.innerHTML = '<div class="loading" style="color:red">Không thể tải danh sách chương.</div>';
-                console.error("Lỗi fetch chi tiết:", error);
             }
         }
 
-        // 3. Lấy nội dung chương
-        async function fetchChapterContent(chapterSlug, storySlug) {
+        // 3. Lấy nội dung chương (Hỗ trợ trả về mảng ảnh hoặc văn bản)
+        async function fetchChapterContent(apiUrl, storySlug, chapName) {
             const titleEl = document.getElementById('reader-title');
             const contentEl = document.getElementById('chapter-content');
             const btnBack = document.getElementById('btn-back-detail');
 
-            titleEl.innerText = "Đang tải...";
+            titleEl.innerText = chapName ? `Chương ${chapName}` : "Đang tải...";
             contentEl.innerHTML = '<div class="loading">Đang tải nội dung chương...</div>';
             
             if(storySlug) {
                 btnBack.href = `#/truyen/${storySlug}`;
                 // Lưu lịch sử đọc
-                localStorage.setItem(`history_${storySlug}`, chapterSlug);
+                localStorage.setItem(`history_api_${storySlug}`, apiUrl);
+                if(chapName) localStorage.setItem(`history_name_${storySlug}`, chapName);
             } else {
                 btnBack.href = `#/`;
             }
 
             try {
-                const res = await fetch(`${BASE_API}/chuong/${chapterSlug}`);
+                // Gọi API lấy data chi tiết chương
+                const res = await fetch(apiUrl);
                 const data = await res.json();
                 const chapter = data.data?.item;
+                const domainCdn = data.data?.domain_cdn;
 
                 if(!chapter) throw new Error("Không tìm thấy nội dung");
+                
+                if(!chapName) {
+                    titleEl.innerText = chapter.chapter_name || chapter.chapter_title || "Nội dung chương";
+                }
 
-                titleEl.innerText = chapter.chapter_name || chapter.chapter_title;
-                contentEl.innerHTML = chapter.chapter_content;
+                // Xử lý render truyện tranh (ảnh) HOẶC truyện chữ (văn bản)
+                const images = chapter.chapter_image;
+                if (images && Array.isArray(images) && images.length > 0) {
+                    let html = '';
+                    const chapterPath = chapter.chapter_path || '';
+                    images.forEach(img => {
+                        const imgSrc = `${domainCdn}/${chapterPath}/${img.image_file}`;
+                        html += `<img src="${imgSrc}" loading="lazy" alt="Truyện tranh">`;
+                    });
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = chapter.chapter_content || '<p>Đang cập nhật nội dung...</p>';
+                }
                 
             } catch (error) {
                 titleEl.innerText = "Lỗi tải chương";
-                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải chương này.</div>';
-                console.error("Lỗi fetch nội dung:", error);
+                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải chương này, vui lòng thử lại sau.</div>';
             }
         }
 
-        // --- CÔNG CỤ ĐỌC TRUYỆN ---
+        // --- CÔNG CỤ TÙY CHỈNH (MÀU SẮC, CỠ CHỮ) ---
         function changeFontSize(step) {
             currentFontSize += step;
             if(currentFontSize < 16) currentFontSize = 16;
@@ -331,13 +388,11 @@
         }
 
         function initTheme() {
-            // Phục hồi font chữ
             const savedSize = localStorage.getItem('pref_fontsize');
             if(savedSize) {
                 currentFontSize = parseInt(savedSize);
                 contentArea.style.fontSize = currentFontSize + 'px';
             }
-            // Phục hồi giao diện Sáng/Tối
             const savedTheme = localStorage.getItem('pref_theme');
             if(savedTheme === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
