@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Viện Tiên Hiệp</title>
+    <style>
+        /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
+        :root {
+            --bg-color: #f4f4f4;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --primary: #d35400;
+            --border: #dddddd;
+            --btn-bg: #eeeeee;
+            --btn-hover: #dddddd;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --border: #333333;
+            --btn-bg: #333333;
+            --btn-hover: #444444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 15px; }
+
+        /* --- THANH CÔNG CỤ (TOOLBAR) --- */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            background-color: var(--card-bg);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .toolbar-title { font-weight: bold; color: var(--primary); font-size: 1.2em; margin: 0; }
+        .toolbar-actions button {
+            background-color: var(--btn-bg); color: var(--text-color);
+            border: none; padding: 8px 12px; border-radius: 5px;
+            cursor: pointer; font-weight: bold; margin-left: 5px;
+        }
+        .toolbar-actions button:hover { background-color: var(--btn-hover); }
+
+        /* --- QUẢN LÝ MÀN HÌNH (ROUTING) --- */
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- COMPONENT: CARD & GRID --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .card {
+            background: var(--card-bg); border-radius: 8px; overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: block;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .card img { width: 100%; height: 200px; object-fit: cover; background: #ccc; }
+        .card-info { padding: 10px; }
+        .card-info h3 { margin: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- COMPONENT: NỘI DUNG CHI TIẾT & ĐỌC --- */
+        .content-box { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .btn-back { display: inline-block; background: var(--primary); color: white; padding: 8px 15px; border-radius: 5px; margin-bottom: 15px; }
+        .chapter-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; border: 1px solid var(--border); }
+        .chapter-list li a { display: block; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        .chapter-list li a:hover { background: var(--btn-bg); color: var(--primary); }
+        
+        #chapter-content { font-size: 22px; text-align: justify; margin-top: 20px; }
+        #chapter-content p { margin-bottom: 15px; }
+        
+        .loading { text-align: center; padding: 40px; font-style: italic; opacity: 0.7; }
+
+        /* Responsive cho Mobile */
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .content-box { padding: 15px; border-radius: 0; margin-top: 10px; }
+            #chapter-content { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <a href="#/" class="toolbar-title">Tiên Hiệp Quán</a>
+        <div class="toolbar-actions" id="reader-tools" style="display: none;">
+            <button onclick="changeFontSize(-2)">A-</button>
+            <button onclick="changeFontSize(2)">A+</button>
+            <button onclick="toggleTheme()">Sáng/Tối</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="view-list" class="view-section active">
+            <h2>Truyện Mới Cập Nhật</h2>
+            <div id="story-grid" class="grid">
+                <div class="loading">Đang tải dữ liệu...</div>
+            </div>
+        </div>
+
+        <div id="view-detail" class="view-section">
+            <a href="#/" class="btn-back">⬅ Trang chủ</a>
+            <div class="content-box">
+                <h2 id="detail-title">Đang tải...</h2>
+                <div id="detail-desc" style="margin-bottom: 20px; opacity: 0.8;"></div>
+                
+                <button id="btn-continue" class="btn-back" style="background: #27ae60; display: none;">📖 Đọc tiếp</button>
+
+                <h3>Danh sách chương</h3>
+                <ul id="detail-chapters" class="chapter-list">
+                    <div class="loading">Đang tải danh sách chương...</div>
+                </ul>
+            </div>
+        </div>
+
+        <div id="view-reader" class="view-section">
+            <a id="btn-back-detail" href="#/" class="btn-back">⬅ Quay lại danh sách chương</a>
+            <div class="content-box">
+                <h2 id="reader-title" style="text-align: center; color: var(--primary);">Đang tải...</h2>
+                <div id="chapter-content">
+                    <div class="loading">Đang tải nội dung chương...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH API ---
+        const BASE_API = 'https://truyenapi.com/v1/api';
+
+        // --- CÁC BIẾN TOÀN CỤC ---
+        let currentFontSize = 22;
+        const contentArea = document.getElementById('chapter-content');
+        const readerTools = document.getElementById('reader-tools');
+
+        // --- HỆ THỐNG ROUTER ---
+        function router() {
+            const hash = window.location.hash;
+            
+            // Ẩn thanh công cụ đọc truyện theo mặc định
+            readerTools.style.display = 'none';
+
+            if (!hash || hash === '' || hash === '#/') {
+                switchView('view-list');
+                fetchNewStories();
+            } else if (hash.startsWith('#/truyen/')) {
+                const slug = hash.replace('#/truyen/', '');
+                switchView('view-detail');
+                fetchStoryDetail(slug);
+            } else if (hash.startsWith('#/chuong/')) {
+                const parts = hash.replace('#/chuong/', '').split('?truyen=');
+                const chapterSlug = parts[0];
+                const storySlug = parts[1] || ''; // Lấy slug truyện để gán nút back
+                
+                readerTools.style.display = 'block'; // Hiện công cụ chỉnh chữ
+                switchView('view-reader');
+                fetchChapterContent(chapterSlug, storySlug);
+            }
+        }
+
+        window.addEventListener('hashchange', router);
+        window.addEventListener('load', () => {
+            initTheme();
+            router();
+        });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo(0, 0); 
+        }
+
+        // --- GỌI API ---
+
+        // 1. Lấy danh sách truyện mới
+        async function fetchNewStories() {
+            const grid = document.getElementById('story-grid');
+            try {
+                const res = await fetch(`${BASE_API}/danh-sach/truyen-moi`);
+                const data = await res.json();
+                grid.innerHTML = ''; 
+                
+                const items = data.data?.items || [];
+                const domainCdn = data.data?.domain_cdn || '';
+
+                if(items.length === 0) {
+                    grid.innerHTML = '<p>Không có dữ liệu.</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const thumbUrl = item.thumb_url.includes('http') ? item.thumb_url : `${domainCdn}/${item.thumb_url}`;
+                    grid.innerHTML += `
+                        <a href="#/truyen/${item.slug}" class="card">
+                            <img src="${thumbUrl}" alt="${item.name}" loading="lazy">
+                            <div class="card-info">
+                                <h3>${item.name}</h3>
+                            </div>
+                        </a>
+                    `;
+                });
+            } catch (error) {
+                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối API! Có thể do API bị lỗi hoặc chặn CORS. Vui lòng kiểm tra F12 (Console).</div>';
+                console.error("Lỗi fetch danh sách:", error);
+            }
+        }
+
+        // 2. Lấy chi tiết truyện
+        async function fetchStoryDetail(slug) {
+            const titleEl = document.getElementById('detail-title');
+            const descEl = document.getElementById('detail-desc');
+            const chaptersUl = document.getElementById('detail-chapters');
+            const btnContinue = document.getElementById('btn-continue');
+
+            titleEl.innerText = "Đang tải...";
+            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương...</div>';
+            btnContinue.style.display = 'none';
+
+            try {
+                const res = await fetch(`${BASE_API}/truyen/${slug}`);
+                const data = await res.json();
+                const story = data.data?.item;
+
+                if(!story) throw new Error("Không tìm thấy truyện");
+
+                titleEl.innerText = story.name;
+                descEl.innerHTML = story.content || "Chưa có giới thiệu.";
+
+                // Xử lý nút Đọc tiếp (Kiểm tra LocalStorage)
+                const savedChapter = localStorage.getItem(`history_${slug}`);
+                if (savedChapter) {
+                    btnContinue.style.display = 'inline-block';
+                    btnContinue.onclick = () => window.location.hash = `#/chuong/${savedChapter}?truyen=${slug}`;
+                }
+
+                const chapters = story.chapters?.[0]?.server_data || [];
+                chaptersUl.innerHTML = '';
+                
+                chapters.forEach(chap => {
+                    // Trích xuất slug chương từ chapter_api_data nếu cần, hoặc dùng trực tiếp file name/slug của truyenapi
+                    // Giả định `chap.chapter_name` chứa URL hoặc slug của chương
+                    const chapSlug = chap.chapter_api_data.split('/').pop(); // Lấy đoạn cuối URL làm slug
+                    
+                    chaptersUl.innerHTML += `
+                        <li><a href="#/chuong/${chapSlug}?truyen=${slug}">${chap.filename}</a></li>
+                    `;
+                });
+            } catch (error) {
+                titleEl.innerText = "Lỗi tải truyện";
+                chaptersUl.innerHTML = '<div class="loading" style="color:red">Không thể tải danh sách chương.</div>';
+                console.error("Lỗi fetch chi tiết:", error);
+            }
+        }
+
+        // 3. Lấy nội dung chương
+        async function fetchChapterContent(chapterSlug, storySlug) {
+            const titleEl = document.getElementById('reader-title');
+            const contentEl = document.getElementById('chapter-content');
+            const btnBack = document.getElementById('btn-back-detail');
+
+            titleEl.innerText = "Đang tải...";
+            contentEl.innerHTML = '<div class="loading">Đang tải nội dung chương...</div>';
+            
+            if(storySlug) {
+                btnBack.href = `#/truyen/${storySlug}`;
+                // Lưu lịch sử đọc
+                localStorage.setItem(`history_${storySlug}`, chapterSlug);
+            } else {
+                btnBack.href = `#/`;
+            }
+
+            try {
+                const res = await fetch(`${BASE_API}/chuong/${chapterSlug}`);
+                const data = await res.json();
+                const chapter = data.data?.item;
+
+                if(!chapter) throw new Error("Không tìm thấy nội dung");
+
+                titleEl.innerText = chapter.chapter_name || chapter.chapter_title;
+                contentEl.innerHTML = chapter.chapter_content;
+                
+            } catch (error) {
+                titleEl.innerText = "Lỗi tải chương";
+                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải chương này.</div>';
+                console.error("Lỗi fetch nội dung:", error);
+            }
+        }
+
+        // --- CÔNG CỤ ĐỌC TRUYỆN ---
+        function changeFontSize(step) {
+            currentFontSize += step;
+            if(currentFontSize < 16) currentFontSize = 16;
+            if(currentFontSize > 40) currentFontSize = 40;
+            contentArea.style.fontSize = currentFontSize + 'px';
+            localStorage.setItem('pref_fontsize', currentFontSize);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('pref_theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('pref_theme', 'dark');
+            }
+        }
+
+        function initTheme() {
+            // Phục hồi font chữ
+            const savedSize = localStorage.getItem('pref_fontsize');
+            if(savedSize) {
+                currentFontSize = parseInt(savedSize);
+                contentArea.style.fontSize = currentFontSize + 'px';
+            }
+            // Phục hồi giao diện Sáng/Tối
+            const savedTheme = localStorage.getItem('pref_theme');
+            if(savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        }
+    </script>
+</body>
+</html>
