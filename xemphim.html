@@ -146,10 +146,34 @@
         #loading { text-align: center; padding: 50px; font-size: 1.3rem; color: var(--accent-color); font-weight: bold;}
         .auto-switch-msg { color: #ef4444; font-size: 0.9rem; margin-top: 5px; display: none; }
 
-        body.is-tv #player-modal { padding: 0; background: #000; overflow: hidden; }
-        body.is-tv #player-container { width: 100vw; height: 100vh; max-width: none; padding-top: 0; position: fixed; top: 0; left: 0; z-index: 1; border-radius: 0; }
+        /* --- TỐI ƯU CSS DÀNH RIÊNG CHO TIVI --- */
+        body.is-tv #player-modal { 
+            padding: 0; background: #000; 
+            overflow-y: auto; /* Cho phép cuộn trên TV bằng D-pad */
+            scroll-behavior: smooth;
+        }
+        body.is-tv #player-container { 
+            width: 100vw; height: 100vh; max-width: none; padding-top: 0; 
+            position: fixed; top: 0; left: 0; z-index: 1; border-radius: 0; 
+        }
         body.is-tv .player-controls { display: none; }
-        body.is-tv .episode-container { position: relative; z-index: 2; margin-top: 90vh; background: rgba(30, 41, 59, 0.9); border-radius: 20px 20px 0 0; padding: 40px; }
+        
+        /* Chuyển khu vực chọn tập thành lớp phủ (Overlay) bên dưới video */
+        body.is-tv .episode-container { 
+            position: relative; z-index: 2; 
+            margin-top: 75vh; /* Nhô lên 25% màn hình để remote dễ bắt focus */
+            background: rgba(15, 23, 42, 0.95); /* Nền bán trong suốt */
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0; 
+            padding: 40px; 
+            min-height: 50vh;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.9);
+        }
+        
+        body.is-tv .close-btn {
+            position: relative; z-index: 2;
+            display: block; margin: 20px auto 100px;
+        }
 
         @media (max-width: 768px) {
             #search-input { width: 100%; max-width: 300px; }
@@ -407,12 +431,42 @@
 
     // Tối ưu hóa điều khiển tivi và phím ảo
     document.addEventListener('keydown', e => { 
+        // Đóng trình xem
         if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 461 || e.keyCode === 10009) {
             closePlayer(); 
         }
+        
+        // Mô phỏng click khi bấm OK/Enter trên remote
         if (e.key === "Enter" && document.activeElement && document.activeElement.tagName !== 'INPUT') {
             e.preventDefault();
             document.activeElement.click();
+        }
+
+        // --- XỬ LÝ PHÍM ĐIỀU HƯỚNG TIVI (D-PAD) ---
+        const playerModal = document.getElementById('player-modal');
+        if (document.body.classList.contains('is-tv') && playerModal.style.display === 'flex') {
+            const activeEl = document.activeElement;
+            
+            // Khi đang ở video, bấm XUỐNG -> Nhảy thẳng tới chọn Server
+            if (e.key === "ArrowDown" || e.keyCode === 40) {
+                if (!activeEl || activeEl.tagName === 'BODY' || activeEl.tagName === 'VIDEO' || activeEl.tagName === 'IFRAME') {
+                    e.preventDefault();
+                    const activeServer = document.querySelector('.server-btn.active') || document.querySelector('.server-btn');
+                    if (activeServer) {
+                        activeServer.focus();
+                        activeServer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
+            
+            // Khi đang ở danh sách server, bấm LÊN -> Cuộn lên trên xem Full Video
+            if (e.key === "ArrowUp" || e.keyCode === 38) {
+                if (activeEl && activeEl.classList.contains('server-btn')) {
+                    playerModal.scrollTo({ top: 0, behavior: 'smooth' });
+                    // Trả lại focus cho body/video để xem toàn màn hình
+                    document.activeElement.blur(); 
+                }
+            }
         }
     });
 
@@ -571,6 +625,14 @@
             let initialEpData = eps[idxToPlay];
             let url = initialEpData.link_m3u8 || initialEpData.m3u8 || initialEpData.link_embed || initialEpData.embed;
             loadVideo(url, document.getElementById(`ep-btn-${idxToPlay}`), idxToPlay);
+        }
+
+        // THÊM ĐOẠN NÀY DÀNH CHO TIVI: Sau khi đổi server, focus ngay vào tập 1
+        if (btnElement && document.body.classList.contains('is-tv')) {
+            setTimeout(() => {
+                const firstEpBtn = document.getElementById('ep-btn-0');
+                if (firstEpBtn) firstEpBtn.focus();
+            }, 50);
         }
     }
 
