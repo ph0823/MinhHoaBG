@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thư Viện Truyen Tranh</title>
+    <title>Thư Viện OTruyen - Chế Độ An Toàn</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -57,65 +57,27 @@
         }
         .toolbar-title { font-weight: bold; color: var(--primary); font-size: 1.2em; margin: 0; }
         
-        .search-box {
-            display: flex;
-            gap: 5px;
-            flex-grow: 1;
-            max-width: 300px;
-        }
-        .search-box input {
-            flex-grow: 1;
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--bg-color);
-            color: var(--text-color);
-        }
-        .search-box button, .toolbar-actions button {
+        .search-box { display: flex; gap: 5px; flex-grow: 1; max-width: 300px; }
+        .search-box input { flex-grow: 1; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-color); color: var(--text-color); }
+        .search-box button, .toolbar-actions button, .pagination button {
             background-color: var(--btn-bg); color: var(--text-color);
             border: none; padding: 8px 12px; border-radius: 5px;
             cursor: pointer; font-weight: bold;
         }
-        .search-box button:hover, .toolbar-actions button:hover { background-color: var(--btn-hover); }
+        .search-box button:hover, .toolbar-actions button:hover, .pagination button:hover { background-color: var(--btn-hover); }
 
-        /* --- QUẢN LÝ MÀN HÌNH (ROUTING) --- */
+        /* --- QUẢN LÝ MÀN HÌNH --- */
         .view-section { display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- COMPONENT: CARD & GRID --- */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .card {
-            background: var(--card-bg); border-radius: 8px; overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: block;
-            transition: transform 0.2s;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: block; transition: transform 0.2s; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .card img { 
-            width: 100%; 
-            height: 220px; 
-            object-fit: cover; 
-            background: #e0e0e0; 
-            display: block; 
-        }
-        .card-info { padding: 10px; height: 65px; } /* Cố định chiều cao phần text */
-        .card-info h3 { 
-            margin: 0; 
-            font-size: 14px; 
-            /* Tối ưu CSS để text dài tự động ngắt xuống 2 dòng */
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.4;
-            text-align: center;
-        }
+        .card img { width: 100%; height: 220px; object-fit: cover; background: #e0e0e0; display: block; }
+        .card-info { padding: 10px; height: 65px; }
+        .card-info h3 { margin: 0; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; text-align: center; }
 
         /* --- COMPONENT: NỘI DUNG CHI TIẾT & ĐỌC --- */
         .content-box { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-top: 20px; }
@@ -130,7 +92,10 @@
         
         .loading { text-align: center; padding: 40px; font-style: italic; opacity: 0.7; }
 
-        /* Responsive cho Mobile */
+        /* --- PHÂN TRANG (PAGINATION) --- */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; }
+        .pagination span { font-weight: bold; color: var(--primary); }
+
         @media (max-width: 600px) {
             .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .card img { height: 180px; }
@@ -163,6 +128,7 @@
             <div id="story-grid" class="grid">
                 <div class="loading">Đang tải dữ liệu...</div>
             </div>
+            <div id="pagination" class="pagination"></div>
         </div>
 
         <div id="view-detail" class="view-section">
@@ -170,13 +136,9 @@
             <div class="content-box">
                 <h2 id="detail-title">Đang tải...</h2>
                 <div id="detail-desc" style="margin-bottom: 20px; opacity: 0.8;"></div>
-                
                 <button id="btn-continue" class="btn-back" style="background: #27ae60; display: none;">📖 Đọc tiếp</button>
-
                 <h3>Danh sách chương</h3>
-                <ul id="detail-chapters" class="chapter-list">
-                    <div class="loading">Đang tải danh sách chương...</div>
-                </ul>
+                <ul id="detail-chapters" class="chapter-list"></ul>
             </div>
         </div>
 
@@ -184,22 +146,29 @@
             <a id="btn-back-detail" href="#/" class="btn-back">⬅ Quay lại danh sách chương</a>
             <div class="content-box">
                 <h2 id="reader-title" style="text-align: center; color: var(--primary);">Đang tải...</h2>
-                <div id="chapter-content">
-                    <div class="loading">Đang tải nội dung chương...</div>
-                </div>
+                <div id="chapter-content"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CẤU HÌNH API ---
         const BASE_API = 'https://otruyenapi.com/v1/api';
-
-        // --- CÁC BIẾN TOÀN CỤC ---
         let currentFontSize = 22;
         const contentArea = document.getElementById('chapter-content');
         const readerTools = document.getElementById('reader-tools');
         const searchInput = document.getElementById('searchInput');
+
+        // --- BỘ LỌC TỪ KHÓA (SAFE SEARCH) ---
+        // Thêm các từ khóa nhạy cảm vào mảng này
+        const BLOCKED_KEYWORDS = ['18+', 'smut', 'adult', 'trưởng thành', 'hentai', 'r18', 'nsfw', 'sắc', 'song tu', 'dâm'];
+
+        function isSafeForKids(item) {
+            // Chuyển tên truyện và slug về chữ thường để dễ so sánh
+            const textToCheck = (item.name + ' ' + (item.slug || '')).toLowerCase();
+            // Nếu có ít nhất 1 từ khóa cấm xuất hiện -> trả về false (Loại bỏ)
+            const hasBlockedWord = BLOCKED_KEYWORDS.some(keyword => textToCheck.includes(keyword));
+            return !hasBlockedWord;
+        }
 
         // --- HỆ THỐNG ROUTER ---
         function router() {
@@ -233,10 +202,7 @@
         }
 
         window.addEventListener('hashchange', router);
-        window.addEventListener('load', () => {
-            initTheme();
-            router();
-        });
+        window.addEventListener('load', () => { initTheme(); router(); });
 
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
@@ -249,57 +215,87 @@
             if(keyword) window.location.hash = `#/tim-kiem/${encodeURIComponent(keyword)}`;
         }
 
-        // --- GỌI API ---
-
-        // 1. Lấy danh sách truyện (ĐÃ SỬA LỖI ẢNH)
-        async function fetchList(apiUrl) {
+        // --- GỌI API & PHÂN TRANG ---
+        async function fetchList(baseApiUrl, page = 1) {
             const grid = document.getElementById('story-grid');
+            const paginationEl = document.getElementById('pagination');
+            
             grid.innerHTML = '<div class="loading">Đang tải dữ liệu...</div>';
+            paginationEl.innerHTML = ''; // Ẩn phân trang lúc đang tải
+
             try {
-                const res = await fetch(apiUrl);
+                // Thêm tham số page vào URL
+                const separator = baseApiUrl.includes('?') ? '&' : '?';
+                const res = await fetch(`${baseApiUrl}${separator}page=${page}`);
                 const data = await res.json();
                 grid.innerHTML = ''; 
                 
-                const items = data.data?.items || [];
-                // Backup tên miền ảnh nếu API bị khuyết
+                let items = data.data?.items || [];
                 let domainCdn = data.data?.domain_cdn || 'https://img.otruyenapi.com';
 
+                // BƯỚC LỌC DỮ LIỆU: Chỉ giữ lại các truyện an toàn
+                items = items.filter(isSafeForKids);
+
                 if(items.length === 0) {
-                    grid.innerHTML = '<p>Không có dữ liệu phù hợp.</p>';
-                    return;
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không có dữ liệu hoặc các truyện đã bị ẩn bởi bộ lọc an toàn.</p>';
+                } else {
+                    items.forEach(item => {
+                        let thumbUrl = item.thumb_url;
+                        if (!thumbUrl.startsWith('http')) {
+                            if (!thumbUrl.includes('uploads/comics')) {
+                                thumbUrl = `${domainCdn}/uploads/comics/${item.thumb_url}`;
+                            } else {
+                                thumbUrl = `${domainCdn}/${item.thumb_url}`;
+                            }
+                            thumbUrl = thumbUrl.replace(/([^:]\/)\/+/g, "$1");
+                        }
+
+                        grid.innerHTML += `
+                            <a href="#/truyen/${item.slug}" class="card">
+                                <img src="${thumbUrl}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
+                                <div class="card-info">
+                                    <h3>${item.name}</h3>
+                                </div>
+                            </a>
+                        `;
+                    });
                 }
 
-                items.forEach(item => {
-                    let thumbUrl = item.thumb_url;
-                    
-                    // FIX: Bổ sung đường dẫn /uploads/comics/ để ảnh hiển thị
-                    if (!thumbUrl.startsWith('http')) {
-                        if (!thumbUrl.includes('uploads/comics')) {
-                            thumbUrl = `${domainCdn}/uploads/comics/${item.thumb_url}`;
-                        } else {
-                            thumbUrl = `${domainCdn}/${item.thumb_url}`;
-                        }
-                        // Xóa các dấu gạch chéo thừa (VD: https://domain.com//uploads/..)
-                        thumbUrl = thumbUrl.replace(/([^:]\/)\/+/g, "$1");
-                    }
+                // VẼ NÚT PHÂN TRANG
+                renderPagination(page, baseApiUrl, data.data?.params?.pagination);
 
-                    // Tích hợp fallback (onerror) nếu URL ảnh chết
-                    grid.innerHTML += `
-                        <a href="#/truyen/${item.slug}" class="card">
-                            <img src="${thumbUrl}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
-                            <div class="card-info">
-                                <h3>${item.name}</h3>
-                            </div>
-                        </a>
-                    `;
-                });
             } catch (error) {
-                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối API! Vui lòng thử tải lại trang.</div>';
-                console.error(error);
+                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối API!</div>';
             }
         }
 
-        // 2. Lấy chi tiết truyện
+        function renderPagination(currentPage, baseApiUrl, paginationData) {
+            const paginationEl = document.getElementById('pagination');
+            let html = '';
+
+            // Nếu đang ở trang > 1, hiển thị nút Trang Trước
+            if (currentPage > 1) {
+                html += `<button onclick="fetchList('${baseApiUrl}', ${currentPage - 1})">⬅ Trang Trước</button>`;
+            }
+
+            html += `<span>Trang ${currentPage}</span>`;
+
+            // Kiểm tra xem có trang tiếp theo không (dựa trên thông số API trả về)
+            // Hoặc đơn giản là nếu danh sách còn hiển thị, cho phép bấm tiếp
+            if (paginationData) {
+                const totalPages = Math.ceil(paginationData.totalItems / paginationData.totalItemsPerPage);
+                if (currentPage < totalPages) {
+                    html += `<button onclick="fetchList('${baseApiUrl}', ${currentPage + 1})">Trang Sau ➡</button>`;
+                }
+            } else {
+                // Fallback nếu API không trả về tổng số trang rõ ràng
+                html += `<button onclick="fetchList('${baseApiUrl}', ${currentPage + 1})">Trang Sau ➡</button>`;
+            }
+
+            paginationEl.innerHTML = html;
+        }
+
+        // --- CÁC HÀM CÒN LẠI (GIỮ NGUYÊN) ---
         async function fetchStoryDetail(slug) {
             const titleEl = document.getElementById('detail-title');
             const descEl = document.getElementById('detail-desc');
@@ -329,12 +325,9 @@
 
                 const chapters = story.chapters?.[0]?.server_data || [];
                 chaptersUl.innerHTML = '';
-                
                 chapters.forEach(chap => {
                     const chapApiUrl = chap.chapter_api_data;
-                    chaptersUl.innerHTML += `
-                        <li><a href="#/chuong/?api=${encodeURIComponent(chapApiUrl)}&truyen=${slug}&name=${encodeURIComponent(chap.filename)}">Chương ${chap.chapter_name || chap.filename}</a></li>
-                    `;
+                    chaptersUl.innerHTML += `<li><a href="#/chuong/?api=${encodeURIComponent(chapApiUrl)}&truyen=${slug}&name=${encodeURIComponent(chap.filename)}">Chương ${chap.chapter_name || chap.filename}</a></li>`;
                 });
             } catch (error) {
                 titleEl.innerText = "Lỗi tải truyện";
@@ -342,7 +335,6 @@
             }
         }
 
-        // 3. Lấy nội dung chương
         async function fetchChapterContent(apiUrl, storySlug, chapName) {
             const titleEl = document.getElementById('reader-title');
             const contentEl = document.getElementById('chapter-content');
@@ -355,9 +347,7 @@
                 btnBack.href = `#/truyen/${storySlug}`;
                 localStorage.setItem(`history_api_${storySlug}`, apiUrl);
                 if(chapName) localStorage.setItem(`history_name_${storySlug}`, chapName);
-            } else {
-                btnBack.href = `#/`;
-            }
+            } else { btnBack.href = `#/`; }
 
             try {
                 const res = await fetch(apiUrl);
@@ -365,11 +355,8 @@
                 const chapter = data.data?.item;
                 const domainCdn = data.data?.domain_cdn;
 
-                if(!chapter) throw new Error("Không tìm thấy nội dung");
-                
-                if(!chapName) {
-                    titleEl.innerText = chapter.chapter_name || chapter.chapter_title || "Nội dung chương";
-                }
+                if(!chapter) throw new Error("Không tìm thấy");
+                if(!chapName) titleEl.innerText = chapter.chapter_name || chapter.chapter_title || "Nội dung chương";
 
                 const images = chapter.chapter_image;
                 if (images && Array.isArray(images) && images.length > 0) {
@@ -377,21 +364,19 @@
                     const chapterPath = chapter.chapter_path || '';
                     images.forEach(img => {
                         let imgSrc = `${domainCdn}/${chapterPath}/${img.image_file}`;
-                        imgSrc = imgSrc.replace(/([^:]\/)\/+/g, "$1"); // Tối ưu URL an toàn
+                        imgSrc = imgSrc.replace(/([^:]\/)\/+/g, "$1");
                         html += `<img src="${imgSrc}" loading="lazy" alt="Truyện tranh">`;
                     });
                     contentEl.innerHTML = html;
                 } else {
                     contentEl.innerHTML = chapter.chapter_content || '<p>Đang cập nhật nội dung...</p>';
                 }
-                
             } catch (error) {
                 titleEl.innerText = "Lỗi tải chương";
-                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải chương này, vui lòng thử lại sau.</div>';
+                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải chương này.</div>';
             }
         }
 
-        // --- CÔNG CỤ TÙY CHỈNH ---
         function changeFontSize(step) {
             currentFontSize += step;
             if(currentFontSize < 16) currentFontSize = 16;
@@ -417,10 +402,7 @@
                 currentFontSize = parseInt(savedSize);
                 contentArea.style.fontSize = currentFontSize + 'px';
             }
-            const savedTheme = localStorage.getItem('pref_theme');
-            if(savedTheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            }
+            if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
         }
     </script>
 </body>
