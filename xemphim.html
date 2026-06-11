@@ -147,32 +147,44 @@
         .auto-switch-msg { color: #ef4444; font-size: 0.9rem; margin-top: 5px; display: none; }
 
         /* --- TỐI ƯU CSS DÀNH RIÊNG CHO TIVI --- */
+        
         body.is-tv #player-modal { 
-            padding: 0; background: #000; 
-            overflow-y: auto; /* Cho phép cuộn trên TV bằng D-pad */
+            padding: 0; 
+            background: #000; 
+            /* QUAN TRỌNG: Đổi hidden thành auto để cuộn được bằng remote */
+            overflow-y: auto; 
             scroll-behavior: smooth;
         }
+        
         body.is-tv #player-container { 
             width: 100vw; height: 100vh; max-width: none; padding-top: 0; 
             position: fixed; top: 0; left: 0; z-index: 1; border-radius: 0; 
         }
+        
         body.is-tv .player-controls { display: none; }
         
-        /* Chuyển khu vực chọn tập thành lớp phủ (Overlay) bên dưới video */
+        /* Đẩy hoàn toàn khu vực chọn tập xuống dưới video */
         body.is-tv .episode-container { 
-            position: relative; z-index: 2; 
-            margin-top: 75vh; /* Nhô lên 25% màn hình để remote dễ bắt focus */
-            background: rgba(15, 23, 42, 0.95); /* Nền bán trong suốt */
+            position: relative; 
+            z-index: 2; 
+            /* Dời hẳn 100% màn hình xuống dưới để không che video */
+            margin-top: 100vh; 
+            background: rgba(15, 23, 42, 0.95); 
             backdrop-filter: blur(10px);
             border-radius: 20px 20px 0 0; 
             padding: 40px; 
-            min-height: 50vh;
+            min-height: 60vh;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.9);
         }
         
         body.is-tv .close-btn {
             position: relative; z-index: 2;
             display: block; margin: 20px auto 100px;
+        }
+
+        /* Ẩn bớt mô tả phim trên TV để menu gọn gàng hơn */
+        body.is-tv #movie-desc {
+            display: none; 
         }
 
         @media (max-width: 768px) {
@@ -447,23 +459,25 @@
         if (document.body.classList.contains('is-tv') && playerModal.style.display === 'flex') {
             const activeEl = document.activeElement;
             
-            // Khi đang ở video, bấm XUỐNG -> Nhảy thẳng tới chọn Server
+            // Khi đang ở video, bấm XUỐNG -> Nhảy thẳng xuống chọn Server
             if (e.key === "ArrowDown" || e.keyCode === 40) {
                 if (!activeEl || activeEl.tagName === 'BODY' || activeEl.tagName === 'VIDEO' || activeEl.tagName === 'IFRAME') {
                     e.preventDefault();
                     const activeServer = document.querySelector('.server-btn.active') || document.querySelector('.server-btn');
                     if (activeServer) {
                         activeServer.focus();
+                        // Lệnh này sẽ kéo khung chọn tập trượt lên màn hình
                         activeServer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
             }
             
-            // Khi đang ở danh sách server, bấm LÊN -> Cuộn lên trên xem Full Video
+            // Khi đang ở danh sách server/tập, bấm LÊN -> Trượt menu xuống, trả lại Full Video
             if (e.key === "ArrowUp" || e.keyCode === 38) {
-                if (activeEl && activeEl.classList.contains('server-btn')) {
-                    playerModal.scrollTo({ top: 0, behavior: 'smooth' });
-                    // Trả lại focus cho body/video để xem toàn màn hình
+                if (activeEl && (activeEl.classList.contains('server-btn') || activeEl.classList.contains('episode-btn'))) {
+                    // Nếu đang ở hàng nút đầu tiên, cuộn mượt mà lên trên cùng
+                    const modal = document.getElementById('player-modal');
+                    modal.scrollTo({ top: 0, behavior: 'smooth' });
                     document.activeElement.blur(); 
                 }
             }
