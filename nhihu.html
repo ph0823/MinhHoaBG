@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhi hư phiên bản 2</title>
+    <title>Nhi hư phiên bản 3 _ 12_06</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -95,7 +95,7 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">MDex OAuth2 Web</a>
+        <a href="#/" class="toolbar-title">MDex Web</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
@@ -143,57 +143,29 @@
         const UPLOADS_BASE = 'https://uploads.mangadex.org';
         const LIMIT = 18;
 
-        // --- CẤU HÌNH OAUTH2 (MANGADEX) ---
-        const TOKEN_URL = "https://auth.mangadex.org/realms/mangadex/protocol/openid-connect/token";
-        const CLIENT_ID = "personal-client-443aa18b-22b2-4ec4-9748-4715056d6de9-d91693d1";
-        const CLIENT_SECRET = "tBOd9Qgi308bFldB9Qi06wyQ2M9NQk9y";
-        const USERNAME = "chucochm";
-        const PASSWORD = "g9yLPwKnBFsEwX4";
-
         let cachedAccessToken = null;
 
-        // Hàm tự động lấy và lưu trữ Token
+        // Hàm này giữ lại để sau này bạn gọi khi cần thực hiện các tác vụ cần đăng nhập (như bình luận, follow truyện)
+        // Hiện tại các hàm gọi dữ liệu công khai ở dưới sẽ KHÔNG dùng hàm này để tránh lỗi CORS Preflight
         async function getAccessToken() {
-            // if (cachedAccessToken) return cachedAccessToken; // Tái sử dụng token nếu còn hạn
-            
-            let cachedAccessToken = null;
-
-            // Hàm tự động lấy và lưu trữ Token thông qua Server Vercel của bạn
-            async function getAccessToken() {
-                if (cachedAccessToken) return cachedAccessToken; 
-
-                try {
-                    // Thay vì gọi auth.mangadex.org, ta gọi vào API trung gian vừa tạo
-                    const res = await fetch('/api/token'); 
-                    
-                    if (!res.ok) throw new Error(`Lỗi lấy token từ Vercel: ${res.status}`);
-
-                    const data = await res.json();
-                    cachedAccessToken = data.access_token;
-                    
-                    // MangaDex Access Token sống khoảng 15 phút, xóa cache sau 14 phút
-                    setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
-
-                    console.log("Đã lấy Access Token thành công qua Vercel API!");
-                    return cachedAccessToken;
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                    throw error;
-                }
+            if (cachedAccessToken) return cachedAccessToken; 
+            try {
+                const res = await fetch('/api/token'); 
+                if (!res.ok) throw new Error(`Lỗi lấy token từ Vercel: ${res.status}`);
+                const data = await res.json();
+                cachedAccessToken = data.access_token;
+                setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
+                return cachedAccessToken;
+            } catch (error) {
+                console.error("Auth Error:", error);
+                throw error;
             }
         }
 
-        // Hàm tạo bộ headers đính kèm Token động
-        async function getAuthHeaders() {
-            const token = await getAccessToken();
-            return {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            };
-        }
+        // --- CẤU HÌNH FETCH CƠ BẢN DÀNH CHO API CÔNG KHAI (KHÔNG CÓ TOKEN) ---
+        const publicFetchOptions = {
+            method: 'GET'
+        };
 
         const searchInput = document.getElementById('searchInput');
 
@@ -244,7 +216,7 @@
         // --- LẤY DANH SÁCH TRUYỆN ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
-            grid.innerHTML = '<div class="loading">Đang xác thực và tải dữ liệu...</div>';
+            grid.innerHTML = '<div class="loading">Đang tải dữ liệu từ MangaDex...</div>';
             document.getElementById('pagination').innerHTML = '';
 
             const params = new URLSearchParams({
@@ -260,9 +232,8 @@
             else params.append('order[latestUploadedChapter]', 'desc'); 
 
             try {
-                // Đợi lấy headers chứa Authorization Token
-                const fetchOptions = await getAuthHeaders();
-                const res = await fetch(`${API_BASE}/manga?${params.toString()}`, fetchOptions);
+                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
+                const res = await fetch(`${API_BASE}/manga?${params.toString()}`, publicFetchOptions);
                 
                 if (!res.ok) throw new Error(`Lỗi server API: ${res.status}`);
                 const data = await res.json();
@@ -289,7 +260,7 @@
 
             } catch (error) {
                 console.error("Lỗi:", error);
-                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu. Hãy kiểm tra lại tài khoản hoặc F12 xem chi tiết.<br>${error.message}</div>`;
+                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu: ${error.message}</div>`;
             }
         }
 
@@ -312,9 +283,8 @@
             chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương...</div>';
 
             try {
-                const fetchOptions = await getAuthHeaders();
-
-                const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`, fetchOptions);
+                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
+                const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`, publicFetchOptions);
                 const mangaData = await mangaRes.json();
                 const manga = mangaData.data;
 
@@ -327,7 +297,8 @@
                     coverEl.style.display = 'block';
                 }
 
-                const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`, fetchOptions);
+                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
+                const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`, publicFetchOptions);
                 const chapData = await chapRes.json();
                 
                 chaptersUl.innerHTML = '';
@@ -355,8 +326,8 @@
             document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
-                const fetchOptions = await getAuthHeaders();
-                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`, fetchOptions);
+                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
+                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`, publicFetchOptions);
                 const data = await res.json();
                 
                 if(data.result === 'error') throw new Error();
