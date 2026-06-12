@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhi hư đã tới manadex</title>
+    <title>Nhi hư phiên bản cải tiến</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -31,29 +31,19 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            transition: background 0.3s, color 0.3s;
-            line-height: 1.6;
+            margin: 0; padding: 0;
+            transition: background 0.3s, color 0.3s; line-height: 1.6;
         }
 
         a { text-decoration: none; color: inherit; }
-        
         .container { max-width: 900px; margin: 0 auto; padding: 15px; }
 
-        /* --- THANH CÔNG CỤ (TOOLBAR) & TÌM KIẾM --- */
+        /* --- THANH CÔNG CỤ & TÌM KIẾM --- */
         .toolbar {
-            position: sticky;
-            top: 0;
-            background-color: var(--card-bg);
-            padding: 10px 15px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 100;
-            gap: 10px;
+            position: sticky; top: 0; background-color: var(--card-bg);
+            padding: 10px 15px; display: flex; flex-wrap: wrap;
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 100; gap: 10px;
         }
         .toolbar-title { font-weight: bold; color: var(--primary); font-size: 1.2em; margin: 0; }
         
@@ -80,20 +70,17 @@
         .card-info { padding: 10px; height: 65px; }
         .card-info h3 { margin: 0; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; text-align: center; }
 
-        /* --- COMPONENT: NỘI DUNG CHI TIẾT & ĐỌC --- */
+        /* --- COMPONENT: NỘI DUNG CHI TIẾT --- */
         .content-box { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-top: 20px; }
         .btn-back { display: inline-block; background: var(--primary); color: white; padding: 8px 15px; border-radius: 5px; margin-bottom: 15px; }
         .chapter-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; border: 1px solid var(--border); }
         .chapter-list li a { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--border); }
         .chapter-list li a:hover { background: var(--btn-bg); color: var(--primary); }
-        .chap-date { font-size: 0.85em; opacity: 0.7; }
         
         #chapter-content { text-align: center; margin-top: 20px; }
         #chapter-content img { width: 100%; max-width: 800px; display: block; margin: 0 auto; margin-bottom: 5px; }
-        
         .loading { text-align: center; padding: 40px; font-style: italic; opacity: 0.7; }
 
-        /* --- PHÂN TRANG (PAGINATION) --- */
         .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; }
         .pagination span { font-weight: bold; color: var(--primary); }
 
@@ -108,24 +95,22 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">MDex Tiếng Việt (VIP)</a>
+        <a href="#/" class="toolbar-title">MDex OAuth2 Web</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
             <button type="submit">Tìm</button>
         </form>
 
-        <div class="toolbar-actions" id="reader-tools">
+        <div class="toolbar-actions">
             <button onclick="toggleTheme()">Sáng/Tối</button>
         </div>
     </div>
 
     <div class="container">
         <div id="view-list" class="view-section active">
-            <h2 id="list-title">Truyện Có Bản Dịch Tiếng Việt</h2>
-            <div id="story-grid" class="grid">
-                <div class="loading">Đang tải dữ liệu...</div>
-            </div>
+            <h2 id="list-title">Truyện Cập Nhật</h2>
+            <div id="story-grid" class="grid"><div class="loading">Đang tải dữ liệu...</div></div>
             <div id="pagination" class="pagination"></div>
         </div>
 
@@ -139,8 +124,6 @@
                         <div id="detail-desc" style="opacity: 0.8; font-size: 0.95em; white-space: pre-wrap;"></div>
                     </div>
                 </div>
-                
-                <button id="btn-continue" class="btn-back" style="background: #27ae60; display: none;">📖 Đọc tiếp</button>
                 <h3>Danh sách chương (Tiếng Việt)</h3>
                 <ul id="detail-chapters" class="chapter-list"></ul>
             </div>
@@ -159,22 +142,64 @@
         const API_BASE = 'https://api.mangadex.org';
         const UPLOADS_BASE = 'https://uploads.mangadex.org';
         const LIMIT = 18;
-        
-        // KÍCH HOẠT API KEY CỦA BẠN TẠI ĐÂY
-        const BEARER_TOKEN = 'personal-client-443aa18b-22b2-4ec4-9748-4715056d6de9-d91693d1';
 
-        // Tạo sẵn Object headers dùng chung cho các lệnh Fetch
-        const fetchOptions = {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${BEARER_TOKEN}`
+        // --- CẤU HÌNH OAUTH2 (MANGADEX) ---
+        const TOKEN_URL = "https://auth.mangadex.org/realms/mangadex/protocol/openid-connect/token";
+        const CLIENT_ID = "personal-client-443aa18b-22b2-4ec4-9748-4715056d6de9-d91693d1";
+        const CLIENT_SECRET = "tBOd9Qgi308bFldB9Qi06wyQ2M9NQk9y";
+        const USERNAME = "chucochm";
+        const PASSWORD = "g9yLPwKnBFsEwX4";
+
+        let cachedAccessToken = null;
+
+        // Hàm tự động lấy và lưu trữ Token
+        async function getAccessToken() {
+            if (cachedAccessToken) return cachedAccessToken; // Tái sử dụng token nếu còn hạn
+
+            const params = new URLSearchParams();
+            params.append("client_id", CLIENT_ID);
+            params.append("client_secret", CLIENT_SECRET);
+            params.append("grant_type", "password");
+            params.append("username", USERNAME);
+            params.append("password", PASSWORD);
+
+            try {
+                const res = await fetch(TOKEN_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: params.toString()
+                });
+
+                if (!res.ok) throw new Error(`Lỗi lấy token xác thực: ${res.status}`);
+
+                const data = await res.json();
+                cachedAccessToken = data.access_token;
+                
+                // MangaDex Access Token thường sống khoảng 15 phút, ta sẽ xóa cache sau 14 phút
+                setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
+
+                console.log("Đã lấy Access Token thành công!");
+                return cachedAccessToken;
+            } catch (error) {
+                console.error("Auth Error:", error);
+                throw error;
             }
-        };
+        }
+
+        // Hàm tạo bộ headers đính kèm Token động
+        async function getAuthHeaders() {
+            const token = await getAccessToken();
+            return {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+        }
 
         const searchInput = document.getElementById('searchInput');
 
-        // Hàm hỗ trợ lấy text theo ngôn ngữ
         function getLocalizedString(obj) {
             if (!obj) return 'Không có thông tin';
             return obj.vi || obj.en || Object.values(obj)[0] || 'Không có thông tin';
@@ -183,9 +208,8 @@
         // --- HỆ THỐNG ROUTER ---
         function router() {
             const hash = window.location.hash;
-
             if (!hash || hash === '' || hash === '#/') {
-                document.getElementById('list-title').innerText = "Truyện Cập Nhật Tiếng Việt";
+                document.getElementById('list-title').innerText = "Truyện Mới Cập Nhật (Tiếng Việt)";
                 switchView('view-list');
                 fetchList('', 1);
             } else if (hash.startsWith('#/tim-kiem/')) {
@@ -201,11 +225,8 @@
             } else if (hash.startsWith('#/chuong/')) {
                 const urlParams = new URLSearchParams(hash.split('?')[1]);
                 const chapterId = hash.replace('#/chuong/', '').split('?')[0];
-                const mangaId = urlParams.get('manga');
-                const chapTitle = urlParams.get('title');
-                
                 switchView('view-reader');
-                fetchChapterContent(chapterId, mangaId, chapTitle);
+                fetchChapterContent(chapterId, urlParams.get('manga'), urlParams.get('title'));
             }
         }
 
@@ -219,222 +240,142 @@
         }
 
         function handleSearch() {
-            const keyword = searchInput.value.trim();
-            if(keyword) window.location.hash = `#/tim-kiem/${encodeURIComponent(keyword)}`;
-            else window.location.hash = '#/';
+            const kw = searchInput.value.trim();
+            window.location.hash = kw ? `#/tim-kiem/${encodeURIComponent(kw)}` : '#/';
         }
 
-        // --- LẤY DANH SÁCH TRUYỆN CÓ API KEY ---
+        // --- LẤY DANH SÁCH TRUYỆN ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
-            grid.innerHTML = '<div class="loading">Đang tải dữ liệu từ MangaDex...</div>';
+            grid.innerHTML = '<div class="loading">Đang xác thực và tải dữ liệu...</div>';
             document.getElementById('pagination').innerHTML = '';
 
-            const offset = (page - 1) * LIMIT;
-            
-            // Dùng URLSearchParams để an toàn không bị lỗi ký tự []
-            const params = new URLSearchParams();
-            params.append('limit', LIMIT);
-            params.append('offset', offset);
-            params.append('includes[]', 'cover_art');
-            params.append('availableTranslatedLanguage[]', 'vi');
-            params.append('contentRating[]', 'safe');
-            params.append('contentRating[]', 'suggestive');
-            params.append('hasAvailableChapters', 'true');
+            const params = new URLSearchParams({
+                limit: LIMIT,
+                offset: (page - 1) * LIMIT,
+                'includes[]': 'cover_art',
+                'availableTranslatedLanguage[]': 'vi',
+                'contentRating[]': 'safe',
+                hasAvailableChapters: 'true'
+            });
 
-            if (keyword) {
-                params.append('title', keyword);
-            } else {
-                params.append('order[latestUploadedChapter]', 'desc'); 
-            }
-
-            const apiUrl = `${API_BASE}/manga?${params.toString()}`;
+            if (keyword) params.append('title', keyword);
+            else params.append('order[latestUploadedChapter]', 'desc'); 
 
             try {
-                // Thêm fetchOptions có chứa API KEY
-                const res = await fetch(apiUrl, fetchOptions);
+                // Đợi lấy headers chứa Authorization Token
+                const fetchOptions = await getAuthHeaders();
+                const res = await fetch(`${API_BASE}/manga?${params.toString()}`, fetchOptions);
                 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    console.error("Lỗi từ server MangaDex:", errData);
-                    throw new Error(`Mã lỗi server: ${res.status}`);
-                }
-
+                if (!res.ok) throw new Error(`Lỗi server API: ${res.status}`);
                 const data = await res.json();
                 
                 grid.innerHTML = '';
                 if(!data.data || data.data.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không tìm thấy truyện nào.</p>';
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không có dữ liệu.</p>';
                     return;
                 }
 
                 data.data.forEach(item => {
                     const title = getLocalizedString(item.attributes.title);
                     const coverRel = item.relationships.find(r => r.type === 'cover_art');
-                    const coverFileName = coverRel ? coverRel.attributes.fileName : null;
-                    const coverUrl = coverFileName ? `${UPLOADS_BASE}/covers/${item.id}/${coverFileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
+                    const coverUrl = coverRel ? `${UPLOADS_BASE}/covers/${item.id}/${coverRel.attributes.fileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
 
                     grid.innerHTML += `
                         <a href="#/truyen/${item.id}" class="card">
                             <img src="${coverUrl}" alt="${title}" loading="lazy">
-                            <div class="card-info">
-                                <h3>${title}</h3>
-                            </div>
-                        </a>
-                    `;
+                            <div class="card-info"><h3>${title}</h3></div>
+                        </a>`;
                 });
 
                 renderPagination(page, keyword, data.total);
 
             } catch (error) {
-                console.error("Lỗi Fetch Data:", error);
-                grid.innerHTML = `
-                    <div class="loading" style="color:#e74c3c;">
-                        <b>Lỗi kết nối MangaDex API!</b><br>
-                        <small>${error.message}</small><br>
-                        <small style="color:#7f8c8d; margin-top:10px; display:block;">
-                            Gợi ý: Nếu báo lỗi "Failed to fetch" hoặc "NetworkError", 90% là do nhà mạng đang chặn tên miền MangaDex. Hãy thử bật VPN 1.1.1.1 hoặc đổi mạng/DNS để kiểm tra.
-                        </small>
-                    </div>`;
+                console.error("Lỗi:", error);
+                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu. Hãy kiểm tra lại tài khoản hoặc F12 xem chi tiết.<br>${error.message}</div>`;
             }
         }
 
         function renderPagination(currentPage, keyword, totalItems) {
             const paginationEl = document.getElementById('pagination');
             const totalPages = Math.ceil(totalItems / LIMIT);
-            let html = '';
-
-            html += `<button ${currentPage <= 1 ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage - 1})">⬅ Trước</button>`;
-            html += `<span>Trang ${currentPage} / ${totalPages > 0 ? totalPages : 1}</span>`;
-            html += `<button ${currentPage >= totalPages ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage + 1})">Sau ➡</button>`;
-
-            paginationEl.innerHTML = html;
+            paginationEl.innerHTML = `
+                <button ${currentPage <= 1 ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage - 1})">⬅ Trước</button>
+                <span>Trang ${currentPage} / ${totalPages || 1}</span>
+                <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage + 1})">Sau ➡</button>
+            `;
         }
 
-        // --- CHI TIẾT TRUYỆN & DANH SÁCH CHƯƠNG ---
+        // --- CHI TIẾT TRUYỆN ---
         async function fetchStoryDetail(mangaId) {
-            const titleEl = document.getElementById('detail-title');
-            const descEl = document.getElementById('detail-desc');
-            const coverEl = document.getElementById('detail-cover');
-            const chaptersUl = document.getElementById('detail-chapters');
-            const btnContinue = document.getElementById('btn-continue');
+            const titleEl = document.getElementById('detail-title'), descEl = document.getElementById('detail-desc');
+            const coverEl = document.getElementById('detail-cover'), chaptersUl = document.getElementById('detail-chapters');
 
-            titleEl.innerText = "Đang tải...";
-            descEl.innerText = "";
-            coverEl.style.display = 'none';
-            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương Tiếng Việt...</div>';
-            btnContinue.style.display = 'none';
+            titleEl.innerText = "Đang tải..."; descEl.innerText = ""; coverEl.style.display = 'none';
+            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương...</div>';
 
             try {
-                // 1. Lấy thông tin truyện (Thêm fetchOptions)
+                const fetchOptions = await getAuthHeaders();
+
                 const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`, fetchOptions);
                 const mangaData = await mangaRes.json();
                 const manga = mangaData.data;
 
-                const title = getLocalizedString(manga.attributes.title);
-                titleEl.innerText = title;
+                titleEl.innerText = getLocalizedString(manga.attributes.title);
                 descEl.innerText = getLocalizedString(manga.attributes.description);
 
                 const coverRel = manga.relationships.find(r => r.type === 'cover_art');
-                if (coverRel && coverRel.attributes) {
+                if (coverRel) {
                     coverEl.src = `${UPLOADS_BASE}/covers/${manga.id}/${coverRel.attributes.fileName}`;
                     coverEl.style.display = 'block';
                 }
 
-                // Xử lý nút Đọc tiếp
-                const savedChapterId = localStorage.getItem(`mdex_history_chap_${mangaId}`);
-                const savedChapterTitle = localStorage.getItem(`mdex_history_title_${mangaId}`);
-                if (savedChapterId) {
-                    btnContinue.style.display = 'inline-block';
-                    btnContinue.onclick = () => window.location.hash = `#/chuong/${savedChapterId}?manga=${mangaId}&title=${encodeURIComponent(savedChapterTitle || 'Đọc tiếp')}`;
-                }
-
-                // 2. Lấy danh sách chương (Thêm fetchOptions)
                 const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`, fetchOptions);
                 const chapData = await chapRes.json();
                 
                 chaptersUl.innerHTML = '';
                 if(chapData.data.length === 0) {
-                    chaptersUl.innerHTML = '<li><a style="justify-content:center">Truyện này chưa có chương nào được dịch sang Tiếng Việt.</a></li>';
-                    return;
+                    chaptersUl.innerHTML = '<li><a>Truyện này chưa có chương Tiếng Việt.</a></li>'; return;
                 }
 
                 chapData.data.forEach(chap => {
-                    const chapNumber = chap.attributes.chapter ? `Chương ${chap.attributes.chapter}` : 'Oneshot';
-                    const chapTitle = chap.attributes.title ? ` - ${chap.attributes.title}` : '';
-                    const uploadDate = new Date(chap.attributes.publishAt).toLocaleDateString('vi-VN');
-                    
-                    const fullTitle = `${chapNumber}${chapTitle}`;
-
+                    const fullTitle = `${chap.attributes.chapter ? 'Chương ' + chap.attributes.chapter : 'Oneshot'}${chap.attributes.title ? ' - ' + chap.attributes.title : ''}`;
+                    const date = new Date(chap.attributes.publishAt).toLocaleDateString('vi-VN');
                     chaptersUl.innerHTML += `
-                        <li>
-                            <a href="#/chuong/${chap.id}?manga=${mangaId}&title=${encodeURIComponent(fullTitle)}">
-                                <span>${fullTitle}</span>
-                                <span class="chap-date">${uploadDate}</span>
-                            </a>
-                        </li>`;
+                        <li><a href="#/chuong/${chap.id}?manga=${mangaId}&title=${encodeURIComponent(fullTitle)}">
+                            <span>${fullTitle}</span><span style="opacity:0.7">${date}</span>
+                        </a></li>`;
                 });
 
-            } catch (error) {
-                titleEl.innerText = "Lỗi tải truyện";
-                chaptersUl.innerHTML = '<div class="loading" style="color:red">Không thể tải chi tiết truyện này.</div>';
-            }
+            } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
         }
 
         // --- ĐỌC CHƯƠNG ---
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
-            const titleEl = document.getElementById('reader-title');
             const contentEl = document.getElementById('chapter-content');
-            const btnBack = document.getElementById('btn-back-detail');
-
-            titleEl.innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang tải cấu trúc ảnh từ máy chủ At-Home...</div>';
-            
-            if(mangaId) {
-                btnBack.href = `#/truyen/${mangaId}`;
-                localStorage.setItem(`mdex_history_chap_${mangaId}`, chapterId);
-                localStorage.setItem(`mdex_history_title_${mangaId}`, chapTitle);
-            } else { btnBack.href = `#/`; }
+            document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
+            contentEl.innerHTML = '<div class="loading">Đang tải ảnh từ At-Home...</div>';
+            document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
-                // Gọi API At-Home Server (Thêm fetchOptions)
+                const fetchOptions = await getAuthHeaders();
                 const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`, fetchOptions);
                 const data = await res.json();
                 
                 if(data.result === 'error') throw new Error();
 
-                const baseUrl = data.baseUrl;
-                const chapterHash = data.chapter.hash;
-                const images = data.chapter.data;
+                contentEl.innerHTML = data.chapter.data.map(img => 
+                    `<img src="${data.baseUrl}/data/${data.chapter.hash}/${img}" loading="lazy">`
+                ).join('');
 
-                let html = '';
-                images.forEach(imgFileName => {
-                    const imgSrc = `${baseUrl}/data/${chapterHash}/${imgFileName}`;
-                    html += `<img src="${imgSrc}" loading="lazy" alt="Trang truyện MangaDex">`;
-                });
-
-                contentEl.innerHTML = html;
-
-            } catch (error) {
-                titleEl.innerText = "Lỗi tải nội dung";
-                contentEl.innerHTML = '<div class="loading" style="color:red">Máy chủ ảnh MangaDex đang quá tải hoặc lỗi. Hãy thử lại sau!</div>';
-            }
+            } catch (error) { contentEl.innerHTML = '<div class="loading" style="color:red">Lỗi tải Server Ảnh!</div>'; }
         }
 
         function toggleTheme() {
-            const body = document.body;
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                localStorage.setItem('pref_theme', 'light');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                localStorage.setItem('pref_theme', 'dark');
-            }
+            document.body.toggleAttribute('data-theme');
+            localStorage.setItem('pref_theme', document.body.hasAttribute('data-theme') ? 'dark' : 'light');
         }
-
-        function initTheme() {
-            if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-        }
+        function initTheme() { if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', ''); }
     </script>
 </body>
 </html>
