@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MangaDex - Hỗ Trợ Tiếng Việt</title>
+    <title>Nhi hư đã tới manadex</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
             --bg-color: #f4f4f4;
             --text-color: #333333;
             --card-bg: #ffffff;
-            --primary: #f66614; /* Màu cam đặc trưng của MangaDex */
+            --primary: #f66614;
             --border: #dddddd;
             --btn-bg: #eeeeee;
             --btn-hover: #dddddd;
@@ -108,7 +108,7 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">MDex Tiếng Việt</a>
+        <a href="#/" class="toolbar-title">MDex Tiếng Việt (VIP)</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
@@ -159,10 +159,22 @@
         const API_BASE = 'https://api.mangadex.org';
         const UPLOADS_BASE = 'https://uploads.mangadex.org';
         const LIMIT = 18;
+        
+        // KÍCH HOẠT API KEY CỦA BẠN TẠI ĐÂY
+        const BEARER_TOKEN = 'personal-client-443aa18b-22b2-4ec4-9748-4715056d6de9-d91693d1';
+
+        // Tạo sẵn Object headers dùng chung cho các lệnh Fetch
+        const fetchOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${BEARER_TOKEN}`
+            }
+        };
 
         const searchInput = document.getElementById('searchInput');
 
-        // Hàm hỗ trợ lấy text theo ngôn ngữ (Ưu tiên Tiếng Việt -> Tiếng Anh -> Ngôn ngữ gốc)
+        // Hàm hỗ trợ lấy text theo ngôn ngữ
         function getLocalizedString(obj) {
             if (!obj) return 'Không có thông tin';
             return obj.vi || obj.en || Object.values(obj)[0] || 'Không có thông tin';
@@ -212,7 +224,7 @@
             else window.location.hash = '#/';
         }
 
-        // --- LẤY DANH SÁCH TRUYỆN ---
+        // --- LẤY DANH SÁCH TRUYỆN CÓ API KEY ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
             grid.innerHTML = '<div class="loading">Đang tải dữ liệu từ MangaDex...</div>';
@@ -220,32 +232,44 @@
 
             const offset = (page - 1) * LIMIT;
             
-            // Xây dựng URL API:
-            // - availableTranslatedLanguage[]=vi : Chỉ lấy truyện có bản dịch Tiếng Việt
-            // - includes[]=cover_art : Lấy kèm thông tin ảnh bìa
-            // - contentRating[]=safe & suggestive : Bỏ qua nội dung hentai/porn (thay thế hàm lọc an toàn cũ)
-            let apiUrl = `${API_BASE}/manga?limit=${LIMIT}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&contentRating[]=safe&contentRating[]=suggestive`;
-            
+            // Dùng URLSearchParams để an toàn không bị lỗi ký tự []
+            const params = new URLSearchParams();
+            params.append('limit', LIMIT);
+            params.append('offset', offset);
+            params.append('includes[]', 'cover_art');
+            params.append('availableTranslatedLanguage[]', 'vi');
+            params.append('contentRating[]', 'safe');
+            params.append('contentRating[]', 'suggestive');
+            params.append('hasAvailableChapters', 'true');
+
             if (keyword) {
-                apiUrl += `&title=${encodeURIComponent(keyword)}`;
+                params.append('title', keyword);
             } else {
-                apiUrl += `&order[updatedAt]=desc`; // Nếu không tìm kiếm, sắp xếp theo mới cập nhật
+                params.append('order[latestUploadedChapter]', 'desc'); 
             }
 
+            const apiUrl = `${API_BASE}/manga?${params.toString()}`;
+
             try {
-                const res = await fetch(apiUrl);
+                // Thêm fetchOptions có chứa API KEY
+                const res = await fetch(apiUrl, fetchOptions);
+                
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("Lỗi từ server MangaDex:", errData);
+                    throw new Error(`Mã lỗi server: ${res.status}`);
+                }
+
                 const data = await res.json();
                 
                 grid.innerHTML = '';
-                if(data.data.length === 0) {
+                if(!data.data || data.data.length === 0) {
                     grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không tìm thấy truyện nào.</p>';
                     return;
                 }
 
                 data.data.forEach(item => {
                     const title = getLocalizedString(item.attributes.title);
-                    
-                    // Trích xuất file ảnh bìa từ relationships
                     const coverRel = item.relationships.find(r => r.type === 'cover_art');
                     const coverFileName = coverRel ? coverRel.attributes.fileName : null;
                     const coverUrl = coverFileName ? `${UPLOADS_BASE}/covers/${item.id}/${coverFileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
@@ -263,7 +287,15 @@
                 renderPagination(page, keyword, data.total);
 
             } catch (error) {
-                grid.innerHTML = '<div class="loading" style="color:red">Lỗi kết nối MangaDex API!</div>';
+                console.error("Lỗi Fetch Data:", error);
+                grid.innerHTML = `
+                    <div class="loading" style="color:#e74c3c;">
+                        <b>Lỗi kết nối MangaDex API!</b><br>
+                        <small>${error.message}</small><br>
+                        <small style="color:#7f8c8d; margin-top:10px; display:block;">
+                            Gợi ý: Nếu báo lỗi "Failed to fetch" hoặc "NetworkError", 90% là do nhà mạng đang chặn tên miền MangaDex. Hãy thử bật VPN 1.1.1.1 hoặc đổi mạng/DNS để kiểm tra.
+                        </small>
+                    </div>`;
             }
         }
 
@@ -294,8 +326,8 @@
             btnContinue.style.display = 'none';
 
             try {
-                // 1. Lấy thông tin truyện
-                const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`);
+                // 1. Lấy thông tin truyện (Thêm fetchOptions)
+                const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`, fetchOptions);
                 const mangaData = await mangaRes.json();
                 const manga = mangaData.data;
 
@@ -317,8 +349,8 @@
                     btnContinue.onclick = () => window.location.hash = `#/chuong/${savedChapterId}?manga=${mangaId}&title=${encodeURIComponent(savedChapterTitle || 'Đọc tiếp')}`;
                 }
 
-                // 2. Lấy danh sách chương (Chỉ lấy bản Tiếng Việt, sắp xếp giảm dần)
-                const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`);
+                // 2. Lấy danh sách chương (Thêm fetchOptions)
+                const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`, fetchOptions);
                 const chapData = await chapRes.json();
                 
                 chaptersUl.innerHTML = '';
@@ -330,7 +362,6 @@
                 chapData.data.forEach(chap => {
                     const chapNumber = chap.attributes.chapter ? `Chương ${chap.attributes.chapter}` : 'Oneshot';
                     const chapTitle = chap.attributes.title ? ` - ${chap.attributes.title}` : '';
-                    const groupRel = chap.relationships.find(r => r.type === 'scanlation_group');
                     const uploadDate = new Date(chap.attributes.publishAt).toLocaleDateString('vi-VN');
                     
                     const fullTitle = `${chapNumber}${chapTitle}`;
@@ -366,19 +397,18 @@
             } else { btnBack.href = `#/`; }
 
             try {
-                // Gọi API At-Home Server để lấy link ảnh chất lượng cao
-                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`);
+                // Gọi API At-Home Server (Thêm fetchOptions)
+                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`, fetchOptions);
                 const data = await res.json();
                 
                 if(data.result === 'error') throw new Error();
 
                 const baseUrl = data.baseUrl;
                 const chapterHash = data.chapter.hash;
-                const images = data.chapter.data; // Chứa tên các file ảnh
+                const images = data.chapter.data;
 
                 let html = '';
                 images.forEach(imgFileName => {
-                    // Cấu trúc link ảnh của MangaDex: {baseUrl}/data/{chapterHash}/{fileName}
                     const imgSrc = `${baseUrl}/data/${chapterHash}/${imgFileName}`;
                     html += `<img src="${imgSrc}" loading="lazy" alt="Trang truyện MangaDex">`;
                 });
