@@ -154,35 +154,32 @@
 
         // Hàm tự động lấy và lưu trữ Token
         async function getAccessToken() {
-            if (cachedAccessToken) return cachedAccessToken; // Tái sử dụng token nếu còn hạn
+            // if (cachedAccessToken) return cachedAccessToken; // Tái sử dụng token nếu còn hạn
+            
+            let cachedAccessToken = null;
 
-            const params = new URLSearchParams();
-            params.append("client_id", CLIENT_ID);
-            params.append("client_secret", CLIENT_SECRET);
-            params.append("grant_type", "password");
-            params.append("username", USERNAME);
-            params.append("password", PASSWORD);
+            // Hàm tự động lấy và lưu trữ Token thông qua Server Vercel của bạn
+            async function getAccessToken() {
+                if (cachedAccessToken) return cachedAccessToken; 
 
-            try {
-                const res = await fetch(TOKEN_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: params.toString()
-                });
+                try {
+                    // Thay vì gọi auth.mangadex.org, ta gọi vào API trung gian vừa tạo
+                    const res = await fetch('/api/token'); 
+                    
+                    if (!res.ok) throw new Error(`Lỗi lấy token từ Vercel: ${res.status}`);
 
-                if (!res.ok) throw new Error(`Lỗi lấy token xác thực: ${res.status}`);
+                    const data = await res.json();
+                    cachedAccessToken = data.access_token;
+                    
+                    // MangaDex Access Token sống khoảng 15 phút, xóa cache sau 14 phút
+                    setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
 
-                const data = await res.json();
-                cachedAccessToken = data.access_token;
-                
-                // MangaDex Access Token thường sống khoảng 15 phút, ta sẽ xóa cache sau 14 phút
-                setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
-
-                console.log("Đã lấy Access Token thành công!");
-                return cachedAccessToken;
-            } catch (error) {
-                console.error("Auth Error:", error);
-                throw error;
+                    console.log("Đã lấy Access Token thành công qua Vercel API!");
+                    return cachedAccessToken;
+                } catch (error) {
+                    console.error("Auth Error:", error);
+                    throw error;
+                }
             }
         }
 
