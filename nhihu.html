@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhi hư phiên bản 3 _ 12_06</title>
+    <title>Phiên bản thứ 4 12_06</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -95,7 +95,7 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">MDex Web</a>
+        <a href="#/" class="toolbar-title">MDex Vercel Proxy</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
@@ -143,30 +143,6 @@
         const UPLOADS_BASE = 'https://uploads.mangadex.org';
         const LIMIT = 18;
 
-        let cachedAccessToken = null;
-
-        // Hàm này giữ lại để sau này bạn gọi khi cần thực hiện các tác vụ cần đăng nhập (như bình luận, follow truyện)
-        // Hiện tại các hàm gọi dữ liệu công khai ở dưới sẽ KHÔNG dùng hàm này để tránh lỗi CORS Preflight
-        async function getAccessToken() {
-            if (cachedAccessToken) return cachedAccessToken; 
-            try {
-                const res = await fetch('/api/token'); 
-                if (!res.ok) throw new Error(`Lỗi lấy token từ Vercel: ${res.status}`);
-                const data = await res.json();
-                cachedAccessToken = data.access_token;
-                setTimeout(() => { cachedAccessToken = null; }, 14 * 60 * 1000);
-                return cachedAccessToken;
-            } catch (error) {
-                console.error("Auth Error:", error);
-                throw error;
-            }
-        }
-
-        // --- CẤU HÌNH FETCH CƠ BẢN DÀNH CHO API CÔNG KHAI (KHÔNG CÓ TOKEN) ---
-        const publicFetchOptions = {
-            method: 'GET'
-        };
-
         const searchInput = document.getElementById('searchInput');
 
         function getLocalizedString(obj) {
@@ -213,10 +189,18 @@
             window.location.hash = kw ? `#/tim-kiem/${encodeURIComponent(kw)}` : '#/';
         }
 
+        // HÀM FETCH QUA PROXY VERCEL
+        async function fetchViaProxy(targetUrl) {
+            const encodedUrl = encodeURIComponent(targetUrl);
+            const res = await fetch(`/api/proxy?url=${encodedUrl}`);
+            if (!res.ok) throw new Error(`Lỗi Proxy/API: ${res.status}`);
+            return await res.json();
+        }
+
         // --- LẤY DANH SÁCH TRUYỆN ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
-            grid.innerHTML = '<div class="loading">Đang tải dữ liệu từ MangaDex...</div>';
+            grid.innerHTML = '<div class="loading">Đang tải dữ liệu thông qua Vercel Proxy...</div>';
             document.getElementById('pagination').innerHTML = '';
 
             const params = new URLSearchParams({
@@ -231,12 +215,11 @@
             if (keyword) params.append('title', keyword);
             else params.append('order[latestUploadedChapter]', 'desc'); 
 
+            const targetUrl = `${API_BASE}/manga?${params.toString()}`;
+
             try {
-                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
-                const res = await fetch(`${API_BASE}/manga?${params.toString()}`, publicFetchOptions);
-                
-                if (!res.ok) throw new Error(`Lỗi server API: ${res.status}`);
-                const data = await res.json();
+                // Gọi qua Proxy
+                const data = await fetchViaProxy(targetUrl);
                 
                 grid.innerHTML = '';
                 if(!data.data || data.data.length === 0) {
@@ -280,12 +263,11 @@
             const coverEl = document.getElementById('detail-cover'), chaptersUl = document.getElementById('detail-chapters');
 
             titleEl.innerText = "Đang tải..."; descEl.innerText = ""; coverEl.style.display = 'none';
-            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương...</div>';
+            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương qua Proxy...</div>';
 
             try {
-                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
-                const mangaRes = await fetch(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`, publicFetchOptions);
-                const mangaData = await mangaRes.json();
+                // Gọi API Manga qua Proxy
+                const mangaData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`);
                 const manga = mangaData.data;
 
                 titleEl.innerText = getLocalizedString(manga.attributes.title);
@@ -297,9 +279,8 @@
                     coverEl.style.display = 'block';
                 }
 
-                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
-                const chapRes = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`, publicFetchOptions);
-                const chapData = await chapRes.json();
+                // Gọi API Chapters qua Proxy
+                const chapData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`);
                 
                 chaptersUl.innerHTML = '';
                 if(chapData.data.length === 0) {
@@ -322,16 +303,16 @@
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
             document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang tải ảnh từ At-Home...</div>';
+            contentEl.innerHTML = '<div class="loading">Đang tải cấu trúc ảnh từ At-Home qua Proxy...</div>';
             document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
-                // Sử dụng publicFetchOptions thay vì gọi getAuthHeaders()
-                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`, publicFetchOptions);
-                const data = await res.json();
+                // Gọi API At-home qua Proxy
+                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}`);
                 
                 if(data.result === 'error') throw new Error();
 
+                // Lưu ý: Các link ảnh thực tế từ At-Home không bị chặn CORS, nên ta có thể nhúng trực tiếp vào thẻ img
                 contentEl.innerHTML = data.chapter.data.map(img => 
                     `<img src="${data.baseUrl}/data/${data.chapter.hash}/${img}" loading="lazy">`
                 ).join('');
