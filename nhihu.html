@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiên bản thứ 4 12_06</title>
+    <title>Phiên bản thứ 5 12_06</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -144,12 +144,81 @@
         const LIMIT = 18;
 
         const searchInput = document.getElementById('searchInput');
+        
 
+        // Hàm ép lấy Tiếng Việt cho cả tiêu đề và mô tả
         function getLocalizedString(obj) {
-            if (!obj) return 'Không có thông tin';
-            return obj.vi || obj.en || Object.values(obj)[0] || 'Không có thông tin';
+            if (!obj) return 'Chưa có tiêu đề';
+            // Ưu tiên: vi -> en -> lấy bất kỳ thứ gì có sẵn
+            return obj.vi || obj.en || Object.values(obj)[0] || 'Chưa có tiêu đề';
         }
 
+        // --- HÀM GỌI PROXY CẢI TIẾN ---
+        async function fetchViaProxy(targetUrl) {
+            const encodedUrl = encodeURIComponent(targetUrl);
+            const res = await fetch(`/api/proxy?url=${encodedUrl}`);
+            if (!res.ok) throw new Error(`Lỗi API: ${res.status}`);
+            return await res.json();
+        }
+
+        // --- LẤY DANH SÁCH TRUYỆN (ĐÃ FIX FILTER) ---
+        async function fetchList(keyword = '', page = 1) {
+            const grid = document.getElementById('story-grid');
+            grid.innerHTML = '<div class="loading">Đang tải truyện...</div>';
+            
+            // Thêm tham số translatedLanguage[]=vi vào query để chỉ lấy truyện có dịch Việt
+            const params = new URLSearchParams({
+                limit: LIMIT,
+                offset: (page - 1) * LIMIT,
+                'includes[]': 'cover_art',
+                'translatedLanguage[]': 'vi', 
+                'contentRating[]': 'safe',
+                hasAvailableChapters: 'true'
+            });
+
+            if (keyword) params.append('title', keyword);
+            else params.append('order[latestUploadedChapter]', 'desc'); 
+
+            try {
+                const data = await fetchViaProxy(`${API_BASE}/manga?${params.toString()}`);
+                grid.innerHTML = '';
+
+                data.data.forEach(item => {
+                    const title = getLocalizedString(item.attributes.title);
+                    const coverRel = item.relationships.find(r => r.type === 'cover_art');
+                    const coverUrl = coverRel ? `${UPLOADS_BASE}/covers/${item.id}/${coverRel.attributes.fileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
+
+                    grid.innerHTML += `
+                        <a href="#/truyen/${item.id}" class="card">
+                            <img src="${coverUrl}" alt="${title}" loading="lazy" onerror="this.src='https://placehold.co/200x300?text=Error'">
+                            <div class="card-info"><h3>${title}</h3></div>
+                        </a>`;
+                });
+            } catch (error) {
+                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>`;
+            }
+        }
+
+        // --- ĐỌC CHƯƠNG (FIX LỖI ẢNH) ---
+        async function fetchChapterContent(chapterId, mangaId, chapTitle) {
+            const contentEl = document.getElementById('chapter-content');
+            document.getElementById('reader-title').innerText = chapTitle || "Đang tải...";
+            contentEl.innerHTML = '<div class="loading">Đang tải ảnh...</div>';
+
+            try {
+                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}`);
+                if(data.result !== 'success') throw new Error();
+
+                // Dùng baseUrl từ API At-home kết hợp với hash để lấy ảnh chất lượng cao
+                const { baseUrl, chapter } = data;
+                contentEl.innerHTML = chapter.data.map(img => 
+                    `<img src="${baseUrl}/data/${chapter.hash}/${img}" loading="lazy">`
+                ).join('');
+
+            } catch (error) { 
+                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải ảnh.</div>'; 
+            }
+        }
         // --- HỆ THỐNG ROUTER ---
         function router() {
             const hash = window.location.hash;
