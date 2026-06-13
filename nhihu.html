@@ -266,34 +266,40 @@
             } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
         }
 
-        // --- ĐỌC CHƯƠNG 
+        // --- ĐỌC CHƯƠNG (BẢN CHUẨN - GỌI TRỰC TIẾP KHÔNG QUA PROXY) ---
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
             document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang chuẩn bị tải ảnh...</div>';
+            contentEl.innerHTML = '<div class="loading">Đang kết nối Server Ảnh (MangaDex At-Home)...</div>';
             document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
-                // 1. Thêm forcePort443=true để ép MangaDex trả về Port chuẩn (tránh bị WebOS chặn)
-                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}?forcePort443=true`);
+                // LƯU Ý QUAN TRỌNG: Gọi TRỰC TIẾP bằng fetch(), KHÔNG dùng fetchViaProxy!
+                // Thêm ?forcePort443=true để webOS/Tivi không bị chặn cổng mạng
+                const response = await fetch(`${API_BASE}/at-home/server/${chapterId}?forcePort443=true`);
                 
-                if(data.result !== 'success') throw new Error('Không nhận được dữ liệu server ảnh từ MangaDex');
+                if (!response.ok) throw new Error(`Mã lỗi HTTP: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data.result !== 'success') {
+                    throw new Error('MangaDex từ chối cấp quyền truy cập server ảnh');
+                }
 
+                // Render ảnh trực tiếp từ Node của MangaDex
                 contentEl.innerHTML = data.chapter.data.map(img => {
                     const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
                     
-                    // 2. Định tuyến URL ảnh qua Proxy 
-                    // Nếu bạn dùng Vercel proxy chuyên dụng cho ảnh (Khuyên dùng - Xem mục 3):
-                    const proxyImgUrl = `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`;
+                    // Dùng wsrv.nl làm phương án dự phòng (fallback proxy) nếu nhà mạng VN chặn link ảnh gốc
+                    const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
 
-                    // HOẶC dùng tạm Proxy cộng đồng miễn phí (Weserv) nếu chưa kịp tạo Vercel proxy:
-                    // const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
-
+                    // Vẫn giữ referrerpolicy="no-referrer" để chống lỗi hotlink
                     return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/600x900?text=Lỗi+Tải+Ảnh';">`;
                 }).join('');
 
             } catch (error) { 
-                contentEl.innerHTML = `<div class="loading" style="color:red">Lỗi tải Server Ảnh: ${error.message}</div>`; 
+                console.error("Chi tiết lỗi:", error);
+                contentEl.innerHTML = `<div class="loading" style="color:red">Lỗi kết nối: ${error.message}<br><small>Vui lòng tải lại trang hoặc chọn chương khác.</small></div>`; 
             }
         }
 
