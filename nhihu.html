@@ -266,24 +266,35 @@
             } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
         }
 
-        // --- ĐỌC CHƯƠNG ---
+        // --- ĐỌC CHƯƠNG 
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
             document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang tải cấu trúc ảnh từ At-Home qua Proxy...</div>';
+            contentEl.innerHTML = '<div class="loading">Đang chuẩn bị tải ảnh...</div>';
             document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
-                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}`);
+                // 1. Thêm forcePort443=true để ép MangaDex trả về Port chuẩn (tránh bị WebOS chặn)
+                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}?forcePort443=true`);
                 
-                if(data.result === 'error') throw new Error();
+                if(data.result !== 'success') throw new Error('Không nhận được dữ liệu server ảnh từ MangaDex');
 
-                // FIX LỖI: Thêm referrerpolicy="no-referrer" để WebOS/Android không bị chặn ảnh từ At-Home
-                contentEl.innerHTML = data.chapter.data.map(img => 
-                    `<img src="${data.baseUrl}/data/${data.chapter.hash}/${img}" loading="lazy" referrerpolicy="no-referrer">`
-                ).join('');
+                contentEl.innerHTML = data.chapter.data.map(img => {
+                    const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
+                    
+                    // 2. Định tuyến URL ảnh qua Proxy 
+                    // Nếu bạn dùng Vercel proxy chuyên dụng cho ảnh (Khuyên dùng - Xem mục 3):
+                    const proxyImgUrl = `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`;
 
-            } catch (error) { contentEl.innerHTML = '<div class="loading" style="color:red">Lỗi tải Server Ảnh!</div>'; }
+                    // HOẶC dùng tạm Proxy cộng đồng miễn phí (Weserv) nếu chưa kịp tạo Vercel proxy:
+                    // const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
+
+                    return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/600x900?text=Lỗi+Tải+Ảnh';">`;
+                }).join('');
+
+            } catch (error) { 
+                contentEl.innerHTML = `<div class="loading" style="color:red">Lỗi tải Server Ảnh: ${error.message}</div>`; 
+            }
         }
 
         // --- HỆ THỐNG ROUTER ---
