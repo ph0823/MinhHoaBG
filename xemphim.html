@@ -158,7 +158,6 @@
         }
         
         body.is-tv #player-container { 
-            /* Bỏ full width/height, đưa về tỷ lệ 16:9 đồng bộ với khung mô tả */
             position: relative;
             width: 100%;
             max-width: 1200px;
@@ -174,7 +173,7 @@
         body.is-tv .episode-container { 
             position: relative; 
             z-index: 2; 
-            margin: 25px auto 20px auto; /* Canh giữa và khoảng cách đẹp */
+            margin: 25px auto 20px auto; 
             background: rgba(15, 23, 42, 0.95); 
             backdrop-filter: blur(10px);
             border-radius: 8px; 
@@ -188,7 +187,6 @@
             display: block; margin: 20px auto 100px;
         }
 
-        /* Ẩn bớt mô tả phim trên TV để menu gọn gàng hơn */
         body.is-tv #movie-desc {
             display: none; 
         }
@@ -271,9 +269,9 @@
         </div>
         <div id="filter-grid" class="movie-grid"></div>
         <div class="pagination">
-            <button id="filter-prev" tabindex="0" class="page-btn">Trước</button>
+            <button id="filter-prev" tabindex="0" class="page-btn" onclick="changePage('filter', -1)">Trước</button>
             <span id="filter-info"></span>
-            <button id="filter-next" tabindex="0" class="page-btn">Sau</button>
+            <button id="filter-next" tabindex="0" class="page-btn" onclick="changePage('filter', 1)">Sau</button>
         </div>
     </div>
 </div>
@@ -485,22 +483,36 @@
         }
     });
 
+    // CẬP NHẬT 2: Sửa hàm lấy phim để tính tổng số trang chuẩn xác hơn cho nhiều loại API
     async function fetchMovies(key, baseUrl) {
         try {
             const separator = baseUrl.includes('?') ? '&' : '?';
             const res = await fetch(`${baseUrl}${separator}page=${state[key].page}`);
             const json = await res.json();
+            
             let items = json.items || (Array.isArray(json.data) ? json.data : (json.data?.items || []));
-            let totalPages = json.paginate?.total_page || (json.data?.params ? Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage) : 1);
+            
+            // Quét đa dạng cấu trúc API để lấy chính xác tổng số trang
+            let totalPages = json.paginate?.total_page 
+                || json.paginate?.totalPages 
+                || json.page?.totalPages 
+                || json.data?.params?.pagination?.totalPages
+                || (json.data?.params ? Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage) : 1)
+                || 1;
 
-            if (!items.length) {
-                document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Không có phim!</div>';
+            if (!items || !items.length) {
+                document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444; font-size: 1.2rem;">Không có dữ liệu phim cho danh mục này!</div>';
+                document.getElementById(`${key.replace('_','-')}-prev`).disabled = true;
+                document.getElementById(`${key.replace('_','-')}-next`).disabled = true;
                 return;
             }
+            
             state[key].total = totalPages;
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Lỗi khi tải phim:", e); 
+        }
     }
 
     function renderGrid(items, gridId) {
@@ -533,6 +545,7 @@
         document.getElementById(key.replace('_','-') + '-grid').scrollIntoView({behavior:'smooth'});
     }
 
+    // CẬP NHẬT 3: Cập nhật hàm loadFilter để đảm bảo sự kiện onClick luôn chuẩn khi lọc
     async function loadFilter(path, title) {
         window.scrollTo(0,0);
         document.getElementById('home-content').style.display = 'none';
@@ -540,6 +553,11 @@
         document.getElementById('filter-title').innerText = title;
         state.filter.url = `${API_DOMAIN}${path}`;
         state.filter.page = 1;
+        
+        // Đảm bảo nút phân trang luôn hoạt động đúng cho bộ lọc, tránh bị ghi đè bởi ô tìm kiếm
+        document.getElementById('filter-prev').onclick = () => changePage('filter', -1);
+        document.getElementById('filter-next').onclick = () => changePage('filter', 1);
+
         showLoading(true);
         await fetchMovies('filter', state.filter.url);
         showLoading(false);
