@@ -145,33 +145,31 @@
 
         const searchInput = document.getElementById('searchInput');
         
-
-        // Hàm ép lấy Tiếng Việt cho cả tiêu đề và mô tả
+        // --- HÀM ÉP LẤY TIẾNG VIỆT ---
         function getLocalizedString(obj) {
             if (!obj) return 'Chưa có tiêu đề';
-            // Ưu tiên: vi -> en -> lấy bất kỳ thứ gì có sẵn
             return obj.vi || obj.en || Object.values(obj)[0] || 'Chưa có tiêu đề';
         }
 
-        // --- HÀM GỌI PROXY CẢI TIẾN ---
+        // --- HÀM GỌI PROXY VERCEL ---
         async function fetchViaProxy(targetUrl) {
             const encodedUrl = encodeURIComponent(targetUrl);
             const res = await fetch(`/api/proxy?url=${encodedUrl}`);
-            if (!res.ok) throw new Error(`Lỗi API: ${res.status}`);
+            if (!res.ok) throw new Error(`Lỗi Proxy/API: ${res.status}`);
             return await res.json();
         }
 
-        // --- LẤY DANH SÁCH TRUYỆN (ĐÃ FIX FILTER) ---
+        // --- LẤY DANH SÁCH TRUYỆN ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
-            grid.innerHTML = '<div class="loading">Đang tải truyện...</div>';
-            
-            // Thêm tham số translatedLanguage[]=vi vào query để chỉ lấy truyện có dịch Việt
+            grid.innerHTML = '<div class="loading">Đang tải dữ liệu thông qua Vercel Proxy...</div>';
+            document.getElementById('pagination').innerHTML = '';
+
             const params = new URLSearchParams({
                 limit: LIMIT,
                 offset: (page - 1) * LIMIT,
                 'includes[]': 'cover_art',
-                'translatedLanguage[]': 'vi', 
+                'availableTranslatedLanguage[]': 'vi', // Chỉ lấy truyện có tiếng Việt
                 'contentRating[]': 'safe',
                 hasAvailableChapters: 'true'
             });
@@ -179,46 +177,115 @@
             if (keyword) params.append('title', keyword);
             else params.append('order[latestUploadedChapter]', 'desc'); 
 
+            const targetUrl = `${API_BASE}/manga?${params.toString()}`;
+
             try {
-                const data = await fetchViaProxy(`${API_BASE}/manga?${params.toString()}`);
+                const data = await fetchViaProxy(targetUrl);
+                
                 grid.innerHTML = '';
+                if(!data.data || data.data.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không có dữ liệu.</p>';
+                    return;
+                }
 
                 data.data.forEach(item => {
                     const title = getLocalizedString(item.attributes.title);
                     const coverRel = item.relationships.find(r => r.type === 'cover_art');
+                    
+                    // Lấy ảnh thumbnail .256.jpg, nếu lỗi do API trả về null thì dùng placehold
                     const coverUrl = coverRel ? `${UPLOADS_BASE}/covers/${item.id}/${coverRel.attributes.fileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
 
+                    // FIX LỖI: Thêm referrerpolicy="no-referrer" và onerror để fallback ảnh nếu link chết
                     grid.innerHTML += `
                         <a href="#/truyen/${item.id}" class="card">
-                            <img src="${coverUrl}" alt="${title}" loading="lazy" onerror="this.src='https://placehold.co/200x300?text=Error'">
+                            <img src="${coverUrl}" alt="${title}" loading="lazy" 
+                                 referrerpolicy="no-referrer" 
+                                 onerror="this.onerror=null; this.src='https://placehold.co/200x300?text=Image+Error';">
                             <div class="card-info"><h3>${title}</h3></div>
                         </a>`;
                 });
+
+                renderPagination(page, keyword, data.total);
+
             } catch (error) {
-                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>`;
+                console.error("Lỗi:", error);
+                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu: ${error.message}</div>`;
             }
         }
 
-        // --- ĐỌC CHƯƠNG (FIX LỖI ẢNH) ---
+        function renderPagination(currentPage, keyword, totalItems) {
+            const paginationEl = document.getElementById('pagination');
+            const totalPages = Math.ceil(totalItems / LIMIT);
+            paginationEl.innerHTML = `
+                <button ${currentPage <= 1 ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage - 1})">⬅ Trước</button>
+                <span>Trang ${currentPage} / ${totalPages || 1}</span>
+                <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage + 1})">Sau ➡</button>
+            `;
+        }
+
+        // --- CHI TIẾT TRUYỆN ---
+        async function fetchStoryDetail(mangaId) {
+            const titleEl = document.getElementById('detail-title'), descEl = document.getElementById('detail-desc');
+            const coverEl = document.getElementById('detail-cover'), chaptersUl = document.getElementById('detail-chapters');
+
+            titleEl.innerText = "Đang tải..."; descEl.innerText = ""; coverEl.style.display = 'none';
+            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương qua Proxy...</div>';
+
+            try {
+                const mangaData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`);
+                const manga = mangaData.data;
+
+                titleEl.innerText = getLocalizedString(manga.attributes.title);
+                descEl.innerText = getLocalizedString(manga.attributes.description);
+
+                const coverRel = manga.relationships.find(r => r.type === 'cover_art');
+                if (coverRel) {
+                    coverEl.src = `${UPLOADS_BASE}/covers/${manga.id}/${coverRel.attributes.fileName}`;
+                    // FIX LỖI: Thêm policy cho ảnh bìa chi tiết
+                    coverEl.setAttribute("referrerpolicy", "no-referrer");
+                    coverEl.setAttribute("onerror", "this.src='https://placehold.co/200x300?text=Image+Error'");
+                    coverEl.style.display = 'block';
+                }
+
+                const chapData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`);
+                
+                chaptersUl.innerHTML = '';
+                if(chapData.data.length === 0) {
+                    chaptersUl.innerHTML = '<li><a>Truyện này chưa có chương Tiếng Việt.</a></li>'; return;
+                }
+
+                chapData.data.forEach(chap => {
+                    const fullTitle = `${chap.attributes.chapter ? 'Chương ' + chap.attributes.chapter : 'Oneshot'}${chap.attributes.title ? ' - ' + chap.attributes.title : ''}`;
+                    const date = new Date(chap.attributes.publishAt).toLocaleDateString('vi-VN');
+                    chaptersUl.innerHTML += `
+                        <li><a href="#/chuong/${chap.id}?manga=${mangaId}&title=${encodeURIComponent(fullTitle)}">
+                            <span>${fullTitle}</span><span style="opacity:0.7">${date}</span>
+                        </a></li>`;
+                });
+
+            } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
+        }
+
+        // --- ĐỌC CHƯƠNG ---
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
-            document.getElementById('reader-title').innerText = chapTitle || "Đang tải...";
-            contentEl.innerHTML = '<div class="loading">Đang tải ảnh...</div>';
+            document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
+            contentEl.innerHTML = '<div class="loading">Đang tải cấu trúc ảnh từ At-Home qua Proxy...</div>';
+            document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             try {
                 const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}`);
-                if(data.result !== 'success') throw new Error();
+                
+                if(data.result === 'error') throw new Error();
 
-                // Dùng baseUrl từ API At-home kết hợp với hash để lấy ảnh chất lượng cao
-                const { baseUrl, chapter } = data;
-                contentEl.innerHTML = chapter.data.map(img => 
-                    `<img src="${baseUrl}/data/${chapter.hash}/${img}" loading="lazy">`
+                // FIX LỖI: Thêm referrerpolicy="no-referrer" để WebOS/Android không bị chặn ảnh từ At-Home
+                contentEl.innerHTML = data.chapter.data.map(img => 
+                    `<img src="${data.baseUrl}/data/${data.chapter.hash}/${img}" loading="lazy" referrerpolicy="no-referrer">`
                 ).join('');
 
-            } catch (error) { 
-                contentEl.innerHTML = '<div class="loading" style="color:red">Không thể tải ảnh.</div>'; 
-            }
+            } catch (error) { contentEl.innerHTML = '<div class="loading" style="color:red">Lỗi tải Server Ảnh!</div>'; }
         }
+
         // --- HỆ THỐNG ROUTER ---
         function router() {
             const hash = window.location.hash;
@@ -258,142 +325,14 @@
             window.location.hash = kw ? `#/tim-kiem/${encodeURIComponent(kw)}` : '#/';
         }
 
-        // HÀM FETCH QUA PROXY VERCEL
-        async function fetchViaProxy(targetUrl) {
-            const encodedUrl = encodeURIComponent(targetUrl);
-            const res = await fetch(`/api/proxy?url=${encodedUrl}`);
-            if (!res.ok) throw new Error(`Lỗi Proxy/API: ${res.status}`);
-            return await res.json();
-        }
-
-        // --- LẤY DANH SÁCH TRUYỆN ---
-        async function fetchList(keyword = '', page = 1) {
-            const grid = document.getElementById('story-grid');
-            grid.innerHTML = '<div class="loading">Đang tải dữ liệu thông qua Vercel Proxy...</div>';
-            document.getElementById('pagination').innerHTML = '';
-
-            const params = new URLSearchParams({
-                limit: LIMIT,
-                offset: (page - 1) * LIMIT,
-                'includes[]': 'cover_art',
-                'availableTranslatedLanguage[]': 'vi',
-                'contentRating[]': 'safe',
-                hasAvailableChapters: 'true'
-            });
-
-            if (keyword) params.append('title', keyword);
-            else params.append('order[latestUploadedChapter]', 'desc'); 
-
-            const targetUrl = `${API_BASE}/manga?${params.toString()}`;
-
-            try {
-                // Gọi qua Proxy
-                const data = await fetchViaProxy(targetUrl);
-                
-                grid.innerHTML = '';
-                if(!data.data || data.data.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không có dữ liệu.</p>';
-                    return;
-                }
-
-                data.data.forEach(item => {
-                    const title = getLocalizedString(item.attributes.title);
-                    const coverRel = item.relationships.find(r => r.type === 'cover_art');
-                    const coverUrl = coverRel ? `${UPLOADS_BASE}/covers/${item.id}/${coverRel.attributes.fileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
-
-                    grid.innerHTML += `
-                        <a href="#/truyen/${item.id}" class="card">
-                            <img src="${coverUrl}" alt="${title}" loading="lazy">
-                            <div class="card-info"><h3>${title}</h3></div>
-                        </a>`;
-                });
-
-                renderPagination(page, keyword, data.total);
-
-            } catch (error) {
-                console.error("Lỗi:", error);
-                grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu: ${error.message}</div>`;
-            }
-        }
-
-        function renderPagination(currentPage, keyword, totalItems) {
-            const paginationEl = document.getElementById('pagination');
-            const totalPages = Math.ceil(totalItems / LIMIT);
-            paginationEl.innerHTML = `
-                <button ${currentPage <= 1 ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage - 1})">⬅ Trước</button>
-                <span>Trang ${currentPage} / ${totalPages || 1}</span>
-                <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="fetchList('${keyword}', ${currentPage + 1})">Sau ➡</button>
-            `;
-        }
-
-        // --- CHI TIẾT TRUYỆN ---
-        async function fetchStoryDetail(mangaId) {
-            const titleEl = document.getElementById('detail-title'), descEl = document.getElementById('detail-desc');
-            const coverEl = document.getElementById('detail-cover'), chaptersUl = document.getElementById('detail-chapters');
-
-            titleEl.innerText = "Đang tải..."; descEl.innerText = ""; coverEl.style.display = 'none';
-            chaptersUl.innerHTML = '<div class="loading">Đang tải danh sách chương qua Proxy...</div>';
-
-            try {
-                // Gọi API Manga qua Proxy
-                const mangaData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}?includes[]=cover_art`);
-                const manga = mangaData.data;
-
-                titleEl.innerText = getLocalizedString(manga.attributes.title);
-                descEl.innerText = getLocalizedString(manga.attributes.description);
-
-                const coverRel = manga.relationships.find(r => r.type === 'cover_art');
-                if (coverRel) {
-                    coverEl.src = `${UPLOADS_BASE}/covers/${manga.id}/${coverRel.attributes.fileName}`;
-                    coverEl.style.display = 'block';
-                }
-
-                // Gọi API Chapters qua Proxy
-                const chapData = await fetchViaProxy(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&order[chapter]=desc&limit=200`);
-                
-                chaptersUl.innerHTML = '';
-                if(chapData.data.length === 0) {
-                    chaptersUl.innerHTML = '<li><a>Truyện này chưa có chương Tiếng Việt.</a></li>'; return;
-                }
-
-                chapData.data.forEach(chap => {
-                    const fullTitle = `${chap.attributes.chapter ? 'Chương ' + chap.attributes.chapter : 'Oneshot'}${chap.attributes.title ? ' - ' + chap.attributes.title : ''}`;
-                    const date = new Date(chap.attributes.publishAt).toLocaleDateString('vi-VN');
-                    chaptersUl.innerHTML += `
-                        <li><a href="#/chuong/${chap.id}?manga=${mangaId}&title=${encodeURIComponent(fullTitle)}">
-                            <span>${fullTitle}</span><span style="opacity:0.7">${date}</span>
-                        </a></li>`;
-                });
-
-            } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
-        }
-
-        // --- ĐỌC CHƯƠNG ---
-        async function fetchChapterContent(chapterId, mangaId, chapTitle) {
-            const contentEl = document.getElementById('chapter-content');
-            document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang tải cấu trúc ảnh từ At-Home qua Proxy...</div>';
-            document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
-
-            try {
-                // Gọi API At-home qua Proxy
-                const data = await fetchViaProxy(`${API_BASE}/at-home/server/${chapterId}`);
-                
-                if(data.result === 'error') throw new Error();
-
-                // Lưu ý: Các link ảnh thực tế từ At-Home không bị chặn CORS, nên ta có thể nhúng trực tiếp vào thẻ img
-                contentEl.innerHTML = data.chapter.data.map(img => 
-                    `<img src="${data.baseUrl}/data/${data.chapter.hash}/${img}" loading="lazy">`
-                ).join('');
-
-            } catch (error) { contentEl.innerHTML = '<div class="loading" style="color:red">Lỗi tải Server Ảnh!</div>'; }
-        }
-
         function toggleTheme() {
             document.body.toggleAttribute('data-theme');
             localStorage.setItem('pref_theme', document.body.hasAttribute('data-theme') ? 'dark' : 'light');
         }
-        function initTheme() { if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', ''); }
+        
+        function initTheme() { 
+            if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', ''); 
+        }
     </script>
 </body>
 </html>
