@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiên bản thứ 5 12_06</title>
+    <title>Phiên bản thứ 5 12_06 (Đã Fix 403)</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -95,7 +95,7 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">MDex Vercel Proxy</a>
+        <a href="#/" class="toolbar-title">MDex App (Đã Fix 403)</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
@@ -145,13 +145,11 @@
 
         const searchInput = document.getElementById('searchInput');
         
-        // --- HÀM ÉP LẤY TIẾNG VIỆT ---
         function getLocalizedString(obj) {
             if (!obj) return 'Chưa có tiêu đề';
             return obj.vi || obj.en || Object.values(obj)[0] || 'Chưa có tiêu đề';
         }
 
-        // --- HÀM GỌI PROXY VERCEL ---
         async function fetchViaProxy(targetUrl) {
             const encodedUrl = encodeURIComponent(targetUrl);
             const res = await fetch(`/api/proxy?url=${encodedUrl}`);
@@ -159,7 +157,6 @@
             return await res.json();
         }
 
-        // --- LẤY DANH SÁCH TRUYỆN ---
         async function fetchList(keyword = '', page = 1) {
             const grid = document.getElementById('story-grid');
             grid.innerHTML = '<div class="loading">Đang tải dữ liệu thông qua Vercel Proxy...</div>';
@@ -169,7 +166,7 @@
                 limit: LIMIT,
                 offset: (page - 1) * LIMIT,
                 'includes[]': 'cover_art',
-                'availableTranslatedLanguage[]': 'vi', // Chỉ lấy truyện có tiếng Việt
+                'availableTranslatedLanguage[]': 'vi',
                 'contentRating[]': 'safe',
                 hasAvailableChapters: 'true'
             });
@@ -191,11 +188,8 @@
                 data.data.forEach(item => {
                     const title = getLocalizedString(item.attributes.title);
                     const coverRel = item.relationships.find(r => r.type === 'cover_art');
-                    
-                    // Lấy ảnh thumbnail .256.jpg, nếu lỗi do API trả về null thì dùng placehold
                     const coverUrl = coverRel ? `${UPLOADS_BASE}/covers/${item.id}/${coverRel.attributes.fileName}.256.jpg` : 'https://placehold.co/200x300?text=No+Cover';
 
-                    // FIX LỖI: Thêm referrerpolicy="no-referrer" và onerror để fallback ảnh nếu link chết
                     grid.innerHTML += `
                         <a href="#/truyen/${item.id}" class="card">
                             <img src="${coverUrl}" alt="${title}" loading="lazy" 
@@ -208,7 +202,6 @@
                 renderPagination(page, keyword, data.total);
 
             } catch (error) {
-                console.error("Lỗi:", error);
                 grid.innerHTML = `<div class="loading" style="color:red">Lỗi tải dữ liệu: ${error.message}</div>`;
             }
         }
@@ -223,7 +216,6 @@
             `;
         }
 
-        // --- CHI TIẾT TRUYỆN ---
         async function fetchStoryDetail(mangaId) {
             const titleEl = document.getElementById('detail-title'), descEl = document.getElementById('detail-desc');
             const coverEl = document.getElementById('detail-cover'), chaptersUl = document.getElementById('detail-chapters');
@@ -241,7 +233,6 @@
                 const coverRel = manga.relationships.find(r => r.type === 'cover_art');
                 if (coverRel) {
                     coverEl.src = `${UPLOADS_BASE}/covers/${manga.id}/${coverRel.attributes.fileName}`;
-                    // FIX LỖI: Thêm policy cho ảnh bìa chi tiết
                     coverEl.setAttribute("referrerpolicy", "no-referrer");
                     coverEl.setAttribute("onerror", "this.src='https://placehold.co/200x300?text=Image+Error'");
                     coverEl.style.display = 'block';
@@ -266,91 +257,69 @@
             } catch (error) { chaptersUl.innerHTML = '<div class="loading" style="color:red">Lỗi tải dữ liệu.</div>'; }
         }
 
-        // --- ĐỌC CHƯƠNG (BẢN TỰ ĐỘNG CHUYỂN ĐỔI PROXY VƯỢT TƯỜNG LỬA) ---
-    async function fetchChapterContent(chapterId, mangaId, chapTitle) {
-        const contentEl = document.getElementById('chapter-content');
-        document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-        contentEl.innerHTML = '<div class="loading">Đang đàm phán kết nối với hệ thống MangaDex...</div>';
-        document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
+        // --- CẬP NHẬT LOGIC LẤY CHƯƠNG ĐỂ FIX LỖI 403 ---
+        async function fetchChapterContent(chapterId, mangaId, chapTitle) {
+            const contentEl = document.getElementById('chapter-content');
+            document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
+            contentEl.innerHTML = '<div class="loading">Đang kết nối Server ảnh MangaDex...</div>';
+            document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
-        const targetUrl = `${API_BASE}/at-home/server/${chapterId}?forcePort443=true`;
-        let data = null;
+            const targetUrl = `${API_BASE}/at-home/server/${chapterId}?forcePort443=true`;
+            let data = null;
 
-        // --- CÁCH 1: Dùng AllOrigins Proxy (Thường lách được Cloudflare tốt nhất) ---
-        try {
-            const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-            if (res1.ok) {
-                const textData = await res1.json();
-                const parsed = JSON.parse(textData.contents);
-                if (parsed.result === 'success') data = parsed;
-            }
-        } catch (e) { console.warn("AllOrigins thất bại, chuyển sang cách 2..."); }
-
-        // --- CÁCH 2: Dùng CorsProxy.io (Mạng lưới Proxy cộng đồng) ---
-        if (!data) {
+            // CÁCH 1: FETCH TRỰC TIẾP (Tốt nhất cho Smart TV/Android vì API MangaDex đã cho phép CORS)
             try {
-                const res2 = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`);
-                if (res2.ok) {
-                    const parsed = await res2.json();
+                const res1 = await fetch(targetUrl);
+                if (res1.ok) {
+                    const parsed = await res1.json();
                     if (parsed.result === 'success') data = parsed;
                 }
-            } catch (e) { console.warn("CorsProxy thất bại, chuyển sang cách 3..."); }
+            } catch (e) { console.warn("Fetch trực tiếp thất bại, chuyển sang Cách 2..."); }
+
+            // CÁCH 2: DÙNG VERCEL PROXY CỦA BẠN (Sẽ ít bị Cloudflare block hơn public proxy)
+            if (!data) {
+                try {
+                    const parsed = await fetchViaProxy(targetUrl);
+                    if (parsed && parsed.result === 'success') data = parsed;
+                } catch (e) { console.warn("Vercel Proxy thất bại, chuyển sang Cách 3..."); }
+            }
+
+            // CÁCH 3: DÙNG ALLORIGINS RAW (Loại bỏ hoàn toàn corsproxy.io gây lỗi 403)
+            if (!data) {
+                try {
+                    const res3 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
+                    if (res3.ok) {
+                        const parsed = await res3.json();
+                        if (parsed.result === 'success') data = parsed;
+                    }
+                } catch (e) { console.warn("AllOrigins Proxy thất bại..."); }
+            }
+
+            // XỬ LÝ LỖI CUỐI CÙNG NẾU TẤT CẢ ĐỀU THẤT BẠI
+            if (!data || data.result !== 'success') {
+                contentEl.innerHTML = `
+                    <div class="loading" style="color:red; line-height: 1.6;">
+                        <b>Lỗi 403: Cloudflare đang chặn yêu cầu của bạn!</b><br>
+                        Hệ thống không thể lấy được đường dẫn ảnh do tường lửa MangaDex chặn proxy.<br>
+                        Vui lòng đảm bảo Vercel Proxy của bạn đang hoạt động bình thường.
+                    </div>`;
+                return;
+            }
+
+            // RENDER ẢNH QUA WSRV.NL
+            contentEl.innerHTML = '<div class="loading">Đã tìm thấy máy chủ, đang tải ảnh...</div>';
+            
+            setTimeout(() => {
+                contentEl.innerHTML = data.chapter.data.map(img => {
+                    const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
+                    
+                    // Proxy trung gian xử lý ảnh cực tốt cho Smart TV và thiết bị yếu
+                    const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
+
+                    return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/600x900?text=Lỗi+Tải+Ảnh';">`;
+                }).join('');
+            }, 300);
         }
-
-        // --- CÁCH 3: Dùng Vercel Proxy của bạn (Nếu MangaDex thả cửa lại) ---
-        if (!data) {
-            try {
-                const parsed = await fetchViaProxy(targetUrl);
-                if (parsed && parsed.result === 'success') data = parsed;
-            } catch (e) { console.warn("Vercel Proxy thất bại..."); }
-        }
-
-        // KIỂM TRA KẾT QUẢ CUỐI CÙNG
-        if (!data || data.result !== 'success') {
-            contentEl.innerHTML = `
-                <div class="loading" style="color:red; line-height: 1.6;">
-                    <b>Thất bại: MangaDex đang chặn mọi đường truyền!</b><br>
-                    Hệ thống bảo vệ của MangaDex hiện đang từ chối cấp phát ảnh.<br>
-                    Vui lòng thử lại sau ít phút hoặc chọn một chương/truyện khác.
-                </div>`;
-            return;
-        }
-
-        // NẾU THÀNH CÔNG: Hiển thị ảnh thông qua Image Proxy (wsrv.nl)
-        contentEl.innerHTML = '<div class="loading">Đã lấy được dữ liệu, đang tải ảnh...</div>';
-        
-        setTimeout(() => {
-            contentEl.innerHTML = data.chapter.data.map(img => {
-                const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
-                
-                // Dùng wsrv.nl làm proxy ảnh (an toàn, ổn định và miễn phí, lách được nhà mạng VN)
-                const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
-
-                return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/600x900?text=Lỗi+Tải+Ảnh';">`;
-            }).join('');
-        }, 500); // Thêm delay nhỏ để tránh trình duyệt tải dồn dập
-    }
-
-// --- HÀM DỰ PHÒNG NẾU SERVER VERCEL BỊ QUÁ TẢI/BLOCK ---
-async function fetchChapterContentFallback(chapterId) {
-    const contentEl = document.getElementById('chapter-content');
-    contentEl.innerHTML = '<div class="loading">Đang thử nghiệm Server Dự Phòng...</div>';
-    try {
-        // Dùng allorigins proxy để lách luật CORS từ phía Client
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(API_BASE + '/at-home/server/' + chapterId + '?forcePort443=true')}`);
-        const textData = await res.json();
-        const data = JSON.parse(textData.contents);
-        
-        contentEl.innerHTML = data.chapter.data.map(img => {
-            const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
-            // Dùng wsrv.nl làm proxy ảnh dự phòng
-            const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
-            return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer">`;
-        }).join('');
-    } catch(e) {
-        contentEl.innerHTML = '<div class="loading" style="color:red">Tất cả server đều đang bận, vui lòng thử lại sau!</div>';
-    }
-}
 
         // --- HỆ THỐNG ROUTER ---
         function router() {
