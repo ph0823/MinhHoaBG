@@ -261,12 +261,37 @@
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
             document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = '<div class="loading">Đang kết nối Server ảnh MangaDex...</div>';
+            contentEl.innerHTML = data.chapter.data.map(img => {
+                const imageUrl =
+                  `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
+
+                return `
+                    <img
+                        src="${imageUrl}"
+                        loading="lazy"
+                        crossorigin="anonymous"
+                        referrerpolicy="no-referrer"
+                        onerror="console.log('Lỗi ảnh:', this.src)">
+                `;
+            }).join('');
             document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
 
             const targetUrl = `${API_BASE}/at-home/server/${chapterId}?forcePort443=true`;
             let data = null;
 
+            contentEl.innerHTML = data.chapter.data.map(img => {
+    const imageUrl =
+      `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
+
+    return `
+        <img
+            src="${imageUrl}"
+            loading="lazy"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+            onerror="console.log('Lỗi ảnh:', this.src)">
+    `;
+}).join('');
             // CÁCH 1: FETCH TRỰC TIẾP (Tốt nhất cho Smart TV/Android vì API MangaDex đã cho phép CORS)
             try {
                 const res1 = await fetch(targetUrl);
