@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiên bản thứ 5 12_06 (Đã Fix 403)</title>
+    <title>Phiên bản thứ 6 15_06</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -260,90 +260,106 @@
         // --- CẬP NHẬT LOGIC LẤY CHƯƠNG ĐỂ FIX LỖI 403 ---
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
             const contentEl = document.getElementById('chapter-content');
-            document.getElementById('reader-title').innerText = chapTitle || "Đang tải chương...";
-            contentEl.innerHTML = data.chapter.data.map(img => {
-                const imageUrl =
-                  `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
 
-                return `
-                    <img
-                        src="${imageUrl}"
-                        loading="lazy"
-                        crossorigin="anonymous"
-                        referrerpolicy="no-referrer"
-                        onerror="console.log('Lỗi ảnh:', this.src)">
-                `;
-            }).join('');
-            document.getElementById('btn-back-detail').href = mangaId ? `#/truyen/${mangaId}` : `#/`;
+            document.getElementById('reader-title').innerText =
+                decodeURIComponent(chapTitle || "Đang tải chương...");
 
-            const targetUrl = `${API_BASE}/at-home/server/${chapterId}?forcePort443=true`;
+            document.getElementById('btn-back-detail').href =
+                mangaId ? `#/truyen/${mangaId}` : '#/';
+
+            contentEl.innerHTML =
+                '<div class="loading">Đang tải dữ liệu chương...</div>';
+
             let data = null;
 
-            contentEl.innerHTML = data.chapter.data.map(img => {
-    const imageUrl =
-      `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
-
-    return `
-        <img
-            src="${imageUrl}"
-            loading="lazy"
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-            onerror="console.log('Lỗi ảnh:', this.src)">
-    `;
-}).join('');
-            // CÁCH 1: FETCH TRỰC TIẾP (Tốt nhất cho Smart TV/Android vì API MangaDex đã cho phép CORS)
             try {
-                const res1 = await fetch(targetUrl);
-                if (res1.ok) {
-                    const parsed = await res1.json();
-                    if (parsed.result === 'success') data = parsed;
-                }
-            } catch (e) { console.warn("Fetch trực tiếp thất bại, chuyển sang Cách 2..."); }
+                // Cách 1: Truy cập trực tiếp MangaDex
+                const targetUrl =
+                    `${API_BASE}/at-home/server/${chapterId}?forcePort443=true`;
 
-            // CÁCH 2: DÙNG VERCEL PROXY CỦA BẠN (Sẽ ít bị Cloudflare block hơn public proxy)
-            if (!data) {
                 try {
-                    const parsed = await fetchViaProxy(targetUrl);
-                    if (parsed && parsed.result === 'success') data = parsed;
-                } catch (e) { console.warn("Vercel Proxy thất bại, chuyển sang Cách 3..."); }
-            }
+                    const response = await fetch(targetUrl);
 
-            // CÁCH 3: DÙNG ALLORIGINS RAW (Loại bỏ hoàn toàn corsproxy.io gây lỗi 403)
-            if (!data) {
-                try {
-                    const res3 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
-                    if (res3.ok) {
-                        const parsed = await res3.json();
-                        if (parsed.result === 'success') data = parsed;
+                    if (response.ok) {
+                        const result = await response.json();
+
+                        if (result.result === "success") {
+                            data = result;
+                        }
                     }
-                } catch (e) { console.warn("AllOrigins Proxy thất bại..."); }
-            }
+                } catch (err) {
+                    console.warn("Direct fetch thất bại:", err);
+                }
 
-            // XỬ LÝ LỖI CUỐI CÙNG NẾU TẤT CẢ ĐỀU THẤT BẠI
-            if (!data || data.result !== 'success') {
+                // Cách 2: Dùng Proxy nếu có
+                if (!data) {
+                    try {
+                        const result = await fetchViaProxy(targetUrl);
+
+                        if (result && result.result === "success") {
+                            data = result;
+                        }
+                    } catch (err) {
+                        console.warn("Proxy fetch thất bại:", err);
+                    }
+                }
+
+                // Không lấy được dữ liệu chương
+                if (!data) {
+                    contentEl.innerHTML = `
+                        <div class="loading" style="color:red">
+                            Không thể lấy dữ liệu chương từ MangaDex.
+                        </div>
+                    `;
+                    return;
+                }
+
+                const images = data.chapter.data || [];
+
+                if (!images.length) {
+                    contentEl.innerHTML = `
+                        <div class="loading" style="color:red">
+                            Chương này không có dữ liệu ảnh.
+                        </div>
+                    `;
+                    return;
+                }
+
                 contentEl.innerHTML = `
-                    <div class="loading" style="color:red; line-height: 1.6;">
-                        <b>Lỗi 403: Cloudflare đang chặn yêu cầu của bạn!</b><br>
-                        Hệ thống không thể lấy được đường dẫn ảnh do tường lửa MangaDex chặn proxy.<br>
-                        Vui lòng đảm bảo Vercel Proxy của bạn đang hoạt động bình thường.
-                    </div>`;
-                return;
-            }
+                    <div class="loading">
+                        Đang tải ${images.length} trang...
+                    </div>
+                `;
 
-            // RENDER ẢNH QUA WSRV.NL
-            contentEl.innerHTML = '<div class="loading">Đã tìm thấy máy chủ, đang tải ảnh...</div>';
-            
-            setTimeout(() => {
-                contentEl.innerHTML = data.chapter.data.map(img => {
-                    const originalUrl = `${data.baseUrl}/data/${data.chapter.hash}/${img}`;
-                    
-                    // Proxy trung gian xử lý ảnh cực tốt cho Smart TV và thiết bị yếu
-                    const proxyImgUrl = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}`;
+                const html = images.map(filename => {
+                    const imageUrl =
+                        `${data.baseUrl}/data/${data.chapter.hash}/${filename}`;
 
-                    return `<img src="${proxyImgUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/600x900?text=Lỗi+Tải+Ảnh';">`;
+                    return `
+                        <img
+                            src="${imageUrl}"
+                            loading="lazy"
+                            crossorigin="anonymous"
+                            referrerpolicy="no-referrer"
+                            style="width:100%;max-width:800px;display:block;margin:0 auto 5px;"
+                            onerror="
+                                console.error('Lỗi tải ảnh:', this.src);
+                                this.src='https://placehold.co/600x900?text=Loi+Tai+Anh';
+                            ">
+                    `;
                 }).join('');
-            }, 300);
+
+                contentEl.innerHTML = html;
+
+            } catch (error) {
+                console.error(error);
+
+                contentEl.innerHTML = `
+                    <div class="loading" style="color:red">
+                        Lỗi tải chương: ${error.message}
+                    </div>
+                `;
+            }
         }
 
         // --- HỆ THỐNG ROUTER ---
