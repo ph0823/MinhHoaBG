@@ -101,19 +101,16 @@
 
     <script>
         
-        const PROXY_URL = "https://mhbd-two.vercel.app/api/proxy?url="; 
-
-        // 2. Cấu hình API của MangaDex
-        // Lấy danh sách truyện, bao gồm ảnh bìa (cover_art), giới hạn 20 truyện, nội dung an toàn
+        // Cấu hình API của MangaDex (Gọi trực tiếp, bỏ qua Vercel Proxy)
         const MANGADEX_API_URL = "https://api.mangadex.org/manga?includes[]=cover_art&limit=20&contentRating[]=safe";
 
-        // Hàm hỗ trợ: Lấy tên truyện (do MangaDex trả về nhiều ngôn ngữ)
+        // Hàm hỗ trợ: Lấy tên truyện (ưu tiên tiếng Anh, nếu không có lấy ngôn ngữ đầu tiên)
         function getTitle(attributes) {
             if (!attributes || !attributes.title) return "Chưa có tiêu đề";
             return attributes.title.en || Object.values(attributes.title)[0] || "Chưa có tiêu đề";
         }
 
-        // Hàm hỗ trợ: Lấy tên file ảnh bìa từ relationships
+        // Hàm hỗ trợ: Lấy tên file ảnh bìa từ danh sách relationships
         function getCoverFileName(relationships) {
             const coverRel = relationships.find(rel => rel.type === 'cover_art');
             if (coverRel && coverRel.attributes) {
@@ -122,44 +119,45 @@
             return null;
         }
 
-        // Hàm chính: Gọi dữ liệu và render
+        // Hàm chính: Gọi dữ liệu và render hiển thị lên web/TV
         async function fetchAndRenderManga() {
             const loader = document.getElementById('loader');
             const grid = document.getElementById('mangaGrid');
 
             try {
-                // Mã hóa URL của MangaDex để đưa vào tham số proxy
-                const targetUrl = PROXY_URL + encodeURIComponent(MANGADEX_API_URL);
-                
-                const response = await fetch(targetUrl);
+                // Gọi trực tiếp API của MangaDex
+                const response = await fetch(MANGADEX_API_URL);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Lỗi máy chủ: ${response.status}`);
                 }
 
                 const data = await response.json();
                 const mangaList = data.data;
 
-                // Xóa trạng thái loading
+                // Tắt trạng thái loading và bật lưới hiển thị
                 loader.style.display = 'none';
                 grid.style.display = 'grid';
 
-                // Lặp qua danh sách và tạo HTML
+                // Làm sạch lưới truyện trước khi thêm mới (tránh bị trùng lặp nếu gọi hàm nhiều lần)
+                grid.innerHTML = '';
+
+                // Lặp qua danh sách và tạo các thẻ truyện (card)
                 mangaList.forEach(manga => {
                     const title = getTitle(manga.attributes);
-                    const status = manga.attributes.status || "Unknown";
+                    const status = manga.attributes.status || "Chưa rõ";
                     const coverFileName = getCoverFileName(manga.relationships);
                     
-                    // URL ảnh bìa của MangaDex có cấu trúc: uploads.mangadex.org/covers/{manga.id}/{cover_filename}
-                    // Thường ảnh bìa MangaDex không bị chặn CORS khi hiển thị trực tiếp bằng thẻ <img>
+                    // Cấu trúc URL ảnh bìa chuẩn của MangaDex
                     let coverUrl = 'https://mangadex.org/favicon.ico'; // Ảnh mặc định nếu lỗi
                     if (coverFileName) {
+                        // Sử dụng .256.jpg để lấy ảnh thu nhỏ, giúp TV load nhanh hơn và không tràn RAM
                         coverUrl = `https://uploads.mangadex.org/covers/${manga.id}/${coverFileName}.256.jpg`;
                     }
 
-                    // Khởi tạo thẻ a (có tabindex='0' mặc định, hỗ trợ tivi remote)
+                    // Tạo phần tử thẻ truyện (dùng thẻ <a> để hỗ trợ remote tivi bấm vào)
                     const card = document.createElement('a');
-                    card.href = "#"; // Bạn có thể sửa link này để trỏ tới trang chi tiết truyện
+                    card.href = "#"; // Sau này bạn có thể thay đổi bằng link đến trang đọc truyện
                     card.className = 'manga-card';
                     card.innerHTML = `
                         <img src="${coverUrl}" alt="${title}" class="manga-cover" loading="lazy">
@@ -173,12 +171,12 @@
 
             } catch (error) {
                 console.error("Lỗi khi tải truyện:", error);
-                loader.textContent = "Không thể tải dữ liệu. Vui lòng kiểm tra lại cấu hình Proxy Vercel của bạn.";
-                loader.style.color = "red";
+                loader.textContent = "Không thể tải dữ liệu từ MangaDex. Vui lòng kiểm tra lại mạng hoặc thử lại sau.";
+                loader.style.color = "#ff6740";
             }
         }
 
-        // Chạy hàm khi trang web tải xong
+        // Kích hoạt hàm khi mã HTML vừa tải xong
         document.addEventListener('DOMContentLoaded', fetchAndRenderManga);
     </script>
 </body>
