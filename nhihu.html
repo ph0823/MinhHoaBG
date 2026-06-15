@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiên bản thứ 6 15_06</title>
+    <title>Phiên bản thứ 7 15_06</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -259,6 +259,9 @@
 
         // --- CẬP NHẬT LOGIC LẤY CHƯƠNG ĐỂ FIX LỖI 403 ---
         async function fetchChapterContent(chapterId, mangaId, chapTitle) {
+            const result = await fetchViaProxy(targetUrl);
+            console.log("Proxy Result:", result);
+
             const contentEl = document.getElementById('chapter-content');
 
             document.getElementById('reader-title').innerText =
