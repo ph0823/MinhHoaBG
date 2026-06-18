@@ -78,12 +78,10 @@
             background: var(--primary-color);
             border-radius: 4px;
             box-shadow: 0 0 15px var(--primary-color);
-            /* Trạng thái mặc định không nhảy để chờ video play */
             transform: scaleY(0.2); 
             opacity: 0.4;
         }
 
-        /* Hiệu ứng sóng nhảy tự động bằng CSS Animation */
         .animated-bar {
             animation: bounce 1.2s ease-in-out infinite alternate;
         }
@@ -108,7 +106,6 @@
         .channel-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 10px; }
         .channel-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
 
-        /* --- CHẾ ĐỘ OVERLAY CHO PC / TV / TABLET (>= 768px) --- */
         @media (min-width: 768px) {
             .app-container {
                 position: relative;
@@ -189,7 +186,7 @@
             display: flex; 
             justify-content: center; 
             margin-top: 25px; 
-            gap: 15px; /* Khoảng cách giữa các nút */
+            gap: 15px; 
         }
 
         .btn-action {
@@ -304,7 +301,6 @@
     let hideOverlayTimeout; 
     const barCount = 25; 
 
-    // Tạo các cột sóng nhạc CSS tĩnh trước
     for (let i = 0; i < barCount; i++) {
         const bar = document.createElement('div');
         bar.className = 'bar';
@@ -312,7 +308,6 @@
         visualizer.appendChild(bar);
     }
 
-    // --- ĐIỀU KHIỂN NÚT PHÁT / TẠM DỪNG & SÓNG NHẠC ---
     btnPlayPause.addEventListener('click', () => {
         if (video.paused) {
             video.play();
@@ -321,27 +316,21 @@
         }
     });
 
-    // Lắng nghe sự kiện phát của Video để bật sóng nhạc
     video.addEventListener('play', () => {
         textPlayPause.innerText = "Tạm dừng";
         iconPlayPause.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
         
-        // Nếu là kênh Radio thì kích hoạt hiệu ứng nhảy
         if (channels[currentChannelIndex].type === 'radio') {
             document.querySelectorAll('.bar').forEach(bar => bar.classList.add('animated-bar'));
         }
     });
 
-    // Lắng nghe sự kiện dừng của Video để tắt sóng nhạc
     video.addEventListener('pause', () => {
         textPlayPause.innerText = "Phát tiếp";
         iconPlayPause.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
-        
-        // Luôn tắt hiệu ứng nhảy khi video bị dừng
         document.querySelectorAll('.bar').forEach(bar => bar.classList.remove('animated-bar'));
     });
 
-    // --- ĐIỀU KHIỂN ĐÓNG/MỞ DANH SÁCH (OVERLAY) ---
     function showOverlayMenu() {
         if (window.innerWidth < 768) return;
         appContainer.classList.add('show-overlay');
@@ -366,7 +355,6 @@
         }, 5000); 
     }
 
-    // Sự kiện Chuột PC
     appContainer.addEventListener('mousemove', (e) => {
         const rect = appContainer.getBoundingClientRect();
         const relativeY = e.clientY - rect.top;
@@ -376,7 +364,6 @@
     });
     appContainer.addEventListener('mouseleave', hideOverlayMenu);
 
-    // Sự kiện Click/Touch Tablet
     appContainer.addEventListener('click', (e) => {
         if (window.innerWidth < 768) return; 
         if (e.target.closest('.channel-grid')) {
@@ -387,22 +374,25 @@
         if (appContainer.classList.contains('show-overlay')) resetHideTimeout();
     });
 
-    // --- LOGIC PHÁT VIDEO / RADIO ---
     function playChannel(channel) {
         if (channel.type === "radio") {
-            // Chỉ hiển thị khung sóng nhạc lên, việc nhảy animation sẽ do event 'play' quyết định ở trên
             visualizer.style.display = 'flex';
         } else {
             visualizer.style.display = 'none';
             document.querySelectorAll('.bar').forEach(bar => bar.classList.remove('animated-bar'));
         }
 
-        if (hls) hls.destroy();
+        // Hủy bỏ luồng HLS cũ nếu có để dọn dẹp bộ nhớ
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
 
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                maxMaxBufferLength: 10 
-            });
+        // KIỂM TRA: Nếu link là m3u8 thì dùng Hls.js, nếu không thì dùng luồng nguyên bản
+        const isM3U8 = channel.url.includes('.m3u8');
+
+        if (isM3U8 && Hls.isSupported()) {
+            hls = new Hls({ maxMaxBufferLength: 10 });
             hls.loadSource(channel.url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -411,7 +401,8 @@
             hls.on(Hls.ErrorTypes.NETWORK_ERROR, () => {
                 console.log("Lỗi mạng luồng stream, đang thử lại...");
             });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        } else {
+            // Xử lý trực tiếp các định dạng âm thanh thô như .aac, .mp3, .ogg hoặc nếu trình duyệt tự hỗ trợ m3u8 (như Safari)
             video.src = channel.url;
             video.play().catch(e => console.log("Chờ tương tác"));
         }
@@ -423,7 +414,6 @@
         document.body.style.overflow = appContainer.classList.contains('fullscreen-mode') ? 'hidden' : '';
     }
 
-    // --- RECALL KÊNH VỪA XEM ---
     function recallChannel() {
         if (previousChannelIndex !== null) {
             const previousCard = playlist.children[previousChannelIndex];
@@ -437,7 +427,6 @@
 
     btnRecall.addEventListener('click', recallChannel);
 
-    // --- RENDER DANH SÁCH KÊNH ---
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
@@ -474,7 +463,6 @@
         }
     });
 
-    // --- HỖ TRỢ PHÍM BACK / RETURN TRÊN REMOTE SMART TV ---
     window.history.pushState({ noExit: true }, '', window.location.href);
     window.addEventListener('popstate', function(event) {
         recallChannel();
