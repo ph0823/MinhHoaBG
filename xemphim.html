@@ -12,9 +12,15 @@
             --text-color: #f8fafc;
             --accent-color: #fbbf24;
             --nav-bg: #1e293b;
+            --base-font-size: 16px; /* Biến font-size để hỗ trợ Accessibility */
         }
 
         *, *::before, *::after { box-sizing: border-box; }
+
+        html {
+            font-size: var(--base-font-size);
+            transition: font-size 0.3s ease;
+        }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,16 +31,24 @@
             padding-right: env(safe-area-inset-right, 15px);
         }
 
+        body.large-text {
+            --base-font-size: 20px; /* Tăng cỡ chữ khi kích hoạt */
+        }
+
         body.is-tv ::-webkit-scrollbar { display: none; }
         body.is-tv { scrollbar-width: none; -ms-overflow-style: none; }
 
-        body.is-tv *:focus {
+        /* Nổi bật phần tử được focus trên TV */
+        *:focus {
             outline: 4px solid var(--accent-color) !important;
             outline-offset: 4px;
             box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
             transform: scale(1.05);
             transition: all 0.2s ease-in-out;
             z-index: 100;
+        }
+        
+        body.is-tv *:focus {
             background-color: rgba(255, 255, 255, 0.1);
         }
 
@@ -51,7 +65,7 @@
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
         }
         .nav-brand { font-size: 1.5rem; font-weight: bold; color: var(--accent-color); cursor: pointer; text-decoration: none; outline: none;}
-        .nav-menu { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; }
+        .nav-menu { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; align-items: center;}
         .nav-item { position: relative; cursor: pointer; padding: 10px; font-weight: 500; font-size: 1rem; transition: 0.3s; outline: none; }
         .nav-item:hover, .nav-item:focus { color: var(--accent-color); }
         
@@ -65,6 +79,19 @@
         .nav-item:hover .dropdown { display: block; }
         .dropdown-item { padding: 12px 20px; font-size: 0.95rem; border-bottom: 1px solid #334155; transition: 0.2s; outline: none; cursor: pointer;}
         .dropdown-item:hover, .dropdown-item:focus { background: var(--accent-color); color: #000; font-weight: bold;}
+
+        /* Nút Accessibility */
+        .a11y-btn {
+            background: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--accent-color);
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .a11y-btn:focus, .a11y-btn:hover { background: var(--accent-color); color: #000; }
 
         header { text-align: center; padding: 40px 20px 20px; }
         .search-box { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
@@ -80,17 +107,13 @@
         @media (min-width: 768px) { .movie-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; } }
         @media (min-width: 1200px) {
             .movie-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
-            body { font-size: 1.15rem; }
-            .movie-info h3 { font-size: 1.1rem; }
             .movie-card img { height: 300px; }
-            #search-input { width: 500px; font-size: 1.1rem; }
-            .section-title { font-size: 1.5rem; }
+            #search-input { width: 500px; }
         }
         @media (min-width: 1600px) {
             .container { max-width: 1600px; }
             .movie-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; }
             .movie-card img { height: 360px; }
-            body { font-size: 1.3rem; }
             #search-input { width: 600px; }
         }
 
@@ -149,47 +172,15 @@
         .auto-switch-msg { color: #ef4444; font-size: 0.9rem; margin-top: 5px; display: none; }
 
         /* --- TỐI ƯU CSS DÀNH RIÊNG CHO TIVI --- */
-        
-        body.is-tv #player-modal { 
-            padding: 40px 20px; 
-            background: #000; 
-            overflow-y: auto; 
-            scroll-behavior: smooth;
-        }
-        
-        body.is-tv #player-container { 
-            position: relative;
-            width: 100%;
-            max-width: 1200px;
-            padding-top: 56.25%; 
-            height: auto;
-            margin: 0 auto;
-            border-radius: 8px;
-            z-index: 1;
-        }
-        
+        body.is-tv #player-modal { padding: 40px 20px; background: #000; overflow-y: auto; scroll-behavior: smooth; }
+        body.is-tv #player-container { height: auto; z-index: 1; }
         body.is-tv .player-controls { display: none; }
-        
         body.is-tv .episode-container { 
-            position: relative; 
-            z-index: 2; 
-            margin: 25px auto 20px auto; 
-            background: rgba(15, 23, 42, 0.95); 
-            backdrop-filter: blur(10px);
-            border-radius: 8px; 
-            padding: 40px; 
-            min-height: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative; z-index: 2; background: rgba(15, 23, 42, 0.95); 
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
-        body.is-tv .close-btn {
-            position: relative; z-index: 2;
-            display: block; margin: 20px auto 100px;
-        }
-
-        body.is-tv #movie-desc {
-            display: none; 
-        }
+        body.is-tv .close-btn { position: relative; z-index: 2; display: block; margin: 20px auto 100px; }
+        body.is-tv #movie-desc { display: none; }
 
         @media (max-width: 768px) {
             #search-input { width: 100%; max-width: 300px; }
@@ -202,33 +193,36 @@
 </head>
 <body>
 
-<nav>
-    <a href="#" class="nav-brand" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">🎬 PHIM K-WORLD</a>
-    <ul class="nav-menu">
-        <li class="nav-item" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()">Trang Chủ</li>
-        <li class="nav-item" tabindex="0">Loại Phim ▾
-            <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')">Phim Bộ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')">Phim Lẻ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')">Hoạt Hình</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')">TV Shows</div>
+<nav aria-label="Menu chính">
+    <a href="#" class="nav-brand" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()" aria-label="Tải lại trang chủ">🎬 PHIM K-WORLD</a>
+    <ul class="nav-menu" role="menubar">
+        <li class="nav-item" tabindex="0" onclick="location.reload()" onkeypress="if(event.key==='Enter') location.reload()" role="menuitem">Trang Chủ</li>
+        <li class="nav-item" tabindex="0" aria-haspopup="true" role="menuitem">Loại Phim ▾
+            <div class="dropdown" role="menu">
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-bo', 'Danh Sách Phim Bộ')" role="menuitem">Phim Bộ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/phim-le', 'Danh Sách Phim Lẻ')" role="menuitem">Phim Lẻ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/hoat-hinh', 'Phim Hoạt Hình')" role="menuitem">Hoạt Hình</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('danh-sach/tv-shows', 'Chương Trình TV Shows')" role="menuitem">TV Shows</div>
             </div>
         </li>
-        <li class="nav-item" tabindex="0">Quốc Gia ▾
-            <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')">Hồng Kông</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')">Trung Quốc</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')">Âu Mỹ</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')">Hàn Quốc</div>
+        <li class="nav-item" tabindex="0" aria-haspopup="true" role="menuitem">Quốc Gia ▾
+            <div class="dropdown" role="menu">
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/hong-kong', 'Phim Hồng Kông')" role="menuitem">Hồng Kông</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/trung-quoc', 'Phim Trung Quốc')" role="menuitem">Trung Quốc</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/au-my', 'Phim Âu Mỹ')" role="menuitem">Âu Mỹ</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('quoc-gia/han-quoc', 'Phim Hàn Quốc')" role="menuitem">Hàn Quốc</div>
             </div>
         </li>
-        <li class="nav-item" tabindex="0">Thể Loại ▾
-            <div class="dropdown">
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')">Tình Cảm</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/hanh-dong', 'Phim Hành Động')">Hành Động</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')">Tâm Lý</div>
-                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/co-trang', 'Phim Cổ Trang')">Cổ Trang</div>
+        <li class="nav-item" tabindex="0" aria-haspopup="true" role="menuitem">Thể Loại ▾
+            <div class="dropdown" role="menu">
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tinh-cam', 'Phim Tình Cảm')" role="menuitem">Tình Cảm</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/hanh-dong', 'Phim Hành Động')" role="menuitem">Hành Động</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/tam-ly', 'Phim Tâm Lý')" role="menuitem">Tâm Lý</div>
+                <div class="dropdown-item" tabindex="0" onclick="loadFilter('the-loai/co-trang', 'Phim Cổ Trang')" role="menuitem">Cổ Trang</div>
             </div>
+        </li>
+        <li>
+            <button id="font-toggle" class="a11y-btn" tabindex="0" onclick="toggleFontSize()" aria-label="Tăng kích thước chữ">A+</button>
         </li>
     </ul>
 </nav>
@@ -236,75 +230,76 @@
 <header>
     <h1>HÔM NAY XEM GÌ?</h1>
     <div class="search-box">
-        <input type="text" id="search-input" tabindex="0" placeholder="Tìm tên phim, diễn viên...">
-        <button class="search-btn" tabindex="0" onclick="initSearch()">TÌM KIẾM</button>
+        <input type="text" id="search-input" tabindex="0" aria-label="Nhập từ khóa tìm kiếm phim" placeholder="Tìm tên phim, diễn viên...">
+        <button class="search-btn" tabindex="0" onclick="executeCurrentSearch()" aria-label="Bấm để tìm kiếm">TÌM KIẾM</button>
     </div>
 </header>
 
 <div class="container">
-    <div id="loading" style="display:none;">⏳ Đang xử lý dữ liệu phim...</div>
+    <div id="loading" style="display:none;" aria-live="polite">⏳ Đang xử lý dữ liệu phim...</div>
 
     <div id="home-content">
         <div class="section-header"><h2 class="section-title">🔥 Phim Mới Cập Nhật</h2></div>
-        <div id="k-series-grid" class="movie-grid"></div>
+        <div id="k-series-grid" class="movie-grid" role="list"></div>
         <div class="pagination">
-            <button id="k-series-prev" tabindex="0" class="page-btn" onclick="changePage('k_series', -1)">Trước</button>
-            <span id="k-series-info"></span>
-            <button id="k-series-next" tabindex="0" class="page-btn" onclick="changePage('k_series', 1)">Sau</button>
+            <button id="k-series-prev" tabindex="0" class="page-btn" aria-label="Trang trước" onclick="changePage('k_series', -1)">Trước</button>
+            <span id="k-series-info" aria-live="polite"></span>
+            <button id="k-series-next" tabindex="0" class="page-btn" aria-label="Trang sau" onclick="changePage('k_series', 1)">Sau</button>
         </div>
 
         <div class="section-header"><h2 class="section-title">🎬 Phim Hành Động Cập Nhật</h2></div>
-        <div id="k-movies-grid" class="movie-grid"></div>
+        <div id="k-movies-grid" class="movie-grid" role="list"></div>
         <div class="pagination">
-            <button id="k-movies-prev" tabindex="0" class="page-btn" onclick="changePage('k_movies', -1)">Trước</button>
-            <span id="k-movies-info"></span>
-            <button id="k-movies-next" tabindex="0" class="page-btn" onclick="changePage('k_movies', 1)">Sau</button>
+            <button id="k-movies-prev" tabindex="0" class="page-btn" aria-label="Trang trước" onclick="changePage('k_movies', -1)">Trước</button>
+            <span id="k-movies-info" aria-live="polite"></span>
+            <button id="k-movies-next" tabindex="0" class="page-btn" aria-label="Trang sau" onclick="changePage('k_movies', 1)">Sau</button>
         </div>
     </div>
 
     <div id="filter-content" style="display:none;">
         <div class="section-header">
             <h2 id="filter-title" class="section-title">Kết Quả</h2>
-            <button class="page-btn" tabindex="0" onclick="location.reload()">Quay lại trang chủ</button>
+            <button class="page-btn" tabindex="0" onclick="location.reload()" aria-label="Quay lại trang chủ">Quay lại trang chủ</button>
         </div>
-        <div id="filter-grid" class="movie-grid"></div>
+        <div id="filter-grid" class="movie-grid" role="list"></div>
         <div class="pagination">
-            <button id="filter-prev" tabindex="0" class="page-btn" onclick="changePage('filter', -1)">Trước</button>
-            <span id="filter-info"></span>
-            <button id="filter-next" tabindex="0" class="page-btn" onclick="changePage('filter', 1)">Sau</button>
+            <button id="filter-prev" tabindex="0" class="page-btn" aria-label="Trang trước" onclick="changePage('filter', -1)">Trước</button>
+            <span id="filter-info" aria-live="polite"></span>
+            <button id="filter-next" tabindex="0" class="page-btn" aria-label="Trang sau" onclick="changePage('filter', 1)">Sau</button>
         </div>
     </div>
 </div>
 
-<div id="player-modal">
+<div id="player-modal" role="dialog" aria-modal="true" aria-labelledby="movie-title-display">
     <div id="player-container">
         <video id="hls-video" controls playsinline style="display: none;"></video>
         <iframe id="video-iframe" src="" frameborder="0" allowfullscreen allow="autoplay; fullscreen" style="display: none;"></iframe>
     </div>
     
     <div class="player-controls">
-        <button id="btn-prev-ep" class="control-btn" onclick="playAdjacentEp(-1)" disabled>⏮ Tập Trước</button>
-        <button id="btn-next-ep" class="control-btn btn-next" onclick="playAdjacentEp(1)" disabled>Tập Tiếp Theo ⏭</button>
+        <button id="btn-prev-ep" class="control-btn" onclick="playAdjacentEp(-1)" aria-label="Phát tập trước" disabled>⏮ Tập Trước</button>
+        <button id="btn-next-ep" class="control-btn btn-next" onclick="playAdjacentEp(1)" aria-label="Phát tập tiếp theo" disabled>Tập Tiếp Theo ⏭</button>
     </div>
 
     <div class="episode-container">
         <h3 id="movie-title-display" style="color: var(--accent-color); margin: 0 0 5px; font-size: 1.8rem;"></h3>
-        <div id="auto-switch-msg" class="auto-switch-msg">⚠️ Máy chủ hiện tại lỗi, đang tự động chuyển kênh...</div>
+        <div id="auto-switch-msg" class="auto-switch-msg" aria-live="assertive">⚠️ Máy chủ hiện tại lỗi, đang tự động chuyển kênh...</div>
         <p id="movie-desc" style="font-size: 1.1rem; color: #cbd5e1; line-height: 1.6; margin-top:10px;"></p>
         <hr style="border: 0.5px solid #475569; margin: 25px 0;">
         
         <strong style="color: #fbbf24; font-size: 1.1rem;">CHỌN BẢN DỊCH / SERVER:</strong>
-        <div id="server-list" class="episode-list" style="margin-bottom: 25px;"></div>
+        <div id="server-list" class="episode-list" style="margin-bottom: 25px;" role="group" aria-label="Danh sách máy chủ"></div>
 
         <strong style="font-size: 1.1rem;">CHỌN TẬP PHIM:</strong>
-        <div id="episode-list" class="episode-list"></div>
+        <div id="episode-list" class="episode-list" role="group" aria-label="Danh sách tập phim"></div>
     </div>
-    <button class="close-btn" tabindex="0" onclick="closePlayer()">ĐÓNG TRÌNH XEM</button>
+    <button class="close-btn" tabindex="0" onclick="closePlayer()" aria-label="Đóng trình xem phim">ĐÓNG TRÌNH XEM</button>
 </div>
 
 <script>
     const API_DOMAIN = "https://phim.nguonc.com/api/films/";
     let hlsInstance = null;
+    let searchTimeout = null; // Dùng cho chức năng Debounce
     
     let state = {
         k_series: { page: 1, total: 1, url: API_DOMAIN + "phim-moi-cap-nhat" },
@@ -315,6 +310,27 @@
     let currentMovieEpisodes = [];
     let currentServerIdx = 0;
     let currentEpIdx = 0;
+
+    // TÍNH NĂNG 1: BẢO MẬT CHỐNG XSS
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[tag] || tag));
+    }
+
+    // TÍNH NĂNG 2: ACCESSIBILITY - ĐỔI CỠ CHỮ
+    function toggleFontSize() {
+        document.body.classList.toggle('large-text');
+        const btn = document.getElementById('font-toggle');
+        if(document.body.classList.contains('large-text')) {
+            btn.innerText = 'A-';
+            btn.setAttribute('aria-label', 'Giảm kích thước chữ');
+        } else {
+            btn.innerText = 'A+';
+            btn.setAttribute('aria-label', 'Tăng kích thước chữ');
+        }
+    }
 
     function checkIsSmartTV() {
         const ua = navigator.userAgent.toLowerCase();
@@ -352,10 +368,8 @@
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), ms);
-            
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
-            
             if (!res.ok) return null; 
             return await res.json(); 
         } catch (error) {
@@ -367,32 +381,24 @@
         window.scrollTo(0,0);
         document.getElementById('home-content').style.display = 'none';
         document.getElementById('filter-content').style.display = 'block';
-        document.getElementById('filter-title').innerText = 'Kết quả tìm kiếm: ' + keyword;
+        document.getElementById('filter-title').innerText = 'Kết quả tìm kiếm: ' + escapeHTML(keyword);
         showLoading(true);
         
-        let items = [];
-        let totalPages = 1;
-        let domain = 'https://img.nguonc.com';
+        let items = []; let totalPages = 1; let domain = 'https://img.nguonc.com';
 
         try {
             let jsonNC = await safeFetch(`https://phim.nguonc.com/api/films/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}`);
-            
             if (jsonNC && jsonNC.items && jsonNC.items.length > 0) {
-                items = jsonNC.items;
-                totalPages = jsonNC.paginate?.total_page || 1;
-            } 
-            else {
+                items = jsonNC.items; totalPages = jsonNC.paginate?.total_page || 1;
+            } else {
                 let jsonKK = await safeFetch(`https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&limit=24`); 
                 if (jsonKK && jsonKK.data && jsonKK.data.items && jsonKK.data.items.length > 0) {
-                    items = jsonKK.data.items;
-                    totalPages = jsonKK.data.params?.pagination?.totalPages || 1;
+                    items = jsonKK.data.items; totalPages = jsonKK.data.params?.pagination?.totalPages || 1;
                     domain = jsonKK.data.APP_DOMAIN_CDN_IMAGE || 'https://img.phimapi.com';
-                }
-                else {
+                } else {
                     let jsonOP = await safeFetch(`https://ophim1.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
                     if (jsonOP && jsonOP.data && jsonOP.data.items && jsonOP.data.items.length > 0) {
-                        items = jsonOP.data.items;
-                        totalPages = jsonOP.data.params?.pagination?.totalPages || 1;
+                        items = jsonOP.data.items; totalPages = jsonOP.data.params?.pagination?.totalPages || 1;
                         domain = jsonOP.data.APP_DOMAIN_CDN_IMAGE || 'https://ophim1.com/uploads/movies';
                     }
                 }
@@ -404,12 +410,9 @@
             } else {
                 const normalizedItems = items.map(m => {
                     let imgUrl = m.thumb_url || m.poster_url || '';
-                    if (!imgUrl.startsWith('http')) {
-                        imgUrl = `${domain}/${imgUrl}`.replace(/([^:]\/)\/+/g, "$1");
-                    }
+                    if (!imgUrl.startsWith('http')) imgUrl = `${domain}/${imgUrl}`.replace(/([^:]\/)\/+/g, "$1");
                     return { ...m, full_img_url: imgUrl };
                 });
-                
                 renderGrid(normalizedItems, 'filter-grid');
                 
                 const paginationBlock = document.querySelector('#filter-content .pagination');
@@ -418,16 +421,9 @@
                 
                 const btnPrev = document.getElementById('filter-prev');
                 const btnNext = document.getElementById('filter-next');
-                
                 btnPrev.onclick = () => executeSearch(keyword, page - 1);
                 btnNext.onclick = () => executeSearch(keyword, page + 1);
-                btnPrev.disabled = page <= 1;
-                btnNext.disabled = page >= totalPages;
-
-                setTimeout(() => {
-                    const firstMovie = document.querySelector('#filter-grid .movie-card');
-                    if(firstMovie) firstMovie.focus();
-                }, 300);
+                btnPrev.disabled = page <= 1; btnNext.disabled = page >= totalPages;
             }
         } catch(e) {
             document.getElementById('filter-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444;">Đã xảy ra lỗi mạng khi tìm kiếm, vui lòng thử lại!</div>';
@@ -435,55 +431,102 @@
         showLoading(false);
     }
 
-    function initSearch() {
+    // TÍNH NĂNG 3: TỐI ƯU DEBOUNCE TÌM KIẾM
+    document.getElementById('search-input').addEventListener('input', e => {
+        clearTimeout(searchTimeout);
+        const kw = e.target.value.trim();
+        if (kw) {
+            searchTimeout = setTimeout(() => { executeSearch(kw, 1); }, 600); // Tự động tìm sau 0.6s
+        }
+    });
+
+    function executeCurrentSearch() {
         const kw = document.getElementById('search-input').value.trim();
         if(kw) executeSearch(kw, 1);
     }
 
+    document.getElementById('search-input').addEventListener('keypress', e => { 
+        if(e.key === 'Enter') {
+            e.preventDefault(); clearTimeout(searchTimeout); executeCurrentSearch();
+            document.activeElement.blur(); 
+        }
+    });
+
+    // TÍNH NĂNG 4: SPATIAL NAVIGATION (ĐIỀU HƯỚNG D-PAD THÔNG MINH CHO TV)
+    function isElementVisible(el) {
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== 'hidden';
+    }
+
+    function getFocusableElements() {
+        return Array.from(document.querySelectorAll('a[href], button, input, [tabindex]:not([tabindex="-1"])'))
+            .filter(el => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden') && isElementVisible(el));
+    }
+
+    function handleTVNavigation(direction) {
+        const focusables = getFocusableElements();
+        if (!focusables.length) return;
+        const current = document.activeElement;
+        
+        if (!current || !focusables.includes(current)) {
+            focusables[0].focus(); return;
+        }
+
+        const currentRect = current.getBoundingClientRect();
+        let bestNext = null;
+        let minDistance = Infinity;
+
+        focusables.forEach(el => {
+            if (el === current) return;
+            const rect = el.getBoundingClientRect();
+            let isCandidate = false;
+
+            // Xác định xem phần tử có nằm ở hướng người dùng bấm không
+            if (direction === 'ArrowLeft' && rect.right <= currentRect.left + 15) isCandidate = true;
+            if (direction === 'ArrowRight' && rect.left >= currentRect.right - 15) isCandidate = true;
+            if (direction === 'ArrowUp' && rect.bottom <= currentRect.top + 15) isCandidate = true;
+            if (direction === 'ArrowDown' && rect.top >= currentRect.bottom - 15) isCandidate = true;
+
+            if (isCandidate) {
+                // Tính khoảng cách tâm giữa 2 phần tử
+                const dx = (rect.left + rect.width / 2) - (currentRect.left + currentRect.width / 2);
+                const dy = (rect.top + rect.height / 2) - (currentRect.top + currentRect.height / 2);
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                // Trọng số phạt để ưu tiên phần tử thẳng hàng (cùng trục)
+                let axisPenalty = (direction === 'ArrowLeft' || direction === 'ArrowRight') ? Math.abs(dy) * 2 : Math.abs(dx) * 2;
+                const totalScore = dist + axisPenalty;
+
+                if (totalScore < minDistance) { minDistance = totalScore; bestNext = el; }
+            }
+        });
+
+        if (bestNext) {
+            bestNext.focus();
+            if (bestNext.scrollIntoViewIfNeeded) bestNext.scrollIntoViewIfNeeded();
+            else bestNext.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // Xử lý sự kiện bàn phím tổng thể
     document.addEventListener('keydown', e => { 
         if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 461 || e.keyCode === 10009) {
             closePlayer(); 
         }
         
         if (e.key === "Enter" && document.activeElement && document.activeElement.tagName !== 'INPUT') {
-            e.preventDefault();
-            document.activeElement.click();
+            e.preventDefault(); document.activeElement.click();
         }
 
-        const playerModal = document.getElementById('player-modal');
-        if (document.body.classList.contains('is-tv') && playerModal.style.display === 'flex') {
-            const activeEl = document.activeElement;
-            
-            if (e.key === "ArrowDown" || e.keyCode === 40) {
-                if (!activeEl || activeEl.tagName === 'BODY' || activeEl.tagName === 'VIDEO' || activeEl.tagName === 'IFRAME') {
-                    e.preventDefault();
-                    const activeServer = document.querySelector('.server-btn.active') || document.querySelector('.server-btn');
-                    if (activeServer) {
-                        activeServer.focus();
-                        activeServer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-            }
-            
-            if (e.key === "ArrowUp" || e.keyCode === 38) {
-                if (activeEl && (activeEl.classList.contains('server-btn') || activeEl.classList.contains('episode-btn'))) {
-                    const modal = document.getElementById('player-modal');
-                    modal.scrollTo({ top: 0, behavior: 'smooth' });
-                    document.activeElement.blur(); 
-                }
+        if (document.body.classList.contains('is-tv')) {
+            const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+            if (keys.includes(e.key)) {
+                e.preventDefault();
+                handleTVNavigation(e.key);
             }
         }
     });
 
-    document.getElementById('search-input').addEventListener('keypress', e => { 
-        if(e.key === 'Enter') {
-            e.preventDefault();
-            initSearch();
-            document.activeElement.blur(); 
-        }
-    });
-
-    // CẬP NHẬT 2: Sửa hàm lấy phim để tính tổng số trang chuẩn xác hơn cho nhiều loại API
     async function fetchMovies(key, baseUrl) {
         try {
             const separator = baseUrl.includes('?') ? '&' : '?';
@@ -491,14 +534,7 @@
             const json = await res.json();
             
             let items = json.items || (Array.isArray(json.data) ? json.data : (json.data?.items || []));
-            
-            // Quét đa dạng cấu trúc API để lấy chính xác tổng số trang
-            let totalPages = json.paginate?.total_page 
-                || json.paginate?.totalPages 
-                || json.page?.totalPages 
-                || json.data?.params?.pagination?.totalPages
-                || (json.data?.params ? Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage) : 1)
-                || 1;
+            let totalPages = json.paginate?.total_page || json.paginate?.totalPages || json.page?.totalPages || json.data?.params?.pagination?.totalPages || (json.data?.params ? Math.ceil(json.data.params.pagination.totalItems / json.data.params.pagination.totalItemsPerPage) : 1) || 1;
 
             if (!items || !items.length) {
                 document.getElementById(`${key.replace('_','-')}-grid`).innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444; font-size: 1.2rem;">Không có dữ liệu phim cho danh mục này!</div>';
@@ -510,9 +546,7 @@
             state[key].total = totalPages;
             renderGrid(items, `${key.replace('_','-')}-grid`);
             updatePagination(key);
-        } catch (e) { 
-            console.error("Lỗi khi tải phim:", e); 
-        }
+        } catch (e) { console.error("Lỗi khi tải phim:", e); }
     }
 
     function renderGrid(items, gridId) {
@@ -520,13 +554,14 @@
         grid.innerHTML = items.map(m => {
             const imgUrl = m.full_img_url || ((m.thumb_url || m.poster_url || '').startsWith('http') ? (m.thumb_url || m.poster_url) : 'https://img.nguonc.com/' + (m.thumb_url || m.poster_url));
             
+            // XSS Prevention áp dụng tại đây
             return `
-            <div class="movie-card" tabindex="0" onclick='playMovie(${JSON.stringify(m.slug)})'>
-                <span class="quality-tag">${m.quality || m.lang || 'HD'}</span>
-                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.onerror=null; this.src='https://placehold.co/200x300?text=No+Poster'">
+            <div class="movie-card" tabindex="0" onclick='playMovie(${JSON.stringify(m.slug)})' role="button" aria-label="Xem phim ${escapeHTML(m.name)}">
+                <span class="quality-tag">${escapeHTML(m.quality || m.lang || 'HD')}</span>
+                <img loading="lazy" decoding="async" src="${imgUrl}" onload="this.classList.add('loaded')" onerror="this.onerror=null; this.src='https://placehold.co/200x300?text=No+Poster'" alt="Poster ${escapeHTML(m.name)}">
                 <div class="movie-info">
-                    <h3>${m.name}</h3>
-                    <small>${m.year || ''} ${m.language ? '• ' + m.language : ''}</small>
+                    <h3>${escapeHTML(m.name)}</h3>
+                    <small>${escapeHTML(m.year || '')} ${m.language ? '• ' + escapeHTML(m.language) : ''}</small>
                 </div>
             </div>
         `}).join('');
@@ -545,22 +580,18 @@
         document.getElementById(key.replace('_','-') + '-grid').scrollIntoView({behavior:'smooth'});
     }
 
-    // CẬP NHẬT 3: Cập nhật hàm loadFilter để đảm bảo sự kiện onClick luôn chuẩn khi lọc
     async function loadFilter(path, title) {
         window.scrollTo(0,0);
         document.getElementById('home-content').style.display = 'none';
         document.getElementById('filter-content').style.display = 'block';
-        document.getElementById('filter-title').innerText = title;
+        document.getElementById('filter-title').innerText = escapeHTML(title);
         state.filter.url = `${API_DOMAIN}${path}`;
         state.filter.page = 1;
         
-        // Đảm bảo nút phân trang luôn hoạt động đúng cho bộ lọc, tránh bị ghi đè bởi ô tìm kiếm
         document.getElementById('filter-prev').onclick = () => changePage('filter', -1);
         document.getElementById('filter-next').onclick = () => changePage('filter', 1);
 
-        showLoading(true);
-        await fetchMovies('filter', state.filter.url);
-        showLoading(false);
+        showLoading(true); await fetchMovies('filter', state.filter.url); showLoading(false);
     }
 
     async function playMovie(slug, isFallback = false) {
@@ -614,12 +645,13 @@
 
             if (!currentMovieEpisodes.length) { alert("Chưa có link phát!"); closePlayer(); return; }
 
-            document.getElementById('movie-title-display').innerText = movieInfo.name || movieInfo.title;
+            // XSS Prevention cho tiêu đề và mô tả
+            document.getElementById('movie-title-display').innerText = escapeHTML(movieInfo.name || movieInfo.title);
             const desc = movieInfo.content || movieInfo.description || "";
-            document.getElementById('movie-desc').innerText = desc.replace(/<[^>]*>?/gm, '').substring(0, 300) + "...";
+            document.getElementById('movie-desc').innerText = escapeHTML(desc.replace(/<[^>]*>?/gm, '').substring(0, 300)) + "...";
             
             document.getElementById('server-list').innerHTML = currentMovieEpisodes.map((ep, idx) => `
-                <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" tabindex="0" onclick="selectServer(${idx}, this)">${ep.server_name}</button>
+                <button class="episode-btn server-btn ${idx === 0 ? 'active' : ''}" tabindex="0" onclick="selectServer(${idx}, this)" aria-label="Chọn máy chủ ${escapeHTML(ep.server_name)}">${escapeHTML(ep.server_name)}</button>
             `).join('');
 
             selectServer(0, null, 0); 
@@ -637,7 +669,7 @@
         const eps = currentMovieEpisodes[serverIndex].server_data;
         document.getElementById('episode-list').innerHTML = eps.map((e, i) => {
             let url = e.link_m3u8 || e.m3u8 || e.link_embed || e.embed;
-            return `<button class="episode-btn" id="ep-btn-${i}" tabindex="0" onclick="loadVideo('${url}', this, ${i})">${e.name}</button>`;
+            return `<button class="episode-btn" id="ep-btn-${i}" tabindex="0" onclick="loadVideo('${url}', this, ${i})" aria-label="Phát ${escapeHTML(e.name)}">${escapeHTML(e.name)}</button>`;
         }).join('');
 
         let idxToPlay = forceEpIndex !== -1 ? forceEpIndex : 0;
@@ -656,10 +688,7 @@
     }
 
     function loadVideo(url, btn, epIndex) {
-        if (!url) {
-            autoSwitchServer();
-            return;
-        }
+        if (!url) { autoSwitchServer(); return; }
 
         currentEpIdx = epIndex;
         document.getElementById('auto-switch-msg').style.display = "none";
@@ -681,16 +710,11 @@
                     videoTag.play().catch(() => console.log("Cần thao tác tay để Play"));
                 });
                 hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        hlsInstance.destroy();
-                        autoSwitchServer();
-                    }
+                    if (data.fatal) { hlsInstance.destroy(); autoSwitchServer(); }
                 });
             } else if (videoTag.canPlayType('application/vnd.apple.mpegurl')) {
                 videoTag.src = url;
-                videoTag.onloadedmetadata = () => {
-                    videoTag.play().catch(()=>{});
-                };
+                videoTag.onloadedmetadata = () => { videoTag.play().catch(()=>{}); };
                 videoTag.onerror = autoSwitchServer;
             }
         } else {
