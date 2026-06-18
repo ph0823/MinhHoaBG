@@ -33,8 +33,6 @@
 
         h1 { text-align: center; color: var(--primary-color); letter-spacing: 1px; margin-bottom: 10px; }
 
-        /* --- APP CONTAINER (Bọc toàn bộ Player và Playlist) --- */
-        /* Mặc định cho Mobile: Hiển thị dạng cột trên - dưới */
         .app-container {
             width: 100%;
             background: #1a1a1a;
@@ -45,7 +43,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
-        /* --- PLAYER WRAPPER --- */
         .player-wrapper {
             width: 100%;
             aspect-ratio: 16 / 9;
@@ -61,6 +58,7 @@
         video:focus { box-shadow: inset 0 0 0 4px var(--focus-color); }
         video::-webkit-media-controls-fullscreen-button { display: none !important; }
 
+        /* --- VISUALIZER SÓNG NHẠC CSS (SỬA LỖI KHÔNG PHÁT ĐƯỢC RADIO) --- */
         #visualizer {
             position: absolute;
             width: 100%;
@@ -68,28 +66,37 @@
             display: none;
             justify-content: center;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
             z-index: 2;
             pointer-events: none; 
         }
 
         .bar {
-            width: 8px; height: 20px; background: var(--primary-color);
-            border-radius: 4px; transition: height 0.05s ease;
+            width: 10px;
+            height: 60px;
+            background: var(--primary-color);
+            border-radius: 4px;
             box-shadow: 0 0 15px var(--primary-color);
         }
 
-        /* --- DANH SÁCH KÊNH (Mặc định cho Mobile) --- */
-        /* Luôn hiển thị, nằm ngay dưới Video, có thanh cuộn */
+        /* Hiệu ứng sóng nhảy tự động bằng CSS Animation khi phát Radio để tránh lỗi CORS */
+        .animated-bar {
+            animation: bounce 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: scaleY(0.2); opacity: 0.4; }
+            100% { transform: scaleY(1.2); opacity: 1; }
+        }
+
         .channel-grid {
             width: 100%;
             padding: 15px;
             box-sizing: border-box;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 10px;
-            max-height: 350px; /* Cho phép cuộn trên đt */
+            max-height: 350px; 
             overflow-y: auto;
             background: #1a1a1a;
         }
@@ -98,11 +105,11 @@
         .channel-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 10px; }
         .channel-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
 
-        /* --- CHẾ ĐỘ OVERLAY CHO TABLET / PC / TV (>= 768px) --- */
+        /* --- CHẾ ĐỘ OVERLAY CHO PC / TV / TABLET (>= 768px) --- */
         @media (min-width: 768px) {
             .app-container {
-                display: block; /* Hủy flex để dùng Absolute overlay */
                 position: relative;
+                display: block;
             }
 
             .channel-grid {
@@ -110,22 +117,19 @@
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                height: 35%; /* Chiếm 35% chiều cao video */
+                height: 40%; 
                 max-height: none;
-                background: rgba(20, 20, 20, 0.85); 
-                backdrop-filter: blur(8px); 
+                background: rgba(20, 20, 20, 0.9); 
+                backdrop-filter: blur(10px); 
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 0 0 12px 12px;
                 z-index: 1000; 
-                
-                /* Ẩn mặc định chờ vuốt/di chuột */
                 transform: translateY(100%);
                 opacity: 0;
                 pointer-events: none;
                 transition: all 0.3s ease-out;
             }
 
-            /* Hiệu ứng trồi lên */
             .app-container.show-overlay .channel-grid,
             .channel-grid:focus-within {
                 transform: translateY(0);
@@ -134,7 +138,6 @@
             }
         }
 
-        /* --- CHẾ ĐỘ TOÀN MÀN HÌNH CHUNG --- */
         .app-container.fullscreen-mode {
             position: fixed !important;
             top: 0 !important; left: 0 !important;
@@ -147,15 +150,14 @@
 
         .app-container.fullscreen-mode .player-wrapper {
             height: 100%;
-            aspect-ratio: auto; /* Bỏ tỷ lệ để lấp đầy màn hình */
+            aspect-ratio: auto; 
         }
         
         .app-container.fullscreen-mode .channel-grid { border-radius: 0; }
 
-        /* --- NÚT BẤM KÊNH --- */
         .channel-card {
             background: var(--container-bg);
-            padding: 20px 10px;
+            padding: 18px 10px;
             text-align: center;
             border-radius: 8px;
             cursor: pointer;
@@ -178,9 +180,8 @@
             border-color: #fff;
         }
 
-        .tag { display: block; font-size: 10px; margin-top: 5px; opacity: 0.7; text-transform: uppercase; }
+        .tag { display: block; font-size: 10px; margin-top: 5px; opacity: 0.8; text-transform: uppercase; color: #f1c40f; }
 
-        /* --- CONTROL BAR DƯỚI APP --- */
         .controls-bar { display: flex; justify-content: center; margin-top: 25px; }
 
         .btn-recall {
@@ -220,7 +221,8 @@
     <div class="app-container" id="appContainer">
         <div class="player-wrapper">
             <div id="visualizer"></div>
-            <video id="video" controls playsinline></video>
+            <!-- Bổ sung crossorigin để giảm lỗi chặn luồng trên Tivi -->
+            <video id="video" controls playsinline crossorigin="anonymous"></video>
         </div>
         
         <div class="channel-grid" id="playlist"></div>
@@ -252,15 +254,14 @@
         { name: "SCTV4", url: "https://liveh12.vtvprime.vn/hls/SCTV4/03.m3u8", type: "tv" },
         { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },
         { name: "VTV1", url: "https://live.fptplay53.net/fnxhd1/vtv1hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+
         //{ name: "VTV3", url: "https://live.fptplay53.net/fnxch2/vtv3hd_abr.smil/chunklist_b1000000.m3u8", type: "tv" },
-        { name: "VTV3", url: "https://live.fptplay53.net/fnxhd1/vtv3hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
         //{ name: "VTV5", url: "https://live-a.fptplay53.net/live/media/VTV5HD/live_hls_avc/VTV5HD-avc1_600000=10004-mp4a_131600=20000.m3u8", type: "tv" },
         //https://vtvgolive-ssaimh.vtvdigital.vn/4ZR-DGXrVEimB6w4rw0HIw/1781732113/manifest/vtv5/master.m3u8
+        
+        { name: "VTV3", url: "https://live.fptplay53.net/fnxhd1/vtv3hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
         { name: "VTV5", url: "https://vtvgolive-ssaimh.vtvdigital.vn/4ZR-DGXrVEimB6w4rw0HIw/1781732113/manifest/vtv5/playlist_720p.m3u8", type: "tv" },
-
-               
         { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
-        //{ name: "THVL1", url: "https://live.fptplay53.net/epzch2/vinhlong1_abr.smil/chunklist.m3u8", type: "tv" },
         { name: "THVL1", url: "https://live.fptplay53.net/epzhd2/vinhlong1_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
         { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8", type: "tv" },
         { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8", type: "tv" },
@@ -271,10 +272,12 @@
         { name: "Hollywood", url: "https://amg01076-lightningintern-actionhollywood-samsungnz-82rry.amagi.tv/playlist/amg01076-lightningintern-actionhollywood-samsungnz/playlist.m3u8", type: "tv" },
         { name: "VNToday", url: "https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
         
+        // Link Radio
         //{ name: "FM 99.9", url: "https://strm.voh.com.vn/radio/channel1/chunklist_w144246478.m3u8", type: "radio" },
-        { name: "FM 99.9", url: "https://strm.voh.com.vn/radio/StreamCH3/playlist.m3u8", type: "radio" },
-        
         //{ name: "VOV GT", url: "https://tfsj1gr4nhct1gwzdrcttfa4urmmoptoz1musp75gq4mbp74go55qchz8c5o.100ycdn.com/play.vovgiaothong.vn/live/gthcm/playlist.m3u8", type: "radio" }
+
+         
+        { name: "FM 99.9", url: "https://strm.voh.com.vn/radio/StreamCH3/playlist.m3u8", type: "radio" },
         { name: "VOV GT", url: "https://play.vovgiaothong.vn/live/gthn/playlist.m3u8", type: "radio" }
     ];
 
@@ -288,133 +291,98 @@
     let currentChannelIndex = 0;
     let previousChannelIndex = null;
     let hideOverlayTimeout; 
-    
-    let audioCtx, analyser, source;
-    const barCount = 40;
-    const bars = [];
-    let isVisualizerEnabled = true;
+    const barCount = 25; // Giảm số lượng bar xuống một chút để hiển thị đẹp hơn trên TV
 
+    // Tạo các cột sóng nhạc CSS tĩnh trước
     for (let i = 0; i < barCount; i++) {
         const bar = document.createElement('div');
         bar.className = 'bar';
+        // Tạo độ trễ animation (delay) ngẫu nhiên để các cột nhảy so le tự nhiên
+        bar.style.animationDelay = `${Math.random() * 0.8}s`;
         visualizer.appendChild(bar);
-        bars.push(bar);
     }
 
-    // --- XỬ LÝ SỰ KIỆN CHUỘT & CHẠM TAY CHO MÀN HÌNH LỚN ---
-    function triggerOverlay(yPosition) {
-        if (window.innerWidth < 768) return; // Không can thiệp nếu là Mobile
-        
-        const rect = appContainer.getBoundingClientRect();
-        // Nếu chuột/tay nằm ở nửa dưới của video -> Hiện overlay
-        if (yPosition > rect.height * 0.5) {
-            appContainer.classList.add('show-overlay');
-            resetHideTimeout(); 
-        }
+    // --- ĐIỀU KHIỂN ĐÓNG/MỞ DANH SÁCH (OVERLAY) ---
+    function showOverlayMenu() {
+        if (window.innerWidth < 768) return;
+        appContainer.classList.add('show-overlay');
+        resetHideTimeout();
     }
 
-    // Dành cho PC / Chuột
-    appContainer.addEventListener('mousemove', (e) => {
-        const relativeY = e.clientY - appContainer.getBoundingClientRect().top;
-        triggerOverlay(relativeY);
-    });
-
-    appContainer.addEventListener('mouseleave', () => {
+    function hideOverlayMenu() {
         if (window.innerWidth >= 768) {
             appContainer.classList.remove('show-overlay');
             clearTimeout(hideOverlayTimeout);
         }
-    });
-
-    // Dành cho Touch trên Tablet
-    appContainer.addEventListener('click', (e) => {
-        if (window.innerWidth < 768) return; 
-
-        // Nếu click vào danh sách thì chỉ reset thời gian ẩn
-        if (e.target.closest('.channel-grid')) {
-            resetHideTimeout();
-            return;
-        }
-        
-        // Nếu click vào video, bật/tắt overlay thủ công
-        appContainer.classList.toggle('show-overlay');
-        if (appContainer.classList.contains('show-overlay')) {
-            resetHideTimeout();
-        }
-    });
+    }
 
     function resetHideTimeout() {
         clearTimeout(hideOverlayTimeout);
         hideOverlayTimeout = setTimeout(() => {
-            appContainer.classList.remove('show-overlay');
+            // Nếu người dùng đang tập trung (focus) remote/bàn phím vào các nút trong list, không tự ẩn menu
+            if (!playlist.contains(document.activeElement)) {
+                appContainer.classList.remove('show-overlay');
+            } else {
+                resetHideTimeout(); // Gia hạn thêm thời gian nếu vẫn đang tương tác
+            }
         }, 5000); 
     }
 
-    // --- VISUALIZER CHO RADIO ---
-    function initAudioVisualizer() {
-        if (!isVisualizerEnabled) return;
-        try {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) throw new Error("Trình duyệt không hỗ trợ");
-                
-                audioCtx = new AudioContext();
-                analyser = audioCtx.createAnalyser();
-                source = audioCtx.createMediaElementSource(video);
-                source.connect(analyser);
-                analyser.connect(audioCtx.destination);
-                analyser.fftSize = 256;
-                animate();
-            }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        } catch (error) {
-            console.warn("Visualizer bị tắt:", error);
-            isVisualizerEnabled = false;
-            visualizer.style.display = 'none';
+    // Sự kiện Chuột PC
+    appContainer.addEventListener('mousemove', (e) => {
+        const rect = appContainer.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        if (relativeY > rect.height * 0.4) {
+            showOverlayMenu();
         }
-    }
+    });
+    appContainer.addEventListener('mouseleave', hideOverlayMenu);
 
-    function animate() {
-        if (!isVisualizerEnabled) return;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        analyser.getByteFrequencyData(dataArray);
-
-        for (let i = 0; i < barCount; i++) {
-            const barHeight = dataArray[i * 2] || 0;
-            bars[i].style.height = (barHeight / 2) + 10 + 'px';
-            bars[i].style.opacity = (barHeight / 255) + 0.3;
+    // Sự kiện Click/Touch Tablet
+    appContainer.addEventListener('click', (e) => {
+        if (window.innerWidth < 768) return; 
+        if (e.target.closest('.channel-grid')) {
+            resetHideTimeout();
+            return;
         }
-        requestAnimationFrame(animate);
-    }
+        appContainer.classList.toggle('show-overlay');
+        if (appContainer.classList.contains('show-overlay')) resetHideTimeout();
+    });
 
-    // --- LOGIC PHÁT VIDEO ---
+    // --- LOGIC PHÁT VIDEO / RADIO ---
     function playChannel(channel) {
-        if (channel.type === "radio" && isVisualizerEnabled) {
+        if (channel.type === "radio") {
             visualizer.style.display = 'flex';
-            setTimeout(initAudioVisualizer, 500); 
+            // Kích hoạt animation nhảy sóng CSS cho tất cả các bar
+            document.querySelectorAll('.bar').forEach(bar => bar.classList.add('animated-bar'));
         } else {
             visualizer.style.display = 'none';
+            // Tắt animation để tiết kiệm CPU khi xem Tivi thường
+            document.querySelectorAll('.bar').forEach(bar => bar.classList.remove('animated-bar'));
         }
 
         if (hls) hls.destroy();
 
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = channel.url;
-            video.play().catch(e => console.log("Cần tương tác"));
-        } else if (Hls.isSupported()) {
-            hls = new Hls();
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                maxMaxBufferLength: 10 // Giới hạn buffer ngắn lại giúp Tivi load kênh nhanh hơn
+            });
             hls.loadSource(channel.url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(e => console.log("Cần tương tác"));
+                video.play().catch(e => console.log("Chờ tương tác từ người dùng"));
             });
+            hls.on(Hls.ErrorTypes.NETWORK_ERROR, () => {
+                console.log("Lỗi mạng luồng stream, đang thử lại...");
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Dành riêng cho trình duyệt Safari PC hoặc một số dòng LG webOS / Tizen TV hỗ trợ sẵn HLS gốc
+            video.src = channel.url;
+            video.play().catch(e => console.log("Chờ tương tác"));
         }
     }
 
-    // FULLSCREEN CHO APP ĐỂ BAO GỒM CẢ OVERLAY
     video.addEventListener('dblclick', toggleFullScreen);
-
     function toggleFullScreen() {
         appContainer.classList.toggle('fullscreen-mode');
         document.body.style.overflow = appContainer.classList.contains('fullscreen-mode') ? 'hidden' : '';
@@ -425,14 +393,9 @@
         if (previousChannelIndex !== null) {
             const previousCard = playlist.children[previousChannelIndex];
             if (previousCard) {
-                if (window.innerWidth >= 768) {
-                    appContainer.classList.add('show-overlay');
-                    resetHideTimeout(); 
-                }
-                if (!appContainer.classList.contains('fullscreen-mode')) {
-                    previousCard.focus(); 
-                }
+                showOverlayMenu();
                 previousCard.click(); 
+                setTimeout(() => previousCard.focus(), 100);
             }
         }
     }
@@ -443,7 +406,7 @@
     channels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
-        card.setAttribute('tabindex', '0');
+        card.setAttribute('tabindex', '0'); // Giúp Remote Tivi có thể bắt được tiêu điểm (Focus)
         card.innerHTML = `${ch.name}${ch.type === 'radio' ? ' <span class="tag">radio</span>' : ''}`;
         
         const triggerPlay = (e) => {
@@ -459,15 +422,16 @@
             card.classList.add('active');
             playChannel(ch);
             
-            // Ẩn overlay sau khi chọn kênh
-            appContainer.classList.remove('show-overlay');
-            clearTimeout(hideOverlayTimeout);
-            
+            // Ẩn nhẹ overlay sau khi đổi kênh thành công
+            setTimeout(hideOverlayMenu, 300);
             video.focus(); 
         };
 
         card.onclick = triggerPlay;
-        card.onkeypress = (e) => { if (e.key === 'Enter') triggerPlay(e); };
+        card.onkeydown = (e) => { if (e.key === 'Enter') triggerPlay(e); };
+        
+        // Khi dùng phím điều hướng Remote TV di chuyển vào thẻ nào, tự động hiện Overlay Menu lên
+        card.onfocus = () => { showOverlayMenu(); };
 
         playlist.appendChild(card);
         
@@ -477,7 +441,7 @@
         }
     });
 
-    // --- XỬ LÝ PHÍM ĐIỀU HƯỚNG ---
+    // --- HỖ TRỢ PHÍM BACK / RETURN TRÊN REMOTE SMART TV (LG webOS & Android TV) ---
     window.history.pushState({ noExit: true }, '', window.location.href);
     window.addEventListener('popstate', function(event) {
         recallChannel();
@@ -485,8 +449,12 @@
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' || e.key === 'q' || e.key === 'Q' || e.keyCode === 461) {
-            if (previousChannelIndex !== null) {
+        // Mã phím 461 là nút BACK trên điều khiển LG webOS, 27 là Esc PC
+        if (e.key === 'Backspace' || e.keyCode === 461 || e.key === 'Escape') {
+            if (appContainer.classList.contains('fullscreen-mode')) {
+                e.preventDefault();
+                toggleFullScreen();
+            } else if (previousChannelIndex !== null) {
                 e.preventDefault();
                 recallChannel();
             }
