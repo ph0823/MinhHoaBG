@@ -73,8 +73,10 @@
 </head>
 <body>
     <div class="container">
-        <h2>Phân loại dữ liệu theo độ tuổi</h2>
-        <img src="https://i.ibb.co/JwFbjXk7/Dat.png" alt="Dat" border="0" width="50px">
+        <center> 
+            <h2>Phân loại danh sách theo độ tuổi</h2>
+            <img src="https://i.ibb.co/JwFbjXk7/Dat.png" alt="Dat" border="0" width="50px">
+        </center> 
         <p>Mời anh Đạt tải lên file Excel cần lọc có chứa cột <strong>"Ngày sinh"</strong> hoặc <strong>"Năm sinh"</strong>.</p>
         
         <!-- Khu vực tuỳ chỉnh độ tuổi -->
@@ -127,11 +129,11 @@
             }
 
             if (!fileInput.files.length) {
-                alert('Vui lòng chọn một file Excel!');
+                alert('Anh Đạt hãy chọn một file Excel!');
                 return;
             }
 
-            statusDiv.innerText = "Đang xử lý...";
+            statusDiv.innerText = "Anh Đạt chờ một chút, đang xử lý dữ liệu ...";
             statusDiv.style.color = "#2e7d32";
             const file = fileInput.files[0];
             const reader = new FileReader();
@@ -163,7 +165,7 @@
                     }
 
                     if (headerRowIndex === -1) {
-                        throw new Error("Không tìm thấy cột 'Ngày sinh' hoặc 'Năm sinh' trong file!");
+                        throw new Error("Không tìm thấy cột 'Ngày sinh' hoặc 'Năm sinh' trong file, anh Đạt!");
                     }
 
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, raw: false, dateNF: 'dd/mm/yyyy' });
@@ -230,10 +232,10 @@
                     }
 
                     // Lưu file kèm theo thông tin mốc tuổi vào tên file
-                    const outputFileName = `Ket_qua_phan_loai_${t1}_${t2}.xlsx`;
+                    const outputFileName = `DSLoc${t1}_${t2}.xlsx`;
                     XLSX.writeFile(newWorkbook, outputFileName);
                     
-                    statusDiv.innerText = `Đã xử lý và tải xuống thành công file: ${outputFileName}`;
+                    statusDiv.innerText = `Đã xử lý và tải xuống thành công file: ${outputFileName}, anh Đạt.`;
                     statusDiv.style.color = "#2e7d32";
 
                 } catch (error) {
