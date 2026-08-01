@@ -58,21 +58,43 @@
             }
 
             statusDiv.innerText = "Đang xử lý...";
+            statusDiv.style.color = "#2e7d32";
             const file = fileInput.files[0];
             const reader = new FileReader();
 
             reader.onload = function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    // Đọc file Excel, cellDates: true giúp tự động parse định dạng ngày của Excel
                     const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-
-                    // Lấy sheet đầu tiên
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
 
-                    // Chuyển sheet thành mảng JSON. dateNF định dạng lại ngày tháng thành chuỗi
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'dd/mm/yyyy' });
+                    // Bước 1: Quét file để tự động tìm dòng chứa tiêu đề (bỏ qua các dòng trống hoặc tên báo cáo)
+                    const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd/mm/yyyy' });
+                    let headerRowIndex = -1;
+                    
+                    for (let i = 0; i < Math.min(20, aoa.length); i++) {
+                        const row = aoa[i];
+                        if (!row) continue;
+                        
+                        // Kiểm tra xem dòng này có chứa cột nào tên "Ngày sinh" hoặc "Năm sinh" không
+                        const hasBirthCol = row.some(cell => 
+                            cell && typeof cell === 'string' && 
+                            (cell.toLowerCase().includes('ngày sinh') || cell.toLowerCase().includes('năm sinh'))
+                        );
+                        
+                        if (hasBirthCol) {
+                            headerRowIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (headerRowIndex === -1) {
+                        throw new Error("Không tìm thấy cột 'Ngày sinh' hoặc 'Năm sinh' trong file!");
+                    }
+
+                    // Bước 2: Chỉ lấy dữ liệu bắt đầu từ dòng tiêu đề thực sự
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, raw: false, dateNF: 'dd/mm/yyyy' });
 
                     const currentYear = new Date().getFullYear();
                     const under18 = [];
@@ -80,7 +102,6 @@
                     const over50 = [];
 
                     jsonData.forEach(row => {
-                        // Tìm linh hoạt tên cột (có thể là "Ngày sinh", "ngày Sinh", "Năm sinh"...)
                         const birthKey = Object.keys(row).find(k => 
                             k.toLowerCase().includes('ngày sinh') || 
                             k.toLowerCase().includes('năm sinh')
@@ -90,19 +111,16 @@
                             let birthYear = 0;
                             const dateStr = row[birthKey].toString().trim();
 
-                            // Bóc tách năm sinh từ chuỗi (hỗ trợ dạng DD/MM/YYYY hoặc chỉ YYYY)
                             if (dateStr.includes('/')) {
                                 const parts = dateStr.split('/');
                                 birthYear = parseInt(parts[parts.length - 1], 10);
                             } else if (dateStr.includes('-')) {
                                 const parts = dateStr.split('-');
-                                // Kiểm tra xem năm nằm ở đầu (YYYY-MM-DD) hay cuối (DD-MM-YYYY)
                                 birthYear = parseInt(parts[0].length === 4 ? parts[0] : parts[parts.length - 1], 10);
                             } else {
                                 birthYear = parseInt(dateStr, 10);
                             }
 
-                            // Phân loại nếu lấy được năm hợp lệ
                             if (!isNaN(birthYear) && birthYear > 1900) {
                                 const age = currentYear - birthYear;
                                 if (age < 18) {
@@ -116,36 +134,40 @@
                         }
                     });
 
-                    // Tạo một Workbook mới để chứa kết quả
+                    // Bước 3: Tạo file Excel mới và gộp các sheet
                     const newWorkbook = XLSX.utils.book_new();
+                    let sheetsAdded = 0;
 
-                    // Thêm các sheet nếu có dữ liệu
                     if (under18.length > 0) {
-                        const ws1 = XLSX.utils.json_to_sheet(under18);
-                        XLSX.utils.book_append_sheet(newWorkbook, ws1, "Dưới 18 tuổi");
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(under18), "Dưới 18 tuổi");
+                        sheetsAdded++;
                     }
                     if (between18And50.length > 0) {
-                        const ws2 = XLSX.utils.json_to_sheet(between18And50);
-                        XLSX.utils.book_append_sheet(newWorkbook, ws2, "Từ 18 đến 50");
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(between18And50), "Từ 18 đến 50");
+                        sheetsAdded++;
                     }
                     if (over50.length > 0) {
-                        const ws3 = XLSX.utils.json_to_sheet(over50);
-                        XLSX.utils.book_append_sheet(newWorkbook, ws3, "Trên 50 tuổi");
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(over50), "Trên 50 tuổi");
+                        sheetsAdded++;
                     }
 
-                    // Kích hoạt trình duyệt tải file xuống
+                    // Chặn lỗi xuất file rỗng nếu không có dữ liệu nào khớp
+                    if (sheetsAdded === 0) {
+                        throw new Error("Không có dữ liệu hợp lệ nào được tìm thấy.");
+                    }
+
                     XLSX.writeFile(newWorkbook, "Ket_qua_phan_loai.xlsx");
                     statusDiv.innerText = "Đã xử lý và tải xuống thành công!";
                     statusDiv.style.color = "#2e7d32";
 
                 } catch (error) {
                     console.error(error);
-                    statusDiv.innerText = "Có lỗi xảy ra trong quá trình xử lý file.";
+                    // Cải tiến thông báo lỗi chi tiết hơn trên màn hình
+                    statusDiv.innerText = "Lỗi: " + error.message;
                     statusDiv.style.color = "red";
                 }
             };
 
-            // Bắt đầu đọc file dưới dạng mảng byte
             reader.readAsArrayBuffer(file);
         }
     </script>
