@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lọc Dữ Liệu Tuổi Từ Excel</title>
-    <!-- Nhúng thư viện SheetJS từ CDN -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
             padding: 40px; 
             background-color: #f4f7f6;
+            line-height: 1.6;
         }
         .container { 
             max-width: 600px; 
@@ -21,37 +21,111 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         h2 { color: #333; margin-top: 0; }
-        input[type="file"] { margin: 20px 0; }
+        
+        .settings-box {
+            background-color: #e9f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #bce0ed;
+            margin: 20px 0;
+        }
+        .settings-box h4 {
+            margin: 0 0 15px 0;
+            color: #0277bd;
+        }
+        .age-group {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .age-group input {
+            width: 60px;
+            padding: 5px;
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #d32f2f;
+            display: inline-block;
+            min-width: 25px;
+            text-align: center;
+        }
+
+        input[type="file"] { margin: 15px 0 25px 0; width: 100%; }
         button { 
             background-color: #4CAF50; 
             color: white; 
-            padding: 10px 20px; 
+            padding: 12px 20px; 
             border: none; 
             border-radius: 4px; 
             cursor: pointer; 
             font-size: 16px;
+            width: 100%;
+            font-weight: bold;
         }
         button:hover { background-color: #45a049; }
-        #status { margin-top: 20px; font-weight: bold; color: #2e7d32; }
+        #status { margin-top: 20px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Phân loại dữ liệu theo độ tuổi</h2>
-        <p>Tải lên file Excel có chứa cột <strong>"Ngày sinh"</strong> hoặc <strong>"Năm sinh"</strong>.</p>
+        <img src="https://i.ibb.co/JwFbjXk7/Dat.png" alt="Dat" border="0" width="50px">
+        <p>Mời anh Đạt tải lên file Excel cần lọc có chứa cột <strong>"Ngày sinh"</strong> hoặc <strong>"Năm sinh"</strong>.</p>
+        
+        <!-- Khu vực tuỳ chỉnh độ tuổi -->
+        <div class="settings-box">
+            <h4>⚙️ Tùy chỉnh mốc độ tuổi</h4>
+            <div class="age-group">
+                <span>Nhóm 1: Dưới</span>
+                <input type="number" id="age1" value="18" min="1" max="100" oninput="updateLabels()">
+                <span>tuổi</span>
+            </div>
+            <div class="age-group">
+                <span>Nhóm 2: Từ</span>
+                <span class="highlight" id="lblAge1">18</span>
+                <span>đến</span>
+                <input type="number" id="age2" value="50" min="2" max="150" oninput="updateLabels()">
+                <span>tuổi</span>
+            </div>
+            <div class="age-group">
+                <span>Nhóm 3: Trên</span>
+                <span class="highlight" id="lblAge2">50</span>
+                <span>tuổi</span>
+            </div>
+        </div>
         
         <input type="file" id="uploadFile" accept=".xlsx, .xls" />
-        <br>
         <button onclick="processExcel()">Lọc & Tải Xuống File Mới</button>
         
         <div id="status"></div>
     </div>
 
     <script>
+        // Hàm cập nhật chữ hiển thị khi người dùng gõ số mới
+        function updateLabels() {
+            document.getElementById('lblAge1').innerText = document.getElementById('age1').value;
+            document.getElementById('lblAge2').innerText = document.getElementById('age2').value;
+        }
+
         function processExcel() {
             const fileInput = document.getElementById('uploadFile');
             const statusDiv = document.getElementById('status');
             
+            // Lấy 2 mốc tuổi do người dùng thiết lập
+            const t1 = parseInt(document.getElementById('age1').value, 10);
+            const t2 = parseInt(document.getElementById('age2').value, 10);
+
+            // Kiểm tra logic nhập liệu
+            if (isNaN(t1) || isNaN(t2) || t1 >= t2) {
+                alert('Vui lòng nhập độ tuổi hợp lệ. Mốc 1 phải nhỏ hơn mốc 2.');
+                return;
+            }
+
             if (!fileInput.files.length) {
                 alert('Vui lòng chọn một file Excel!');
                 return;
@@ -69,7 +143,7 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
 
-                    // Bước 1: Quét file để tự động tìm dòng chứa tiêu đề (bỏ qua các dòng trống hoặc tên báo cáo)
+                    // Tự động tìm dòng tiêu đề chứa "Ngày sinh"
                     const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd/mm/yyyy' });
                     let headerRowIndex = -1;
                     
@@ -77,7 +151,6 @@
                         const row = aoa[i];
                         if (!row) continue;
                         
-                        // Kiểm tra xem dòng này có chứa cột nào tên "Ngày sinh" hoặc "Năm sinh" không
                         const hasBirthCol = row.some(cell => 
                             cell && typeof cell === 'string' && 
                             (cell.toLowerCase().includes('ngày sinh') || cell.toLowerCase().includes('năm sinh'))
@@ -93,13 +166,12 @@
                         throw new Error("Không tìm thấy cột 'Ngày sinh' hoặc 'Năm sinh' trong file!");
                     }
 
-                    // Bước 2: Chỉ lấy dữ liệu bắt đầu từ dòng tiêu đề thực sự
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, raw: false, dateNF: 'dd/mm/yyyy' });
 
                     const currentYear = new Date().getFullYear();
-                    const under18 = [];
-                    const between18And50 = [];
-                    const over50 = [];
+                    const group1 = []; // Dưới t1
+                    const group2 = []; // Từ t1 đến t2
+                    const group3 = []; // Trên t2
 
                     jsonData.forEach(row => {
                         const birthKey = Object.keys(row).find(k => 
@@ -123,46 +195,49 @@
 
                             if (!isNaN(birthYear) && birthYear > 1900) {
                                 const age = currentYear - birthYear;
-                                if (age < 18) {
-                                    under18.push(row);
-                                } else if (age <= 50) {
-                                    between18And50.push(row);
+                                
+                                // Phân loại theo mốc tuổi tuỳ chỉnh
+                                if (age < t1) {
+                                    group1.push(row);
+                                } else if (age <= t2) {
+                                    group2.push(row);
                                 } else {
-                                    over50.push(row);
+                                    group3.push(row);
                                 }
                             }
                         }
                     });
 
-                    // Bước 3: Tạo file Excel mới và gộp các sheet
                     const newWorkbook = XLSX.utils.book_new();
                     let sheetsAdded = 0;
 
-                    if (under18.length > 0) {
-                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(under18), "Dưới 18 tuổi");
+                    // Đặt tên sheet động dựa trên tham số đầu vào
+                    if (group1.length > 0) {
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(group1), `Dưới ${t1} tuổi`);
                         sheetsAdded++;
                     }
-                    if (between18And50.length > 0) {
-                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(between18And50), "Từ 18 đến 50");
+                    if (group2.length > 0) {
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(group2), `Từ ${t1} đến ${t2}`);
                         sheetsAdded++;
                     }
-                    if (over50.length > 0) {
-                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(over50), "Trên 50 tuổi");
+                    if (group3.length > 0) {
+                        XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.json_to_sheet(group3), `Trên ${t2} tuổi`);
                         sheetsAdded++;
                     }
 
-                    // Chặn lỗi xuất file rỗng nếu không có dữ liệu nào khớp
                     if (sheetsAdded === 0) {
                         throw new Error("Không có dữ liệu hợp lệ nào được tìm thấy.");
                     }
 
-                    XLSX.writeFile(newWorkbook, "Ket_qua_phan_loai.xlsx");
-                    statusDiv.innerText = "Đã xử lý và tải xuống thành công!";
+                    // Lưu file kèm theo thông tin mốc tuổi vào tên file
+                    const outputFileName = `Ket_qua_phan_loai_${t1}_${t2}.xlsx`;
+                    XLSX.writeFile(newWorkbook, outputFileName);
+                    
+                    statusDiv.innerText = `Đã xử lý và tải xuống thành công file: ${outputFileName}`;
                     statusDiv.style.color = "#2e7d32";
 
                 } catch (error) {
                     console.error(error);
-                    // Cải tiến thông báo lỗi chi tiết hơn trên màn hình
                     statusDiv.innerText = "Lỗi: " + error.message;
                     statusDiv.style.color = "red";
                 }
