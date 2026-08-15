@@ -153,7 +153,16 @@
             aspect-ratio: auto; 
         }
         
-        .app-container.fullscreen-mode .channel-grid { border-radius: 0; }
+        /* Đảm bảo video nằm ở lớp dưới khi fullscreen */
+        .app-container.fullscreen-mode video {
+            z-index: 1 !important;
+        }
+
+        /* Ép menu luôn đè lên video trên Tivi khi fullscreen */
+        .app-container.fullscreen-mode .channel-grid {
+            border-radius: 0;
+            z-index: 2147483647 !important; /* Mức z-index tối đa đối với các trình duyệt TV */
+        }
 
         .channel-card {
             background: var(--container-bg);
@@ -247,8 +256,8 @@
     </div>
 
     <div class="links-section">
-        <h3><a href="xemphim.html" tabindex="0">Phim</a></h3>
-        <p><a href="https://5ptbpmh.ybai.co/ds-hoc-vui-cung-5-phut-thuuc-bai-1659354545?ybai=0392540641">zoom</a>
+        <h3><a href="xemphim.html" tabindex="0"> - Phim - </a></h3>
+        
         <p><a href="https://onflix.lol">onflix</a> ||
         <a href="https://motphimtv.run/actor/thanh-long" tabindex="0">Thành Long - Jackie Chan</a> ||
         <a href="https://www.vn2c.my/xem/phim-mat-danh-iris-tap-1-thuyet-minh-id-10869" tabindex="0">Mật danh Iris</a></p>
@@ -411,8 +420,33 @@
 
     video.addEventListener('dblclick', toggleFullScreen);
     function toggleFullScreen() {
-        appContainer.classList.toggle('fullscreen-mode');
-        document.body.style.overflow = appContainer.classList.contains('fullscreen-mode') ? 'hidden' : '';
+        if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+            // Yêu cầu Fullscreen thực sự cho appContainer
+            if (appContainer.requestFullscreen) {
+                appContainer.requestFullscreen();
+            } else if (appContainer.msRequestFullscreen) {
+                appContainer.msRequestFullscreen();
+            } else if (appContainer.mozRequestFullScreen) {
+                appContainer.mozRequestFullScreen();
+            } else if (appContainer.webkitRequestFullscreen) {
+                appContainer.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            }
+            appContainer.classList.add('fullscreen-mode');
+            document.body.style.overflow = 'hidden';
+        } else {
+            // Thoát Fullscreen thực sự
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            appContainer.classList.remove('fullscreen-mode');
+            document.body.style.overflow = '';
+        }
     }
 
     function recallChannel() {
