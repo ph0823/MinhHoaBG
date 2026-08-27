@@ -1,0 +1,229 @@
+ <!-- const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; -->
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đọc PDF Cá Nhân từ Google Drive</title>
+    
+    <!-- Thư viện PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;}
+        .header { text-align: center; margin-bottom: 15px; color: #333; }
+        .main-content { display: flex; flex: 1; gap: 20px; overflow: hidden; }
+        
+        .file-list-container { width: 300px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-y: auto; }
+        .file-list { list-style-type: none; padding: 0; margin: 0; }
+        .file-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; border-radius: 4px; transition: background 0.2s; word-wrap: break-word;}
+        .file-list li:hover { background-color: #e9ecef; color: #007bff; font-weight: bold;}
+        .li-back { background-color: #fff3cd !important; font-weight: bold; border-bottom: 2px solid #ffecb5 !important; }
+        .li-back:hover { background-color: #ffe69c !important; color: #856404 !important; }
+        
+        .pdf-viewer-container { flex: 1; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; padding: 15px; overflow-y: auto;}
+        .controls { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
+        .controls button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .controls button:hover { background: #218838; }
+        .controls button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        canvas { border: 1px solid #ddd; max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .loading { color: #ff5722; font-style: italic; font-weight: bold; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>📚 Tủ Sách PDF Cá Nhân</h2>
+        <div id="loadingMsg" class="loading">Đang tải dữ liệu, vui lòng đợi...</div>
+    </div>
+
+    <div class="main-content">
+        <div class="file-list-container">
+            <ul class="file-list" id="fileList">
+                <li>Đang kết nối đến Google Drive...</li>
+            </ul>
+        </div>
+
+        <div class="pdf-viewer-container">
+            <div class="controls" id="pdfControls" style="display: none;">
+                <button id="btnPrev" onclick="prevPage()">⬅️ Trang Trước</button>
+                <span>Trang: <strong id="pageNum">0</strong> / <strong id="pageCount">0</strong></span>
+                <button id="btnNext" onclick="nextPage()">Trang Sau ➡️</button>
+            </div>
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // ĐIỀN ĐƯỜNG LINK ỨNG DỤNG WEB (APPS SCRIPT) CỦA BẠN VÀO ĐÂY
+        // =========================================================
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; 
+        // =========================================================
+
+        let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const listUl = document.getElementById('fileList');
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Biến lưu trữ lịch sử các thư mục đã đi vào
+        let folderHistory = []; 
+
+        window.onload = function() {
+            initLoad();
+        };
+
+        // Hàm chạy khi mới mở web (Vào thư mục gốc)
+        function initLoad() {
+            folderHistory = []; // Xóa trắng lịch sử
+            loadDirectory('');  // Bỏ trống để báo máy chủ dùng thư mục gốc
+        }
+
+        // Hàm chạy khi click vào một Thư mục con
+        function openFolder(folderId) {
+            folderHistory.push(folderId); // Lưu ID thư mục này vào lịch sử
+            loadDirectory(folderId);      // Tải nội dung thư mục đó
+        }
+
+        // Hàm chạy khi bấm nút "Quay lại"
+        function goBack() {
+            folderHistory.pop(); // Bỏ thư mục hiện tại ra khỏi lịch sử
+            // Lấy ID của thư mục trước đó. Nếu lịch sử trống nghĩa là đang ở gốc.
+            const prevFolderId = folderHistory.length > 0 ? folderHistory[folderHistory.length - 1] : '';
+            loadDirectory(prevFolderId);
+        }
+
+        // Hàm chính: Gọi máy chủ để tải danh sách thư mục/file
+        async function loadDirectory(folderId) {
+            loadingMsg.style.display = 'block';
+            loadingMsg.textContent = "Đang tải danh sách...";
+            listUl.innerHTML = ''; 
+
+            try {
+                let fetchUrl = `${WEB_APP_URL}?action=list`;
+                // Nếu có truyền folderId (tức là đang ở thư mục con), thì gắn thêm vào URL
+                if (folderId !== '') {
+                    fetchUrl += `&folderId=${folderId}`;
+                }
+
+                const response = await fetch(fetchUrl);
+                const data = await response.json();
+
+                // Tạo nút "Quay lại" nếu chúng ta đang ở trong thư mục con
+                if (folderHistory.length > 0) {
+                    const liBack = document.createElement('li');
+                    liBack.className = "li-back";
+                    liBack.textContent = "🔙 Quay lại thư mục trước";
+                    liBack.onclick = () => goBack();
+                    listUl.appendChild(liBack);
+                }
+
+                if (data.files && data.files.length > 0) {
+                    data.files.forEach(item => {
+                        const li = document.createElement('li');
+                        // Kiểm tra xem item này là Thư mục hay File PDF
+                        if (item.mimeType === 'application/vnd.google-apps.folder') {
+                            li.textContent = "📁 " + item.name;
+                            li.onclick = () => openFolder(item.id); // Click thì mở thư mục
+                        } else {
+                            li.textContent = "📄 " + item.name;
+                            li.onclick = () => loadPDF(item.id);    // Click thì đọc PDF
+                        }
+                        listUl.appendChild(li);
+                    });
+                } else {
+                    const emptyLi = document.createElement('li');
+                    emptyLi.textContent = "Thư mục này trống.";
+                    listUl.appendChild(emptyLi);
+                }
+            } catch (error) {
+                listUl.innerHTML = '<li style="color:red;">Lỗi kết nối máy chủ.</li>';
+                console.error(error);
+            } finally {
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        // --- PHẦN MÃ ĐỌC PDF ĐƯỢC GIỮ NGUYÊN ---
+        // --- CẬP NHẬT HÀM ĐỌC PDF ---
+        async function loadPDF(fileId) {
+            loadingMsg.style.display = 'block';
+            loadingMsg.textContent = "Đang tải và xử lý file PDF...";
+            
+            try {
+                // 1. Xin đường link gốc từ máy chủ Apps Script
+                const response = await fetch(`${WEB_APP_URL}?action=getLink&fileId=${fileId}`);
+                const data = await response.json();
+                
+                // 2. Sử dụng "cầu nối" AllOrigins (ổn định hơn) để tải file
+                const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(data.downloadUrl)}`;
+
+                // 3. Yêu cầu thư viện PDF.js đọc dữ liệu
+                pdfjsLib.getDocument(corsProxyUrl).promise.then(pdfDoc_ => {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('pageCount').textContent = pdfDoc.numPages;
+                    document.getElementById('pdfControls').style.display = 'flex';
+                    pageNum = 1;
+                    renderPage(pageNum);
+                    loadingMsg.style.display = 'none'; // Ẩn thông báo khi thành công
+                }).catch(err => {
+                    // Bắt lỗi nếu PDF.js không thể đọc được file
+                    console.error("Lỗi PDF.js:", err);
+                    alert("Không thể đọc file PDF. Lỗi: " + err.message);
+                    loadingMsg.style.display = 'none';
+                });
+
+            } catch (error) {
+                // Bắt lỗi nếu mạng bị rớt hoặc máy chủ không phản hồi
+                console.error("Lỗi mạng:", error);
+                alert("Lỗi kết nối khi tải PDF. Vui lòng kiểm tra F12 (Console) để xem chi tiết.");
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        function renderPage(num) {
+            pageIsRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 }); 
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderCtx = { canvasContext: ctx, viewport: viewport };
+                page.render(renderCtx).promise.then(() => {
+                    pageIsRendering = false;
+                    if (pageNumIsPending !== null) {
+                        renderPage(pageNumIsPending);
+                        pageNumIsPending = null;
+                    }
+                });
+
+                document.getElementById('pageNum').textContent = num;
+                document.getElementById('btnPrev').disabled = num <= 1;
+                document.getElementById('btnNext').disabled = num >= pdfDoc.numPages;
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageIsRendering) pageNumIsPending = num;
+            else renderPage(num);
+        }
+
+        function prevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        function nextPage() {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+    </script>
+</body>
+</html>
