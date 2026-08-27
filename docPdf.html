@@ -99,52 +99,46 @@
         }
 
         // Hàm chính: Gọi máy chủ để tải danh sách thư mục/file
-        async function loadDirectory(folderId) {
+        // --- CẬP NHẬT HÀM ĐỌC PDF TRỰC TIẾP TỪ MÁY CHỦ CỦA BẠN ---
+        async function loadPDF(fileId) {
             loadingMsg.style.display = 'block';
-            loadingMsg.textContent = "Đang tải danh sách...";
-            listUl.innerHTML = ''; 
-
+            loadingMsg.textContent = "Đang tải dữ liệu PDF từ máy chủ an toàn...";
+            
             try {
-                let fetchUrl = `${WEB_APP_URL}?action=list`;
-                // Nếu có truyền folderId (tức là đang ở thư mục con), thì gắn thêm vào URL
-                if (folderId !== '') {
-                    fetchUrl += `&folderId=${folderId}`;
-                }
-
-                const response = await fetch(fetchUrl);
+                // 1. Gọi máy chủ Apps Script của bạn để lấy dữ liệu (action=getFileData)
+                const response = await fetch(`${WEB_APP_URL}?action=getFileData&fileId=${fileId}`);
                 const data = await response.json();
-
-                // Tạo nút "Quay lại" nếu chúng ta đang ở trong thư mục con
-                if (folderHistory.length > 0) {
-                    const liBack = document.createElement('li');
-                    liBack.className = "li-back";
-                    liBack.textContent = "🔙 Quay lại thư mục trước";
-                    liBack.onclick = () => goBack();
-                    listUl.appendChild(liBack);
+                
+                if (data.error) {
+                    alert("Máy chủ báo lỗi: " + data.error);
+                    loadingMsg.style.display = 'none';
+                    return;
                 }
 
-                if (data.files && data.files.length > 0) {
-                    data.files.forEach(item => {
-                        const li = document.createElement('li');
-                        // Kiểm tra xem item này là Thư mục hay File PDF
-                        if (item.mimeType === 'application/vnd.google-apps.folder') {
-                            li.textContent = "📁 " + item.name;
-                            li.onclick = () => openFolder(item.id); // Click thì mở thư mục
-                        } else {
-                            li.textContent = "📄 " + item.name;
-                            li.onclick = () => loadPDF(item.id);    // Click thì đọc PDF
-                        }
-                        listUl.appendChild(li);
-                    });
-                } else {
-                    const emptyLi = document.createElement('li');
-                    emptyLi.textContent = "Thư mục này trống.";
-                    listUl.appendChild(emptyLi);
+                // 2. Dịch ngược chuỗi văn bản Base64 trở lại thành file PDF (mảng byte)
+                const pdfData = atob(data.base64);
+                const uint8Array = new Uint8Array(pdfData.length);
+                for (let i = 0; i < pdfData.length; i++) {
+                    uint8Array[i] = pdfData.charCodeAt(i);
                 }
+
+                // 3. Yêu cầu thư viện PDF.js vẽ mảng byte đó lên màn hình
+                pdfjsLib.getDocument({data: uint8Array}).promise.then(pdfDoc_ => {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('pageCount').textContent = pdfDoc.numPages;
+                    document.getElementById('pdfControls').style.display = 'flex';
+                    pageNum = 1;
+                    renderPage(pageNum);
+                    loadingMsg.style.display = 'none';
+                }).catch(err => {
+                    console.error("Lỗi vẽ PDF:", err);
+                    alert("Không thể vẽ PDF. Lỗi: " + err.message);
+                    loadingMsg.style.display = 'none';
+                });
+
             } catch (error) {
-                listUl.innerHTML = '<li style="color:red;">Lỗi kết nối máy chủ.</li>';
-                console.error(error);
-            } finally {
+                console.error("Lỗi mạng:", error);
+                alert("Lỗi kết nối đến máy chủ Google Apps Script.");
                 loadingMsg.style.display = 'none';
             }
         }
