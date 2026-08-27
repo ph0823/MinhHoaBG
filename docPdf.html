@@ -11,11 +11,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     
     <style>
-        /* CSS giữ nguyên như cũ của bạn */
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;}
         .header { text-align: center; margin-bottom: 15px; color: #333; }
         .main-content { display: flex; flex: 1; gap: 20px; overflow: hidden; }
         
+        /* Cột danh sách file */
         .file-list-container { width: 300px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-y: auto; }
         .file-list { list-style-type: none; padding: 0; margin: 0; }
         .file-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; border-radius: 4px; transition: background 0.2s; word-wrap: break-word;}
@@ -23,21 +23,35 @@
         .li-back { background-color: #fff3cd !important; font-weight: bold; border-bottom: 2px solid #ffecb5 !important; }
         .li-back:hover { background-color: #ffe69c !important; color: #856404 !important; }
         
+        /* Khu vực đọc PDF */
         .pdf-viewer-container { flex: 1; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; padding: 15px; overflow-y: auto;}
         .controls { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
         .controls button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;}
         .controls button:hover { background: #218838; }
         .controls button:disabled { background: #ccc; cursor: not-allowed; }
-        
         canvas { border: 1px solid #ddd; max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .loading { color: #ff5722; font-style: italic; font-weight: bold; margin-bottom: 10px; display: none; }
+        
+        /* Loading & Progress Bar */
+        .loading-container { text-align: center; margin-bottom: 15px; display: none; }
+        .loading-text { color: #ff5722; font-style: italic; font-weight: bold; margin-bottom: 8px; }
+        .progress-box { width: 300px; height: 12px; background: #e9ecef; border-radius: 6px; margin: 0 auto; overflow: hidden; border: 1px solid #ccc;}
+        .progress-bar { height: 100%; width: 0%; background: #28a745; transition: width 0.2s; }
+        .progress-status { font-size: 12px; color: #555; margin-top: 5px; font-weight: bold;}
     </style>
 </head>
 <body>
 
     <div class="header">
         <h2>📚 Tủ Sách PDF Cá Nhân</h2>
-        <div id="loadingMsg" class="loading">Đang tải dữ liệu, vui lòng đợi...</div>
+        
+        <!-- Khu vực thanh tiến trình -->
+        <div id="loadingContainer" class="loading-container">
+            <div id="loadingText" class="loading-text">Đang tải dữ liệu...</div>
+            <div class="progress-box">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="progressStatus" class="progress-status">0%</div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -58,13 +72,22 @@
     </div>
 
     <script>
+        // =========================================================
+        // ĐIỀN ĐƯỜNG LINK ỨNG DỤNG WEB (APPS SCRIPT) CỦA BẠN VÀO ĐÂY
+        // =========================================================
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; 
+        // =========================================================
 
         let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
-        const loadingMsg = document.getElementById('loadingMsg');
         const listUl = document.getElementById('fileList');
+
+        // Các biến cho thanh tiến trình
+        const loadingContainer = document.getElementById('loadingContainer');
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        const progressStatus = document.getElementById('progressStatus');
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -76,7 +99,7 @@
 
         function initLoad() {
             folderHistory = []; 
-            loadDirectory('');  
+            loadDirectory('');  // Trống để lấy thư mục gốc
         }
 
         function openFolder(folderId) {
@@ -90,22 +113,22 @@
             loadDirectory(prevFolderId);
         }
 
-        // ĐÃ BỔ SUNG: Hàm loadDirectory để gọi danh sách file từ máy chủ
+        // Tải danh sách File & Thư mục con
         async function loadDirectory(folderId) {
-            loadingMsg.style.display = 'block';
-            loadingMsg.textContent = "Đang tải danh sách tài liệu...";
-            listUl.innerHTML = ''; // Làm sạch danh sách cũ
+            loadingContainer.style.display = 'block';
+            loadingText.textContent = "Đang lấy danh sách tài liệu...";
+            progressBar.style.width = '100%';
+            progressBar.style.background = '#17a2b8';
+            progressStatus.textContent = "Vui lòng chờ...";
+            listUl.innerHTML = ''; 
 
             try {
-                // Giả định Apps Script của bạn xử lý action=list và trả về danh sách file/thư mục
                 const response = await fetch(`${WEB_APP_URL}?action=list&folderId=${folderId}`);
                 const data = await response.json();
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
 
-                // Nếu không phải ở thư mục gốc, hiện nút Quay lại
+                // Nút quay lại nếu không phải gốc
                 if (folderId !== '') {
                     const liBack = document.createElement('li');
                     liBack.className = 'li-back';
@@ -114,40 +137,81 @@
                     listUl.appendChild(liBack);
                 }
 
-                // Hiển thị danh sách file và thư mục
-                data.files.forEach(file => {
-                    const li = document.createElement('li');
-                    if (file.isFolder) {
-                        li.textContent = '📁 ' + file.name;
-                        li.onclick = () => openFolder(file.id);
-                    } else {
-                        li.textContent = '📄 ' + file.name;
-                        li.onclick = () => loadPDF(file.id);
-                    }
-                    listUl.appendChild(li);
-                });
+                // Vẽ danh sách
+                if (data.files.length === 0) {
+                    listUl.innerHTML += `<li>Thư mục trống hoặc không có file PDF.</li>`;
+                } else {
+                    data.files.forEach(file => {
+                        const li = document.createElement('li');
+                        if (file.isFolder) {
+                            li.textContent = '📁 ' + file.name;
+                            li.onclick = () => openFolder(file.id);
+                        } else {
+                            li.textContent = '📄 ' + file.name;
+                            li.onclick = () => loadPDF(file.id);
+                        }
+                        listUl.appendChild(li);
+                    });
+                }
             } catch (error) {
                 console.error("Lỗi khi tải thư mục:", error);
-                listUl.innerHTML = `<li>❌ Lỗi: Không thể kết nối. Vui lòng kiểm tra lại Web App URL.</li>`;
+                listUl.innerHTML = `<li>❌ Lỗi: ${error.message}</li>`;
             } finally {
-                loadingMsg.style.display = 'none';
+                loadingContainer.style.display = 'none';
             }
         }
 
-        // ĐÃ SỬA: Chỉ giữ lại 1 hàm loadPDF sử dụng Base64 để tránh lỗi CORS
+        // Đọc file PDF bằng XHR (Hiển thị phần trăm)
         async function loadPDF(fileId) {
-            loadingMsg.style.display = 'block';
-            loadingMsg.textContent = "Đang tải dữ liệu PDF từ máy chủ an toàn...";
+            loadingContainer.style.display = 'block';
+            loadingText.textContent = "Đang tải file PDF từ Drive...";
+            progressBar.style.width = '0%';
+            progressBar.style.background = '#28a745';
+            progressStatus.textContent = '0%';
             
             try {
-                const response = await fetch(`${WEB_APP_URL}?action=getFileData&fileId=${fileId}`);
-                const data = await response.json();
-                
+                const url = `${WEB_APP_URL}?action=getFileData&fileId=${fileId}`;
+
+                const data = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    
+                    xhr.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            const percent = Math.round((event.loaded / event.total) * 100);
+                            progressBar.style.width = percent + '%';
+                            progressStatus.textContent = percent + '%';
+                        } else {
+                            const mbLoaded = (event.loaded / (1024 * 1024)).toFixed(2);
+                            progressBar.style.width = '100%'; 
+                            progressBar.style.background = '#17a2b8'; 
+                            progressStatus.textContent = `Đã tải: ${mbLoaded} MB...`;
+                        }
+                    };
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try { resolve(JSON.parse(xhr.responseText)); } 
+                            catch (e) { reject(new Error("Dữ liệu không hợp lệ")); }
+                        } else {
+                            reject(new Error("Lỗi máy chủ: " + xhr.status));
+                        }
+                    };
+                    
+                    xhr.onerror = () => reject(new Error("Lỗi kết nối mạng"));
+                    xhr.send();
+                });
+
                 if (data.error) {
                     alert("Máy chủ báo lỗi: " + data.error);
-                    loadingMsg.style.display = 'none';
+                    loadingContainer.style.display = 'none';
                     return;
                 }
+
+                loadingText.textContent = "Đang giải mã và vẽ trang PDF...";
+                progressBar.style.width = '100%';
+                progressBar.style.background = '#ffc107'; 
+                progressStatus.textContent = "Sắp xong...";
 
                 const pdfData = atob(data.base64);
                 const uint8Array = new Uint8Array(pdfData.length);
@@ -161,20 +225,21 @@
                     document.getElementById('pdfControls').style.display = 'flex';
                     pageNum = 1;
                     renderPage(pageNum);
-                    loadingMsg.style.display = 'none';
+                    loadingContainer.style.display = 'none';
                 }).catch(err => {
                     console.error("Lỗi vẽ PDF:", err);
                     alert("Không thể vẽ PDF. Lỗi: " + err.message);
-                    loadingMsg.style.display = 'none';
+                    loadingContainer.style.display = 'none';
                 });
 
             } catch (error) {
-                console.error("Lỗi mạng:", error);
-                alert("Lỗi kết nối đến máy chủ Google Apps Script.");
-                loadingMsg.style.display = 'none';
+                console.error("Lỗi tải PDF:", error);
+                alert("Lỗi quá trình tải: " + error.message);
+                loadingContainer.style.display = 'none';
             }
         }
 
+        // --- Các hàm render trang PDF giữ nguyên ---
         function renderPage(num) {
             pageIsRendering = true;
             pdfDoc.getPage(num).then(page => {
