@@ -1,5 +1,7 @@
  <!-- const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; -->
 
+ <!-- const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; -->
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -85,6 +87,7 @@
     .canvas-stage { display: inline-block; position: relative; min-width: 1px; min-height: 1px; }
     canvas { display: block; background: white; box-shadow: 0 8px 30px rgba(15, 23, 42, .25); }
     .welcome { height: 100%; display: grid; place-items: center; color: #475569; }
+    .welcome[hidden] { display: none !important; }
     .welcome-box { max-width: 480px; padding: 28px; text-align: center; background: rgba(255,255,255,.72); border-radius: 16px; }
     .welcome-icon { font-size: 56px; }
     .toast {
@@ -299,6 +302,11 @@
     renderFileList();
     els.sidebar.classList.remove('open');
     els.documentName.textContent = file.name;
+
+    // Ẩn màn hình chào ngay khi người dùng chọn file.
+    // Không chờ tải xong PDF mới ẩn để tránh hiển thị chồng lên tài liệu.
+    els.welcome.hidden = true;
+    els.canvas.hidden = true;
     setViewerEnabled(false);
 
     try {
@@ -337,6 +345,14 @@
     } catch (error) {
       if (token !== loadToken) return;
       setLoading(false);
+
+      // Nếu tải thất bại và chưa có PDF nào được mở, hiện lại màn hình chào.
+      if (!pdfDoc) {
+        els.welcome.hidden = false;
+        els.canvas.hidden = true;
+        els.documentName.textContent = 'Chưa chọn tài liệu';
+      }
+
       showToast(error.message, true);
       console.error(error);
     }
@@ -457,3 +473,4 @@
 </script>
 </body>
 </html>
+
