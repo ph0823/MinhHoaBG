@@ -3,281 +3,457 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đọc PDF Nhi hư từ Google Drive</title>
-    
-    <!-- Thư viện PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;}
-        .header { text-align: center; margin-bottom: 15px; color: #333; }
-        .main-content { display: flex; flex: 1; gap: 20px; overflow: hidden; }
-        
-        /* Cột danh sách file */
-        .file-list-container { width: 300px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-y: auto; }
-        .file-list { list-style-type: none; padding: 0; margin: 0; }
-        .file-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; border-radius: 4px; transition: background 0.2s; word-wrap: break-word;}
-        .file-list li:hover { background-color: #e9ecef; color: #007bff; font-weight: bold;}
-        .li-back { background-color: #fff3cd !important; font-weight: bold; border-bottom: 2px solid #ffecb5 !important; }
-        .li-back:hover { background-color: #ffe69c !important; color: #856404 !important; }
-        
-        /* Khu vực đọc PDF */
-        .pdf-viewer-container { flex: 1; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; padding: 15px; overflow-y: auto;}
-        .controls { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
-        .controls button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .controls button:hover { background: #218838; }
-        .controls button:disabled { background: #ccc; cursor: not-allowed; }
-        canvas { border: 1px solid #ddd; max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        
-        /* Loading & Progress Bar */
-        .loading-container { text-align: center; margin-bottom: 15px; display: none; }
-        .loading-text { color: #ff5722; font-style: italic; font-weight: bold; margin-bottom: 8px; }
-        .progress-box { width: 300px; height: 12px; background: #e9ecef; border-radius: 6px; margin: 0 auto; overflow: hidden; border: 1px solid #ccc;}
-        .progress-bar { height: 100%; width: 0%; background: #28a745; transition: width 0.2s; }
-        .progress-status { font-size: 12px; color: #555; margin-top: 5px; font-weight: bold;}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <title>Tủ sách PDF Nhi hư Google Drive</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --surface: #ffffff;
+      --bg: #eef2f5;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #dbe3ea;
+      --danger: #b91c1c;
+      --shadow: 0 10px 28px rgba(15, 23, 42, .09);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      overflow: hidden;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+    .topbar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 18px; background: var(--surface); border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(15, 23, 42, .05); z-index: 5;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 250px; }
+    .brand-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: #ccfbf1; font-size: 23px; }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand small { display: block; margin-top: 2px; color: var(--muted); }
+    .status { margin-left: auto; min-width: 260px; max-width: 460px; }
+    .status-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .progress { height: 7px; overflow: hidden; background: #e2e8f0; border-radius: 999px; }
+    .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .2s ease; }
+    .layout { min-height: 0; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 14px; padding: 14px; }
+    .sidebar, .viewer { min-height: 0; background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .sidebar { display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; }
+    .sidebar-head { padding: 14px; border-bottom: 1px solid var(--border); }
+    .folder-title { font-weight: 750; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .breadcrumb { margin-top: 6px; font-size: 12px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .search-wrap { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .search-wrap input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; }
+    .search-wrap input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15, 118, 110, .12); }
+    .file-list { list-style: none; padding: 8px; margin: 0; overflow: auto; }
+    .file-item {
+      display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center;
+      width: 100%; padding: 10px; border: 0; border-radius: 10px; background: transparent; text-align: left; color: var(--text);
+    }
+    .file-item:hover, .file-item.active { background: #ecfdf5; }
+    .file-item.active { outline: 1px solid #99f6e4; }
+    .file-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #f1f5f9; font-size: 19px; }
+    .file-name { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+    .file-meta { margin-top: 3px; font-size: 11px; color: var(--muted); }
+    .empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+    .viewer { display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px; border-bottom: 1px solid var(--border); background: #fbfdfe;
+    }
+    .toolbar button, .toolbar input {
+      height: 36px; border: 1px solid var(--border); border-radius: 9px; background: white; color: var(--text);
+    }
+    .toolbar button { padding: 0 12px; font-weight: 650; }
+    .toolbar button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+    .toolbar .primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .toolbar .primary:hover:not(:disabled) { background: var(--primary-dark); color: white; }
+    .page-input { width: 62px; padding: 0 8px; text-align: center; }
+    .divider { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
+    .document-name { flex: 1 1 200px; min-width: 140px; max-width: 420px; margin-right: auto; padding: 0 8px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .canvas-wrap { min-height: 0; overflow: auto; padding: 24px; text-align: center; background: #cbd5e1; }
+    .canvas-stage { display: inline-block; position: relative; min-width: 1px; min-height: 1px; }
+    canvas { display: block; background: white; box-shadow: 0 8px 30px rgba(15, 23, 42, .25); }
+    .welcome { height: 100%; display: grid; place-items: center; color: #475569; }
+    .welcome-box { max-width: 480px; padding: 28px; text-align: center; background: rgba(255,255,255,.72); border-radius: 16px; }
+    .welcome-icon { font-size: 56px; }
+    .toast {
+      position: fixed; right: 18px; bottom: 18px; z-index: 20; max-width: min(420px, calc(100vw - 36px));
+      padding: 12px 14px; border-radius: 11px; background: #0f172a; color: white; box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--danger); }
+    .mobile-menu { display: none; }
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .app { min-height: 100%; height: auto; }
+      .topbar { position: sticky; top: 0; }
+      .brand { min-width: 0; }
+      .brand small, .status { display: none; }
+      .mobile-menu { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 10px; background: white; }
+      .layout { grid-template-columns: 1fr; min-height: calc(100vh - 66px); }
+      .sidebar { position: fixed; inset: 66px auto 0 0; z-index: 10; width: min(88vw, 350px); border-radius: 0 14px 14px 0; transform: translateX(-105%); transition: transform .22s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .viewer { min-height: calc(100vh - 94px); }
+      .canvas-wrap { padding: 12px; }
+      .document-name { flex-basis: 100%; max-width: none; text-align: center; }
+      .divider { display: none; }
+    }
+  </style>
 </head>
 <body>
-
-    <div class="header">
-        <h2>📚 Tủ Sách PDF Nhi hư</h2>
-        
-        <!-- Khu vực thanh tiến trình -->
-        <div id="loadingContainer" class="loading-container">
-            <div id="loadingText" class="loading-text">Đang tải dữ liệu...</div>
-            <div class="progress-box">
-                <div id="progressBar" class="progress-bar"></div>
-            </div>
-            <div id="progressStatus" class="progress-status">0%</div>
-        </div>
+<div class="app">
+  <header class="topbar">
+    <button id="mobileMenu" class="mobile-menu" type="button" aria-label="Mở danh sách tài liệu">☰</button>
+    <div class="brand">
+      <div class="brand-icon">📚</div>
+      <div><h1>Tủ sách PDF</h1><small>Đọc tài liệu từ Google Drive</small></div>
     </div>
-
-    <div class="main-content">
-        <div class="file-list-container">
-            <ul class="file-list" id="fileList">
-                <li>Đang kết nối đến Google Drive...</li>
-            </ul>
-        </div>
-
-        <div class="pdf-viewer-container">
-            <div class="controls" id="pdfControls" style="display: none;">
-                <button id="btnPrev" onclick="prevPage()">⬅️ Trang Trước</button>
-                <span>Trang: <strong id="pageNum">0</strong> / <strong id="pageCount">0</strong></span>
-                <button id="btnNext" onclick="nextPage()">Trang Sau ➡️</button>
-            </div>
-            <canvas id="pdfCanvas"></canvas>
-        </div>
+    <div id="statusBox" class="status" hidden>
+      <div class="status-row"><span id="statusText">Đang xử lý...</span><span id="statusPercent">0%</span></div>
+      <div class="progress"><div id="progressBar"></div></div>
     </div>
+  </header>
 
-    <script>
-        // =========================================================
-        // ĐIỀN ĐƯỜNG LINK ỨNG DỤNG WEB (APPS SCRIPT) CỦA BẠN VÀO ĐÂY
-        // =========================================================
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; 
-        // =========================================================
+  <main class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <div id="folderTitle" class="folder-title">Đang kết nối...</div>
+        <div id="breadcrumb" class="breadcrumb">Thư mục gốc</div>
+      </div>
+      <div class="search-wrap"><input id="searchInput" type="search" placeholder="Tìm thư mục hoặc file PDF..." autocomplete="off"></div>
+      <ul id="fileList" class="file-list"><li class="empty">Đang tải danh sách...</li></ul>
+    </aside>
 
-        let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
-        const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
-        const listUl = document.getElementById('fileList');
+    <section class="viewer">
+      <div class="toolbar">
+        <div id="documentName" class="document-name">Chưa chọn tài liệu</div>
+        <button id="btnPrev" type="button" disabled>← Trước</button>
+        <input id="pageInput" class="page-input" type="number" min="1" value="1" disabled aria-label="Số trang">
+        <span>/ <strong id="pageCount">0</strong></span>
+        <button id="btnNext" type="button" disabled>Sau →</button>
+        <span class="divider"></span>
+        <button id="btnZoomOut" type="button" disabled>−</button>
+        <strong id="zoomLabel">100%</strong>
+        <button id="btnZoomIn" type="button" disabled>+</button>
+        <button id="btnFit" class="primary" type="button" disabled>Vừa chiều rộng</button>
+      </div>
+      <div id="canvasWrap" class="canvas-wrap">
+        <div id="welcome" class="welcome"><div class="welcome-box"><div class="welcome-icon">📄</div><h2>Chọn một file PDF để bắt đầu</h2><p>Dùng danh sách bên trái để mở thư mục và tài liệu.</p></div></div>
+        <div class="canvas-stage"><canvas id="pdfCanvas" hidden></canvas></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast" role="status"></div>
 
-        // Các biến cho thanh tiến trình
-        const loadingContainer = document.getElementById('loadingContainer');
-        const loadingText = document.getElementById('loadingText');
-        const progressBar = document.getElementById('progressBar');
-        const progressStatus = document.getElementById('progressStatus');
+<script>
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
+  const ROOT_MARKER = '';
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 3;
+  const SCALE_STEP = 0.2;
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        let folderHistory = []; 
+  const els = {
+    sidebar: document.getElementById('sidebar'), mobileMenu: document.getElementById('mobileMenu'),
+    folderTitle: document.getElementById('folderTitle'), breadcrumb: document.getElementById('breadcrumb'),
+    searchInput: document.getElementById('searchInput'), fileList: document.getElementById('fileList'),
+    statusBox: document.getElementById('statusBox'), statusText: document.getElementById('statusText'),
+    statusPercent: document.getElementById('statusPercent'), progressBar: document.getElementById('progressBar'),
+    documentName: document.getElementById('documentName'), btnPrev: document.getElementById('btnPrev'),
+    pageInput: document.getElementById('pageInput'), pageCount: document.getElementById('pageCount'),
+    btnNext: document.getElementById('btnNext'), btnZoomOut: document.getElementById('btnZoomOut'),
+    zoomLabel: document.getElementById('zoomLabel'), btnZoomIn: document.getElementById('btnZoomIn'),
+    btnFit: document.getElementById('btnFit'), canvasWrap: document.getElementById('canvasWrap'),
+    canvas: document.getElementById('pdfCanvas'), welcome: document.getElementById('welcome'),
+    toast: document.getElementById('toast')
+  };
 
-        window.onload = function() {
-            initLoad();
-        };
+  const ctx = els.canvas.getContext('2d', { alpha: false });
+  let folderStack = [];
+  let currentItems = [];
+  let currentFolderId = ROOT_MARKER;
+  let activeFileId = '';
+  let pdfDoc = null;
+  let pageNum = 1;
+  let scale = 1.25;
+  let renderTask = null;
+  let loadToken = 0;
+  let toastTimer = null;
 
-        function initLoad() {
-            folderHistory = []; 
-            loadDirectory('');  // Trống để lấy thư mục gốc
-        }
+  document.addEventListener('DOMContentLoaded', init);
 
-        function openFolder(folderId) {
-            folderHistory.push(folderId); 
-            loadDirectory(folderId);      
-        }
+  function init() {
+    bindEvents();
+    loadDirectory(ROOT_MARKER, true);
+  }
 
-        function goBack() {
-            folderHistory.pop(); 
-            const prevFolderId = folderHistory.length > 0 ? folderHistory[folderHistory.length - 1] : '';
-            loadDirectory(prevFolderId);
-        }
+  function bindEvents() {
+    els.mobileMenu.addEventListener('click', () => els.sidebar.classList.toggle('open'));
+    els.searchInput.addEventListener('input', renderFileList);
+    els.btnPrev.addEventListener('click', () => goToPage(pageNum - 1));
+    els.btnNext.addEventListener('click', () => goToPage(pageNum + 1));
+    els.pageInput.addEventListener('change', () => goToPage(Number(els.pageInput.value)));
+    els.pageInput.addEventListener('keydown', e => { if (e.key === 'Enter') goToPage(Number(els.pageInput.value)); });
+    els.btnZoomOut.addEventListener('click', () => setScale(scale - SCALE_STEP));
+    els.btnZoomIn.addEventListener('click', () => setScale(scale + SCALE_STEP));
+    els.btnFit.addEventListener('click', fitToWidth);
+    window.addEventListener('keydown', handleShortcuts);
+  }
 
-        // Tải danh sách File & Thư mục con
-        async function loadDirectory(folderId) {
-            loadingContainer.style.display = 'block';
-            loadingText.textContent = "Đang lấy danh sách tài liệu...";
-            progressBar.style.width = '100%';
-            progressBar.style.background = '#17a2b8';
-            progressStatus.textContent = "Vui lòng chờ...";
-            listUl.innerHTML = ''; 
+  async function api(action, params = {}) {
+    const url = new URL(WEB_APP_URL);
+    url.searchParams.set('action', action);
+    url.searchParams.set('_', Date.now().toString());
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+    const response = await fetch(url.toString(), { method: 'GET', cache: 'no-store', redirect: 'follow' });
+    if (!response.ok) throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+    const data = await response.json();
+    if (data.ok === false || data.error) throw new Error(data.error || 'Máy chủ xử lý không thành công.');
+    return data;
+  }
 
-            try {
-                const response = await fetch(`${WEB_APP_URL}?action=list&folderId=${folderId}`);
-                const data = await response.json();
+  async function loadDirectory(folderId, reset = false) {
+    setLoading(true, 'Đang lấy danh sách tài liệu...', 15);
+    els.fileList.innerHTML = '<li class="empty">Đang tải...</li>';
+    try {
+      const data = await api('list', folderId ? { folderId } : {});
+      currentFolderId = data.folder.id;
+      currentItems = Array.isArray(data.files) ? data.files : [];
+      if (reset) folderStack = [{ id: data.folder.id, name: data.folder.name }];
+      els.folderTitle.textContent = data.folder.name;
+      els.breadcrumb.textContent = folderStack.map(item => item.name).join(' › ');
+      els.searchInput.value = '';
+      renderFileList();
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      els.fileList.innerHTML = `<li class="empty">❌ ${escapeHtml(error.message)}</li>`;
+      showToast(error.message, true);
+    }
+  }
 
-                if (data.error) throw new Error(data.error);
+  function renderFileList() {
+    const keyword = normalize(els.searchInput.value);
+    const filtered = currentItems.filter(item => normalize(item.name).includes(keyword));
+    const fragment = document.createDocumentFragment();
 
-                // Nút quay lại nếu không phải gốc
-                if (folderId !== '') {
-                    const liBack = document.createElement('li');
-                    liBack.className = 'li-back';
-                    liBack.textContent = '🔙 Quay lại thư mục trước';
-                    liBack.onclick = goBack;
-                    listUl.appendChild(liBack);
-                }
+    if (folderStack.length > 1) {
+      fragment.appendChild(makeItem({ name: 'Quay lại thư mục trước', isFolder: true }, true));
+    }
 
-                // Vẽ danh sách
-                if (data.files.length === 0) {
-                    listUl.innerHTML += `<li>Thư mục trống hoặc không có file PDF.</li>`;
-                } else {
-                    data.files.forEach(file => {
-                        const li = document.createElement('li');
-                        if (file.isFolder) {
-                            li.textContent = '📁 ' + file.name;
-                            li.onclick = () => openFolder(file.id);
-                        } else {
-                            li.textContent = '📄 ' + file.name;
-                            li.onclick = () => loadPDF(file.id);
-                        }
-                        listUl.appendChild(li);
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải thư mục:", error);
-                listUl.innerHTML = `<li>❌ Lỗi: ${error.message}</li>`;
-            } finally {
-                loadingContainer.style.display = 'none';
-            }
-        }
+    if (!filtered.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = keyword ? 'Không tìm thấy tài liệu phù hợp.' : 'Thư mục không có file PDF.';
+      fragment.appendChild(li);
+    } else {
+      filtered.forEach(item => fragment.appendChild(makeItem(item, false)));
+    }
+    els.fileList.replaceChildren(fragment);
+  }
 
-        // Đọc file PDF bằng XHR (Hiển thị phần trăm)
-        async function loadPDF(fileId) {
-            loadingContainer.style.display = 'block';
-            loadingText.textContent = "Đang tải file PDF từ Drive...";
-            progressBar.style.width = '0%';
-            progressBar.style.background = '#28a745';
-            progressStatus.textContent = '0%';
-            
-            try {
-                const url = `${WEB_APP_URL}?action=getFileData&fileId=${fileId}`;
+  function makeItem(item, isBack) {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'file-item' + (!isBack && item.id === activeFileId ? ' active' : '');
+    button.innerHTML = `<span class="file-icon">${isBack ? '↩️' : item.isFolder ? '📁' : '📄'}</span><span><div class="file-name">${escapeHtml(item.name)}</div>${(!isBack && !item.isFolder) ? `<div class="file-meta">${formatBytes(item.size || 0)}</div>` : ''}</span>`;
+    button.addEventListener('click', () => {
+      if (isBack) return goBack();
+      if (item.isFolder) return openFolder(item);
+      openPdf(item);
+    });
+    li.appendChild(button);
+    return li;
+  }
 
-                const data = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', url, true);
-                    
-                    xhr.onprogress = (event) => {
-                        if (event.lengthComputable) {
-                            const percent = Math.round((event.loaded / event.total) * 100);
-                            progressBar.style.width = percent + '%';
-                            progressStatus.textContent = percent + '%';
-                        } else {
-                            const mbLoaded = (event.loaded / (1024 * 1024)).toFixed(2);
-                            progressBar.style.width = '100%'; 
-                            progressBar.style.background = '#17a2b8'; 
-                            progressStatus.textContent = `Đã tải: ${mbLoaded} MB...`;
-                        }
-                    };
+  function openFolder(item) {
+    folderStack.push({ id: item.id, name: item.name });
+    loadDirectory(item.id);
+  }
 
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            try { resolve(JSON.parse(xhr.responseText)); } 
-                            catch (e) { reject(new Error("Dữ liệu không hợp lệ")); }
-                        } else {
-                            reject(new Error("Lỗi máy chủ: " + xhr.status));
-                        }
-                    };
-                    
-                    xhr.onerror = () => reject(new Error("Lỗi kết nối mạng"));
-                    xhr.send();
-                });
+  function goBack() {
+    if (folderStack.length <= 1) return;
+    folderStack.pop();
+    const previous = folderStack[folderStack.length - 1];
+    loadDirectory(previous.id);
+  }
 
-                if (data.error) {
-                    alert("Máy chủ báo lỗi: " + data.error);
-                    loadingContainer.style.display = 'none';
-                    return;
-                }
+  async function openPdf(file) {
+    const token = ++loadToken;
+    activeFileId = file.id;
+    renderFileList();
+    els.sidebar.classList.remove('open');
+    els.documentName.textContent = file.name;
+    setViewerEnabled(false);
 
-                loadingText.textContent = "Đang giải mã và vẽ trang PDF...";
-                progressBar.style.width = '100%';
-                progressBar.style.background = '#ffc107'; 
-                progressStatus.textContent = "Sắp xong...";
+    try {
+      setLoading(true, 'Đang đọc thông tin file...', 3);
+      const infoData = await api('getFileInfo', { fileId: file.id });
+      if (token !== loadToken) return;
+      const info = infoData.file;
+      const chunks = new Array(info.totalChunks);
 
-                const pdfData = atob(data.base64);
-                const uint8Array = new Uint8Array(pdfData.length);
-                for (let i = 0; i < pdfData.length; i++) {
-                    uint8Array[i] = pdfData.charCodeAt(i);
-                }
+      for (let index = 0; index < info.totalChunks; index++) {
+        if (token !== loadToken) return;
+        const percent = Math.round((index / info.totalChunks) * 90);
+        setLoading(true, `Đang tải ${file.name} (${index + 1}/${info.totalChunks})...`, percent);
+        const chunkData = await api('getFileChunk', { fileId: file.id, index });
+        chunks[index] = base64ToBytes(chunkData.base64);
+      }
 
-                pdfjsLib.getDocument({data: uint8Array}).promise.then(pdfDoc_ => {
-                    pdfDoc = pdfDoc_;
-                    document.getElementById('pageCount').textContent = pdfDoc.numPages;
-                    document.getElementById('pdfControls').style.display = 'flex';
-                    pageNum = 1;
-                    renderPage(pageNum);
-                    loadingContainer.style.display = 'none';
-                }).catch(err => {
-                    console.error("Lỗi vẽ PDF:", err);
-                    alert("Không thể vẽ PDF. Lỗi: " + err.message);
-                    loadingContainer.style.display = 'none';
-                });
+      if (token !== loadToken) return;
+      setLoading(true, 'Đang ghép và xử lý PDF...', 94);
+      const pdfBytes = concatUint8Arrays(chunks, info.size);
 
-            } catch (error) {
-                console.error("Lỗi tải PDF:", error);
-                alert("Lỗi quá trình tải: " + error.message);
-                loadingContainer.style.display = 'none';
-            }
-        }
+      if (pdfDoc) {
+        try { await pdfDoc.destroy(); } catch (_) {}
+      }
+      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+      pdfDoc = await loadingTask.promise;
+      pageNum = 1;
+      els.pageCount.textContent = pdfDoc.numPages;
+      els.pageInput.max = pdfDoc.numPages;
+      els.welcome.hidden = true;
+      els.canvas.hidden = false;
+      setViewerEnabled(true);
+      await fitToWidth();
+      setLoading(false);
+      showToast(`Đã mở “${file.name}”.`);
+    } catch (error) {
+      if (token !== loadToken) return;
+      setLoading(false);
+      showToast(error.message, true);
+      console.error(error);
+    }
+  }
 
-        // --- Các hàm render trang PDF giữ nguyên ---
-        function renderPage(num) {
-            pageIsRendering = true;
-            pdfDoc.getPage(num).then(page => {
-                const viewport = page.getViewport({ scale: 1.5 }); 
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+  async function renderPage() {
+    if (!pdfDoc) return;
+    if (renderTask) {
+      try { renderTask.cancel(); } catch (_) {}
+      renderTask = null;
+    }
 
-                const renderCtx = { canvasContext: ctx, viewport: viewport };
-                page.render(renderCtx).promise.then(() => {
-                    pageIsRendering = false;
-                    if (pageNumIsPending !== null) {
-                        renderPage(pageNumIsPending);
-                        pageNumIsPending = null;
-                    }
-                });
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale });
+    const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+    els.canvas.width = Math.floor(viewport.width * outputScale);
+    els.canvas.height = Math.floor(viewport.height * outputScale);
+    els.canvas.style.width = `${Math.floor(viewport.width)}px`;
+    els.canvas.style.height = `${Math.floor(viewport.height)}px`;
 
-                document.getElementById('pageNum').textContent = num;
-                document.getElementById('btnPrev').disabled = num <= 1;
-                document.getElementById('btnNext').disabled = num >= pdfDoc.numPages;
-            });
-        }
+    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+    renderTask = page.render({ canvasContext: ctx, viewport, transform });
+    try { await renderTask.promise; } catch (error) { if (error?.name !== 'RenderingCancelledException') throw error; }
+    renderTask = null;
+    updateControls();
+  }
 
-        function queueRenderPage(num) {
-            if (pageIsRendering) pageNumIsPending = num;
-            else renderPage(num);
-        }
+  function goToPage(value) {
+    if (!pdfDoc) return;
+    const target = Math.max(1, Math.min(pdfDoc.numPages, Math.round(Number(value) || pageNum)));
+    pageNum = target;
+    els.canvasWrap.scrollTop = 0;
+    renderPage().catch(error => showToast(error.message, true));
+  }
 
-        function prevPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        }
+  function setScale(value) {
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, Number(value.toFixed(2))));
+    renderPage().catch(error => showToast(error.message, true));
+  }
 
-        function nextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
-    </script>
+  async function fitToWidth() {
+    if (!pdfDoc) return;
+    const page = await pdfDoc.getPage(pageNum);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const availableWidth = Math.max(260, els.canvasWrap.clientWidth - (window.innerWidth <= 860 ? 24 : 48));
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
+    await renderPage();
+  }
+
+  function updateControls() {
+    const ready = Boolean(pdfDoc);
+    els.pageInput.value = pageNum;
+    els.btnPrev.disabled = !ready || pageNum <= 1;
+    els.btnNext.disabled = !ready || pageNum >= pdfDoc.numPages;
+    els.btnZoomOut.disabled = !ready || scale <= MIN_SCALE;
+    els.btnZoomIn.disabled = !ready || scale >= MAX_SCALE;
+    els.zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+  }
+
+  function setViewerEnabled(enabled) {
+    [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit].forEach(el => el.disabled = !enabled);
+    if (!enabled) { els.btnPrev.disabled = true; els.btnNext.disabled = true; }
+  }
+
+  function setLoading(show, text = '', percent = 0) {
+    els.statusBox.hidden = !show;
+    if (!show) return;
+    const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+    els.statusText.textContent = text;
+    els.statusPercent.textContent = `${safePercent}%`;
+    els.progressBar.style.width = `${safePercent}%`;
+  }
+
+  function showToast(message, isError = false) {
+    clearTimeout(toastTimer);
+    els.toast.textContent = message;
+    els.toast.className = `toast show${isError ? ' error' : ''}`;
+    toastTimer = setTimeout(() => els.toast.className = 'toast', 3500);
+  }
+
+  function handleShortcuts(event) {
+    if (!pdfDoc || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (event.key === 'ArrowLeft' || event.key === 'PageUp') goToPage(pageNum - 1);
+    if (event.key === 'ArrowRight' || event.key === 'PageDown') goToPage(pageNum + 1);
+    if (event.key === '+' || event.key === '=') setScale(scale + SCALE_STEP);
+    if (event.key === '-') setScale(scale - SCALE_STEP);
+    if (event.key === '0') fitToWidth();
+  }
+
+  function base64ToBytes(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function concatUint8Arrays(parts, totalLength) {
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    parts.forEach(part => { result.set(part, offset); offset += part.length; });
+    return result;
+  }
+
+  function normalize(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return `${(bytes / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+  }
+</script>
 </body>
 </html>
