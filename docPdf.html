@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     
     <style>
+        /* CSS giữ nguyên như cũ của bạn */
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;}
         .header { text-align: center; margin-bottom: 15px; color: #333; }
         .main-content { display: flex; flex: 1; gap: 20px; overflow: hidden; }
@@ -57,11 +58,7 @@
     </div>
 
     <script>
-        // =========================================================
-        // ĐIỀN ĐƯỜNG LINK ỨNG DỤNG WEB (APPS SCRIPT) CỦA BẠN VÀO ĐÂY
-        // =========================================================
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; 
-        // =========================================================
 
         let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
         const canvas = document.getElementById('pdfCanvas');
@@ -71,41 +68,78 @@
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // Biến lưu trữ lịch sử các thư mục đã đi vào
         let folderHistory = []; 
 
         window.onload = function() {
             initLoad();
         };
 
-        // Hàm chạy khi mới mở web (Vào thư mục gốc)
         function initLoad() {
-            folderHistory = []; // Xóa trắng lịch sử
-            loadDirectory('');  // Bỏ trống để báo máy chủ dùng thư mục gốc
+            folderHistory = []; 
+            loadDirectory('');  
         }
 
-        // Hàm chạy khi click vào một Thư mục con
         function openFolder(folderId) {
-            folderHistory.push(folderId); // Lưu ID thư mục này vào lịch sử
-            loadDirectory(folderId);      // Tải nội dung thư mục đó
+            folderHistory.push(folderId); 
+            loadDirectory(folderId);      
         }
 
-        // Hàm chạy khi bấm nút "Quay lại"
         function goBack() {
-            folderHistory.pop(); // Bỏ thư mục hiện tại ra khỏi lịch sử
-            // Lấy ID của thư mục trước đó. Nếu lịch sử trống nghĩa là đang ở gốc.
+            folderHistory.pop(); 
             const prevFolderId = folderHistory.length > 0 ? folderHistory[folderHistory.length - 1] : '';
             loadDirectory(prevFolderId);
         }
 
-        // Hàm chính: Gọi máy chủ để tải danh sách thư mục/file
-        // --- CẬP NHẬT HÀM ĐỌC PDF TRỰC TIẾP TỪ MÁY CHỦ CỦA BẠN ---
+        // ĐÃ BỔ SUNG: Hàm loadDirectory để gọi danh sách file từ máy chủ
+        async function loadDirectory(folderId) {
+            loadingMsg.style.display = 'block';
+            loadingMsg.textContent = "Đang tải danh sách tài liệu...";
+            listUl.innerHTML = ''; // Làm sạch danh sách cũ
+
+            try {
+                // Giả định Apps Script của bạn xử lý action=list và trả về danh sách file/thư mục
+                const response = await fetch(`${WEB_APP_URL}?action=list&folderId=${folderId}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Nếu không phải ở thư mục gốc, hiện nút Quay lại
+                if (folderId !== '') {
+                    const liBack = document.createElement('li');
+                    liBack.className = 'li-back';
+                    liBack.textContent = '🔙 Quay lại thư mục trước';
+                    liBack.onclick = goBack;
+                    listUl.appendChild(liBack);
+                }
+
+                // Hiển thị danh sách file và thư mục
+                data.files.forEach(file => {
+                    const li = document.createElement('li');
+                    if (file.isFolder) {
+                        li.textContent = '📁 ' + file.name;
+                        li.onclick = () => openFolder(file.id);
+                    } else {
+                        li.textContent = '📄 ' + file.name;
+                        li.onclick = () => loadPDF(file.id);
+                    }
+                    listUl.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Lỗi khi tải thư mục:", error);
+                listUl.innerHTML = `<li>❌ Lỗi: Không thể kết nối. Vui lòng kiểm tra lại Web App URL.</li>`;
+            } finally {
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        // ĐÃ SỬA: Chỉ giữ lại 1 hàm loadPDF sử dụng Base64 để tránh lỗi CORS
         async function loadPDF(fileId) {
             loadingMsg.style.display = 'block';
             loadingMsg.textContent = "Đang tải dữ liệu PDF từ máy chủ an toàn...";
             
             try {
-                // 1. Gọi máy chủ Apps Script của bạn để lấy dữ liệu (action=getFileData)
                 const response = await fetch(`${WEB_APP_URL}?action=getFileData&fileId=${fileId}`);
                 const data = await response.json();
                 
@@ -115,14 +149,12 @@
                     return;
                 }
 
-                // 2. Dịch ngược chuỗi văn bản Base64 trở lại thành file PDF (mảng byte)
                 const pdfData = atob(data.base64);
                 const uint8Array = new Uint8Array(pdfData.length);
                 for (let i = 0; i < pdfData.length; i++) {
                     uint8Array[i] = pdfData.charCodeAt(i);
                 }
 
-                // 3. Yêu cầu thư viện PDF.js vẽ mảng byte đó lên màn hình
                 pdfjsLib.getDocument({data: uint8Array}).promise.then(pdfDoc_ => {
                     pdfDoc = pdfDoc_;
                     document.getElementById('pageCount').textContent = pdfDoc.numPages;
@@ -139,43 +171,6 @@
             } catch (error) {
                 console.error("Lỗi mạng:", error);
                 alert("Lỗi kết nối đến máy chủ Google Apps Script.");
-                loadingMsg.style.display = 'none';
-            }
-        }
-
-        // --- PHẦN MÃ ĐỌC PDF ĐƯỢC GIỮ NGUYÊN ---
-        // --- CẬP NHẬT HÀM ĐỌC PDF ---
-        async function loadPDF(fileId) {
-            loadingMsg.style.display = 'block';
-            loadingMsg.textContent = "Đang tải và xử lý file PDF...";
-            
-            try {
-                // 1. Xin đường link gốc từ máy chủ Apps Script
-                const response = await fetch(`${WEB_APP_URL}?action=getLink&fileId=${fileId}`);
-                const data = await response.json();
-                
-                // 2. Sử dụng "cầu nối" AllOrigins (ổn định hơn) để tải file
-                const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(data.downloadUrl)}`;
-
-                // 3. Yêu cầu thư viện PDF.js đọc dữ liệu
-                pdfjsLib.getDocument(corsProxyUrl).promise.then(pdfDoc_ => {
-                    pdfDoc = pdfDoc_;
-                    document.getElementById('pageCount').textContent = pdfDoc.numPages;
-                    document.getElementById('pdfControls').style.display = 'flex';
-                    pageNum = 1;
-                    renderPage(pageNum);
-                    loadingMsg.style.display = 'none'; // Ẩn thông báo khi thành công
-                }).catch(err => {
-                    // Bắt lỗi nếu PDF.js không thể đọc được file
-                    console.error("Lỗi PDF.js:", err);
-                    alert("Không thể đọc file PDF. Lỗi: " + err.message);
-                    loadingMsg.style.display = 'none';
-                });
-
-            } catch (error) {
-                // Bắt lỗi nếu mạng bị rớt hoặc máy chủ không phản hồi
-                console.error("Lỗi mạng:", error);
-                alert("Lỗi kết nối khi tải PDF. Vui lòng kiểm tra F12 (Console) để xem chi tiết.");
                 loadingMsg.style.display = 'none';
             }
         }
