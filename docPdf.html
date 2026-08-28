@@ -220,6 +220,7 @@
   async function api(action, params = {}) {
     const url = new URL(WEB_APP_URL);
     url.searchParams.set('action', action);
+    url.searchParams.set('appType', 'pdf'); // Thêm dòng này để báo cho server mở thư mục pdf
     url.searchParams.set('_', Date.now().toString());
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
     const response = await fetch(url.toString(), { method: 'GET', cache: 'no-store', redirect: 'follow' });
