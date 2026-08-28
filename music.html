@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình phát mp3 2026</title>
+<title>Trình nhạc Nhi hư</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -441,7 +441,17 @@ let wetGainNode = null;
 let masterGainNode = null;
 let mediaSourceNodes = [];
 let visualizerFrame = 0;
+let visualizerTimer = 0;
+let visualizerLevels = [];
+let visualizerSilentFrames = 0;
+let visualizerUsesRealSpectrum = false;
+let audioEffectsAvailable = true;
 let frequencyData = null;
+
+const IS_LG_WEBOS_TV =
+  /web0s|webos|netcast|lg browser|smarttv/i.test(
+    navigator.userAgent || ''
+  );
 
 const effectState = {
   preset: 'off',
@@ -3537,85 +3547,190 @@ async function ensureAudioEffects() {
     window.AudioContext ||
     window.webkitAudioContext;
 
+  // LG webOS TV không hỗ trợ createMediaElementSource() cho audio/video.
+  // Không cố tạo node vì có thể làm lỗi đồ thị âm thanh. Bộ phổ hình ảnh
+  // vẫn chạy bằng chế độ mô phỏng tương thích TV.
+  if (IS_LG_WEBOS_TV) {
+    audioEffectsAvailable = false;
+    disableUnsupportedAudioEffects(
+      'TV LG: dùng hiệu ứng hình ảnh'
+    );
+    return;
+  }
+
   if (!AudioContextClass) {
-    els.effectPreset.disabled = true;
-    els.bassBoost.disabled = true;
-    els.echoLevel.disabled = true;
-    els.effectBadge.textContent = 'Trình duyệt không hỗ trợ';
+    audioEffectsAvailable = false;
+    disableUnsupportedAudioEffects(
+      'Trình duyệt không hỗ trợ'
+    );
     return;
   }
 
   if (!audioContext) {
-    audioContext = new AudioContextClass();
+    try {
+      audioContext =
+        new AudioContextClass();
 
-    bassFilterNode = audioContext.createBiquadFilter();
-    bassFilterNode.type = 'lowshelf';
-    bassFilterNode.frequency.value = 180;
+      bassFilterNode =
+        audioContext.createBiquadFilter();
 
-    trebleFilterNode = audioContext.createBiquadFilter();
-    trebleFilterNode.type = 'highshelf';
-    trebleFilterNode.frequency.value = 3200;
+      bassFilterNode.type =
+        'lowshelf';
 
-    compressorNode = audioContext.createDynamicsCompressor();
-    compressorNode.threshold.value = -18;
-    compressorNode.knee.value = 18;
-    compressorNode.attack.value = 0.012;
-    compressorNode.release.value = 0.24;
+      bassFilterNode.frequency.value =
+        180;
 
-    dryGainNode = audioContext.createGain();
-    delayNode = audioContext.createDelay(0.8);
-    feedbackGainNode = audioContext.createGain();
-    wetGainNode = audioContext.createGain();
-    analyserNode = audioContext.createAnalyser();
-    masterGainNode = audioContext.createGain();
+      trebleFilterNode =
+        audioContext.createBiquadFilter();
 
-    analyserNode.fftSize = 256;
-    analyserNode.smoothingTimeConstant = 0.82;
-    frequencyData = new Uint8Array(
-      analyserNode.frequencyBinCount
-    );
+      trebleFilterNode.type =
+        'highshelf';
 
-    bassFilterNode
-      .connect(trebleFilterNode)
-      .connect(compressorNode);
+      trebleFilterNode.frequency.value =
+        3200;
 
-    compressorNode.connect(dryGainNode);
-    dryGainNode.connect(analyserNode);
+      compressorNode =
+        audioContext.createDynamicsCompressor();
 
-    compressorNode.connect(delayNode);
-    delayNode.connect(feedbackGainNode);
-    feedbackGainNode.connect(delayNode);
-    delayNode.connect(wetGainNode);
-    wetGainNode.connect(analyserNode);
+      compressorNode.threshold.value =
+        -18;
 
-    analyserNode
-      .connect(masterGainNode)
-      .connect(audioContext.destination);
+      compressorNode.knee.value =
+        18;
 
-    mediaSourceNodes = players.map(player => {
-      const source =
-        audioContext.createMediaElementSource(player);
+      compressorNode.attack.value =
+        0.012;
 
-      const gain =
+      compressorNode.release.value =
+        0.24;
+
+      dryGainNode =
         audioContext.createGain();
 
-      gain.gain.value = 1;
-      source.connect(gain);
-      gain.connect(bassFilterNode);
+      delayNode =
+        audioContext.createDelay(0.8);
 
-      return {
-        source: source,
-        gain: gain
-      };
-    });
+      feedbackGainNode =
+        audioContext.createGain();
 
-    updateEffectNodes();
+      wetGainNode =
+        audioContext.createGain();
+
+      analyserNode =
+        audioContext.createAnalyser();
+
+      masterGainNode =
+        audioContext.createGain();
+
+      analyserNode.fftSize =
+        256;
+
+      analyserNode.smoothingTimeConstant =
+        0.82;
+
+      frequencyData =
+        new Uint8Array(
+          analyserNode.frequencyBinCount
+        );
+
+      bassFilterNode
+        .connect(trebleFilterNode)
+        .connect(compressorNode);
+
+      compressorNode.connect(
+        dryGainNode
+      );
+
+      dryGainNode.connect(
+        analyserNode
+      );
+
+      compressorNode.connect(
+        delayNode
+      );
+
+      delayNode.connect(
+        feedbackGainNode
+      );
+
+      feedbackGainNode.connect(
+        delayNode
+      );
+
+      delayNode.connect(
+        wetGainNode
+      );
+
+      wetGainNode.connect(
+        analyserNode
+      );
+
+      analyserNode
+        .connect(masterGainNode)
+        .connect(audioContext.destination);
+
+      mediaSourceNodes =
+        players.map(player => {
+          const source =
+            audioContext.createMediaElementSource(
+              player
+            );
+
+          const gain =
+            audioContext.createGain();
+
+          gain.gain.value = 1;
+
+          source.connect(gain);
+          gain.connect(bassFilterNode);
+
+          return {
+            source: source,
+            gain: gain
+          };
+        });
+
+      audioEffectsAvailable = true;
+      updateEffectNodes();
+    } catch (error) {
+      audioEffectsAvailable = false;
+      analyserNode = null;
+      frequencyData = null;
+      mediaSourceNodes = [];
+
+      disableUnsupportedAudioEffects(
+        'Chỉ dùng hiệu ứng hình ảnh'
+      );
+
+      try {
+        if (audioContext) {
+          await audioContext.close();
+        }
+      } catch (_) {}
+
+      audioContext = null;
+      return;
+    }
   }
 
-  if (audioContext.state === 'suspended') {
-    await audioContext.resume();
+  if (
+    audioContext &&
+    audioContext.state === 'suspended'
+  ) {
+    try {
+      await audioContext.resume();
+    } catch (_) {}
   }
 }
+
+function disableUnsupportedAudioEffects(message) {
+  els.effectPreset.disabled = true;
+  els.bassBoost.disabled = true;
+  els.echoLevel.disabled = true;
+  els.effectPreset.value = 'off';
+  els.effectBadge.textContent = message;
+}
+
 
 function applyEffectPreset(name, persist = true) {
   const preset =
@@ -3646,7 +3761,20 @@ function applyEffectPreset(name, persist = true) {
 }
 
 function updateEffectNodes() {
-  if (!audioContext) return;
+  if (
+    !audioEffectsAvailable ||
+    !audioContext ||
+    !bassFilterNode ||
+    !trebleFilterNode ||
+    !compressorNode ||
+    !delayNode ||
+    !feedbackGainNode ||
+    !wetGainNode ||
+    !dryGainNode ||
+    !masterGainNode
+  ) {
+    return;
+  }
 
   const now = audioContext.currentTime;
 
@@ -3747,29 +3875,45 @@ function saveEffectPreferences() {
 }
 
 function startVisualizer() {
-  if (visualizerFrame) return;
+  if (
+    visualizerTimer ||
+    visualizerFrame
+  ) {
+    return;
+  }
 
-  const canvas = els.visualizer;
-  const context = canvas.getContext('2d');
+  const canvas =
+    els.visualizer;
+
+  const context =
+    canvas.getContext('2d');
+
+  const barCount = 34;
+
+  visualizerLevels =
+    new Array(barCount).fill(0.12);
 
   const draw = () => {
-    visualizerFrame =
-      requestAnimationFrame(draw);
-
     const rect =
       canvas.getBoundingClientRect();
 
     const dpr =
       Math.min(
         window.devicePixelRatio || 1,
-        2
+        IS_LG_WEBOS_TV ? 1 : 2
       );
 
     const width =
-      Math.max(1, Math.floor(rect.width * dpr));
+      Math.max(
+        1,
+        Math.floor(rect.width * dpr)
+      );
 
     const height =
-      Math.max(1, Math.floor(rect.height * dpr));
+      Math.max(
+        1,
+        Math.floor(rect.height * dpr)
+      );
 
     if (
       canvas.width !== width ||
@@ -3786,24 +3930,41 @@ function startVisualizer() {
       height
     );
 
-    const barCount = 34;
-    const gap = 3 * dpr;
+    const player =
+      activeAudio();
+
+    const playing =
+      Boolean(
+        player &&
+        !player.paused &&
+        !player.ended
+      );
+
+    const realSpectrum =
+      readRealSpectrumIfAvailable(
+        playing
+      );
+
+    const now =
+      Date.now();
+
+    const currentTime =
+      player &&
+      Number.isFinite(player.currentTime)
+        ? player.currentTime
+        : 0;
+
+    const gap =
+      3 * dpr;
+
     const barWidth =
       Math.max(
         2 * dpr,
-        (width - gap * (barCount - 1)) / barCount
+        (
+          width -
+          gap * (barCount - 1)
+        ) / barCount
       );
-
-    const active =
-      analyserNode &&
-      frequencyData &&
-      !activeAudio().paused;
-
-    if (active) {
-      analyserNode.getByteFrequencyData(
-        frequencyData
-      );
-    }
 
     const gradient =
       context.createLinearGradient(
@@ -3828,16 +3989,17 @@ function startVisualizer() {
       '#ec4899'
     );
 
-    context.fillStyle = gradient;
+    context.fillStyle =
+      gradient;
 
     for (
       let index = 0;
       index < barCount;
       index++
     ) {
-      let level;
+      let targetLevel;
 
-      if (active) {
+      if (realSpectrum) {
         const sourceIndex =
           Math.min(
             frequencyData.length - 1,
@@ -3849,17 +4011,37 @@ function startVisualizer() {
             )
           );
 
-        level =
-          frequencyData[sourceIndex] / 255;
+        targetLevel =
+          frequencyData[sourceIndex] /
+          255;
       } else {
-        level =
-          0.08 +
-          0.035 *
-          Math.sin(
-            performance.now() / 620 +
-            index * 0.62
+        targetLevel =
+          getFallbackVisualizerLevel(
+            index,
+            barCount,
+            now,
+            currentTime,
+            playing
           );
       }
+
+      const smoothing =
+        playing ? 0.42 : 0.2;
+
+      visualizerLevels[index] =
+        visualizerLevels[index] *
+          (1 - smoothing) +
+        targetLevel *
+          smoothing;
+
+      const level =
+        Math.max(
+          0.035,
+          Math.min(
+            1,
+            visualizerLevels[index]
+          )
+        );
 
       const barHeight =
         Math.max(
@@ -3868,7 +4050,8 @@ function startVisualizer() {
         );
 
       const x =
-        index * (barWidth + gap);
+        index *
+        (barWidth + gap);
 
       const y =
         height - barHeight;
@@ -3890,8 +4073,180 @@ function startVisualizer() {
     }
   };
 
+  // requestAnimationFrame trên một số phiên bản webOS TV có thể bị
+  // giảm tần số mạnh. setInterval 80 ms ổn định hơn cho hiệu ứng nhẹ.
+  visualizerTimer =
+    window.setInterval(
+      draw,
+      IS_LG_WEBOS_TV ? 90 : 70
+    );
+
   draw();
 }
+
+function readRealSpectrumIfAvailable(playing) {
+  if (
+    !playing ||
+    !analyserNode ||
+    !frequencyData ||
+    !audioEffectsAvailable
+  ) {
+    visualizerUsesRealSpectrum = false;
+    visualizerSilentFrames = 0;
+    return false;
+  }
+
+  try {
+    analyserNode.getByteFrequencyData(
+      frequencyData
+    );
+  } catch (_) {
+    visualizerUsesRealSpectrum = false;
+    return false;
+  }
+
+  let total = 0;
+  let maximum = 0;
+
+  for (
+    let index = 0;
+    index < frequencyData.length;
+    index++
+  ) {
+    const value =
+      frequencyData[index];
+
+    total += value;
+
+    if (value > maximum) {
+      maximum = value;
+    }
+  }
+
+  const average =
+    total /
+    Math.max(
+      1,
+      frequencyData.length
+    );
+
+  if (
+    average > 1.5 ||
+    maximum > 10
+  ) {
+    visualizerSilentFrames = 0;
+    visualizerUsesRealSpectrum = true;
+    return true;
+  }
+
+  visualizerSilentFrames++;
+
+  if (
+    visualizerSilentFrames >= 5
+  ) {
+    visualizerUsesRealSpectrum = false;
+  }
+
+  return visualizerUsesRealSpectrum;
+}
+
+function getFallbackVisualizerLevel(
+  index,
+  barCount,
+  now,
+  currentTime,
+  playing
+) {
+  if (!playing) {
+    return (
+      0.07 +
+      0.025 *
+      Math.sin(
+        now / 760 +
+        index * 0.64
+      )
+    );
+  }
+
+  const seconds =
+    now / 1000;
+
+  const phase =
+    currentTime * 4.15 +
+    seconds * 0.42;
+
+  const lowPulse =
+    0.5 +
+    0.5 *
+    Math.sin(
+      phase * 1.15
+    );
+
+  const midPulse =
+    0.5 +
+    0.5 *
+    Math.sin(
+      phase * 2.07 +
+      index * 0.31
+    );
+
+  const highPulse =
+    0.5 +
+    0.5 *
+    Math.sin(
+      phase * 3.61 +
+      index * 0.89
+    );
+
+  const frequencyShape =
+    1 -
+    index /
+    Math.max(
+      1,
+      barCount * 1.22
+    );
+
+  const beat =
+    (
+      index < barCount * 0.25
+        ? lowPulse * 0.46
+        : index < barCount * 0.67
+          ? midPulse * 0.34
+          : highPulse * 0.22
+    );
+
+  const deterministicNoise =
+    pseudoNoise(
+      index * 19.17 +
+      Math.floor(
+        currentTime * 9
+      ) * 0.73
+    );
+
+  return Math.max(
+    0.08,
+    Math.min(
+      0.96,
+      0.1 +
+      beat +
+      frequencyShape * 0.19 +
+      deterministicNoise * 0.13
+    )
+  );
+}
+
+function pseudoNoise(value) {
+  const result =
+    Math.sin(
+      value * 12.9898
+    ) * 43758.5453;
+
+  return (
+    result -
+    Math.floor(result)
+  );
+}
+
 
 function drawRoundedRect(
   context,
@@ -3924,10 +4279,19 @@ function drawRoundedRect(
 }
 
 function stopVisualizer() {
+  if (visualizerTimer) {
+    clearInterval(
+      visualizerTimer
+    );
+
+    visualizerTimer = 0;
+  }
+
   if (visualizerFrame) {
     cancelAnimationFrame(
       visualizerFrame
     );
+
     visualizerFrame = 0;
   }
 }
