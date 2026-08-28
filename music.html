@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình nhạc Nhi hư - Network Diagnostics v5.6</title>
+<title>Trình nhạc Nhi hư - v.1.2026</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -299,7 +299,7 @@ input[type=range]{width:100%;accent-color:var(--p)}
     <div class="brand">
       <div class="logo">🎧</div>
       <div>
-        <h1>Thư viện âm thanh</h1>
+        <h1>Trình chơi nhạc Nguyên Nhi 2026</h1>
         <small>Phát ổn định với bộ đệm trượt từ Google Drive</small>
       </div>
     </div>
@@ -421,7 +421,7 @@ input[type=range]{width:100%;accent-color:var(--p)}
   class="network-diagnostics no-file"
   role="status"
   aria-live="polite"
-  title="Thông tin chẩn đoán đường truyền cho file đang phát"
+  title="Chỉ ghi nhận sự cố đã được xác nhận cho file đang phát"
 >
   <span id="diagnosticDot" class="diag-dot" aria-hidden="true"></span>
   <span id="diagnosticText" class="diag-text">
@@ -497,6 +497,19 @@ const MSE_KEEP_BEHIND_SECONDS =
 
 const MSE_QUOTA_RETRY_DELAY_MS = 650;
 const MSE_BUFFER_CHECK_INTERVAL_MS = 500;
+
+/*
+ * Chẩn đoán đường truyền:
+ * - waiting/stalled phải kéo dài mới được xem là một lần ngắt.
+ * - phục hồi chỉ được xác nhận khi mạng phản hồi và âm thanh đã chạy ổn định.
+ */
+const DIAGNOSTIC_PLAYBACK_CONFIRM_MS = 2200;
+const DIAGNOSTIC_NETWORK_CONFIRM_FAILURES = 2;
+const DIAGNOSTIC_NETWORK_FAILURE_WINDOW_MS = 5000;
+const DIAGNOSTIC_RECOVERY_STABLE_MS = 1800;
+const DIAGNOSTIC_PLAYBACK_FRESH_MS = 1400;
+const DIAGNOSTIC_RECOVERY_BUFFER_SECONDS = 3;
+const DIAGNOSTIC_CANDIDATE_BUFFER_SECONDS = 2.5;
 
 const $ = id => document.getElementById(id);
 
@@ -644,13 +657,34 @@ const networkState = {
 const connectionDiagnostics = {
   fileId: '',
   fileName: '',
+
   incidentCount: 0,
   incidentActive: false,
   incidentStartedAt: 0,
+  incidentKind: '',
   incidentReason: '',
+  lastIncidentReason: '',
+
   totalInterruptedMs: 0,
   lastIncidentMs: 0,
-  lastIncidentEndedAt: 0
+  lastIncidentEndedAt: 0,
+
+  candidateTimer: 0,
+  candidateStartedAt: 0,
+  candidatePlayerTime: 0,
+  candidateKind: '',
+  candidateReason: '',
+
+  playbackEverStarted: false,
+  lastPlaybackTime: 0,
+  lastPlaybackProgressAt: 0,
+
+  lastNetworkFailureAt: 0,
+  consecutiveNetworkFailures: 0,
+  lastNetworkSuccessAt: 0,
+
+  recoveryStableSince: 0,
+  ignorePlaybackEventsUntil: 0
 };
 
 let connectionDiagnosticTimer = 0;
@@ -863,9 +897,11 @@ function configurePlayers() {
     player.addEventListener('playing', () => {
       if (index === activePlayerIndex) {
         networkState.urgent = false;
+        noteDiagnosticPlaybackStarted(player);
         startPlaybackUiTicker();
         syncPlaybackUi();
         refreshPlaybackStatus();
+        maybeEndConnectionIncident();
       }
     });
 
@@ -873,7 +909,33 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         els.play.textContent = '▶';
         els.cover.classList.remove('playing');
+
+        if (!shouldBePlaying) {
+          cancelDiagnosticCandidate();
+          maybeEndConnectionIncident();
+        }
+
         syncPlaybackUi();
+      }
+    });
+
+    player.addEventListener('seeking', () => {
+      if (index === activePlayerIndex) {
+        cancelDiagnosticCandidate();
+        connectionDiagnostics.ignorePlaybackEventsUntil =
+          Date.now() + 3500;
+      }
+    });
+
+    player.addEventListener('seeked', () => {
+      if (index === activePlayerIndex) {
+        connectionDiagnostics.ignorePlaybackEventsUntil =
+          Date.now() + 1200;
+        connectionDiagnostics.lastPlaybackTime =
+          Number(player.currentTime || 0);
+        connectionDiagnostics.lastPlaybackProgressAt =
+          Date.now();
+        maybeEndConnectionIncident();
       }
     });
 
@@ -881,8 +943,16 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
         networkState.recovering = true;
-        beginConnectionIncident('Bộ đệm cạn hoặc tín hiệu bị gián đoạn');
-        showRecoveryStatus('Bộ đệm sắp hết • đang khôi phục đường truyền...');
+
+        schedulePlaybackIncident(
+          'Bộ đệm cạn hoặc tín hiệu bị gián đoạn',
+          player
+        );
+
+        showRecoveryStatus(
+          'Bộ đệm sắp hết • đang kiểm tra trạng thái đường truyền...'
+        );
+
         kickStreamingRecovery('waiting');
       }
     });
@@ -891,8 +961,16 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
         networkState.recovering = true;
-        beginConnectionIncident('Đường truyền tạm dừng');
-        showRecoveryStatus('Đường truyền tạm dừng • đang kiểm tra lại máy chủ...');
+
+        schedulePlaybackIncident(
+          'Đường truyền hoặc bộ đệm tạm dừng',
+          player
+        );
+
+        showRecoveryStatus(
+          'Tín hiệu tạm dừng • đang xác minh trước khi ghi nhận sự cố...'
+        );
+
         kickStreamingRecovery('stalled');
       }
     });
@@ -901,6 +979,7 @@ function configurePlayers() {
       if (index === activePlayerIndex && !networkState.offline) {
         attemptResumePlayback(activeSession);
         refreshPlaybackStatus();
+        maybeEndConnectionIncident();
       }
     });
 
@@ -933,7 +1012,10 @@ function startConnectionDiagnostics() {
   updateConnectionDiagnostics();
 
   connectionDiagnosticTimer = window.setInterval(
-    updateConnectionDiagnostics,
+    () => {
+      maybeEndConnectionIncident();
+      updateConnectionDiagnostics();
+    },
     1000
   );
 }
@@ -946,19 +1028,7 @@ function stopConnectionDiagnostics() {
 }
 
 function resetConnectionDiagnostics(file) {
-  /*
-   * Nếu bài trước đang gặp sự cố, chốt thời gian trước khi chuyển bài.
-   * Bộ đếm của bài mới bắt đầu lại từ 0.
-   */
-  if (connectionDiagnostics.incidentActive) {
-    const elapsed = Math.max(
-      0,
-      Date.now() - connectionDiagnostics.incidentStartedAt
-    );
-
-    connectionDiagnostics.totalInterruptedMs += elapsed;
-    connectionDiagnostics.lastIncidentMs = elapsed;
-  }
+  cancelDiagnosticCandidate();
 
   connectionDiagnostics.fileId =
     file && file.id
@@ -973,15 +1043,274 @@ function resetConnectionDiagnostics(file) {
   connectionDiagnostics.incidentCount = 0;
   connectionDiagnostics.incidentActive = false;
   connectionDiagnostics.incidentStartedAt = 0;
+  connectionDiagnostics.incidentKind = '';
   connectionDiagnostics.incidentReason = '';
+  connectionDiagnostics.lastIncidentReason = '';
+
   connectionDiagnostics.totalInterruptedMs = 0;
   connectionDiagnostics.lastIncidentMs = 0;
   connectionDiagnostics.lastIncidentEndedAt = 0;
 
+  connectionDiagnostics.playbackEverStarted = false;
+  connectionDiagnostics.lastPlaybackTime = 0;
+  connectionDiagnostics.lastPlaybackProgressAt = 0;
+
+  connectionDiagnostics.lastNetworkFailureAt = 0;
+  connectionDiagnostics.consecutiveNetworkFailures = 0;
+  connectionDiagnostics.lastNetworkSuccessAt = 0;
+  connectionDiagnostics.recoveryStableSince = 0;
+  connectionDiagnostics.ignorePlaybackEventsUntil = 0;
+
   updateConnectionDiagnostics();
 }
 
-function beginConnectionIncident(reason) {
+function cancelDiagnosticCandidate() {
+  if (connectionDiagnostics.candidateTimer) {
+    clearTimeout(
+      connectionDiagnostics.candidateTimer
+    );
+  }
+
+  connectionDiagnostics.candidateTimer = 0;
+  connectionDiagnostics.candidateStartedAt = 0;
+  connectionDiagnostics.candidatePlayerTime = 0;
+  connectionDiagnostics.candidateKind = '';
+  connectionDiagnostics.candidateReason = '';
+}
+
+function noteDiagnosticPlaybackStarted(player) {
+  if (!activeFileId || !player) return;
+
+  connectionDiagnostics.playbackEverStarted = true;
+  connectionDiagnostics.lastPlaybackTime =
+    Number(player.currentTime || 0);
+
+  connectionDiagnostics.lastPlaybackProgressAt =
+    Date.now();
+
+  cancelDiagnosticCandidate();
+}
+
+function trackDiagnosticPlaybackProgress(
+  player,
+  currentTime
+) {
+  if (!activeFileId || !player) return;
+
+  const current =
+    Number.isFinite(currentTime)
+      ? currentTime
+      : Number(player.currentTime || 0);
+
+  if (
+    current >
+    connectionDiagnostics.lastPlaybackTime + 0.08
+  ) {
+    connectionDiagnostics.playbackEverStarted =
+      connectionDiagnostics.playbackEverStarted ||
+      current > 0.15;
+
+    connectionDiagnostics.lastPlaybackTime =
+      current;
+
+    connectionDiagnostics.lastPlaybackProgressAt =
+      Date.now();
+
+    if (
+      connectionDiagnostics.candidateKind ===
+      'playback'
+    ) {
+      cancelDiagnosticCandidate();
+    }
+
+    maybeEndConnectionIncident();
+  }
+}
+
+function schedulePlaybackIncident(
+  reason,
+  player
+) {
+  if (
+    !activeFileId ||
+    !player ||
+    !shouldBePlaying ||
+    player.ended ||
+    !connectionDiagnostics.playbackEverStarted ||
+    Date.now() <
+      connectionDiagnostics.ignorePlaybackEventsUntil
+  ) {
+    return;
+  }
+
+  if (connectionDiagnostics.incidentActive) {
+    connectionDiagnostics.incidentReason =
+      normalizeDiagnosticReason(reason);
+
+    updateConnectionDiagnostics();
+    return;
+  }
+
+  if (
+    connectionDiagnostics.candidateTimer &&
+    connectionDiagnostics.candidateKind ===
+      'playback'
+  ) {
+    connectionDiagnostics.candidateReason =
+      normalizeDiagnosticReason(reason);
+
+    return;
+  }
+
+  cancelDiagnosticCandidate();
+
+  connectionDiagnostics.candidateKind =
+    'playback';
+
+  connectionDiagnostics.candidateReason =
+    normalizeDiagnosticReason(reason);
+
+  connectionDiagnostics.candidateStartedAt =
+    Date.now();
+
+  connectionDiagnostics.candidatePlayerTime =
+    Number(player.currentTime || 0);
+
+  connectionDiagnostics.candidateTimer =
+    window.setTimeout(
+      () => {
+        connectionDiagnostics.candidateTimer = 0;
+
+        if (
+          !activeFileId ||
+          !shouldBePlaying ||
+          player.ended
+        ) {
+          cancelDiagnosticCandidate();
+          return;
+        }
+
+        const current =
+          Number(player.currentTime || 0);
+
+        const progressed =
+          current >
+          connectionDiagnostics.candidatePlayerTime +
+            0.12;
+
+        const progressStale =
+          Date.now() -
+            connectionDiagnostics.lastPlaybackProgressAt >=
+          DIAGNOSTIC_PLAYBACK_CONFIRM_MS;
+
+        const bufferAhead =
+          getBufferAhead(player);
+
+        const genuinelyBlocked =
+          player.readyState < 3 ||
+          player.paused ||
+          bufferAhead <
+            DIAGNOSTIC_CANDIDATE_BUFFER_SECONDS ||
+          networkState.offline ||
+          networkState.failures > 0;
+
+        const startedAt =
+          connectionDiagnostics.candidateStartedAt;
+
+        const confirmedReason =
+          connectionDiagnostics.candidateReason;
+
+        cancelDiagnosticCandidate();
+
+        if (
+          !progressed &&
+          progressStale &&
+          genuinelyBlocked
+        ) {
+          beginConnectionIncident(
+            confirmedReason,
+            startedAt,
+            'playback'
+          );
+        }
+      },
+      DIAGNOSTIC_PLAYBACK_CONFIRM_MS
+    );
+}
+
+function registerDiagnosticNetworkFailure(reason) {
+  if (!activeFileId) return;
+
+  const now = Date.now();
+
+  if (
+    now -
+      connectionDiagnostics.lastNetworkFailureAt <=
+    DIAGNOSTIC_NETWORK_FAILURE_WINDOW_MS
+  ) {
+    connectionDiagnostics.consecutiveNetworkFailures++;
+  } else {
+    connectionDiagnostics.consecutiveNetworkFailures = 1;
+  }
+
+  connectionDiagnostics.lastNetworkFailureAt = now;
+
+  const player = activeAudio();
+
+  const playbackBlocked =
+    shouldBePlaying &&
+    (
+      networkState.offline ||
+      getBufferAhead(player) <
+        DIAGNOSTIC_CANDIDATE_BUFFER_SECONDS ||
+      (
+        connectionDiagnostics.playbackEverStarted &&
+        now -
+          connectionDiagnostics.lastPlaybackProgressAt >=
+        DIAGNOSTIC_PLAYBACK_CONFIRM_MS
+      )
+    );
+
+  if (
+    networkState.offline ||
+    connectionDiagnostics.consecutiveNetworkFailures >=
+      DIAGNOSTIC_NETWORK_CONFIRM_FAILURES ||
+    playbackBlocked
+  ) {
+    beginConnectionIncident(
+      reason,
+      now,
+      networkState.offline
+        ? 'offline'
+        : 'network'
+    );
+  }
+}
+
+function noteDiagnosticNetworkSuccess(source) {
+  if (!activeFileId) return;
+
+  connectionDiagnostics.lastNetworkSuccessAt =
+    Date.now();
+
+  connectionDiagnostics.consecutiveNetworkFailures =
+    0;
+
+  if (
+    connectionDiagnostics.candidateKind ===
+    'network'
+  ) {
+    cancelDiagnosticCandidate();
+  }
+
+  maybeEndConnectionIncident();
+}
+
+function beginConnectionIncident(
+  reason,
+  startedAt = Date.now(),
+  kind = 'network'
+) {
   if (!activeFileId) return;
 
   if (
@@ -998,27 +1327,126 @@ function beginConnectionIncident(reason) {
     });
   }
 
-  /*
-   * waiting, stalled, offline và retry có thể xảy ra liên tiếp trong
-   * cùng một sự cố. Chỉ tăng bộ đếm khi bắt đầu một đợt mới.
-   */
+  cancelDiagnosticCandidate();
+
   if (!connectionDiagnostics.incidentActive) {
     connectionDiagnostics.incidentActive = true;
     connectionDiagnostics.incidentCount++;
-    connectionDiagnostics.incidentStartedAt = Date.now();
+
+    connectionDiagnostics.incidentStartedAt =
+      Math.min(
+        Date.now(),
+        Math.max(
+          0,
+          Number(startedAt) || Date.now()
+        )
+      );
+
+    connectionDiagnostics.incidentKind = kind;
+    connectionDiagnostics.recoveryStableSince = 0;
+  } else if (
+    connectionDiagnostics.incidentKind !==
+    'offline' &&
+    kind === 'offline'
+  ) {
+    connectionDiagnostics.incidentKind = 'offline';
   }
 
   if (reason) {
     connectionDiagnostics.incidentReason =
       normalizeDiagnosticReason(reason);
+
+    connectionDiagnostics.lastIncidentReason =
+      connectionDiagnostics.incidentReason;
   }
 
   updateConnectionDiagnostics();
 }
 
-function endConnectionIncident() {
+function maybeEndConnectionIncident() {
   if (!connectionDiagnostics.incidentActive) {
-    updateConnectionDiagnostics();
+    return false;
+  }
+
+  if (
+    networkState.offline ||
+    !navigator.onLine
+  ) {
+    connectionDiagnostics.recoveryStableSince = 0;
+    return false;
+  }
+
+  const player = activeAudio();
+  const now = Date.now();
+
+  const requiresNetworkSuccess =
+    connectionDiagnostics.incidentKind ===
+      'network' ||
+    connectionDiagnostics.incidentKind ===
+      'offline';
+
+  const networkRecovered =
+    !requiresNetworkSuccess ||
+    connectionDiagnostics.lastNetworkSuccessAt >=
+      connectionDiagnostics.incidentStartedAt;
+
+  const playbackProgressFresh =
+    connectionDiagnostics.playbackEverStarted &&
+    now -
+      connectionDiagnostics.lastPlaybackProgressAt <=
+      DIAGNOSTIC_PLAYBACK_FRESH_MS;
+
+  const playbackReady =
+    !shouldBePlaying ||
+    Boolean(player && player.ended) ||
+    (
+      player &&
+      !player.paused &&
+      (
+        playbackProgressFresh ||
+        (
+          player.readyState >= 3 &&
+          getBufferAhead(player) >=
+            DIAGNOSTIC_RECOVERY_BUFFER_SECONDS
+        )
+      )
+    );
+
+  if (
+    networkRecovered &&
+    playbackReady
+  ) {
+    if (
+      !connectionDiagnostics.recoveryStableSince
+    ) {
+      connectionDiagnostics.recoveryStableSince =
+        now;
+
+      return false;
+    }
+
+    if (
+      now -
+        connectionDiagnostics.recoveryStableSince >=
+      DIAGNOSTIC_RECOVERY_STABLE_MS
+    ) {
+      endConnectionIncident(true);
+      return true;
+    }
+
+    return false;
+  }
+
+  connectionDiagnostics.recoveryStableSince = 0;
+  return false;
+}
+
+function endConnectionIncident(silent = false) {
+  if (!connectionDiagnostics.incidentActive) {
+    if (!silent) {
+      updateConnectionDiagnostics();
+    }
+
     return;
   }
 
@@ -1028,14 +1456,28 @@ function endConnectionIncident() {
       connectionDiagnostics.incidentStartedAt
   );
 
-  connectionDiagnostics.totalInterruptedMs += elapsed;
-  connectionDiagnostics.lastIncidentMs = elapsed;
-  connectionDiagnostics.lastIncidentEndedAt = Date.now();
+  connectionDiagnostics.totalInterruptedMs +=
+    elapsed;
+
+  connectionDiagnostics.lastIncidentMs =
+    elapsed;
+
+  connectionDiagnostics.lastIncidentEndedAt =
+    Date.now();
+
+  connectionDiagnostics.lastIncidentReason =
+    connectionDiagnostics.incidentReason ||
+    connectionDiagnostics.lastIncidentReason;
+
   connectionDiagnostics.incidentActive = false;
   connectionDiagnostics.incidentStartedAt = 0;
+  connectionDiagnostics.incidentKind = '';
   connectionDiagnostics.incidentReason = '';
+  connectionDiagnostics.recoveryStableSince = 0;
 
-  updateConnectionDiagnostics();
+  if (!silent) {
+    updateConnectionDiagnostics();
+  }
 }
 
 async function verifyDiagnosticRecovery() {
@@ -1050,11 +1492,11 @@ async function verifyDiagnosticRecovery() {
     async () => {
       try {
         await probeBackendOnce(undefined);
-        endConnectionIncident();
+        noteDiagnosticNetworkSuccess('health');
       } catch (_) {
         /*
-         * Sự kiện online không bảo đảm máy chủ đã truy cập được.
-         * Giữ nguyên bộ đếm cho đến khi chunk hoặc health API thành công.
+         * Sự kiện online chỉ cho biết thiết bị có giao diện mạng.
+         * Không kết thúc sự cố cho đến khi API thật sự phản hồi.
          */
       } finally {
         diagnosticRecoveryProbePromise = null;
@@ -1100,23 +1542,30 @@ function updateConnectionDiagnostics() {
     connectionDiagnostics.totalInterruptedMs +
     currentMs;
 
-  const statusText =
-    connectionDiagnostics.incidentActive
-      ? (
-          navigator.onLine
-            ? 'đang khôi phục'
-            : 'đang mất mạng'
-        )
-      : 'kết nối ổn định';
+  let statusText = 'kết nối ổn định';
+
+  if (connectionDiagnostics.incidentActive) {
+    statusText =
+      !navigator.onLine ||
+      networkState.offline
+        ? 'đang mất mạng'
+        : 'đang khôi phục';
+  } else if (
+    connectionDiagnostics.candidateTimer
+  ) {
+    statusText =
+      'đang xác minh tín hiệu';
+  }
 
   footer.className =
     'network-diagnostics' +
     (
       connectionDiagnostics.incidentActive
         ? (
-            navigator.onLine
-              ? ' warning'
-              : ' offline'
+            !navigator.onLine ||
+            networkState.offline
+              ? ' offline'
+              : ' warning'
           )
         : ''
     );
@@ -1134,13 +1583,18 @@ function updateConnectionDiagnostics() {
         ).toLocaleTimeString('vi-VN')
       : '—';
 
+  const reason =
+    connectionDiagnostics.incidentActive
+      ? connectionDiagnostics.incidentReason
+      : connectionDiagnostics.lastIncidentReason;
+
   footer.title =
     `File: ${connectionDiagnostics.fileName || activeFileId}\n` +
-    `Số lần ngắt: ${connectionDiagnostics.incidentCount}\n` +
+    `Số lần ngắt đã xác nhận: ${connectionDiagnostics.incidentCount}\n` +
     `Thời gian sự cố hiện tại: ${formatDiagnosticDuration(currentMs)}\n` +
     `Tổng thời gian gián đoạn: ${formatDiagnosticDuration(totalMs)}\n` +
     `Bắt đầu sự cố hiện tại: ${startedAt}\n` +
-    `Nguyên nhân gần nhất: ${connectionDiagnostics.incidentReason || 'Không có'}\n` +
+    `Nguyên nhân gần nhất: ${reason || 'Không có'}\n` +
     `Trạng thái: ${statusText}`;
 }
 
@@ -1167,17 +1621,17 @@ function formatDiagnosticDuration(milliseconds) {
 }
 
 function normalizeDiagnosticReason(reason) {
-  const text = String(reason || '').trim();
+  const value = String(reason || '').trim();
 
-  if (!text) {
+  if (!value) {
     return 'Gián đoạn đường truyền';
   }
 
-  if (text.length <= 120) {
-    return text;
+  if (value.length <= 120) {
+    return value;
   }
 
-  return text.slice(0, 117) + '...';
+  return value.slice(0, 117) + '...';
 }
 
 function bindNetworkEvents() {
@@ -1187,7 +1641,12 @@ function bindNetworkEvents() {
     networkState.recovering = true;
     networkState.lastFailureAt = Date.now();
     networkState.recoveryCycle++;
-    beginConnectionIncident('Mất kết nối Internet');
+
+    beginConnectionIncident(
+      'Mất kết nối Internet',
+      Date.now(),
+      'offline'
+    );
 
     showRecoveryStatus(
       `Mất kết nối Internet • còn bộ đệm ${Math.round(getBufferAhead(activeAudio()))} giây`
@@ -1906,7 +2365,7 @@ async function fetchChunkWithRecovery(
       networkState.failures++;
       networkState.lastFailureAt = Date.now();
 
-      beginConnectionIncident(
+      registerDiagnosticNetworkFailure(
         error && error.message
           ? error.message
           : 'Lỗi tải dữ liệu âm thanh'
@@ -2101,6 +2560,7 @@ async function probeBackendOnce(signal) {
     );
   }
 
+  noteDiagnosticNetworkSuccess('health');
   return true;
 }
 
@@ -2197,7 +2657,7 @@ function markStreamingRecovered(
   networkState.recovering = false;
   networkState.recoveryMessage = '';
   networkState.lastSuccessAt = Date.now();
-  endConnectionIncident();
+  noteDiagnosticNetworkSuccess('chunk');
 
   session.recovering = false;
   session.lastNetworkSuccessAt =
@@ -3925,6 +4385,11 @@ function syncPlaybackUi() {
 
   const duration = getEffectiveDuration(player);
 
+  trackDiagnosticPlaybackProgress(
+    player,
+    current
+  );
+
   els.current.textContent = formatTime(current);
 
   if (duration > 0) {
@@ -5202,6 +5667,7 @@ function cleanupEverything() {
   stopPlaybackUiTicker();
   stopStreamWatchdog();
   stopConnectionDiagnostics();
+  cancelDiagnosticCandidate();
   stopVisualizer();
   cancelActiveSession();
   clearStandby();
