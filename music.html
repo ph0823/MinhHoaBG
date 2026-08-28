@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện Nhi hư - Google Drive</title>
+<title>Trình phát mp3</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -129,6 +129,51 @@ input[type=range]{width:100%;accent-color:var(--p)}
   padding:7px 9px;border:1px solid var(--border);
   border-radius:8px;background:#fff
 }
+
+.visualizer-wrap{
+  width:min(420px,100%);height:74px;margin:-8px auto 14px;
+  padding:8px 10px;border:1px solid #ddd6fe;border-radius:14px;
+  background:linear-gradient(180deg,rgba(245,243,255,.96),rgba(237,233,254,.68));
+  overflow:hidden
+}
+#visualizer{display:block;width:100%;height:100%}
+.cover.playing{
+  animation:coverPulse 1.35s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(124,58,237,.3)
+}
+@keyframes coverPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(124,58,237,.24)}
+  50%{transform:scale(1.025);box-shadow:0 0 0 14px rgba(124,58,237,0)}
+}
+.effects-panel{
+  width:min(560px,100%);margin:16px auto 0;padding:12px 14px;
+  border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.82)
+}
+.effects-title{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;margin-bottom:10px;font-size:13px;font-weight:800;color:var(--text)
+}
+.effects-grid{
+  display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(135px,1fr) minmax(135px,1fr);
+  gap:10px;align-items:end
+}
+.effects-grid label{
+  display:grid;gap:5px;text-align:left;font-size:12px;color:var(--muted)
+}
+.effects-grid select{
+  height:36px;padding:0 9px;border:1px solid var(--border);
+  border-radius:9px;background:#fff;color:var(--text)
+}
+.effect-value{font-variant-numeric:tabular-nums;color:var(--p);font-weight:750}
+.effect-badge{
+  padding:4px 9px;border-radius:999px;background:#ede9fe;
+  color:var(--p);font-size:11px;white-space:nowrap
+}
+@media(max-width:620px){
+  .effects-grid{grid-template-columns:1fr}
+  .visualizer-wrap{height:64px}
+}
+
 .loading{
   padding:14px 18px;margin:16px auto 0;background:#fff;
   border:1px solid var(--border);border-radius:12px;
@@ -209,7 +254,11 @@ input[type=range]{width:100%;accent-color:var(--p)}
 
     <section class="player">
       <div class="card">
-        <div class="cover">🎵</div>
+        <div id="cover" class="cover">🎵</div>
+        <div class="visualizer-wrap" aria-label="Hiệu ứng phổ âm thanh">
+          <canvas id="visualizer"></canvas>
+        </div>
+
         <h2 id="trackTitle" class="title">Chưa chọn bài</h2>
         <div id="trackSub" class="sub">Chọn một file âm thanh trong danh sách.</div>
 
@@ -244,6 +293,37 @@ input[type=range]{width:100%;accent-color:var(--p)}
             <input id="autoNext" type="checkbox" checked>
             Tự phát bài sau
           </label>
+        </div>
+
+        <div class="effects-panel">
+          <div class="effects-title">
+            <span>🎚️ Hiệu ứng âm thanh</span>
+            <span id="effectBadge" class="effect-badge">Đang tắt</span>
+          </div>
+
+          <div class="effects-grid">
+            <label>
+              Chế độ âm thanh
+              <select id="effectPreset">
+                <option value="off">Tắt hiệu ứng</option>
+                <option value="bass">Tăng âm trầm</option>
+                <option value="vocal">Rõ giọng hát</option>
+                <option value="concert">Không gian sân khấu</option>
+                <option value="night">Nghe ban đêm</option>
+                <option value="custom">Tùy chỉnh</option>
+              </select>
+            </label>
+
+            <label>
+              Bass: <span id="bassValue" class="effect-value">0 dB</span>
+              <input id="bassBoost" type="range" min="-8" max="12" value="0" step="1">
+            </label>
+
+            <label>
+              Độ vang: <span id="echoValue" class="effect-value">0%</span>
+              <input id="echoLevel" type="range" min="0" max="45" value="0" step="1">
+            </label>
+          </div>
         </div>
 
         <div id="loading" class="loading" hidden>Đang chuẩn bị phát...</div>
@@ -302,6 +382,14 @@ const els = {
   volume: $('volume'),
   speed: $('speed'),
   autoNext: $('autoNext'),
+  cover: $('cover'),
+  visualizer: $('visualizer'),
+  effectPreset: $('effectPreset'),
+  bassBoost: $('bassBoost'),
+  bassValue: $('bassValue'),
+  echoLevel: $('echoLevel'),
+  echoValue: $('echoValue'),
+  effectBadge: $('effectBadge'),
   loading: $('loading'),
   mode: $('mode'),
   toast: $('toast')
@@ -329,6 +417,59 @@ let cacheDbPromise = null;
 let playbackUiTimer = null;
 let lastEffectiveDuration = 0;
 let lastSavedSecond = -1;
+
+let audioContext = null;
+let analyserNode = null;
+let bassFilterNode = null;
+let trebleFilterNode = null;
+let compressorNode = null;
+let dryGainNode = null;
+let delayNode = null;
+let feedbackGainNode = null;
+let wetGainNode = null;
+let masterGainNode = null;
+let mediaSourceNodes = [];
+let visualizerFrame = 0;
+let frequencyData = null;
+
+const effectState = {
+  preset: 'off',
+  bass: 0,
+  treble: 0,
+  echo: 0,
+  feedback: 0,
+  delay: 0.18,
+  compressorRatio: 1,
+  master: 1
+};
+
+const EFFECT_PRESETS = Object.freeze({
+  off: {
+    label: 'Đang tắt',
+    bass: 0, treble: 0, echo: 0, feedback: 0,
+    delay: 0.18, compressorRatio: 1, master: 1
+  },
+  bass: {
+    label: 'Tăng âm trầm',
+    bass: 8, treble: 1, echo: 0.02, feedback: 0.04,
+    delay: 0.16, compressorRatio: 3, master: 0.92
+  },
+  vocal: {
+    label: 'Rõ giọng hát',
+    bass: -2, treble: 5, echo: 0.015, feedback: 0.025,
+    delay: 0.13, compressorRatio: 2.5, master: 0.96
+  },
+  concert: {
+    label: 'Không gian sân khấu',
+    bass: 3, treble: 2, echo: 0.26, feedback: 0.22,
+    delay: 0.22, compressorRatio: 3.5, master: 0.88
+  },
+  night: {
+    label: 'Nghe ban đêm',
+    bass: 2, treble: -3, echo: 0.05, feedback: 0.05,
+    delay: 0.16, compressorRatio: 6, master: 0.78
+  }
+});
 
 const networkState = {
   offline: !navigator.onLine,
@@ -372,6 +513,7 @@ function init() {
   restorePreferences();
   configurePlayers();
   bindNetworkEvents();
+  startVisualizer();
   openChunkDb().then(() => pruneChunkCache()).catch(() => {});
   loadDirectory('', true);
 }
@@ -389,23 +531,65 @@ function bindEvents() {
 
   els.playFolder.addEventListener(
     'click',
-    playAllCurrentFolder
+    () => {
+      ensureAudioEffects().catch(() => {});
+      playAllCurrentFolder();
+    }
   );
 
   els.play.addEventListener(
     'click',
-    togglePlay
+    () => {
+      ensureAudioEffects().catch(() => {});
+      togglePlay();
+    }
   );
 
   els.prev.addEventListener(
     'click',
-    () => playRelative(-1)
+    () => {
+      ensureAudioEffects().catch(() => {});
+      playRelative(-1);
+    }
   );
 
   els.next.addEventListener(
     'click',
-    () => playRelative(1)
+    () => {
+      ensureAudioEffects().catch(() => {});
+      playRelative(1);
+    }
   );
+
+  els.effectPreset.addEventListener('change', () => {
+    ensureAudioEffects().catch(() => {});
+    applyEffectPreset(els.effectPreset.value, true);
+  });
+
+  els.bassBoost.addEventListener('input', () => {
+    ensureAudioEffects().catch(() => {});
+    els.effectPreset.value = 'custom';
+    effectState.preset = 'custom';
+    effectState.bass = Number(els.bassBoost.value);
+    effectState.treble = 0;
+    updateEffectNodes();
+    updateEffectUi();
+    saveEffectPreferences();
+  });
+
+  els.echoLevel.addEventListener('input', () => {
+    ensureAudioEffects().catch(() => {});
+    els.effectPreset.value = 'custom';
+    effectState.preset = 'custom';
+    effectState.echo = Number(els.echoLevel.value) / 100;
+    effectState.feedback = Math.min(0.32, effectState.echo * 0.82);
+    effectState.delay = 0.2;
+    effectState.compressorRatio = 3;
+    effectState.master = 0.92;
+    updateEffectNodes();
+    updateEffectUi();
+    saveEffectPreferences();
+  });
 
   els.volume.addEventListener('input', () => {
     players.forEach(
@@ -480,7 +664,9 @@ function configurePlayers() {
 
     player.addEventListener('play', () => {
       if (index === activePlayerIndex) {
+        ensureAudioEffects().catch(() => {});
         els.play.textContent = '⏸';
+        els.cover.classList.add('playing');
         startPlaybackUiTicker();
       }
     });
@@ -497,6 +683,7 @@ function configurePlayers() {
     player.addEventListener('pause', () => {
       if (index === activePlayerIndex) {
         els.play.textContent = '▶';
+        els.cover.classList.remove('playing');
         syncPlaybackUi();
       }
     });
@@ -1033,6 +1220,7 @@ function makeItem(item, isBack) {
       return;
     }
 
+    ensureAudioEffects().catch(() => {});
     openAudio(item);
   });
 
@@ -1188,6 +1376,7 @@ function canUseProgressiveMse(info) {
 }
 
 async function openAudio(file, options = {}) {
+  ensureAudioEffects().catch(() => {});
   const autoplay = options.autoplay !== false;
 
   if (
@@ -2446,6 +2635,9 @@ function restorePreferences() {
   const volume = localStorage.getItem('audio_volume');
   const speed = localStorage.getItem('audio_speed');
   const autoNext = localStorage.getItem('audio_auto_next');
+  const savedPreset = localStorage.getItem('audio_effect_preset') || 'off';
+  const savedBass = Number(localStorage.getItem('audio_effect_bass'));
+  const savedEcho = Number(localStorage.getItem('audio_effect_echo'));
 
   if (volume !== null) {
     els.volume.value = volume;
@@ -2460,12 +2652,435 @@ function restorePreferences() {
   }
 
   players.forEach(applyPlayerSettings);
+
+  if (savedPreset === 'custom') {
+    effectState.preset = 'custom';
+    effectState.bass = Number.isFinite(savedBass) ? savedBass : 0;
+    effectState.treble = 0;
+    effectState.echo = Number.isFinite(savedEcho) ? savedEcho : 0;
+    effectState.feedback = Math.min(0.32, effectState.echo * 0.82);
+    effectState.delay = 0.2;
+    effectState.compressorRatio = 3;
+    effectState.master = 0.92;
+    els.effectPreset.value = 'custom';
+  } else {
+    applyEffectPreset(
+      Object.prototype.hasOwnProperty.call(EFFECT_PRESETS, savedPreset)
+        ? savedPreset
+        : 'off',
+      false
+    );
+  }
+
+  updateEffectUi();
 }
 
 function applyPlayerSettings(player) {
   player.volume = Number(els.volume.value);
   player.playbackRate = Number(els.speed.value);
 }
+
+
+async function ensureAudioEffects() {
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if (!AudioContextClass) {
+    els.effectPreset.disabled = true;
+    els.bassBoost.disabled = true;
+    els.echoLevel.disabled = true;
+    els.effectBadge.textContent = 'Trình duyệt không hỗ trợ';
+    return;
+  }
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+
+    bassFilterNode = audioContext.createBiquadFilter();
+    bassFilterNode.type = 'lowshelf';
+    bassFilterNode.frequency.value = 180;
+
+    trebleFilterNode = audioContext.createBiquadFilter();
+    trebleFilterNode.type = 'highshelf';
+    trebleFilterNode.frequency.value = 3200;
+
+    compressorNode = audioContext.createDynamicsCompressor();
+    compressorNode.threshold.value = -18;
+    compressorNode.knee.value = 18;
+    compressorNode.attack.value = 0.012;
+    compressorNode.release.value = 0.24;
+
+    dryGainNode = audioContext.createGain();
+    delayNode = audioContext.createDelay(0.8);
+    feedbackGainNode = audioContext.createGain();
+    wetGainNode = audioContext.createGain();
+    analyserNode = audioContext.createAnalyser();
+    masterGainNode = audioContext.createGain();
+
+    analyserNode.fftSize = 256;
+    analyserNode.smoothingTimeConstant = 0.82;
+    frequencyData = new Uint8Array(
+      analyserNode.frequencyBinCount
+    );
+
+    bassFilterNode
+      .connect(trebleFilterNode)
+      .connect(compressorNode);
+
+    compressorNode.connect(dryGainNode);
+    dryGainNode.connect(analyserNode);
+
+    compressorNode.connect(delayNode);
+    delayNode.connect(feedbackGainNode);
+    feedbackGainNode.connect(delayNode);
+    delayNode.connect(wetGainNode);
+    wetGainNode.connect(analyserNode);
+
+    analyserNode
+      .connect(masterGainNode)
+      .connect(audioContext.destination);
+
+    mediaSourceNodes = players.map(player => {
+      const source =
+        audioContext.createMediaElementSource(player);
+
+      const gain =
+        audioContext.createGain();
+
+      gain.gain.value = 1;
+      source.connect(gain);
+      gain.connect(bassFilterNode);
+
+      return {
+        source: source,
+        gain: gain
+      };
+    });
+
+    updateEffectNodes();
+  }
+
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume();
+  }
+}
+
+function applyEffectPreset(name, persist = true) {
+  const preset =
+    EFFECT_PRESETS[name] ||
+    EFFECT_PRESETS.off;
+
+  effectState.preset = name;
+  effectState.bass = preset.bass;
+  effectState.treble = preset.treble;
+  effectState.echo = preset.echo;
+  effectState.feedback = preset.feedback;
+  effectState.delay = preset.delay;
+  effectState.compressorRatio = preset.compressorRatio;
+  effectState.master = preset.master;
+
+  els.effectPreset.value = name;
+  els.bassBoost.value = String(preset.bass);
+  els.echoLevel.value = String(
+    Math.round(preset.echo * 100)
+  );
+
+  updateEffectNodes();
+  updateEffectUi();
+
+  if (persist) {
+    saveEffectPreferences();
+  }
+}
+
+function updateEffectNodes() {
+  if (!audioContext) return;
+
+  const now = audioContext.currentTime;
+
+  bassFilterNode.gain.setTargetAtTime(
+    effectState.bass,
+    now,
+    0.035
+  );
+
+  trebleFilterNode.gain.setTargetAtTime(
+    effectState.treble,
+    now,
+    0.035
+  );
+
+  delayNode.delayTime.setTargetAtTime(
+    effectState.delay,
+    now,
+    0.035
+  );
+
+  feedbackGainNode.gain.setTargetAtTime(
+    Math.min(0.35, effectState.feedback),
+    now,
+    0.035
+  );
+
+  wetGainNode.gain.setTargetAtTime(
+    Math.min(0.42, effectState.echo),
+    now,
+    0.035
+  );
+
+  dryGainNode.gain.setTargetAtTime(
+    1,
+    now,
+    0.035
+  );
+
+  compressorNode.ratio.setTargetAtTime(
+    effectState.compressorRatio,
+    now,
+    0.04
+  );
+
+  compressorNode.threshold.setTargetAtTime(
+    effectState.preset === 'night' ? -28 : -18,
+    now,
+    0.04
+  );
+
+  masterGainNode.gain.setTargetAtTime(
+    effectState.master,
+    now,
+    0.04
+  );
+}
+
+function updateEffectUi() {
+  els.bassBoost.value =
+    String(effectState.bass);
+
+  els.echoLevel.value =
+    String(
+      Math.round(effectState.echo * 100)
+    );
+
+  els.bassValue.textContent =
+    `${effectState.bass > 0 ? '+' : ''}${effectState.bass} dB`;
+
+  els.echoValue.textContent =
+    `${Math.round(effectState.echo * 100)}%`;
+
+  const preset =
+    EFFECT_PRESETS[effectState.preset];
+
+  els.effectBadge.textContent =
+    preset
+      ? preset.label
+      : 'Tùy chỉnh';
+}
+
+function saveEffectPreferences() {
+  localStorage.setItem(
+    'audio_effect_preset',
+    effectState.preset
+  );
+
+  localStorage.setItem(
+    'audio_effect_bass',
+    String(effectState.bass)
+  );
+
+  localStorage.setItem(
+    'audio_effect_echo',
+    String(effectState.echo)
+  );
+}
+
+function startVisualizer() {
+  if (visualizerFrame) return;
+
+  const canvas = els.visualizer;
+  const context = canvas.getContext('2d');
+
+  const draw = () => {
+    visualizerFrame =
+      requestAnimationFrame(draw);
+
+    const rect =
+      canvas.getBoundingClientRect();
+
+    const dpr =
+      Math.min(
+        window.devicePixelRatio || 1,
+        2
+      );
+
+    const width =
+      Math.max(1, Math.floor(rect.width * dpr));
+
+    const height =
+      Math.max(1, Math.floor(rect.height * dpr));
+
+    if (
+      canvas.width !== width ||
+      canvas.height !== height
+    ) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    context.clearRect(
+      0,
+      0,
+      width,
+      height
+    );
+
+    const barCount = 34;
+    const gap = 3 * dpr;
+    const barWidth =
+      Math.max(
+        2 * dpr,
+        (width - gap * (barCount - 1)) / barCount
+      );
+
+    const active =
+      analyserNode &&
+      frequencyData &&
+      !activeAudio().paused;
+
+    if (active) {
+      analyserNode.getByteFrequencyData(
+        frequencyData
+      );
+    }
+
+    const gradient =
+      context.createLinearGradient(
+        0,
+        height,
+        0,
+        0
+      );
+
+    gradient.addColorStop(
+      0,
+      '#7c3aed'
+    );
+
+    gradient.addColorStop(
+      0.55,
+      '#a855f7'
+    );
+
+    gradient.addColorStop(
+      1,
+      '#ec4899'
+    );
+
+    context.fillStyle = gradient;
+
+    for (
+      let index = 0;
+      index < barCount;
+      index++
+    ) {
+      let level;
+
+      if (active) {
+        const sourceIndex =
+          Math.min(
+            frequencyData.length - 1,
+            Math.floor(
+              index /
+              barCount *
+              frequencyData.length *
+              0.72
+            )
+          );
+
+        level =
+          frequencyData[sourceIndex] / 255;
+      } else {
+        level =
+          0.08 +
+          0.035 *
+          Math.sin(
+            performance.now() / 620 +
+            index * 0.62
+          );
+      }
+
+      const barHeight =
+        Math.max(
+          3 * dpr,
+          level * height * 0.9
+        );
+
+      const x =
+        index * (barWidth + gap);
+
+      const y =
+        height - barHeight;
+
+      const radius =
+        Math.min(
+          barWidth / 2,
+          4 * dpr
+        );
+
+      drawRoundedRect(
+        context,
+        x,
+        y,
+        barWidth,
+        barHeight,
+        radius
+      );
+    }
+  };
+
+  draw();
+}
+
+function drawRoundedRect(
+  context,
+  x,
+  y,
+  width,
+  height,
+  radius
+) {
+  context.beginPath();
+
+  if (typeof context.roundRect === 'function') {
+    context.roundRect(
+      x,
+      y,
+      width,
+      height,
+      radius
+    );
+  } else {
+    context.rect(
+      x,
+      y,
+      width,
+      height
+    );
+  }
+
+  context.fill();
+}
+
+function stopVisualizer() {
+  if (visualizerFrame) {
+    cancelAnimationFrame(
+      visualizerFrame
+    );
+    visualizerFrame = 0;
+  }
+}
+
 
 function showMode(text) {
   els.mode.hidden = false;
@@ -2596,8 +3211,15 @@ function resetPlayer(player) {
 function cleanupEverything() {
   savePosition();
   stopPlaybackUiTicker();
+  stopVisualizer();
   cancelActiveSession();
   clearStandby();
+
+  if (audioContext) {
+    try {
+      audioContext.close();
+    } catch (_) {}
+  }
 }
 
 function waitEvent(target, eventName, timeout, signal) {
