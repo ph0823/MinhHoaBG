@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình nhạc Nhi hư</title>
+<title>Trình nhạc Nhi hư - Network Diagnostics v5.6</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -13,7 +13,7 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;background:var(--bg);color:var(--text);
+  margin:0;background:var(--bg);color:var(--text);padding-bottom:34px;
   font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif
 }
 button,input,select{font:inherit}
@@ -184,6 +184,85 @@ input[type=range]{width:100%;accent-color:var(--p)}
   border-radius:999px;background:#ede9fe;color:var(--p);
   font-size:11px;font-weight:750
 }
+
+.network-diagnostics{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:30;
+  min-height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:5px 12px calc(5px + env(safe-area-inset-bottom, 0px));
+  border-top:1px solid #dbe3ea;
+  background:rgba(255,255,255,.96);
+  color:#475569;
+  font-size:11px;
+  line-height:1.25;
+  text-align:center;
+  box-shadow:0 -3px 12px rgba(15,23,42,.06);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px)
+}
+.network-diagnostics .diag-dot{
+  width:8px;
+  height:8px;
+  flex:0 0 8px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 0 3px rgba(34,197,94,.12)
+}
+.network-diagnostics.warning{
+  color:#92400e;
+  background:rgba(255,251,235,.97);
+  border-top-color:#fde68a
+}
+.network-diagnostics.warning .diag-dot{
+  background:#f59e0b;
+  box-shadow:0 0 0 3px rgba(245,158,11,.15);
+  animation:diagPulse 1.15s ease-in-out infinite
+}
+.network-diagnostics.offline{
+  color:#991b1b;
+  background:rgba(254,242,242,.97);
+  border-top-color:#fecaca
+}
+.network-diagnostics.offline .diag-dot{
+  background:#ef4444;
+  box-shadow:0 0 0 3px rgba(239,68,68,.15);
+  animation:diagPulse .9s ease-in-out infinite
+}
+.network-diagnostics.no-file{
+  color:#64748b
+}
+.network-diagnostics .diag-text{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+@keyframes diagPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.48;transform:scale(.78)}
+}
+@media(max-width:620px){
+  body{padding-bottom:42px}
+  .network-diagnostics{
+    min-height:38px;
+    padding-left:8px;
+    padding-right:8px;
+    font-size:10px
+  }
+  .network-diagnostics .diag-text{
+    white-space:normal;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical
+  }
+}
+
 .toast{
   position:fixed;right:18px;bottom:18px;
   max-width:min(420px,calc(100vw - 36px));
@@ -221,7 +300,7 @@ input[type=range]{width:100%;accent-color:var(--p)}
       <div class="logo">🎧</div>
       <div>
         <h1>Thư viện âm thanh</h1>
-        <small>Phát nhanh theo từng phần từ Google Drive</small>
+        <small>Phát ổn định với bộ đệm trượt từ Google Drive</small>
       </div>
     </div>
     <div id="status" class="status" hidden>
@@ -336,6 +415,20 @@ input[type=range]{width:100%;accent-color:var(--p)}
   </main>
 </div>
 
+
+<footer
+  id="networkDiagnostics"
+  class="network-diagnostics no-file"
+  role="status"
+  aria-live="polite"
+  title="Thông tin chẩn đoán đường truyền cho file đang phát"
+>
+  <span id="diagnosticDot" class="diag-dot" aria-hidden="true"></span>
+  <span id="diagnosticText" class="diag-text">
+    Chẩn đoán đường truyền: chưa chọn file âm thanh.
+  </span>
+</footer>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -363,6 +456,47 @@ const CACHE_DB_VERSION = 1;
 const MAX_CACHE_ENTRIES = 320;
 const PLAYBACK_UI_INTERVAL_MS = 250;
 const RECOVERY_BUFFER_TARGET_SECONDS = 300;
+
+/*
+ * Giới hạn bộ đệm MediaSource theo thiết bị.
+ * Điện thoại và TV thường có quota SourceBuffer thấp hơn máy tính.
+ */
+const IS_TV_DEVICE =
+  /web0s|webos|netcast|smarttv|tizen|hbbtv|aftb|aftm|aftt/i.test(
+    navigator.userAgent || ''
+  );
+
+const IS_MOBILE_DEVICE =
+  /android|iphone|ipad|ipod|mobile/i.test(
+    navigator.userAgent || ''
+  );
+
+const IS_MEMORY_CONSTRAINED_DEVICE =
+  IS_TV_DEVICE || IS_MOBILE_DEVICE;
+
+const MSE_MAX_BUFFER_AHEAD_SECONDS =
+  IS_TV_DEVICE
+    ? 55
+    : IS_MOBILE_DEVICE
+      ? 75
+      : 180;
+
+const MSE_RESUME_BUFFER_AHEAD_SECONDS =
+  IS_TV_DEVICE
+    ? 30
+    : IS_MOBILE_DEVICE
+      ? 45
+      : 120;
+
+const MSE_KEEP_BEHIND_SECONDS =
+  IS_TV_DEVICE
+    ? 12
+    : IS_MOBILE_DEVICE
+      ? 20
+      : 45;
+
+const MSE_QUOTA_RETRY_DELAY_MS = 650;
+const MSE_BUFFER_CHECK_INTERVAL_MS = 500;
 
 const $ = id => document.getElementById(id);
 
@@ -399,6 +533,9 @@ const els = {
   effectBadge: $('effectBadge'),
   loading: $('loading'),
   mode: $('mode'),
+  networkDiagnostics: $('networkDiagnostics'),
+  diagnosticText: $('diagnosticText'),
+  diagnosticDot: $('diagnosticDot'),
   toast: $('toast')
 };
 
@@ -504,6 +641,21 @@ const networkState = {
   recoveryMessage: ''
 };
 
+const connectionDiagnostics = {
+  fileId: '',
+  fileName: '',
+  incidentCount: 0,
+  incidentActive: false,
+  incidentStartedAt: 0,
+  incidentReason: '',
+  totalInterruptedMs: 0,
+  lastIncidentMs: 0,
+  lastIncidentEndedAt: 0
+};
+
+let connectionDiagnosticTimer = 0;
+let diagnosticRecoveryProbePromise = null;
+
 let standbyState = {
   token: 0,
   track: null,
@@ -537,6 +689,7 @@ function init() {
   restorePreferences();
   configurePlayers();
   bindNetworkEvents();
+  startConnectionDiagnostics();
   startVisualizer();
   startStreamWatchdog();
   openChunkDb().then(() => pruneChunkCache()).catch(() => {});
@@ -694,6 +847,16 @@ function configurePlayers() {
         els.play.textContent = '⏸';
         els.cover.classList.add('playing');
         startPlaybackUiTicker();
+
+        if (
+          activeSession &&
+          activeSession.type === 'mse' &&
+          activeSession.bufferPaused
+        ) {
+          kickStreamingRecovery(
+            'play-resumed'
+          );
+        }
       }
     });
 
@@ -718,6 +881,7 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
         networkState.recovering = true;
+        beginConnectionIncident('Bộ đệm cạn hoặc tín hiệu bị gián đoạn');
         showRecoveryStatus('Bộ đệm sắp hết • đang khôi phục đường truyền...');
         kickStreamingRecovery('waiting');
       }
@@ -727,6 +891,7 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
         networkState.recovering = true;
+        beginConnectionIncident('Đường truyền tạm dừng');
         showRecoveryStatus('Đường truyền tạm dừng • đang kiểm tra lại máy chủ...');
         kickStreamingRecovery('stalled');
       }
@@ -762,6 +927,259 @@ function configurePlayers() {
   });
 }
 
+function startConnectionDiagnostics() {
+  if (connectionDiagnosticTimer) return;
+
+  updateConnectionDiagnostics();
+
+  connectionDiagnosticTimer = window.setInterval(
+    updateConnectionDiagnostics,
+    1000
+  );
+}
+
+function stopConnectionDiagnostics() {
+  if (!connectionDiagnosticTimer) return;
+
+  clearInterval(connectionDiagnosticTimer);
+  connectionDiagnosticTimer = 0;
+}
+
+function resetConnectionDiagnostics(file) {
+  /*
+   * Nếu bài trước đang gặp sự cố, chốt thời gian trước khi chuyển bài.
+   * Bộ đếm của bài mới bắt đầu lại từ 0.
+   */
+  if (connectionDiagnostics.incidentActive) {
+    const elapsed = Math.max(
+      0,
+      Date.now() - connectionDiagnostics.incidentStartedAt
+    );
+
+    connectionDiagnostics.totalInterruptedMs += elapsed;
+    connectionDiagnostics.lastIncidentMs = elapsed;
+  }
+
+  connectionDiagnostics.fileId =
+    file && file.id
+      ? String(file.id)
+      : '';
+
+  connectionDiagnostics.fileName =
+    file && file.name
+      ? String(file.name)
+      : '';
+
+  connectionDiagnostics.incidentCount = 0;
+  connectionDiagnostics.incidentActive = false;
+  connectionDiagnostics.incidentStartedAt = 0;
+  connectionDiagnostics.incidentReason = '';
+  connectionDiagnostics.totalInterruptedMs = 0;
+  connectionDiagnostics.lastIncidentMs = 0;
+  connectionDiagnostics.lastIncidentEndedAt = 0;
+
+  updateConnectionDiagnostics();
+}
+
+function beginConnectionIncident(reason) {
+  if (!activeFileId) return;
+
+  if (
+    connectionDiagnostics.fileId !==
+    activeFileId
+  ) {
+    resetConnectionDiagnostics({
+      id: activeFileId,
+      name:
+        els.trackTitle &&
+        els.trackTitle.textContent
+          ? els.trackTitle.textContent
+          : activeFileId
+    });
+  }
+
+  /*
+   * waiting, stalled, offline và retry có thể xảy ra liên tiếp trong
+   * cùng một sự cố. Chỉ tăng bộ đếm khi bắt đầu một đợt mới.
+   */
+  if (!connectionDiagnostics.incidentActive) {
+    connectionDiagnostics.incidentActive = true;
+    connectionDiagnostics.incidentCount++;
+    connectionDiagnostics.incidentStartedAt = Date.now();
+  }
+
+  if (reason) {
+    connectionDiagnostics.incidentReason =
+      normalizeDiagnosticReason(reason);
+  }
+
+  updateConnectionDiagnostics();
+}
+
+function endConnectionIncident() {
+  if (!connectionDiagnostics.incidentActive) {
+    updateConnectionDiagnostics();
+    return;
+  }
+
+  const elapsed = Math.max(
+    0,
+    Date.now() -
+      connectionDiagnostics.incidentStartedAt
+  );
+
+  connectionDiagnostics.totalInterruptedMs += elapsed;
+  connectionDiagnostics.lastIncidentMs = elapsed;
+  connectionDiagnostics.lastIncidentEndedAt = Date.now();
+  connectionDiagnostics.incidentActive = false;
+  connectionDiagnostics.incidentStartedAt = 0;
+  connectionDiagnostics.incidentReason = '';
+
+  updateConnectionDiagnostics();
+}
+
+async function verifyDiagnosticRecovery() {
+  if (
+    !connectionDiagnostics.incidentActive ||
+    diagnosticRecoveryProbePromise
+  ) {
+    return diagnosticRecoveryProbePromise;
+  }
+
+  diagnosticRecoveryProbePromise = (
+    async () => {
+      try {
+        await probeBackendOnce(undefined);
+        endConnectionIncident();
+      } catch (_) {
+        /*
+         * Sự kiện online không bảo đảm máy chủ đã truy cập được.
+         * Giữ nguyên bộ đếm cho đến khi chunk hoặc health API thành công.
+         */
+      } finally {
+        diagnosticRecoveryProbePromise = null;
+      }
+    }
+  )();
+
+  return diagnosticRecoveryProbePromise;
+}
+
+function updateConnectionDiagnostics() {
+  const footer = els.networkDiagnostics;
+  const output = els.diagnosticText;
+
+  if (!footer || !output) return;
+
+  if (
+    !activeFileId ||
+    !connectionDiagnostics.fileId
+  ) {
+    footer.className =
+      'network-diagnostics no-file';
+
+    output.textContent =
+      'Chẩn đoán đường truyền: chưa chọn file âm thanh.';
+
+    footer.title =
+      'Chưa có file âm thanh đang phát.';
+
+    return;
+  }
+
+  const currentMs =
+    connectionDiagnostics.incidentActive
+      ? Math.max(
+          0,
+          Date.now() -
+            connectionDiagnostics.incidentStartedAt
+        )
+      : 0;
+
+  const totalMs =
+    connectionDiagnostics.totalInterruptedMs +
+    currentMs;
+
+  const statusText =
+    connectionDiagnostics.incidentActive
+      ? (
+          navigator.onLine
+            ? 'đang khôi phục'
+            : 'đang mất mạng'
+        )
+      : 'kết nối ổn định';
+
+  footer.className =
+    'network-diagnostics' +
+    (
+      connectionDiagnostics.incidentActive
+        ? (
+            navigator.onLine
+              ? ' warning'
+              : ' offline'
+          )
+        : ''
+    );
+
+  output.textContent =
+    `📡 File hiện tại: ${connectionDiagnostics.incidentCount} lần ngắt` +
+    ` • sự cố hiện tại: ${formatDiagnosticDuration(currentMs)}` +
+    ` • tổng gián đoạn: ${formatDiagnosticDuration(totalMs)}` +
+    ` • ${statusText}`;
+
+  const startedAt =
+    connectionDiagnostics.incidentActive
+      ? new Date(
+          connectionDiagnostics.incidentStartedAt
+        ).toLocaleTimeString('vi-VN')
+      : '—';
+
+  footer.title =
+    `File: ${connectionDiagnostics.fileName || activeFileId}\n` +
+    `Số lần ngắt: ${connectionDiagnostics.incidentCount}\n` +
+    `Thời gian sự cố hiện tại: ${formatDiagnosticDuration(currentMs)}\n` +
+    `Tổng thời gian gián đoạn: ${formatDiagnosticDuration(totalMs)}\n` +
+    `Bắt đầu sự cố hiện tại: ${startedAt}\n` +
+    `Nguyên nhân gần nhất: ${connectionDiagnostics.incidentReason || 'Không có'}\n` +
+    `Trạng thái: ${statusText}`;
+}
+
+function formatDiagnosticDuration(milliseconds) {
+  const totalSeconds = Math.max(
+    0,
+    Math.floor(milliseconds / 1000)
+  );
+
+  const hours = Math.floor(
+    totalSeconds / 3600
+  );
+
+  const minutes = Math.floor(
+    totalSeconds % 3600 / 60
+  );
+
+  const seconds =
+    totalSeconds % 60;
+
+  return hours > 0
+    ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function normalizeDiagnosticReason(reason) {
+  const text = String(reason || '').trim();
+
+  if (!text) {
+    return 'Gián đoạn đường truyền';
+  }
+
+  if (text.length <= 120) {
+    return text;
+  }
+
+  return text.slice(0, 117) + '...';
+}
+
 function bindNetworkEvents() {
   window.addEventListener('offline', () => {
     networkState.offline = true;
@@ -769,6 +1187,7 @@ function bindNetworkEvents() {
     networkState.recovering = true;
     networkState.lastFailureAt = Date.now();
     networkState.recoveryCycle++;
+    beginConnectionIncident('Mất kết nối Internet');
 
     showRecoveryStatus(
       `Mất kết nối Internet • còn bộ đệm ${Math.round(getBufferAhead(activeAudio()))} giây`
@@ -785,6 +1204,7 @@ function bindNetworkEvents() {
     );
 
     kickStreamingRecovery('online');
+    verifyDiagnosticRecovery();
   });
 
   document.addEventListener('visibilitychange', () => {
@@ -1486,6 +1906,12 @@ async function fetchChunkWithRecovery(
       networkState.failures++;
       networkState.lastFailureAt = Date.now();
 
+      beginConnectionIncident(
+        error && error.message
+          ? error.message
+          : 'Lỗi tải dữ liệu âm thanh'
+      );
+
       const bufferAhead =
         Math.round(
           getBufferAhead(session.player)
@@ -1540,7 +1966,11 @@ function isRecoverableStreamingError(error) {
     'http 503',
     'http 504',
     'service invoked',
-    'too many'
+    'too many',
+    'sourcebuffer is full',
+    'cannot free space',
+    'quotaexceeded',
+    'quota exceeded'
   ].some(term => message.includes(term));
 }
 
@@ -1767,6 +2197,7 @@ function markStreamingRecovered(
   networkState.recovering = false;
   networkState.recoveryMessage = '';
   networkState.lastSuccessAt = Date.now();
+  endConnectionIncident();
 
   session.recovering = false;
   session.lastNetworkSuccessAt =
@@ -1868,6 +2299,7 @@ async function openAudio(file, options = {}) {
   clearStandby();
 
   activeFileId = file.id;
+  resetConnectionDiagnostics(file);
 
   activeIndex = audioItems.findIndex(
     item => item.id === file.id
@@ -1963,7 +2395,11 @@ async function startProgressiveMse(
     resumeTimer: null,
     recovering: false,
     lastStreamProgressAt: Date.now(),
-    lastNetworkSuccessAt: Date.now()
+    lastNetworkSuccessAt: Date.now(),
+    lastBufferCleanupAt: 0,
+    quotaPressure: false,
+    bufferPaused: false,
+    quotaRetryCount: 0
   };
 
   activeSession = session;
@@ -1988,7 +2424,9 @@ async function startProgressiveMse(
   } catch (_) {}
 
   const initialCount = Math.min(
-    INITIAL_CHUNKS_BEFORE_PLAY,
+    IS_MEMORY_CONSTRAINED_DEVICE
+      ? 1
+      : INITIAL_CHUNKS_BEFORE_PLAY,
     info.totalChunks
   );
 
@@ -2018,7 +2456,8 @@ async function startProgressiveMse(
       sourceBuffer,
       bytes,
       controller.signal,
-      player
+      player,
+      session
     );
 
     session.loadedChunks++;
@@ -2253,6 +2692,15 @@ async function streamRemainingChunks(
   ) {
     throwIfSessionInactive(session);
 
+    /*
+     * Không tiếp tục tải/nối khi đã có quá nhiều dữ liệu phía trước.
+     * Điều này tránh SourceBuffer đầy trên điện thoại và TV.
+     */
+    await waitForSafeBufferWindow(
+      session,
+      false
+    );
+
     const concurrency =
       getAdaptiveConcurrency(
         session.player
@@ -2293,7 +2741,8 @@ async function streamRemainingChunks(
         session.sourceBuffer,
         result.bytes,
         session.controller.signal,
-        session.player
+        session.player,
+        session
       );
 
       session.loadedChunks++;
@@ -2495,7 +2944,7 @@ function stopStreamWatchdog() {
 
 function getAdaptiveConcurrency(player) {
   const connection = navigator.connection || {};
-  let concurrency = 4;
+  let concurrency = IS_MEMORY_CONSTRAINED_DEVICE ? 2 : 4;
 
   if (connection.saveData) {
     concurrency = 1;
@@ -2504,17 +2953,29 @@ function getAdaptiveConcurrency(player) {
   } else if (connection.effectiveType === '2g') {
     concurrency = 1;
   } else if (connection.effectiveType === '3g') {
-    concurrency = 2;
+    concurrency = Math.min(concurrency, 2);
   } else if (connection.effectiveType === '4g') {
-    concurrency = 4;
+    concurrency = Math.min(
+      IS_MEMORY_CONSTRAINED_DEVICE ? 2 : 4,
+      concurrency
+    );
   }
 
   const bufferAhead = getBufferAhead(player);
 
-  if (networkState.urgent || bufferAhead < 12) {
-    concurrency = Math.min(6, concurrency + 2);
-  } else if (bufferAhead > 100) {
-    concurrency = Math.min(concurrency, 2);
+  if (
+    networkState.urgent ||
+    bufferAhead < 12
+  ) {
+    concurrency = Math.min(
+      IS_MEMORY_CONSTRAINED_DEVICE ? 3 : 6,
+      concurrency + 1
+    );
+  } else if (
+    bufferAhead >
+    MSE_RESUME_BUFFER_AHEAD_SECONDS
+  ) {
+    concurrency = 1;
   }
 
   if (networkState.failures >= 3) {
@@ -2532,53 +2993,200 @@ function getAdaptiveConcurrency(player) {
   return Math.max(1, concurrency);
 }
 
+/**
+ * Chờ bộ đệm phía trước giảm xuống mức an toàn.
+ * Khi người dùng tạm dừng, tải nền cũng tạm dừng thay vì làm đầy RAM.
+ */
+async function waitForSafeBufferWindow(
+  session,
+  forceDrain = false
+) {
+  if (
+    !session ||
+    session.type !== 'mse'
+  ) {
+    return;
+  }
+
+  const player = session.player;
+  const signal = session.controller.signal;
+
+  const limit = forceDrain || session.quotaPressure
+    ? MSE_RESUME_BUFFER_AHEAD_SECONDS
+    : MSE_MAX_BUFFER_AHEAD_SECONDS;
+
+  while (true) {
+    throwIfSessionInactive(session);
+
+    const bufferAhead =
+      getBufferAhead(player);
+
+    /*
+     * Chủ động xóa phần đã phát, nhưng luôn giữ lại một đoạn phía sau
+     * để thao tác tua lùi ngắn vẫn hoạt động.
+     */
+    await maybeReleaseOldBuffer(
+      session,
+      false
+    );
+
+    if (bufferAhead <= limit) {
+      session.bufferPaused = false;
+      return;
+    }
+
+    session.bufferPaused = true;
+
+    showMode(
+      `Đã đệm ${Math.round(bufferAhead)} giây • tạm ngừng nạp để bảo vệ bộ nhớ`
+    );
+
+    await delay(
+      MSE_BUFFER_CHECK_INTERVAL_MS,
+      signal
+    );
+  }
+}
+
+/**
+ * Nối dữ liệu với cơ chế phục hồi quota.
+ * QuotaExceededError không còn làm kết thúc bài; ứng dụng dọn buffer,
+ * chờ thời gian phát tiến lên rồi thử lại cùng chunk.
+ */
 async function appendSourceBuffer(
   sourceBuffer,
   bytes,
   signal,
   player,
-  allowCleanup = true
+  session = null
 ) {
-  await waitSourceBufferIdle(sourceBuffer, signal);
+  while (true) {
+    if (session) {
+      throwIfSessionInactive(session);
 
-  try {
-    await appendSourceBufferOnce(sourceBuffer, bytes, signal);
-  } catch (error) {
-    if (
-      allowCleanup &&
-      error &&
-      error.name === 'QuotaExceededError'
-    ) {
-      const cleaned = await releaseOldBuffer(
+      await waitForSafeBufferWindow(
+        session,
+        Boolean(session.quotaPressure)
+      );
+    } else {
+      throwIfAborted(signal);
+    }
+
+    await waitSourceBufferIdle(
+      sourceBuffer,
+      signal
+    );
+
+    try {
+      await appendSourceBufferOnce(
         sourceBuffer,
-        player,
+        bytes,
         signal
       );
 
-      if (cleaned) {
-        await appendSourceBuffer(
-          sourceBuffer,
-          bytes,
-          signal,
-          player,
+      if (session) {
+        session.quotaRetryCount = 0;
+
+        await maybeReleaseOldBuffer(
+          session,
           false
         );
-        return;
+      }
+
+      return;
+    } catch (error) {
+      if (!isSourceBufferQuotaError(error)) {
+        throw error;
+      }
+
+      if (session) {
+        session.quotaPressure = true;
+        session.quotaRetryCount =
+          (session.quotaRetryCount || 0) + 1;
+      }
+
+      const cleaned =
+        await releaseOldBuffer(
+          sourceBuffer,
+          player,
+          signal,
+          true
+        );
+
+      const bufferAhead =
+        Math.round(
+          getBufferAhead(player)
+        );
+
+      showMode(
+        cleaned
+          ? `Đã dọn bộ đệm cũ • thử nối lại chunk`
+          : `Bộ nhớ đệm đầy • chờ phát bớt ${bufferAhead} giây đã nạp`
+      );
+
+      /*
+       * Sau remove(), một số trình duyệt cần một nhịp để giải phóng
+       * bộ nhớ nội bộ. Không append lại ngay trong cùng event loop.
+       */
+      await delay(
+        cleaned
+          ? 180
+          : MSE_QUOTA_RETRY_DELAY_MS,
+        signal
+      );
+
+      if (session && !cleaned) {
+        await waitForSafeBufferWindow(
+          session,
+          true
+        );
       }
     }
-
-    throw error;
   }
 }
 
-function appendSourceBufferOnce(sourceBuffer, bytes, signal) {
+function isSourceBufferQuotaError(error) {
+  if (!error) return false;
+
+  const name =
+    String(error.name || '')
+      .toLowerCase();
+
+  const message =
+    String(error.message || error)
+      .toLowerCase();
+
+  return (
+    name === 'quotaexceedederror' ||
+    message.includes('sourcebuffer is full') ||
+    message.includes('cannot free space') ||
+    message.includes('quota exceeded') ||
+    message.includes('quotaexceeded')
+  );
+}
+
+function appendSourceBufferOnce(
+  sourceBuffer,
+  bytes,
+  signal
+) {
   return new Promise((resolve, reject) => {
     const cleanup = () => {
-      sourceBuffer.removeEventListener('updateend', onUpdateEnd);
-      sourceBuffer.removeEventListener('error', onError);
+      sourceBuffer.removeEventListener(
+        'updateend',
+        onUpdateEnd
+      );
+
+      sourceBuffer.removeEventListener(
+        'error',
+        onError
+      );
 
       if (signal) {
-        signal.removeEventListener('abort', onAbort);
+        signal.removeEventListener(
+          'abort',
+          onAbort
+        );
       }
     };
 
@@ -2589,12 +3197,21 @@ function appendSourceBufferOnce(sourceBuffer, bytes, signal) {
 
     const onError = () => {
       cleanup();
-      reject(new Error('Không thể nối dữ liệu MP3.'));
+      reject(
+        new Error(
+          'Không thể nối dữ liệu MP3.'
+        )
+      );
     };
 
     const onAbort = () => {
       cleanup();
-      reject(new DOMException('Đã hủy tải.', 'AbortError'));
+      reject(
+        new DOMException(
+          'Đã hủy tải.',
+          'AbortError'
+        )
+      );
     };
 
     sourceBuffer.addEventListener(
@@ -2610,11 +3227,17 @@ function appendSourceBufferOnce(sourceBuffer, bytes, signal) {
     );
 
     if (signal) {
-      signal.addEventListener('abort', onAbort, { once: true });
+      signal.addEventListener(
+        'abort',
+        onAbort,
+        { once: true }
+      );
     }
 
     try {
-      sourceBuffer.appendBuffer(bytes);
+      sourceBuffer.appendBuffer(
+        bytes
+      );
     } catch (error) {
       cleanup();
       reject(error);
@@ -2622,60 +3245,180 @@ function appendSourceBufferOnce(sourceBuffer, bytes, signal) {
   });
 }
 
-async function releaseOldBuffer(sourceBuffer, player, signal) {
+/**
+ * Chỉ dọn định kỳ, tránh gọi SourceBuffer.remove() sau mỗi chunk.
+ */
+async function maybeReleaseOldBuffer(
+  session,
+  aggressive = false
+) {
   if (
-    !sourceBuffer.buffered ||
-    sourceBuffer.buffered.length === 0 ||
-    player.currentTime < 60
+    !session ||
+    !session.sourceBuffer ||
+    session.cancelled
   ) {
     return false;
   }
 
-  const removeEnd = Math.max(0, player.currentTime - 30);
+  const now = Date.now();
 
-  if (removeEnd <= 0) {
+  if (
+    !aggressive &&
+    now - (session.lastBufferCleanupAt || 0) <
+      12000
+  ) {
     return false;
   }
 
-  await waitSourceBufferIdle(sourceBuffer, signal);
+  const cleaned =
+    await releaseOldBuffer(
+      session.sourceBuffer,
+      session.player,
+      session.controller.signal,
+      aggressive
+    );
+
+  if (cleaned) {
+    session.lastBufferCleanupAt = now;
+  }
+
+  return cleaned;
+}
+
+/**
+ * Xóa dữ liệu đã phát khỏi SourceBuffer.
+ * Bản cũ chỉ xóa khi currentTime >= 60 giây, khiến thiết bị quota thấp
+ * bị đầy trước khi đủ điều kiện dọn dẹp.
+ */
+async function releaseOldBuffer(
+  sourceBuffer,
+  player,
+  signal,
+  aggressive = false
+) {
+  if (
+    !sourceBuffer ||
+    !sourceBuffer.buffered ||
+    sourceBuffer.buffered.length === 0
+  ) {
+    return false;
+  }
+
+  const currentTime =
+    Number.isFinite(player.currentTime)
+      ? player.currentTime
+      : 0;
+
+  const keepBehind =
+    aggressive
+      ? Math.min(8, MSE_KEEP_BEHIND_SECONDS)
+      : MSE_KEEP_BEHIND_SECONDS;
+
+  const removeEnd =
+    currentTime - keepBehind;
+
+  if (removeEnd <= 1) {
+    return false;
+  }
+
+  let removeStart;
+
+  try {
+    removeStart =
+      sourceBuffer.buffered.start(0);
+  } catch (_) {
+    return false;
+  }
+
+  if (
+    !Number.isFinite(removeStart) ||
+    removeEnd <= removeStart + 0.5
+  ) {
+    return false;
+  }
+
+  await waitSourceBufferIdle(
+    sourceBuffer,
+    signal
+  );
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+
     const cleanup = () => {
-      sourceBuffer.removeEventListener('updateend', onDone);
-      sourceBuffer.removeEventListener('error', onError);
+      sourceBuffer.removeEventListener(
+        'updateend',
+        onDone
+      );
+
+      sourceBuffer.removeEventListener(
+        'error',
+        onError
+      );
 
       if (signal) {
-        signal.removeEventListener('abort', onAbort);
+        signal.removeEventListener(
+          'abort',
+          onAbort
+        );
       }
     };
 
-    const onDone = () => {
+    const finish = value => {
+      if (settled) return;
+      settled = true;
       cleanup();
-      resolve(true);
+      resolve(value);
+    };
+
+    const onDone = () => {
+      finish(true);
     };
 
     const onError = () => {
-      cleanup();
-      resolve(false);
+      finish(false);
     };
 
     const onAbort = () => {
+      if (settled) return;
+      settled = true;
       cleanup();
-      reject(new DOMException('Đã hủy tải.', 'AbortError'));
+
+      reject(
+        new DOMException(
+          'Đã hủy tải.',
+          'AbortError'
+        )
+      );
     };
 
-    sourceBuffer.addEventListener('updateend', onDone, { once: true });
-    sourceBuffer.addEventListener('error', onError, { once: true });
+    sourceBuffer.addEventListener(
+      'updateend',
+      onDone,
+      { once: true }
+    );
+
+    sourceBuffer.addEventListener(
+      'error',
+      onError,
+      { once: true }
+    );
 
     if (signal) {
-      signal.addEventListener('abort', onAbort, { once: true });
+      signal.addEventListener(
+        'abort',
+        onAbort,
+        { once: true }
+      );
     }
 
     try {
-      sourceBuffer.remove(0, removeEnd);
+      sourceBuffer.remove(
+        removeStart,
+        removeEnd
+      );
     } catch (_) {
-      cleanup();
-      resolve(false);
+      finish(false);
     }
   });
 }
@@ -2875,6 +3618,23 @@ async function prepareNextTrack() {
 
   if (!next) return;
 
+  /*
+   * Trên điện thoại/TV, không giữ đồng thời SourceBuffer lớn và Blob
+   * của cả bài kế tiếp. Chỉ nạp bài sau khi còn rất ít thời gian.
+   */
+  if (IS_MEMORY_CONSTRAINED_DEVICE) {
+    const player = activeAudio();
+    const duration = getEffectiveDuration(player);
+    const remaining =
+      duration > 0
+        ? duration - (player.currentTime || 0)
+        : Infinity;
+
+    if (remaining > 18) {
+      return;
+    }
+  }
+
   if (
     standbyState.ready &&
     standbyState.track &&
@@ -2979,6 +3739,7 @@ async function activateStandby(track, autoplay = true) {
   resetPlayer(oldPlayer);
 
   activeFileId = track.id;
+  resetConnectionDiagnostics(track);
 
   activeIndex = audioItems.findIndex(
     item => item.id === track.id
@@ -4440,6 +5201,7 @@ function cleanupEverything() {
   savePosition();
   stopPlaybackUiTicker();
   stopStreamWatchdog();
+  stopConnectionDiagnostics();
   stopVisualizer();
   cancelActiveSession();
   clearStandby();
