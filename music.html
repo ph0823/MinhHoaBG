@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện mp3 Nhi hư - Google Drive</title>
+<title>Thư viện thanh Nhi hư - Google Drive</title>
 <style>
 :root{--p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;--muted:#64748b;--border:#dbe3ea;--danger:#b91c1c}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
@@ -173,10 +173,10 @@ async function openAudio(file){
   els.trackTitle.textContent=file.name;els.trackSub.textContent='Đang tải từ Google Drive...';els.loading.hidden=false;els.play.disabled=true;els.seek.disabled=true;
   try{
     savePosition();els.audio.pause();
-    const info=(await api('getFileInfo',{fileId:file.id})).file,chunks=new Array(info.totalChunks);
+    const info=(await api('getFileInfo',{fileId:file.id,folderId:file.folderId||''})).file,chunks=new Array(info.totalChunks);
     for(let i=0;i<info.totalChunks;i++){
       if(token!==loadToken)return;const pct=Math.round(((i+1)/info.totalChunks)*92);els.loading.textContent=`Đang tải âm thanh: ${i+1}/${info.totalChunks}`;setLoading(true,`Đang tải ${file.name} (${i+1}/${info.totalChunks})...`,pct);
-      chunks[i]=b64((await api('getFileChunk',{fileId:file.id,index:i})).base64);
+      chunks[i]=b64((await api('getFileChunk',{fileId:file.id,folderId:file.folderId||'',index:i})).base64);
     }
     if(token!==loadToken)return;setLoading(true,'Đang chuẩn bị phát...',97);
     const blob=new Blob([join(chunks,info.size)],{type:info.mimeType||guessMime(info.extension)});
