@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình phát mp3</title>
+<title>Trình phát mp3 2026</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -344,10 +344,17 @@ const WEB_APP_URL =
 
 const APP_TYPE = 'audio';
 const MSE_MIME = 'audio/mpeg';
-const API_RETRIES = 9;
+// API thử ngắn theo từng đợt; tầng phục hồi luồng bên dưới sẽ tiếp tục vô hạn.
+const API_RETRIES = 3;
 const RETRY_BASE_MS = 650;
 const RETRY_MAX_MS = 15000;
 const REQUEST_TIMEOUT_MS = 25000;
+const RECOVERY_PROBE_BASE_MS = 1200;
+const RECOVERY_PROBE_MAX_MS = 12000;
+const RECOVERY_PROBE_TIMEOUT_MS = 8000;
+const STREAM_WATCHDOG_INTERVAL_MS = 1500;
+const STREAM_STALL_THRESHOLD_MS = 12000;
+const STREAM_LOW_BUFFER_SECONDS = 18;
 const INITIAL_CHUNKS_BEFORE_PLAY = 2;
 const PREFETCH_SECONDS = 45;
 const CACHE_DB_NAME = 'gdrive-music-chunks-v5';
@@ -415,8 +422,12 @@ let activeSession = null;
 let cacheWriteCount = 0;
 let cacheDbPromise = null;
 let playbackUiTimer = null;
+let streamWatchdogTimer = null;
 let lastEffectiveDuration = 0;
 let lastSavedSecond = -1;
+let shouldBePlaying = false;
+let recoveryProbePromise = null;
+let lastRecoveryToastAt = 0;
 
 let audioContext = null;
 let analyserNode = null;
@@ -476,7 +487,10 @@ const networkState = {
   retrying: 0,
   failures: 0,
   lastSuccessAt: 0,
+  lastFailureAt: 0,
   urgent: false,
+  recovering: false,
+  recoveryCycle: 0,
   recoveryMessage: ''
 };
 
@@ -514,6 +528,7 @@ function init() {
   configurePlayers();
   bindNetworkEvents();
   startVisualizer();
+  startStreamWatchdog();
   openChunkDb().then(() => pruneChunkCache()).catch(() => {});
   loadDirectory('', true);
 }
@@ -664,6 +679,7 @@ function configurePlayers() {
 
     player.addEventListener('play', () => {
       if (index === activePlayerIndex) {
+        shouldBePlaying = true;
         ensureAudioEffects().catch(() => {});
         els.play.textContent = '⏸';
         els.cover.classList.add('playing');
@@ -691,26 +707,31 @@ function configurePlayers() {
     player.addEventListener('waiting', () => {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
-        showRecoveryStatus('Bộ đệm sắp hết, đang khôi phục đường truyền...');
+        networkState.recovering = true;
+        showRecoveryStatus('Bộ đệm sắp hết • đang khôi phục đường truyền...');
+        kickStreamingRecovery('waiting');
       }
     });
 
     player.addEventListener('stalled', () => {
       if (index === activePlayerIndex) {
         networkState.urgent = true;
-        showRecoveryStatus('Đường truyền tạm dừng, đang thử lại...');
+        networkState.recovering = true;
+        showRecoveryStatus('Đường truyền tạm dừng • đang kiểm tra lại máy chủ...');
+        kickStreamingRecovery('stalled');
       }
     });
 
     player.addEventListener('canplay', () => {
       if (index === activePlayerIndex && !networkState.offline) {
-        networkState.urgent = false;
+        attemptResumePlayback(activeSession);
         refreshPlaybackStatus();
       }
     });
 
     player.addEventListener('ended', () => {
       if (index === activePlayerIndex) {
+        shouldBePlaying = Boolean(els.autoNext.checked);
         syncPlaybackUi();
         handleEnded();
       }
@@ -735,6 +756,10 @@ function bindNetworkEvents() {
   window.addEventListener('offline', () => {
     networkState.offline = true;
     networkState.urgent = true;
+    networkState.recovering = true;
+    networkState.lastFailureAt = Date.now();
+    networkState.recoveryCycle++;
+
     showRecoveryStatus(
       `Mất kết nối Internet • còn bộ đệm ${Math.round(getBufferAhead(activeAudio()))} giây`
     );
@@ -743,13 +768,32 @@ function bindNetworkEvents() {
   window.addEventListener('online', () => {
     networkState.offline = false;
     networkState.failures = 0;
-    showRecoveryStatus('Đã có mạng • tự động tiếp tục tải...');
+    networkState.recoveryCycle++;
+
+    showRecoveryStatus(
+      'Đã nhận tín hiệu mạng • đang xác minh và tiếp tục tải...'
+    );
+
+    kickStreamingRecovery('online');
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      networkState.recoveryCycle++;
+      kickStreamingRecovery('visible');
+    }
   });
 
   const connection = navigator.connection;
-  if (connection && typeof connection.addEventListener === 'function') {
+
+  if (
+    connection &&
+    typeof connection.addEventListener === 'function'
+  ) {
     connection.addEventListener('change', () => {
+      networkState.recoveryCycle++;
       refreshPlaybackStatus();
+      kickStreamingRecovery('connection-change');
     });
   }
 }
@@ -777,6 +821,11 @@ async function api(
       const data = await apiOnce(action, params, signal);
       networkState.lastSuccessAt = Date.now();
       networkState.failures = Math.max(0, networkState.failures - 1);
+
+      if (navigator.onLine) {
+        networkState.offline = false;
+      }
+
       return data;
     } catch (error) {
       if (isAbortError(error)) {
@@ -792,6 +841,8 @@ async function api(
 
       networkState.failures++;
       networkState.retrying++;
+      networkState.lastFailureAt = Date.now();
+      networkState.recovering = true;
 
       const waitMs = calculateRetryDelay(attempt);
 
@@ -1331,10 +1382,20 @@ async function getFileInfo(file, signal) {
   }
 }
 
-async function fetchChunk(file, info, index, signal) {
+async function fetchChunk(
+  file,
+  info,
+  index,
+  signal,
+  requestMeta = null
+) {
   const cached = await getCachedChunk(file, info, index);
 
   if (cached) {
+    if (requestMeta) {
+      requestMeta.fromCache = true;
+    }
+
     return cached;
   }
 
@@ -1351,9 +1412,410 @@ async function fetchChunk(file, info, index, signal) {
 
   const bytes = base64ToBytes(data.base64);
 
+  if (requestMeta) {
+    requestMeta.fromCache = false;
+  }
+
   putCachedChunk(file, info, index, bytes).catch(() => {});
 
   return bytes;
+}
+
+/**
+ * Không bỏ cuộc sau khi một đợt retry API kết thúc.
+ * Hàm chỉ thoát khi chunk tải thành công, phiên bị hủy hoặc gặp lỗi vĩnh viễn.
+ */
+async function fetchChunkWithRecovery(
+  file,
+  info,
+  index,
+  session
+) {
+  let recoveryAttempt = 0;
+
+  while (true) {
+    throwIfSessionInactive(session);
+
+    try {
+      const requestMeta = {};
+
+      const bytes = await fetchChunk(
+        file,
+        info,
+        index,
+        session.controller.signal,
+        requestMeta
+      );
+
+      // Chunk lấy từ IndexedDB không chứng minh Internet đã phục hồi.
+      if (!requestMeta.fromCache) {
+        markStreamingRecovered(
+          session,
+          file
+        );
+      }
+
+      return bytes;
+    } catch (error) {
+      if (
+        isAbortError(error) ||
+        session.cancelled ||
+        session.token !== loadToken
+      ) {
+        throw error;
+      }
+
+      if (!isRecoverableStreamingError(error)) {
+        throw error;
+      }
+
+      recoveryAttempt++;
+      session.recovering = true;
+      networkState.recovering = true;
+      networkState.urgent = true;
+      networkState.failures++;
+      networkState.lastFailureAt = Date.now();
+
+      const bufferAhead =
+        Math.round(
+          getBufferAhead(session.player)
+        );
+
+      showRecoveryStatus(
+        navigator.onLine
+          ? `Mạng gián đoạn • đang khôi phục chunk ${index + 1}/${info.totalChunks} • còn ${bufferAhead} giây bộ đệm`
+          : `Mất mạng • chờ kết nối lại • còn ${bufferAhead} giây bộ đệm`
+      );
+
+      await waitForBackendRecovery(
+        session,
+        recoveryAttempt
+      );
+
+      // Tránh nhiều chunk đồng loạt gửi lại cùng một thời điểm.
+      await delay(
+        Math.floor(Math.random() * 450),
+        session.controller.signal
+      );
+    }
+  }
+}
+
+function isRecoverableStreamingError(error) {
+  if (isRetryableError(error)) {
+    return true;
+  }
+
+  const message =
+    String(
+      error && error.message
+        ? error.message
+        : error || ''
+    ).toLowerCase();
+
+  return [
+    'failed to fetch',
+    'load failed',
+    'network',
+    'kết nối',
+    'gián đoạn',
+    'timeout',
+    'thời gian chờ',
+    'byte-range',
+    'http 408',
+    'http 425',
+    'http 429',
+    'http 500',
+    'http 502',
+    'http 503',
+    'http 504',
+    'service invoked',
+    'too many'
+  ].some(term => message.includes(term));
+}
+
+/**
+ * Chỉ một tác vụ kiểm tra kết nối được chạy tại một thời điểm.
+ * navigator.onLine chỉ là tín hiệu tham khảo; health API mới là xác nhận thật.
+ */
+function waitForBackendRecovery(
+  session,
+  recoveryAttempt
+) {
+  if (recoveryProbePromise) {
+    return recoveryProbePromise;
+  }
+
+  recoveryProbePromise =
+    performBackendRecoveryProbe(
+      session,
+      recoveryAttempt
+    ).finally(() => {
+      recoveryProbePromise = null;
+    });
+
+  return recoveryProbePromise;
+}
+
+async function performBackendRecoveryProbe(
+  session,
+  recoveryAttempt
+) {
+  let probeAttempt = Math.max(
+    0,
+    recoveryAttempt - 1
+  );
+
+  while (true) {
+    throwIfSessionInactive(session);
+
+    if (!navigator.onLine) {
+      await waitUntilOnline(
+        session.controller.signal
+      );
+    }
+
+    const waitMs =
+      probeAttempt === 0
+        ? 0
+        : Math.min(
+            RECOVERY_PROBE_MAX_MS,
+            RECOVERY_PROBE_BASE_MS *
+              Math.pow(1.75, probeAttempt - 1)
+          ) +
+          Math.floor(Math.random() * 500);
+
+    if (waitMs > 0) {
+      await waitForRecoveryWake(
+        waitMs,
+        session.controller.signal
+      );
+    }
+
+    throwIfSessionInactive(session);
+
+    try {
+      await probeBackendOnce(
+        session.controller.signal
+      );
+
+      networkState.offline = false;
+      networkState.lastSuccessAt = Date.now();
+      return;
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw error;
+      }
+
+      probeAttempt++;
+      networkState.lastFailureAt = Date.now();
+
+      showRecoveryStatus(
+        navigator.onLine
+          ? `Máy chủ chưa phản hồi • kiểm tra lại lần ${probeAttempt}...`
+          : 'Mất kết nối • đang chờ mạng trở lại...'
+      );
+    }
+  }
+}
+
+async function probeBackendOnce(signal) {
+  const url = new URL(WEB_APP_URL);
+
+  url.searchParams.set('action', 'health');
+  url.searchParams.set('appType', APP_TYPE);
+  url.searchParams.set('_', Date.now().toString());
+
+  const response = await fetchWithTimeout(
+    url.toString(),
+    {
+      method: 'GET',
+      cache: 'no-store',
+      redirect: 'follow'
+    },
+    signal,
+    RECOVERY_PROBE_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    throw new RetryableRequestError(
+      `Health API trả về HTTP ${response.status}.`,
+      response.status
+    );
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch (_) {
+    throw new RetryableRequestError(
+      'Health API trả dữ liệu không đầy đủ.'
+    );
+  }
+
+  if (data.ok === false || data.error) {
+    throw new RetryableRequestError(
+      data.error ||
+      'Health API chưa sẵn sàng.'
+    );
+  }
+
+  return true;
+}
+
+function waitForRecoveryWake(
+  milliseconds,
+  signal
+) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve();
+    };
+
+    const fail = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(
+        new DOMException(
+          'Đã hủy tải.',
+          'AbortError'
+        )
+      );
+    };
+
+    const onVisible = () => {
+      if (!document.hidden) {
+        finish();
+      }
+    };
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      window.removeEventListener(
+        'online',
+        finish
+      );
+      document.removeEventListener(
+        'visibilitychange',
+        onVisible
+      );
+
+      if (signal) {
+        signal.removeEventListener(
+          'abort',
+          fail
+        );
+      }
+    };
+
+    const timer = setTimeout(
+      finish,
+      milliseconds
+    );
+
+    window.addEventListener(
+      'online',
+      finish,
+      { once: true }
+    );
+
+    document.addEventListener(
+      'visibilitychange',
+      onVisible
+    );
+
+    if (signal) {
+      signal.addEventListener(
+        'abort',
+        fail,
+        { once: true }
+      );
+    }
+  });
+}
+
+function markStreamingRecovered(
+  session,
+  file
+) {
+  const wasRecovering =
+    networkState.recovering ||
+    networkState.urgent ||
+    Boolean(networkState.recoveryMessage) ||
+    Boolean(session.recovering);
+
+  networkState.offline = false;
+  networkState.failures = 0;
+  networkState.urgent = false;
+  networkState.recovering = false;
+  networkState.recoveryMessage = '';
+  networkState.lastSuccessAt = Date.now();
+
+  session.recovering = false;
+  session.lastNetworkSuccessAt =
+    Date.now();
+
+  if (wasRecovering) {
+    const now = Date.now();
+
+    showMode(
+      'Đã khôi phục kết nối • tiếp tục tải từ vị trí bị gián đoạn'
+    );
+
+    if (
+      now - lastRecoveryToastAt >
+      8000
+    ) {
+      lastRecoveryToastAt = now;
+
+      showToast(
+        'Đã khôi phục kết nối và tiếp tục tải.'
+      );
+    }
+  }
+
+  attemptResumePlayback(session);
+
+  if (
+    session.type === 'mse' &&
+    !session.streamCompleted
+  ) {
+    updateBackgroundProgress(
+      file,
+      session
+    );
+  }
+}
+
+function attemptResumePlayback(session) {
+  if (
+    !session ||
+    session.cancelled ||
+    session.token !== loadToken ||
+    !shouldBePlaying
+  ) {
+    return;
+  }
+
+  const player =
+    session.player ||
+    activeAudio();
+
+  if (
+    player &&
+    player.paused &&
+    !player.ended &&
+    player.readyState >= 2
+  ) {
+    player.play().catch(() => {});
+  }
 }
 
 function canUseProgressiveMse(info) {
@@ -1378,6 +1840,7 @@ function canUseProgressiveMse(info) {
 async function openAudio(file, options = {}) {
   ensureAudioEffects().catch(() => {});
   const autoplay = options.autoplay !== false;
+  shouldBePlaying = autoplay;
 
   if (
     standbyState.ready &&
@@ -1479,7 +1942,18 @@ async function startProgressiveMse(
     loadedChunks: 0,
     totalChunks: info.totalChunks,
     file: file,
-    info: info
+    info: info,
+    nextLaunch: null,
+    nextAppend: null,
+    inFlight: new Map(),
+    readyChunks: new Map(),
+    streamRunning: false,
+    streamCompleted: false,
+    streamTask: null,
+    resumeTimer: null,
+    recovering: false,
+    lastStreamProgressAt: Date.now(),
+    lastNetworkSuccessAt: Date.now()
   };
 
   activeSession = session;
@@ -1517,11 +1991,11 @@ async function startProgressiveMse(
       Math.max(3, Math.round((index + 1) / info.totalChunks * 100))
     );
 
-    const bytes = await fetchChunk(
+    const bytes = await fetchChunkWithRecovery(
       file,
       info,
       index,
-      controller.signal
+      session
     );
 
     if (index === 0) {
@@ -1580,91 +2054,276 @@ async function startProgressiveMse(
     autoplay
   );
 
-  streamRemainingChunks(
-    session,
-    file,
-    info,
-    initialCount
-  ).catch(error => {
-    if (
-      !session.cancelled &&
-      token === loadToken &&
-      !isAbortError(error)
-    ) {
-      showRecoveryStatus(
-        'Tạm dừng tải nền • đang tiếp tục thử lại...'
-      );
+  session.nextLaunch = initialCount;
+  session.nextAppend = initialCount;
 
-      console.error(error);
-    }
-  });
+  ensureBackgroundStream(
+    session,
+    initialCount
+  );
+}
+
+function ensureBackgroundStream(
+  session,
+  startIndex = undefined
+) {
+  if (
+    !session ||
+    session.type !== 'mse' ||
+    session.cancelled ||
+    session.token !== loadToken ||
+    session.streamCompleted ||
+    session.streamRunning
+  ) {
+    return;
+  }
+
+  if (
+    Number.isInteger(startIndex) &&
+    session.nextAppend == null
+  ) {
+    session.nextAppend = startIndex;
+    session.nextLaunch = startIndex;
+  }
+
+  if (session.resumeTimer) {
+    clearTimeout(session.resumeTimer);
+    session.resumeTimer = null;
+  }
+
+  session.streamRunning = true;
+
+  session.streamTask =
+    streamRemainingChunks(session)
+      .catch(error => {
+        if (
+          session.cancelled ||
+          session.token !== loadToken ||
+          isAbortError(error)
+        ) {
+          return;
+        }
+
+        if (isRecoverableStreamingError(error)) {
+          session.recovering = true;
+          networkState.recovering = true;
+          networkState.urgent = true;
+
+          if (session.readyChunks) {
+            session.readyChunks.delete(
+              session.nextAppend
+            );
+          }
+
+          session.nextLaunch =
+            Math.min(
+              session.nextLaunch,
+              session.nextAppend
+            );
+
+          showRecoveryStatus(
+            'Tải nền tạm gián đoạn • trình giám sát sẽ tự tiếp tục...'
+          );
+
+          scheduleBackgroundResume(
+            session,
+            1200
+          );
+
+          return;
+        }
+
+        showToast(
+          'Không thể tiếp tục tải bài: ' +
+          error.message,
+          true
+        );
+
+        console.error(error);
+      })
+      .finally(() => {
+        session.streamRunning = false;
+        session.streamTask = null;
+      });
+}
+
+function scheduleBackgroundResume(
+  session,
+  delayMs = 1500
+) {
+  if (
+    !session ||
+    session.cancelled ||
+    session.streamCompleted ||
+    session.resumeTimer
+  ) {
+    return;
+  }
+
+  session.resumeTimer =
+    setTimeout(() => {
+      session.resumeTimer = null;
+
+      if (
+        session === activeSession &&
+        !session.cancelled &&
+        session.token === loadToken
+      ) {
+        ensureBackgroundStream(
+          session
+        );
+      }
+    }, delayMs);
 }
 
 async function streamRemainingChunks(
-  session,
-  file,
-  info,
-  startIndex
+  session
 ) {
-  let nextLaunch = startIndex;
-  let nextAppend = startIndex;
+  const file = session.file;
+  const info = session.info;
 
-  const inFlight = new Map();
-  const ready = new Map();
+  if (
+    session.nextAppend == null
+  ) {
+    session.nextAppend =
+      session.loadedChunks;
+  }
+
+  if (
+    session.nextLaunch == null
+  ) {
+    session.nextLaunch =
+      session.nextAppend;
+  }
+
+  const inFlight =
+    session.inFlight ||
+    new Map();
+
+  const ready =
+    session.readyChunks ||
+    new Map();
+
+  session.inFlight = inFlight;
+  session.readyChunks = ready;
 
   const launch = index => {
-    const promise = fetchChunk(
-      file,
-      info,
-      index,
-      session.controller.signal
-    ).then(bytes => {
-      ready.set(index, bytes);
-      inFlight.delete(index);
-      return index;
-    }).catch(error => {
-      inFlight.delete(index);
-      throw error;
-    });
+    const promise =
+      fetchChunkWithRecovery(
+        file,
+        info,
+        index,
+        session
+      )
+        .then(bytes => {
+          ready.set(
+            index,
+            { bytes: bytes }
+          );
+        })
+        .catch(error => {
+          ready.set(
+            index,
+            { error: error }
+          );
+        })
+        .finally(() => {
+          inFlight.delete(index);
+        });
 
-    inFlight.set(index, promise);
+    inFlight.set(
+      index,
+      promise
+    );
   };
 
-  while (nextAppend < info.totalChunks) {
+  while (
+    session.nextAppend <
+    info.totalChunks
+  ) {
     throwIfSessionInactive(session);
 
-    const concurrency = getAdaptiveConcurrency(session.player);
+    const concurrency =
+      getAdaptiveConcurrency(
+        session.player
+      );
 
     while (
-      inFlight.size < concurrency &&
-      nextLaunch < info.totalChunks
+      inFlight.size <
+        concurrency &&
+      session.nextLaunch <
+        info.totalChunks
     ) {
-      launch(nextLaunch++);
+      launch(
+        session.nextLaunch
+      );
+
+      session.nextLaunch++;
     }
 
-    if (ready.has(nextAppend)) {
-      const bytes = ready.get(nextAppend);
-      ready.delete(nextAppend);
+    if (
+      ready.has(
+        session.nextAppend
+      )
+    ) {
+      const result =
+        ready.get(
+          session.nextAppend
+        );
+
+      ready.delete(
+        session.nextAppend
+      );
+
+      if (result.error) {
+        throw result.error;
+      }
 
       await appendSourceBuffer(
         session.sourceBuffer,
-        bytes,
+        result.bytes,
         session.controller.signal,
         session.player
       );
 
       session.loadedChunks++;
-      nextAppend++;
+      session.nextAppend++;
+      session.lastStreamProgressAt =
+        Date.now();
 
-      updateBackgroundProgress(file, session);
+      markStreamingRecovered(
+        session,
+        file
+      );
+
+      updateBackgroundProgress(
+        file,
+        session
+      );
+
       continue;
     }
 
     if (!inFlight.size) {
-      throw new Error('Không còn yêu cầu tải nào đang hoạt động.');
+      // Có thể xảy ra sau khi tab ngủ hoặc trình duyệt hủy request.
+      // Không kết thúc luồng; khởi chạy lại từ chunk còn thiếu.
+      session.nextLaunch =
+        Math.min(
+          session.nextLaunch,
+          session.nextAppend
+        );
+
+      await delay(
+        350,
+        session.controller.signal
+      );
+
+      continue;
     }
 
-    await Promise.race(inFlight.values());
+    await Promise.race(
+      inFlight.values()
+    );
   }
 
   await waitSourceBufferIdle(
@@ -1681,16 +2340,147 @@ async function streamRemainingChunks(
     } catch (_) {}
   }
 
-  if (!session.cancelled && session.token === loadToken) {
+  session.streamCompleted = true;
+  session.streamRunning = false;
+  networkState.recovering = false;
+  networkState.urgent = false;
+  networkState.recoveryMessage = '';
+
+  if (
+    !session.cancelled &&
+    session.token === loadToken
+  ) {
     setLoading(false);
 
     els.trackSub.textContent =
-      `${formatBytes(info.size)} • ${formatTime(activeAudio().duration)}`;
+      `${formatBytes(info.size)} • ${formatTime(getEffectiveDuration(session.player))}`;
 
-    showMode('Đã tải đủ bài • đã lưu bộ đệm ngoại tuyến');
+    showMode(
+      'Đã tải đủ bài • đã lưu bộ đệm ngoại tuyến'
+    );
 
+    attemptResumePlayback(session);
     prepareNextTrack();
   }
+}
+
+function kickStreamingRecovery(reason = '') {
+  const session = activeSession;
+
+  if (
+    !session ||
+    session.type !== 'mse' ||
+    session.cancelled ||
+    session.streamCompleted ||
+    session.token !== loadToken
+  ) {
+    return;
+  }
+
+  if (session.resumeTimer) {
+    clearTimeout(
+      session.resumeTimer
+    );
+
+    session.resumeTimer = null;
+  }
+
+  if (reason) {
+    session.lastRecoveryReason =
+      reason;
+  }
+
+  ensureBackgroundStream(
+    session
+  );
+}
+
+function startStreamWatchdog() {
+  if (streamWatchdogTimer) {
+    return;
+  }
+
+  streamWatchdogTimer =
+    window.setInterval(() => {
+      const session =
+        activeSession;
+
+      if (
+        !session ||
+        session.type !== 'mse' ||
+        session.cancelled ||
+        session.streamCompleted ||
+        session.token !== loadToken
+      ) {
+        return;
+      }
+
+      const bufferAhead =
+        getBufferAhead(
+          session.player
+        );
+
+      const stalledFor =
+        Date.now() -
+        (
+          session.lastStreamProgressAt ||
+          session.lastNetworkSuccessAt ||
+          Date.now()
+        );
+
+      if (
+        !session.streamRunning
+      ) {
+        ensureBackgroundStream(
+          session
+        );
+      }
+
+      if (
+        bufferAhead <
+          STREAM_LOW_BUFFER_SECONDS ||
+        stalledFor >
+          STREAM_STALL_THRESHOLD_MS
+      ) {
+        networkState.urgent = true;
+
+        if (
+          stalledFor >
+          STREAM_STALL_THRESHOLD_MS
+        ) {
+          showRecoveryStatus(
+            `Không nhận được dữ liệu ${Math.round(stalledFor / 1000)} giây • đang tự nối lại...`
+          );
+        }
+
+        kickStreamingRecovery(
+          'watchdog'
+        );
+      }
+
+      if (
+        shouldBePlaying &&
+        session.player.paused &&
+        !session.player.ended &&
+        bufferAhead > 1
+      ) {
+        attemptResumePlayback(
+          session
+        );
+      }
+    }, STREAM_WATCHDOG_INTERVAL_MS);
+}
+
+function stopStreamWatchdog() {
+  if (!streamWatchdogTimer) {
+    return;
+  }
+
+  clearInterval(
+    streamWatchdogTimer
+  );
+
+  streamWatchdogTimer = null;
 }
 
 function getAdaptiveConcurrency(player) {
@@ -2012,6 +2802,7 @@ async function downloadAllChunks(
 
 function markReady(file, info, modeText, autoplay) {
   const player = activeAudio();
+  shouldBePlaying = autoplay;
 
   els.loading.hidden = true;
   els.play.disabled = false;
@@ -2035,21 +2826,28 @@ function markReady(file, info, modeText, autoplay) {
 
 function updateBackgroundProgress(file, session) {
   const percent = Math.round(
-    session.loadedChunks / session.totalChunks * 100
+    session.loadedChunks /
+    session.totalChunks *
+    100
   );
+
+  if (
+    networkState.offline ||
+    networkState.recovering ||
+    networkState.retrying > 0
+  ) {
+    updateRecoveryProgress();
+    return;
+  }
 
   setLoading(
     true,
-    networkState.offline
-      ? `Mất mạng • đang dùng bộ đệm của ${file.name}`
-      : `Đang đệm nền ${file.name}`,
+    `Đang đệm nền ${file.name}`,
     percent
   );
 
   showMode(
-    networkState.offline
-      ? `Mất mạng • còn ${Math.round(getBufferAhead(session.player))} giây bộ đệm`
-      : `Đang phát • đã đệm ${percent}% • tự nối lại khi lỗi`
+    `Đang phát • đã đệm ${percent}% • kết nối ổn định`
   );
 }
 
@@ -2129,6 +2927,8 @@ async function prepareNextTrack() {
 }
 
 async function activateStandby(track, autoplay = true) {
+  shouldBePlaying = autoplay;
+
   if (
     !standbyState.ready ||
     !standbyState.track ||
@@ -2202,7 +3002,10 @@ async function activateStandby(track, autoplay = true) {
 async function handleEnded() {
   savePosition();
 
-  if (!els.autoNext.checked) return;
+  if (!els.autoNext.checked) {
+    shouldBePlaying = false;
+    return;
+  }
 
   const next = getRelativeTrack(1);
 
@@ -2260,10 +3063,21 @@ function togglePlay() {
   if (!player.src) return;
 
   if (player.paused) {
+    shouldBePlaying = true;
+
     player.play().catch(
-      error => showToast(error.message, true)
+      error =>
+        showToast(
+          error.message,
+          true
+        )
+    );
+
+    kickStreamingRecovery(
+      'manual-play'
     );
   } else {
+    shouldBePlaying = false;
     player.pause();
   }
 }
@@ -2526,16 +3340,38 @@ function refreshPlaybackStatus() {
     return;
   }
 
-  if (networkState.retrying > 0) return;
+  if (
+    networkState.retrying > 0 ||
+    networkState.recovering
+  ) {
+    updateRecoveryProgress();
+    return;
+  }
 
   networkState.recoveryMessage = '';
 
-  if (activeSession && activeSession.type === 'mse') {
-    const percent = Math.round(
-      activeSession.loadedChunks / activeSession.totalChunks * 100
+  if (
+    activeSession &&
+    activeSession.type === 'mse'
+  ) {
+    const percent =
+      Math.round(
+        activeSession.loadedChunks /
+        activeSession.totalChunks *
+        100
+      );
+
+    setLoading(
+      !activeSession.streamCompleted,
+      `Đang đệm nền ${activeSession.file.name}`,
+      percent
     );
 
-    showMode(`Đang phát • đã đệm ${percent}% • kết nối ổn định`);
+    showMode(
+      activeSession.streamCompleted
+        ? 'Đã tải đủ bài • phát ổn định'
+        : `Đang phát • đã đệm ${percent}% • kết nối ổn định`
+    );
   }
 }
 
@@ -2546,26 +3382,33 @@ function showRecoveryStatus(message) {
 
 function updateRecoveryProgress() {
   const player = activeAudio();
-  const bufferAhead = getBufferAhead(player);
-  const duration = getEffectiveDuration(player);
+  const bufferAhead =
+    getBufferAhead(player);
 
-  const targetSeconds = Math.max(
-    60,
-    Math.min(
-      RECOVERY_BUFFER_TARGET_SECONDS,
-      duration > 0
-        ? duration
-        : RECOVERY_BUFFER_TARGET_SECONDS
-    )
-  );
+  const duration =
+    getEffectiveDuration(player);
 
-  const bufferPercent = Math.max(
-    1,
-    Math.min(
-      100,
-      bufferAhead / targetSeconds * 100
-    )
-  );
+  const targetSeconds =
+    Math.max(
+      60,
+      Math.min(
+        RECOVERY_BUFFER_TARGET_SECONDS,
+        duration > 0
+          ? duration
+          : RECOVERY_BUFFER_TARGET_SECONDS
+      )
+    );
+
+  const bufferPercent =
+    Math.max(
+      1,
+      Math.min(
+        100,
+        bufferAhead /
+        targetSeconds *
+        100
+      )
+    );
 
   els.status.hidden = false;
 
@@ -2574,16 +3417,14 @@ function updateRecoveryProgress() {
     (
       networkState.offline
         ? 'Mất kết nối • đang phát bằng dữ liệu đã đệm...'
-        : 'Đường truyền chập chờn • đang tự động thử lại...'
+        : 'Đường truyền chập chờn • đang xác minh và tiếp tục tải...'
     );
 
   els.statusPct.textContent =
     bufferAhead > 0
       ? `${Math.round(bufferAhead)} giây`
-      : 'đang thử lại';
+      : 'đang nối lại';
 
-  // Trước đây chiều rộng giữ nguyên phần trăm tải cũ.
-  // Bây giờ thanh này biểu diễn lượng bộ đệm còn lại và thay đổi liên tục.
   els.progress.style.width =
     `${bufferPercent}%`;
 
@@ -2592,6 +3433,16 @@ function updateRecoveryProgress() {
       ? `${els.statusText.textContent} • còn ${Math.round(bufferAhead)} giây`
       : els.statusText.textContent
   );
+
+  if (
+    activeSession &&
+    activeSession.type === 'mse' &&
+    !activeSession.streamCompleted
+  ) {
+    kickStreamingRecovery(
+      'recovery-ui'
+    );
+  }
 }
 
 function savePosition() {
@@ -3157,6 +4008,19 @@ function cancelActiveSession(resetAudio = true) {
 
   session.cancelled = true;
 
+  if (session.resumeTimer) {
+    clearTimeout(session.resumeTimer);
+    session.resumeTimer = null;
+  }
+
+  if (session.inFlight) {
+    session.inFlight.clear();
+  }
+
+  if (session.readyChunks) {
+    session.readyChunks.clear();
+  }
+
   if (session.controller) {
     try {
       session.controller.abort();
@@ -3211,6 +4075,7 @@ function resetPlayer(player) {
 function cleanupEverything() {
   savePosition();
   stopPlaybackUiTicker();
+  stopStreamWatchdog();
   stopVisualizer();
   cancelActiveSession();
   clearStandby();
