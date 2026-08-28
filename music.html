@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện nhạc Nhi hư - Google Drive</title>
+<title>Thư viện mp3 Nhi hư - Google Drive</title>
 <style>
 :root{--p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;--muted:#64748b;--border:#dbe3ea;--danger:#b91c1c}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
@@ -111,7 +111,7 @@ async function loadDirectory(folderId,reset=false){
     els.playFolder.textContent=audioItems.length?`▶ Phát ${audioItems.length} bài`:'▶ Quét và phát';
     renderList();
     updateButtons();
-  }catch(e){els.fileList.innerHTML=`<li class="empty">❌ ${esc(e.message)}</li>`;toast(e.message,true)}finally{setLoading(false)}
+  }catch(e){els.fileList.innerHTML=`<li class="empty">❌ ${esc(e.message)}</li>`;els.playFolder.disabled=true;els.playFolder.textContent='Không thể phát';toast(e.message,true)}finally{setLoading(false)}
 }
 function renderList(){
   const k=norm(els.search.value),filtered=currentItems.filter(x=>norm(x.name).includes(k)),frag=document.createDocumentFragment();
@@ -129,6 +129,8 @@ function goBack(){if(folderStack.length>1)loadDirectory(folderStack[folderStack.
 async function openFolder(folder){
   const token=++folderScanToken;
   els.folderTitle.textContent='Đang mở ' + folder.name + '...';
+  els.playFolder.disabled=true;
+  els.playFolder.textContent='Đang tải...';
   els.fileList.innerHTML='<li class="empty">Đang tải nội dung thư mục...</li>';
   try{
     await loadDirectory(folder.id);
@@ -145,7 +147,8 @@ async function playAllCurrentFolder(){
   setLoading(true,'Đang quét các bài hát trong thư mục...',10);
 
   try{
-    const tracks=await collectTracksRecursive(currentFolderId,token);
+    const playlistData=await api('playlist',{folderId:currentFolderId});
+    const tracks=Array.isArray(playlistData.tracks)?playlistData.tracks:[];
     if(token!==folderScanToken)return;
     if(!tracks.length)throw new Error('Không tìm thấy file âm thanh trong thư mục này hoặc các thư mục con.');
 
@@ -163,34 +166,6 @@ async function playAllCurrentFolder(){
       setLoading(false);
     }
   }
-}
-
-async function collectTracksRecursive(rootFolderId,token){
-  const queue=[rootFolderId];
-  const visited=new Set();
-  const tracks=[];
-  const MAX_FOLDERS=250;
-
-  while(queue.length){
-    if(token!==folderScanToken)return [];
-    if(visited.size>=MAX_FOLDERS)throw new Error('Thư mục có quá nhiều thư mục con. Giới hạn quét là '+MAX_FOLDERS+' thư mục.');
-
-    const folderId=queue.shift();
-    if(visited.has(folderId))continue;
-    visited.add(folderId);
-
-    setLoading(true,`Đang quét thư mục ${visited.size}...`,Math.min(85,10+visited.size));
-    const data=await api('list',{folderId});
-    const items=Array.isArray(data.files)?data.files:[];
-
-    items.forEach(item=>{
-      if(item.isFolder)queue.push(item.id);
-      else tracks.push(item);
-    });
-  }
-
-  tracks.sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
-  return tracks;
 }
 
 async function openAudio(file){
