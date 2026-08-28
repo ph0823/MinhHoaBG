@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình nhạc Nhi hư - v2.0</title>
+<title>Trình nhạc Nhi hư - v2.1</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -131,12 +131,74 @@ input[type=range]{width:100%;accent-color:var(--p)}
 }
 
 .visualizer-wrap{
-  width:min(420px,100%);height:74px;margin:-8px auto 14px;
-  padding:8px 10px;border:1px solid #ddd6fe;border-radius:14px;
-  background:linear-gradient(180deg,rgba(245,243,255,.96),rgba(237,233,254,.68));
-  overflow:hidden
+  --visualizer-energy:0;
+  --visualizer-hue:268;
+  position:relative;
+  isolation:isolate;
+  width:min(520px,100%);
+  height:96px;
+  margin:-8px auto 16px;
+  padding:9px 12px;
+  overflow:hidden;
+  border:1px solid hsla(var(--visualizer-hue),88%,72%,.42);
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 18% 28%,hsla(var(--visualizer-hue),95%,70%,.20),transparent 36%),
+    radial-gradient(circle at 82% 72%,hsla(calc(var(--visualizer-hue) + 48),92%,68%,.18),transparent 40%),
+    linear-gradient(180deg,rgba(250,248,255,.98),rgba(237,233,254,.78));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.88),
+    0 10px 28px hsla(var(--visualizer-hue),78%,52%,calc(.05 + var(--visualizer-energy) * .12));
+  transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease
 }
-#visualizer{display:block;width:100%;height:100%}
+.visualizer-wrap::before{
+  content:'';
+  position:absolute;
+  inset:-70% -30%;
+  z-index:0;
+  pointer-events:none;
+  opacity:calc(.10 + var(--visualizer-energy) * .28);
+  background:conic-gradient(
+    from 0deg,
+    transparent 0 20%,
+    hsla(var(--visualizer-hue),96%,68%,.42) 30%,
+    transparent 42% 68%,
+    hsla(calc(var(--visualizer-hue) + 55),92%,66%,.32) 78%,
+    transparent 90%
+  );
+  animation:visualizerAurora 9s linear infinite
+}
+.visualizer-wrap::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  opacity:.23;
+  background-image:radial-gradient(circle,rgba(124,58,237,.34) 0 1px,transparent 1.4px);
+  background-size:18px 18px;
+  mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)
+}
+.visualizer-wrap.active{
+  border-color:hsla(var(--visualizer-hue),92%,62%,.72);
+  transform:translateY(-1px);
+  animation:visualizerGlow 1.8s ease-in-out infinite
+}
+#visualizer{
+  position:relative;
+  z-index:2;
+  display:block;
+  width:100%;
+  height:100%;
+  filter:saturate(1.16) contrast(1.04)
+}
+@keyframes visualizerAurora{
+  to{transform:rotate(360deg)}
+}
+@keyframes visualizerGlow{
+  0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 9px 24px hsla(var(--visualizer-hue),82%,54%,.10)}
+  50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 13px 34px hsla(var(--visualizer-hue),88%,56%,calc(.14 + var(--visualizer-energy) * .18))}
+}
 .cover.playing{
   animation:coverPulse 1.35s ease-in-out infinite;
   box-shadow:0 0 0 0 rgba(124,58,237,.3)
@@ -171,7 +233,18 @@ input[type=range]{width:100%;accent-color:var(--p)}
 }
 @media(max-width:620px){
   .effects-grid{grid-template-columns:1fr}
-  .visualizer-wrap{height:64px}
+  .visualizer-wrap{
+    width:100%;
+    height:78px;
+    padding:7px 8px;
+    border-radius:16px
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .visualizer-wrap,
+  .visualizer-wrap::before{
+    animation:none!important
+  }
 }
 
 .loading{
@@ -596,6 +669,16 @@ let visualizerSilentFrames = 0;
 let visualizerUsesRealSpectrum = false;
 let audioEffectsAvailable = true;
 let frequencyData = null;
+let visualizerPeaks = [];
+let visualizerPeakVelocity = [];
+let visualizerEnergy = 0;
+let visualizerBassEnergy = 0;
+let visualizerLastRenderAt = 0;
+let visualizerHue = 268;
+
+const VISUALIZER_REDUCED_MOTION =
+  window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const IS_LG_WEBOS_TV =
   /web0s|webos|netcast|lg browser|smarttv/i.test(
@@ -879,6 +962,7 @@ function configurePlayers() {
         ensureAudioEffects().catch(() => {});
         els.play.textContent = '⏸';
         els.cover.classList.add('playing');
+        els.visualizer.parentElement.classList.add('active');
         startPlaybackUiTicker();
 
         if (
@@ -908,6 +992,7 @@ function configurePlayers() {
       if (index === activePlayerIndex) {
         els.play.textContent = '▶';
         els.cover.classList.remove('playing');
+        els.visualizer.parentElement.classList.remove('active');
 
         if (!shouldBePlaying) {
           cancelDiagnosticCandidate();
@@ -5107,206 +5192,630 @@ function startVisualizer() {
     return;
   }
 
-  const canvas =
-    els.visualizer;
+  const canvas = els.visualizer;
+  const context = canvas.getContext('2d', {
+    alpha: true,
+    desynchronized: true
+  });
 
-  const context =
-    canvas.getContext('2d');
-
-  const barCount = 34;
-
-  visualizerLevels =
-    new Array(barCount).fill(0.12);
-
-  const draw = () => {
-    const rect =
-      canvas.getBoundingClientRect();
-
-    const dpr =
-      Math.min(
-        window.devicePixelRatio || 1,
-        IS_LG_WEBOS_TV ? 1 : 2
-      );
-
-    const width =
-      Math.max(
-        1,
-        Math.floor(rect.width * dpr)
-      );
-
-    const height =
-      Math.max(
-        1,
-        Math.floor(rect.height * dpr)
-      );
+  const render = timestamp => {
+    const frameGap =
+      IS_LG_WEBOS_TV
+        ? 90
+        : IS_MOBILE_DEVICE
+          ? 30
+          : VISUALIZER_REDUCED_MOTION
+            ? 66
+            : 16;
 
     if (
-      canvas.width !== width ||
-      canvas.height !== height
+      timestamp - visualizerLastRenderAt <
+      frameGap
     ) {
-      canvas.width = width;
-      canvas.height = height;
+      visualizerFrame =
+        requestAnimationFrame(render);
+      return;
     }
 
-    context.clearRect(
-      0,
-      0,
-      width,
-      height
+    visualizerLastRenderAt = timestamp;
+    drawVisualizerScene(
+      canvas,
+      context,
+      timestamp
     );
 
-    const player =
-      activeAudio();
+    visualizerFrame =
+      requestAnimationFrame(render);
+  };
 
-    const playing =
-      Boolean(
-        player &&
-        !player.paused &&
-        !player.ended
+  if (IS_LG_WEBOS_TV) {
+    visualizerTimer = window.setInterval(
+      () => drawVisualizerScene(
+        canvas,
+        context,
+        performance.now()
+      ),
+      90
+    );
+
+    drawVisualizerScene(
+      canvas,
+      context,
+      performance.now()
+    );
+  } else {
+    visualizerFrame =
+      requestAnimationFrame(render);
+  }
+}
+
+function drawVisualizerScene(
+  canvas,
+  context,
+  timestamp
+) {
+  const rect =
+    canvas.getBoundingClientRect();
+
+  const dpr = Math.min(
+    window.devicePixelRatio || 1,
+    IS_LG_WEBOS_TV
+      ? 1
+      : IS_MOBILE_DEVICE
+        ? 1.6
+        : 2
+  );
+
+  const width = Math.max(
+    1,
+    Math.floor(rect.width * dpr)
+  );
+
+  const height = Math.max(
+    1,
+    Math.floor(rect.height * dpr)
+  );
+
+  if (
+    canvas.width !== width ||
+    canvas.height !== height
+  ) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  context.clearRect(0, 0, width, height);
+
+  const player = activeAudio();
+  const playing = Boolean(
+    player &&
+    !player.paused &&
+    !player.ended
+  );
+
+  const realSpectrum =
+    readRealSpectrumIfAvailable(playing);
+
+  const currentTime =
+    player &&
+    Number.isFinite(player.currentTime)
+      ? player.currentTime
+      : 0;
+
+  const barCount =
+    IS_LG_WEBOS_TV
+      ? 34
+      : IS_MOBILE_DEVICE
+        ? 42
+        : 56;
+
+  if (visualizerLevels.length !== barCount) {
+    visualizerLevels =
+      new Array(barCount).fill(0.1);
+
+    visualizerPeaks =
+      new Array(barCount).fill(0.12);
+
+    visualizerPeakVelocity =
+      new Array(barCount).fill(0);
+  }
+
+  const levels = new Array(barCount);
+  let energySum = 0;
+  let bassSum = 0;
+
+  for (
+    let index = 0;
+    index < barCount;
+    index++
+  ) {
+    const target = realSpectrum
+      ? getRealSpectrumLevel(
+          index,
+          barCount
+        )
+      : getFallbackVisualizerLevel(
+          index,
+          barCount,
+          timestamp,
+          currentTime,
+          playing
+        );
+
+    const previous =
+      visualizerLevels[index] || 0;
+
+    const smoothing =
+      target > previous
+        ? 0.58
+        : playing
+          ? 0.2
+          : 0.12;
+
+    const level =
+      previous * (1 - smoothing) +
+      target * smoothing;
+
+    visualizerLevels[index] = level;
+    levels[index] = level;
+    energySum += level;
+
+    if (index < Math.ceil(barCount * 0.22)) {
+      bassSum += level;
+    }
+
+    if (level >= visualizerPeaks[index]) {
+      visualizerPeaks[index] = level;
+      visualizerPeakVelocity[index] = 0;
+    } else {
+      visualizerPeakVelocity[index] +=
+        playing ? 0.0028 : 0.0012;
+
+      visualizerPeaks[index] = Math.max(
+        level,
+        visualizerPeaks[index] -
+          visualizerPeakVelocity[index]
       );
+    }
+  }
 
-    const realSpectrum =
-      readRealSpectrumIfAvailable(
-        playing
-      );
+  const rawEnergy =
+    energySum / barCount;
 
-    const now =
-      Date.now();
+  const rawBass =
+    bassSum /
+    Math.max(1, Math.ceil(barCount * 0.22));
 
-    const currentTime =
-      player &&
-      Number.isFinite(player.currentTime)
-        ? player.currentTime
-        : 0;
+  visualizerEnergy =
+    visualizerEnergy * 0.82 +
+    rawEnergy * 0.18;
 
-    const gap =
-      3 * dpr;
+  visualizerBassEnergy =
+    visualizerBassEnergy * 0.74 +
+    rawBass * 0.26;
 
-    const barWidth =
-      Math.max(
-        2 * dpr,
-        (
-          width -
-          gap * (barCount - 1)
-        ) / barCount
-      );
+  visualizerHue =
+    264 +
+    Math.sin(timestamp / 2600) * 13 +
+    visualizerBassEnergy * 24;
+
+  updateVisualizerContainer(
+    playing,
+    visualizerEnergy,
+    visualizerHue
+  );
+
+  drawVisualizerBackdrop(
+    context,
+    width,
+    height,
+    timestamp,
+    visualizerEnergy,
+    visualizerBassEnergy
+  );
+
+  drawVisualizerBars(
+    context,
+    width,
+    height,
+    levels,
+    visualizerPeaks,
+    timestamp,
+    dpr,
+    playing
+  );
+
+  drawVisualizerWaveLine(
+    context,
+    width,
+    height,
+    levels,
+    dpr,
+    timestamp,
+    playing
+  );
+}
+
+function getRealSpectrumLevel(
+  index,
+  barCount
+) {
+  const normalized =
+    index /
+    Math.max(1, barCount - 1);
+
+  const curved =
+    Math.pow(normalized, 1.62);
+
+  const sourceIndex = Math.min(
+    frequencyData.length - 1,
+    Math.floor(
+      curved *
+      frequencyData.length *
+      0.86
+    )
+  );
+
+  const left =
+    frequencyData[
+      Math.max(0, sourceIndex - 1)
+    ] || 0;
+
+  const center =
+    frequencyData[sourceIndex] || 0;
+
+  const right =
+    frequencyData[
+      Math.min(
+        frequencyData.length - 1,
+        sourceIndex + 1
+      )
+    ] || 0;
+
+  const averaged =
+    (left + center * 2 + right) / 4;
+
+  let level = Math.pow(
+    averaged / 255,
+    0.76
+  );
+
+  if (normalized < 0.22) {
+    level *= 1.18;
+  } else if (normalized > 0.72) {
+    level *= 0.9;
+  }
+
+  return Math.max(
+    0.025,
+    Math.min(1, level)
+  );
+}
+
+function drawVisualizerBackdrop(
+  context,
+  width,
+  height,
+  timestamp,
+  energy,
+  bassEnergy
+) {
+  const glowX =
+    width *
+    (0.5 + Math.sin(timestamp / 1700) * 0.2);
+
+  const glow =
+    context.createRadialGradient(
+      glowX,
+      height * 0.72,
+      0,
+      glowX,
+      height * 0.72,
+      width * 0.55
+    );
+
+  glow.addColorStop(
+    0,
+    `hsla(${visualizerHue},92%,62%,${0.05 + energy * 0.14})`
+  );
+
+  glow.addColorStop(
+    0.55,
+    `hsla(${visualizerHue + 45},92%,65%,${0.02 + bassEnergy * 0.08})`
+  );
+
+  glow.addColorStop(1, 'transparent');
+
+  context.fillStyle = glow;
+  context.fillRect(0, 0, width, height);
+
+  const baseline = height * 0.82;
+
+  context.save();
+  context.strokeStyle =
+    `hsla(${visualizerHue},86%,68%,${0.08 + energy * 0.16})`;
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(width * 0.025, baseline + 0.5);
+  context.lineTo(width * 0.975, baseline + 0.5);
+  context.stroke();
+  context.restore();
+}
+
+function drawVisualizerBars(
+  context,
+  width,
+  height,
+  levels,
+  peaks,
+  timestamp,
+  dpr,
+  playing
+) {
+  const barCount = levels.length;
+  const gap =
+    (IS_MOBILE_DEVICE ? 2.2 : 2.8) * dpr;
+
+  const sidePadding = 3 * dpr;
+  const usableWidth =
+    width - sidePadding * 2;
+
+  const barWidth = Math.max(
+    2.1 * dpr,
+    (
+      usableWidth -
+      gap * (barCount - 1)
+    ) / barCount
+  );
+
+  const baseline = height * 0.82;
+  const maxHeight = height * 0.74;
+  const reflectionHeight = height * 0.12;
+
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+
+  for (
+    let index = 0;
+    index < barCount;
+    index++
+  ) {
+    const normalized =
+      index /
+      Math.max(1, barCount - 1);
+
+    const pulse =
+      playing
+        ? 1 +
+          Math.sin(
+            timestamp / 210 +
+            index * 0.56
+          ) * 0.035
+        : 1;
+
+    const level = Math.max(
+      0.035,
+      Math.min(1, levels[index] * pulse)
+    );
+
+    const barHeight = Math.max(
+      3 * dpr,
+      level * maxHeight
+    );
+
+    const x =
+      sidePadding +
+      index * (barWidth + gap);
+
+    const y =
+      baseline - barHeight;
+
+    const hue =
+      visualizerHue +
+      normalized * 62 +
+      Math.sin(timestamp / 1300) * 8;
 
     const gradient =
       context.createLinearGradient(
-        0,
-        height,
-        0,
-        0
+        x,
+        baseline,
+        x,
+        y
       );
 
     gradient.addColorStop(
       0,
-      '#7c3aed'
+      `hsl(${hue},90%,54%)`
     );
 
     gradient.addColorStop(
-      0.55,
-      '#a855f7'
+      0.58,
+      `hsl(${hue + 18},94%,61%)`
     );
 
     gradient.addColorStop(
       1,
-      '#ec4899'
+      `hsl(${hue + 42},96%,70%)`
+    );
+
+    context.fillStyle = gradient;
+    context.shadowColor =
+      `hsla(${hue},95%,58%,${0.18 + visualizerEnergy * 0.38})`;
+    context.shadowBlur =
+      (3 + visualizerEnergy * 9) * dpr;
+
+    drawRoundedRect(
+      context,
+      x,
+      y,
+      barWidth,
+      barHeight,
+      Math.min(barWidth / 2, 5 * dpr)
+    );
+
+    const peakY =
+      baseline -
+      Math.min(1, peaks[index]) *
+      maxHeight;
+
+    context.shadowBlur = 0;
+    context.fillStyle =
+      `hsla(${hue + 36},100%,78%,${playing ? 0.82 : 0.45})`;
+
+    drawRoundedRect(
+      context,
+      x,
+      Math.max(1 * dpr, peakY - 1.3 * dpr),
+      barWidth,
+      1.8 * dpr,
+      1 * dpr
+    );
+
+    const reflection =
+      Math.min(
+        reflectionHeight,
+        barHeight * 0.18
+      );
+
+    const reflectionGradient =
+      context.createLinearGradient(
+        x,
+        baseline,
+        x,
+        baseline + reflection
+      );
+
+    reflectionGradient.addColorStop(
+      0,
+      `hsla(${hue},90%,60%,.22)`
+    );
+
+    reflectionGradient.addColorStop(
+      1,
+      `hsla(${hue},90%,60%,0)`
     );
 
     context.fillStyle =
-      gradient;
+      reflectionGradient;
 
-    for (
-      let index = 0;
-      index < barCount;
-      index++
-    ) {
-      let targetLevel;
+    drawRoundedRect(
+      context,
+      x,
+      baseline + 2 * dpr,
+      barWidth,
+      reflection,
+      Math.min(barWidth / 2, 4 * dpr)
+    );
+  }
 
-      if (realSpectrum) {
-        const sourceIndex =
-          Math.min(
-            frequencyData.length - 1,
-            Math.floor(
-              index /
-              barCount *
-              frequencyData.length *
-              0.72
-            )
-          );
+  context.restore();
+}
 
-        targetLevel =
-          frequencyData[sourceIndex] /
-          255;
-      } else {
-        targetLevel =
-          getFallbackVisualizerLevel(
-            index,
-            barCount,
-            now,
-            currentTime,
-            playing
-          );
-      }
+function drawVisualizerWaveLine(
+  context,
+  width,
+  height,
+  levels,
+  dpr,
+  timestamp,
+  playing
+) {
+  if (
+    IS_LG_WEBOS_TV ||
+    levels.length < 3
+  ) {
+    return;
+  }
 
-      const smoothing =
-        playing ? 0.42 : 0.2;
+  const baseline = height * 0.82;
+  const maxHeight = height * 0.74;
+  const sidePadding = 4 * dpr;
+  const step =
+    (width - sidePadding * 2) /
+    (levels.length - 1);
 
-      visualizerLevels[index] =
-        visualizerLevels[index] *
-          (1 - smoothing) +
-        targetLevel *
-          smoothing;
+  context.save();
+  context.beginPath();
 
-      const level =
-        Math.max(
-          0.035,
-          Math.min(
-            1,
-            visualizerLevels[index]
-          )
-        );
+  for (
+    let index = 0;
+    index < levels.length;
+    index++
+  ) {
+    const x =
+      sidePadding + index * step;
 
-      const barHeight =
-        Math.max(
-          3 * dpr,
-          level * height * 0.9
-        );
+    const oscillation =
+      playing
+        ? Math.sin(
+            timestamp / 240 +
+            index * 0.72
+          ) * 1.2 * dpr
+        : 0;
 
-      const x =
-        index *
-        (barWidth + gap);
+    const y =
+      baseline -
+      levels[index] *
+      maxHeight -
+      oscillation;
 
-      const y =
-        height - barHeight;
+    if (index === 0) {
+      context.moveTo(x, y);
+    } else {
+      const previousX =
+        sidePadding +
+        (index - 1) * step;
 
-      const radius =
-        Math.min(
-          barWidth / 2,
-          4 * dpr
-        );
+      const controlX =
+        (previousX + x) / 2;
 
-      drawRoundedRect(
-        context,
-        x,
+      context.quadraticCurveTo(
+        controlX,
         y,
-        barWidth,
-        barHeight,
-        radius
+        x,
+        y
       );
     }
-  };
+  }
 
-  // requestAnimationFrame trên một số phiên bản webOS TV có thể bị
-  // giảm tần số mạnh. setInterval 80 ms ổn định hơn cho hiệu ứng nhẹ.
-  visualizerTimer =
-    window.setInterval(
-      draw,
-      IS_LG_WEBOS_TV ? 90 : 70
-    );
+  context.strokeStyle =
+    `hsla(${visualizerHue + 48},100%,78%,${0.16 + visualizerEnergy * 0.3})`;
 
-  draw();
+  context.lineWidth =
+    (0.8 + visualizerEnergy * 1.2) * dpr;
+
+  context.shadowColor =
+    `hsla(${visualizerHue + 38},95%,66%,.42)`;
+
+  context.shadowBlur =
+    (3 + visualizerEnergy * 7) * dpr;
+
+  context.stroke();
+  context.restore();
+}
+
+function updateVisualizerContainer(
+  playing,
+  energy,
+  hue
+) {
+  const wrapper =
+    els.visualizer.parentElement;
+
+  wrapper.style.setProperty(
+    '--visualizer-energy',
+    Math.max(0, Math.min(1, energy)).toFixed(3)
+  );
+
+  wrapper.style.setProperty(
+    '--visualizer-hue',
+    Math.round(hue)
+  );
+
+  wrapper.classList.toggle(
+    'active',
+    playing
+  );
 }
 
 function readRealSpectrumIfAvailable(playing) {
@@ -5338,26 +5847,18 @@ function readRealSpectrumIfAvailable(playing) {
     index < frequencyData.length;
     index++
   ) {
-    const value =
-      frequencyData[index];
-
+    const value = frequencyData[index];
     total += value;
-
-    if (value > maximum) {
-      maximum = value;
-    }
+    maximum = Math.max(maximum, value);
   }
 
   const average =
     total /
-    Math.max(
-      1,
-      frequencyData.length
-    );
+    Math.max(1, frequencyData.length);
 
   if (
-    average > 1.5 ||
-    maximum > 10
+    average > 1.2 ||
+    maximum > 8
   ) {
     visualizerSilentFrames = 0;
     visualizerUsesRealSpectrum = true;
@@ -5366,9 +5867,7 @@ function readRealSpectrumIfAvailable(playing) {
 
   visualizerSilentFrames++;
 
-  if (
-    visualizerSilentFrames >= 5
-  ) {
+  if (visualizerSilentFrames >= 7) {
     visualizerUsesRealSpectrum = false;
   }
 
@@ -5382,80 +5881,83 @@ function getFallbackVisualizerLevel(
   currentTime,
   playing
 ) {
+  const normalized =
+    index /
+    Math.max(1, barCount - 1);
+
   if (!playing) {
-    return (
-      0.07 +
-      0.025 *
+    return Math.max(
+      0.035,
+      0.065 +
+      0.024 *
       Math.sin(
-        now / 760 +
-        index * 0.64
+        now / 720 +
+        index * 0.58
       )
     );
   }
 
-  const seconds =
-    now / 1000;
-
+  const seconds = now / 1000;
   const phase =
-    currentTime * 4.15 +
-    seconds * 0.42;
+    currentTime * 4.8 +
+    seconds * 0.68;
 
-  const lowPulse =
+  const bassPulse =
+    0.5 +
+    0.5 *
+    Math.sin(phase * 1.08);
+
+  const kickPulse =
+    Math.pow(
+      0.5 +
+      0.5 *
+      Math.sin(phase * 2.16),
+      3.2
+    );
+
+  const middleWave =
     0.5 +
     0.5 *
     Math.sin(
-      phase * 1.15
+      phase * 2.45 +
+      index * 0.37
     );
 
-  const midPulse =
+  const trebleWave =
     0.5 +
     0.5 *
     Math.sin(
-      phase * 2.07 +
-      index * 0.31
+      phase * 4.2 +
+      index * 1.04
     );
 
-  const highPulse =
-    0.5 +
-    0.5 *
-    Math.sin(
-      phase * 3.61 +
-      index * 0.89
-    );
+  const shape =
+    Math.pow(1 - normalized, 0.46);
 
-  const frequencyShape =
-    1 -
-    index /
-    Math.max(
-      1,
-      barCount * 1.22
-    );
+  const bandEnergy =
+    normalized < 0.2
+      ? bassPulse * 0.36 +
+        kickPulse * 0.28
+      : normalized < 0.66
+        ? middleWave * 0.42 +
+          bassPulse * 0.12
+        : trebleWave * 0.28 +
+          middleWave * 0.1;
 
-  const beat =
-    (
-      index < barCount * 0.25
-        ? lowPulse * 0.46
-        : index < barCount * 0.67
-          ? midPulse * 0.34
-          : highPulse * 0.22
-    );
-
-  const deterministicNoise =
+  const noise =
     pseudoNoise(
-      index * 19.17 +
-      Math.floor(
-        currentTime * 9
-      ) * 0.73
+      index * 22.37 +
+      Math.floor(currentTime * 12) * 0.81
     );
 
   return Math.max(
-    0.08,
+    0.06,
     Math.min(
-      0.96,
-      0.1 +
-      beat +
-      frequencyShape * 0.19 +
-      deterministicNoise * 0.13
+      1,
+      0.06 +
+      shape * 0.18 +
+      bandEnergy +
+      noise * 0.12
     )
   );
 }
@@ -5466,10 +5968,7 @@ function pseudoNoise(value) {
       value * 12.9898
     ) * 43758.5453;
 
-  return (
-    result -
-    Math.floor(result)
-  );
+  return result - Math.floor(result);
 }
 
 
