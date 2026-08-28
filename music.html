@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Trình nhạc Nhi hư - v.1.2026</title>
+<title>Trình nhạc Nhi hư - v.1</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -299,7 +299,7 @@ input[type=range]{width:100%;accent-color:var(--p)}
     <div class="brand">
       <div class="logo">🎧</div>
       <div>
-        <h1>Trình chơi nhạc Nguyên Nhi 2026</h1>
+        <h1>Thư viện âm thanh</h1>
         <small>Phát ổn định với bộ đệm trượt từ Google Drive</small>
       </div>
     </div>
@@ -421,7 +421,7 @@ input[type=range]{width:100%;accent-color:var(--p)}
   class="network-diagnostics no-file"
   role="status"
   aria-live="polite"
-  title="Chỉ ghi nhận sự cố đã được xác nhận cho file đang phát"
+  title="Đồng bộ với trạng thái nhận dữ liệu thực tế của file đang phát"
 >
   <span id="diagnosticDot" class="diag-dot" aria-hidden="true"></span>
   <span id="diagnosticText" class="diag-text">
@@ -510,6 +510,11 @@ const DIAGNOSTIC_RECOVERY_STABLE_MS = 1800;
 const DIAGNOSTIC_PLAYBACK_FRESH_MS = 1400;
 const DIAGNOSTIC_RECOVERY_BUFFER_SECONDS = 3;
 const DIAGNOSTIC_CANDIDATE_BUFFER_SECONDS = 2.5;
+
+const DIAGNOSTIC_DATA_STALL_CONFIRM_MS =
+  STREAM_STALL_THRESHOLD_MS;
+
+const DIAGNOSTIC_BUFFER_PAUSE_MARGIN_SECONDS = 3;
 
 const $ = id => document.getElementById(id);
 
@@ -1383,12 +1388,24 @@ function maybeEndConnectionIncident() {
     connectionDiagnostics.incidentKind ===
       'network' ||
     connectionDiagnostics.incidentKind ===
-      'offline';
+      'offline' ||
+    connectionDiagnostics.incidentKind ===
+      'data';
 
   const networkRecovered =
     !requiresNetworkSuccess ||
     connectionDiagnostics.lastNetworkSuccessAt >=
       connectionDiagnostics.incidentStartedAt;
+
+  const dataFlowRecovered =
+    connectionDiagnostics.incidentKind !==
+      'data' ||
+    Boolean(
+      activeSession &&
+      activeSession.type === 'mse' &&
+      activeSession.lastStreamProgressAt >=
+        connectionDiagnostics.incidentStartedAt
+    );
 
   const playbackProgressFresh =
     connectionDiagnostics.playbackEverStarted &&
@@ -1414,6 +1431,7 @@ function maybeEndConnectionIncident() {
 
   if (
     networkRecovered &&
+    dataFlowRecovered &&
     playbackReady
   ) {
     if (
@@ -1571,7 +1589,7 @@ function updateConnectionDiagnostics() {
     );
 
   output.textContent =
-    `📡 File hiện tại: ${connectionDiagnostics.incidentCount} lần ngắt` +
+    `📡 File hiện tại: ${connectionDiagnostics.incidentCount} lần gián đoạn dữ liệu` +
     ` • sự cố hiện tại: ${formatDiagnosticDuration(currentMs)}` +
     ` • tổng gián đoạn: ${formatDiagnosticDuration(totalMs)}` +
     ` • ${statusText}`;
@@ -1590,7 +1608,7 @@ function updateConnectionDiagnostics() {
 
   footer.title =
     `File: ${connectionDiagnostics.fileName || activeFileId}\n` +
-    `Số lần ngắt đã xác nhận: ${connectionDiagnostics.incidentCount}\n` +
+    `Số lần gián đoạn dữ liệu đã xác nhận: ${connectionDiagnostics.incidentCount}\n` +
     `Thời gian sự cố hiện tại: ${formatDiagnosticDuration(currentMs)}\n` +
     `Tổng thời gian gián đoạn: ${formatDiagnosticDuration(totalMs)}\n` +
     `Bắt đầu sự cố hiện tại: ${startedAt}\n` +
@@ -3210,11 +3228,11 @@ async function streamRemainingChunks(
       session.lastStreamProgressAt =
         Date.now();
 
-      markStreamingRecovered(
-        session,
-        file
-      );
-
+      /*
+       * Không gọi markStreamingRecovered() ở đây vì chunk có thể đến từ
+       * IndexedDB. Chỉ fetchChunkWithRecovery() mới xác nhận rằng mạng
+       * thật sự đã trả dữ liệu mới.
+       */
       updateBackgroundProgress(
         file,
         session
@@ -3334,41 +3352,114 @@ function startStreamWatchdog() {
         return;
       }
 
+      const now = Date.now();
+
       const bufferAhead =
         getBufferAhead(
           session.player
         );
 
+      const lastDataAt =
+        session.lastStreamProgressAt ||
+        session.lastNetworkSuccessAt ||
+        now;
+
       const stalledFor =
-        Date.now() -
+        now - lastDataAt;
+
+      /*
+       * Bộ đệm trượt chủ động ngừng tải khi đã chứa đủ dữ liệu.
+       * Đây không phải lỗi đường truyền và không được hiển thị là
+       * "không nhận được dữ liệu".
+       */
+      const intentionallyBufferPaused =
+        !networkState.offline &&
+        navigator.onLine &&
+        networkState.failures === 0 &&
         (
-          session.lastStreamProgressAt ||
-          session.lastNetworkSuccessAt ||
-          Date.now()
+          session.bufferPaused ||
+          bufferAhead >=
+            MSE_MAX_BUFFER_AHEAD_SECONDS -
+              DIAGNOSTIC_BUFFER_PAUSE_MARGIN_SECONDS
         );
 
-      if (
-        !session.streamRunning
-      ) {
+      if (intentionallyBufferPaused) {
+        networkState.urgent = false;
+
+        if (
+          !connectionDiagnostics.incidentActive ||
+          connectionDiagnostics.incidentKind ===
+            'data'
+        ) {
+          networkState.recovering = false;
+          networkState.recoveryMessage = '';
+
+          setLoading(false);
+
+          showMode(
+            `Đã đệm ${Math.round(bufferAhead)} giây • tạm ngừng nạp để bảo vệ bộ nhớ`
+          );
+
+          if (
+            connectionDiagnostics.incidentActive &&
+            connectionDiagnostics.incidentKind ===
+              'data'
+          ) {
+            /*
+             * Nếu đã nhận thêm dữ liệu và chuyển sang tạm dừng có chủ
+             * đích, sự cố dữ liệu đã kết thúc.
+             */
+            noteDiagnosticNetworkSuccess(
+              'buffer-full'
+            );
+
+            maybeEndConnectionIncident();
+          }
+        }
+
+        return;
+      }
+
+      if (!session.streamRunning) {
         ensureBackgroundStream(
           session
         );
       }
 
-      if (
+      const realDataStall =
+        stalledFor >=
+          DIAGNOSTIC_DATA_STALL_CONFIRM_MS &&
+        !session.bufferPaused;
+
+      const lowBuffer =
         bufferAhead <
-          STREAM_LOW_BUFFER_SECONDS ||
-        stalledFor >
-          STREAM_STALL_THRESHOLD_MS
+          STREAM_LOW_BUFFER_SECONDS;
+
+      if (
+        lowBuffer ||
+        realDataStall
       ) {
         networkState.urgent = true;
 
-        if (
-          stalledFor >
-          STREAM_STALL_THRESHOLD_MS
-        ) {
+        if (realDataStall) {
+          const startedAt =
+            Math.max(
+              connectionDiagnostics.lastNetworkSuccessAt || 0,
+              lastDataAt
+            );
+
+          beginConnectionIncident(
+            `Không nhận được dữ liệu từ máy chủ trong ${Math.round(stalledFor / 1000)} giây`,
+            startedAt,
+            'data'
+          );
+
           showRecoveryStatus(
             `Không nhận được dữ liệu ${Math.round(stalledFor / 1000)} giây • đang tự nối lại...`
+          );
+        } else {
+          showRecoveryStatus(
+            `Bộ đệm chỉ còn ${Math.round(bufferAhead)} giây • đang tải bổ sung...`
           );
         }
 
@@ -3491,6 +3582,14 @@ async function waitForSafeBufferWindow(
     );
 
     if (bufferAhead <= limit) {
+      if (session.bufferPaused) {
+        /*
+         * Khi vừa thoát khỏi trạng thái tạm dừng có chủ đích, đặt lại
+         * mốc giám sát để watchdog không hiểu nhầm là mất dữ liệu.
+         */
+        session.lastStreamProgressAt = Date.now();
+      }
+
       session.bufferPaused = false;
       return;
     }
