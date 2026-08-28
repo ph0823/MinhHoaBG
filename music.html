@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc Nhi hư - Progressive Streaming v2.2</title>
+<title>Trình nhạc Nhi hư - v2.2</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -123,6 +123,77 @@ input[type=range]::-moz-range-thumb{
   border:none;opacity:0;transition:opacity .1s;
 }
 input[type=range]:hover::-moz-range-thumb{opacity:1;}
+
+/* Thanh phát riêng: xanh = đã phát, xám sáng = đã đệm, xám tối = chưa tải. */
+.seek input[type=range]{
+  --played-progress:0%;
+  --buffered-progress:0%;
+  height:7px;
+  border-radius:999px;
+  background:
+    linear-gradient(
+      to right,
+      var(--p) 0 var(--played-progress),
+      #b3b3b3 var(--played-progress) var(--buffered-progress),
+      #535353 var(--buffered-progress) 100%
+    );
+}
+.seek input[type=range]::-webkit-slider-runnable-track{
+  height:7px;
+  border-radius:999px;
+  background:transparent;
+}
+.seek input[type=range]::-moz-range-track{
+  height:7px;
+  border-radius:999px;
+  background:transparent;
+}
+.seek input[type=range]::-moz-range-progress{
+  height:7px;
+  border-radius:999px;
+  background:transparent;
+}
+.seek input[type=range]::-webkit-slider-thumb{
+  width:15px;
+  height:15px;
+  margin-top:-4px;
+  opacity:1;
+  background:#fff;
+  border:2px solid var(--p);
+  box-shadow:0 0 0 3px rgba(29,185,84,.16);
+}
+.seek input[type=range]::-moz-range-thumb{
+  width:13px;
+  height:13px;
+  opacity:1;
+  background:#fff;
+  border:2px solid var(--p);
+  box-shadow:0 0 0 3px rgba(29,185,84,.16);
+}
+.seek input[type=range]:disabled{
+  cursor:default;
+  opacity:.62;
+}
+.seek-status{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  min-height:18px;
+  margin:7px 54px 0;
+  color:var(--muted);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+}
+.seek-status span:last-child{
+  text-align:right;
+}
+@media(max-width:620px){
+  .seek-status{
+    margin:7px 42px 0;
+    font-size:10px;
+  }
+}
 
 .controls{
   display:flex;justify-content:center;align-items:center;
@@ -255,7 +326,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
     <div class="brand">
       <div class="logo">♪</div>
       <div>
-        <h1>Thư viện Spotify</h1>        
+        <h1>Thư viện nhạc</h1>        
       </div>
     </div>
     <div id="status" class="status" hidden>
@@ -301,6 +372,10 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
           <span id="current">0:00</span>
           <input id="seek" type="range" min="0" max="100" value="0" disabled>
           <span id="duration">0:00</span>
+        </div>
+        <div id="seekStatus" class="seek-status" aria-live="polite">
+          <span id="playedStatus">Đã phát 0%</span>
+          <span id="bufferedStatus">Chưa có dữ liệu đệm</span>
         </div>
 
         <div class="controls">
@@ -370,7 +445,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
 </footer>
 <div id="toast" class="toast"></div>
 
-<!-- Bản progressive: phát sau chunk đầu, tải nền, preload và crossfade -->
+<!-- Bản progressive: thanh phát xanh rõ, thanh đệm xám và thời lượng ổn định -->
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
 const APP_TYPE = 'audio';
@@ -445,8 +520,10 @@ const els = {
   playFolder:$('playFolder'), search:$('search'), fileList:$('fileList'), status:$('status'),
   statusText:$('statusText'), statusPct:$('statusPct'), progress:$('progress'),
   trackTitle:$('trackTitle'), trackSub:$('trackSub'), current:$('current'), duration:$('duration'),
-  seek:$('seek'), prev:$('prev'), play:$('play'), next:$('next'), volume:$('volume'),
-  speed:$('speed'), autoNext:$('autoNext'), cover:$('cover'), visualizer:$('visualizer'),
+  seek:$('seek'), seekStatus:$('seekStatus'), playedStatus:$('playedStatus'),
+  bufferedStatus:$('bufferedStatus'), prev:$('prev'), play:$('play'), next:$('next'),
+  volume:$('volume'), speed:$('speed'), autoNext:$('autoNext'),
+  cover:$('cover'), visualizer:$('visualizer'),
   effectPreset:$('effectPreset'), bassBoost:$('bassBoost'), bassValue:$('bassValue'),
   echoLevel:$('echoLevel'), echoValue:$('echoValue'), effectBadge:$('effectBadge'),
   loading:$('loading'), mode:$('mode'), networkDiagnostics:$('networkDiagnostics'),
@@ -719,6 +796,7 @@ function bindEvents() {
     }
 
     player.currentTime = target;
+    updateSeekProgressVisual(player);
   });
   window.addEventListener('beforeunload', cleanupEverything);
 }
@@ -762,7 +840,18 @@ function setLoading(visible, text = '', percent = 0) {
   els.status.hidden = !visible; if (!visible) return; const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
   els.statusText.textContent = text; els.statusPct.textContent = `${safePercent}%`; els.progress.style.width = `${safePercent}%`;
 }
-function resetTimeDisplay() { els.current.textContent = '0:00'; els.duration.textContent = '0:00'; els.seek.value = 0; els.seek.max = 100; lastEffectiveDuration = 0; lastSavedSecond = -1; }
+function resetTimeDisplay() {
+  els.current.textContent = '0:00';
+  els.duration.textContent = '0:00';
+  els.seek.value = 0;
+  els.seek.max = 100;
+  els.seek.style.setProperty('--played-progress', '0%');
+  els.seek.style.setProperty('--buffered-progress', '0%');
+  els.playedStatus.textContent = 'Đã phát 0%';
+  els.bufferedStatus.textContent = 'Chưa có dữ liệu đệm';
+  lastEffectiveDuration = 0;
+  lastSavedSecond = -1;
+}
 function showToast(message, isError = false) { clearTimeout(toastTimer); els.toast.textContent = message; els.toast.className = `toast show${isError ? ' error' : ''}`; toastTimer = setTimeout(() => els.toast.className = 'toast', 3500); }
 /* cleanupEverything được định nghĩa ở phần lõi phát nhạc bên dưới. */
 function base64ToBytes(base64) { const binary = atob(base64); const bytes = new Uint8Array(binary.length); for (let index = 0; index < binary.length; index++) { bytes[index] = binary.charCodeAt(index); } return bytes; }
@@ -2570,13 +2659,6 @@ async function prepareTrackPlayer(
 function getEffectiveDuration(
   player = activeAudio()
 ) {
-  if (
-    Number.isFinite(player.duration) &&
-    player.duration > 0
-  ) {
-    return player.duration;
-  }
-
   const index =
     players.indexOf(player);
 
@@ -2584,6 +2666,11 @@ function getEffectiveDuration(
     const session =
       playerStreamSessions[index];
 
+    /*
+     * Trong lúc MediaSource đang nối thêm chunk, player.duration có thể
+     * thay đổi theo phần đã append. Dùng thời lượng ước lượng ổn định để
+     * thanh phát không co giãn hoặc nhảy liên tục.
+     */
     if (
       session &&
       session.estimatedDuration > 0
@@ -2592,7 +2679,149 @@ function getEffectiveDuration(
     }
   }
 
+  if (
+    Number.isFinite(player.duration) &&
+    player.duration > 0
+  ) {
+    return player.duration;
+  }
+
   return 0;
+}
+
+function getBufferedEnd(
+  player = activeAudio()
+) {
+  let bufferedEnd = 0;
+
+  try {
+    for (
+      let index = 0;
+      index < player.buffered.length;
+      index++
+    ) {
+      bufferedEnd = Math.max(
+        bufferedEnd,
+        player.buffered.end(index)
+      );
+    }
+  } catch (_) {}
+
+  return bufferedEnd;
+}
+
+function updateSeekProgressVisual(
+  player = activeAudio()
+) {
+  if (!player || !els.seek) return;
+
+  const duration =
+    getEffectiveDuration(player);
+
+  const current =
+    Math.max(
+      0,
+      Number(player.currentTime || 0)
+    );
+
+  const playerIndex =
+    players.indexOf(player);
+
+  const session =
+    playerIndex >= 0
+      ? playerStreamSessions[playerIndex]
+      : null;
+
+  if (!(duration > 0)) {
+    els.seek.style.setProperty(
+      '--played-progress',
+      '0%'
+    );
+
+    els.seek.style.setProperty(
+      '--buffered-progress',
+      '0%'
+    );
+
+    els.playedStatus.textContent =
+      'Đã phát 0%';
+
+    els.bufferedStatus.textContent =
+      'Đang xác định thời lượng...';
+
+    return;
+  }
+
+  const bufferedEnd =
+    Math.min(
+      duration,
+      getBufferedEnd(player)
+    );
+
+  const playedPercent =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        current / duration * 100
+      )
+    );
+
+  const bufferedPercent =
+    Math.max(
+      playedPercent,
+      Math.min(
+        100,
+        bufferedEnd / duration * 100
+      )
+    );
+
+  els.seek.style.setProperty(
+    '--played-progress',
+    `${playedPercent.toFixed(2)}%`
+  );
+
+  els.seek.style.setProperty(
+    '--buffered-progress',
+    `${bufferedPercent.toFixed(2)}%`
+  );
+
+  els.playedStatus.textContent =
+    `Đã phát ${Math.round(playedPercent)}%`;
+
+  if (
+    session &&
+    session.info &&
+    session.info.totalChunks > 0
+  ) {
+    const downloadPercent =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          session.loadedChunks /
+          session.info.totalChunks *
+          100
+        )
+      );
+
+    const bufferedSeconds =
+      Math.max(
+        0,
+        bufferedEnd - current
+      );
+
+    els.bufferedStatus.textContent =
+      session.completed
+        ? 'Đã tải đủ 100%'
+        : `Đệm trước ${formatTime(bufferedSeconds)} • tải ${Math.round(downloadPercent)}%`;
+  } else if (player.src) {
+    els.bufferedStatus.textContent =
+      'Đã tải đủ 100%';
+  } else {
+    els.bufferedStatus.textContent =
+      'Chưa có dữ liệu đệm';
+  }
 }
 
 function waitForMediaReady(
@@ -2882,6 +3111,10 @@ async function openAudio(
                 targetIndex ===
                 activePlayerIndex
               ) {
+                updateSeekProgressVisual(
+                  players[targetIndex]
+                );
+
                 if (background) {
                   setLoading(
                     true,
@@ -3663,6 +3896,8 @@ function syncPlaybackUi() {
       duration
     );
 
+    updateSeekProgressVisual(player);
+
     const remaining =
       duration - current;
 
@@ -3685,6 +3920,8 @@ function syncPlaybackUi() {
     ) {
       startSeamlessNext();
     }
+  } else {
+    updateSeekProgressVisual(player);
   }
 
   savePosition();
@@ -3706,6 +3943,7 @@ function updateMetadata() {
     els.seek.disabled = false;
   }
 
+  updateSeekProgressVisual(player);
   applyPlayerPreferences(player);
 }
 
