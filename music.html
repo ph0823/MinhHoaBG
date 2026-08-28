@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện âm thanh Nhi hư - Google Drive</title>
+<title>Thư viện nhạc Nhi hư - Google Drive</title>
 <style>
 :root{--p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;--muted:#64748b;--border:#dbe3ea;--danger:#b91c1c}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
@@ -14,7 +14,7 @@ button,input,select{font:inherit}[hidden]{display:none!important}.app{min-height
 .status{margin-left:auto;min-width:260px}.status-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}.bar{height:7px;background:#e2e8f0;border-radius:999px;overflow:hidden}.bar>div{height:100%;width:0;background:var(--p)}
 .layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;padding:14px;min-height:0}.sidebar,.player{background:#fff;border:1px solid var(--border);border-radius:15px;overflow:hidden}
 .sidebar{display:grid;grid-template-rows:auto auto 1fr;height:calc(100vh - 96px)}.head{padding:14px;border-bottom:1px solid var(--border)}.folder{font-weight:800}.crumb{font-size:12px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.search{padding:12px 14px;border-bottom:1px solid var(--border)}.search input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
+.search{padding:12px 14px;border-bottom:1px solid var(--border)}.search input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px}.folder-actions{display:flex;gap:8px;margin-top:10px}.folder-actions button{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:#f5f3ff;color:var(--p);font-weight:750;cursor:pointer}.folder-actions button:disabled{opacity:.45;cursor:not-allowed}
 .list{list-style:none;padding:8px;margin:0;overflow:auto}.item{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;width:100%;padding:10px;border:0;border-radius:11px;background:transparent;text-align:left;color:var(--text);cursor:pointer}.item:hover,.item.active{background:#f5f3ff}.item.active{outline:1px solid #c4b5fd}
 .icon{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#f1f5f9;font-size:20px}.name{font-weight:700;font-size:14px;overflow-wrap:anywhere}.meta{font-size:11px;color:var(--muted);margin-top:3px}.empty{padding:30px 16px;text-align:center;color:var(--muted)}
 .player{display:grid;place-items:center;padding:28px;min-height:calc(100vh - 96px);background:linear-gradient(145deg,#fff,#f5f3ff)}.card{width:min(620px,100%);text-align:center}.cover{width:180px;height:180px;border-radius:34px;margin:0 auto 22px;display:grid;place-items:center;font-size:78px;background:linear-gradient(145deg,#ede9fe,#ddd6fe)}
@@ -35,7 +35,7 @@ button,input,select{font:inherit}[hidden]{display:none!important}.app{min-height
 
 <main class="layout">
 <aside id="sidebar" class="sidebar">
-<div class="head"><div id="folderTitle" class="folder">Đang kết nối...</div><div id="breadcrumb" class="crumb">Thư mục gốc</div></div>
+<div class="head"><div id="folderTitle" class="folder">Đang kết nối...</div><div id="breadcrumb" class="crumb">Thư mục gốc</div><div class="folder-actions"><button id="playFolder" type="button" disabled>▶ Phát tất cả</button></div></div>
 <div class="search"><input id="search" type="search" placeholder="Tìm thư mục hoặc file âm thanh..."></div>
 <ul id="fileList" class="list"><li class="empty">Đang tải danh sách...</li></ul>
 </aside>
@@ -64,14 +64,15 @@ button,input,select{font:inherit}[hidden]{display:none!important}.app{min-height
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
 const APP_TYPE='audio';
 const $=id=>document.getElementById(id);
-const els={menu:$('menu'),sidebar:$('sidebar'),folderTitle:$('folderTitle'),breadcrumb:$('breadcrumb'),search:$('search'),fileList:$('fileList'),status:$('status'),statusText:$('statusText'),statusPct:$('statusPct'),progress:$('progress'),trackTitle:$('trackTitle'),trackSub:$('trackSub'),current:$('current'),duration:$('duration'),seek:$('seek'),prev:$('prev'),play:$('play'),next:$('next'),volume:$('volume'),speed:$('speed'),autoNext:$('autoNext'),loading:$('loading'),audio:$('audio'),toast:$('toast')};
-let folderStack=[],currentItems=[],audioItems=[],activeFileId='',activeIndex=-1,objectUrl='',loadToken=0,toastTimer=null;
+const els={menu:$('menu'),sidebar:$('sidebar'),folderTitle:$('folderTitle'),breadcrumb:$('breadcrumb'),playFolder:$('playFolder'),search:$('search'),fileList:$('fileList'),status:$('status'),statusText:$('statusText'),statusPct:$('statusPct'),progress:$('progress'),trackTitle:$('trackTitle'),trackSub:$('trackSub'),current:$('current'),duration:$('duration'),seek:$('seek'),prev:$('prev'),play:$('play'),next:$('next'),volume:$('volume'),speed:$('speed'),autoNext:$('autoNext'),loading:$('loading'),audio:$('audio'),toast:$('toast')};
+let folderStack=[],currentItems=[],audioItems=[],activeFileId='',activeIndex=-1,objectUrl='',loadToken=0,toastTimer=null,currentFolderId='',currentFolderName='',folderScanToken=0;
 
 document.addEventListener('DOMContentLoaded',init);
 function init(){bind();restore();loadDirectory('',true)}
 function bind(){
   els.menu.onclick=()=>els.sidebar.classList.toggle('open');
   els.search.oninput=renderList;
+  els.playFolder.onclick=playAllCurrentFolder;
   els.play.onclick=togglePlay;
   els.prev.onclick=()=>playRelative(-1);
   els.next.onclick=()=>playRelative(1);
@@ -96,10 +97,20 @@ async function loadDirectory(folderId,reset=false){
   setLoading(true,'Đang lấy danh sách âm thanh...',15);els.fileList.innerHTML='<li class="empty">Đang tải...</li>';
   try{
     const data=await api('list',folderId?{folderId}:{});
-    currentItems=Array.isArray(data.files)?data.files:[];audioItems=currentItems.filter(x=>!x.isFolder);
+    currentItems=Array.isArray(data.files)?data.files:[];
+    audioItems=currentItems.filter(x=>!x.isFolder);
+    currentFolderId=data.folder.id;
+    currentFolderName=data.folder.name;
+    activeIndex=audioItems.findIndex(x=>x.id===activeFileId);
     folderStack=Array.isArray(data.breadcrumbs)&&data.breadcrumbs.length?data.breadcrumbs:[{id:data.folder.id,name:data.folder.name}];
     if(reset&&folderStack.length>1)folderStack=[folderStack[0]];
-    els.folderTitle.textContent=data.folder.name;els.breadcrumb.textContent=folderStack.map(x=>x.name).join(' › ');els.search.value='';renderList();updateButtons();
+    els.folderTitle.textContent=data.folder.name;
+    els.breadcrumb.textContent=folderStack.map(x=>x.name).join(' › ');
+    els.search.value='';
+    els.playFolder.disabled=currentItems.length===0;
+    els.playFolder.textContent=audioItems.length?`▶ Phát ${audioItems.length} bài`:'▶ Quét và phát';
+    renderList();
+    updateButtons();
   }catch(e){els.fileList.innerHTML=`<li class="empty">❌ ${esc(e.message)}</li>`;toast(e.message,true)}finally{setLoading(false)}
 }
 function renderList(){
@@ -112,9 +123,76 @@ function renderList(){
 function makeItem(item,isBack){
   const li=document.createElement('li'),b=document.createElement('button');b.className='item'+(!isBack&&item.id===activeFileId?' active':'');
   b.innerHTML=`<span class="icon">${isBack?'↩️':item.isFolder?'📁':'🎵'}</span><span><div class="name">${esc(item.name)}</div>${!isBack&&!item.isFolder?`<div class="meta">${fmtBytes(item.size||0)}</div>`:''}</span>`;
-  b.onclick=()=>{if(isBack)return goBack();if(item.isFolder)return loadDirectory(item.id);openAudio(item)};li.appendChild(b);return li;
+  b.onclick=()=>{if(isBack)return goBack();if(item.isFolder)return openFolder(item);openAudio(item)};li.appendChild(b);return li;
 }
 function goBack(){if(folderStack.length>1)loadDirectory(folderStack[folderStack.length-2].id)}
+async function openFolder(folder){
+  const token=++folderScanToken;
+  els.folderTitle.textContent='Đang mở ' + folder.name + '...';
+  els.fileList.innerHTML='<li class="empty">Đang tải nội dung thư mục...</li>';
+  try{
+    await loadDirectory(folder.id);
+  }catch(e){
+    if(token===folderScanToken)toast(e.message,true);
+  }
+}
+
+async function playAllCurrentFolder(){
+  if(!currentFolderId)return;
+  const token=++folderScanToken;
+  els.playFolder.disabled=true;
+  els.playFolder.textContent='Đang quét...';
+  setLoading(true,'Đang quét các bài hát trong thư mục...',10);
+
+  try{
+    const tracks=await collectTracksRecursive(currentFolderId,token);
+    if(token!==folderScanToken)return;
+    if(!tracks.length)throw new Error('Không tìm thấy file âm thanh trong thư mục này hoặc các thư mục con.');
+
+    audioItems=tracks;
+    activeIndex=0;
+    els.playFolder.textContent=`▶ Phát ${tracks.length} bài`;
+    toast(`Đã tạo danh sách phát “${currentFolderName}” gồm ${tracks.length} bài.`);
+    await openAudio(tracks[0]);
+  }catch(e){
+    if(token!==folderScanToken)return;
+    toast(e.message,true);
+  }finally{
+    if(token===folderScanToken){
+      els.playFolder.disabled=false;
+      setLoading(false);
+    }
+  }
+}
+
+async function collectTracksRecursive(rootFolderId,token){
+  const queue=[rootFolderId];
+  const visited=new Set();
+  const tracks=[];
+  const MAX_FOLDERS=250;
+
+  while(queue.length){
+    if(token!==folderScanToken)return [];
+    if(visited.size>=MAX_FOLDERS)throw new Error('Thư mục có quá nhiều thư mục con. Giới hạn quét là '+MAX_FOLDERS+' thư mục.');
+
+    const folderId=queue.shift();
+    if(visited.has(folderId))continue;
+    visited.add(folderId);
+
+    setLoading(true,`Đang quét thư mục ${visited.size}...`,Math.min(85,10+visited.size));
+    const data=await api('list',{folderId});
+    const items=Array.isArray(data.files)?data.files:[];
+
+    items.forEach(item=>{
+      if(item.isFolder)queue.push(item.id);
+      else tracks.push(item);
+    });
+  }
+
+  tracks.sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
+  return tracks;
+}
+
 async function openAudio(file){
   const token=++loadToken;activeFileId=file.id;activeIndex=audioItems.findIndex(x=>x.id===file.id);renderList();updateButtons();els.sidebar.classList.remove('open');
   els.trackTitle.textContent=file.name;els.trackSub.textContent='Đang tải từ Google Drive...';els.loading.hidden=false;els.play.disabled=true;els.seek.disabled=true;
