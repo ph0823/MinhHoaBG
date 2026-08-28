@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc Nhi hư - v2.1</title>
+<title>Trình nhạc Nhi hư - Progressive Streaming v2.2</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -370,7 +370,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
 </footer>
 <div id="toast" class="toast"></div>
 
-<!-- Bản hoàn chỉnh: tải song song, preload bài kế tiếp và crossfade -->
+<!-- Bản progressive: phát sau chunk đầu, tải nền, preload và crossfade -->
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
 const APP_TYPE = 'audio';
@@ -393,6 +393,42 @@ const CROSSFADE_MS = IS_TV_DEVICE ? 240 : IS_MOBILE_DEVICE ? 420 : 720;
 const CROSSFADE_TRIGGER_SECONDS = CROSSFADE_MS / 1000 + 0.22;
 const DOWNLOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 3 : 5;
 const PRELOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 2 : 4;
+
+/* Phát ngay khi mới tải một phần file */
+const PROGRESSIVE_INITIAL_CHUNKS =
+  IS_TV_DEVICE || IS_MOBILE_DEVICE
+    ? 1
+    : 2;
+
+const PROGRESSIVE_BATCH_SIZE =
+  IS_TV_DEVICE
+    ? 1
+    : IS_MOBILE_DEVICE
+      ? 2
+      : 3;
+
+const PROGRESSIVE_READY_SECONDS = 3;
+const PROGRESSIVE_RETRY_DELAY_MS = 1200;
+const PROGRESSIVE_MAX_BUFFER_AHEAD =
+  IS_TV_DEVICE
+    ? 55
+    : IS_MOBILE_DEVICE
+      ? 80
+      : 180;
+
+const PROGRESSIVE_RESUME_BUFFER_AHEAD =
+  IS_TV_DEVICE
+    ? 28
+    : IS_MOBILE_DEVICE
+      ? 45
+      : 120;
+
+const PROGRESSIVE_KEEP_BEHIND =
+  IS_TV_DEVICE
+    ? 10
+    : IS_MOBILE_DEVICE
+      ? 18
+      : 40;
 
 const MSE_MAX_BUFFER_AHEAD_SECONDS = IS_TV_DEVICE ? 55 : IS_MOBILE_DEVICE ? 75 : 180;
 const MSE_RESUME_BUFFER_AHEAD_SECONDS = IS_TV_DEVICE ? 30 : IS_MOBILE_DEVICE ? 45 : 120;
@@ -448,12 +484,14 @@ let standbyState = {
   ready: false,
   loading: false,
   playerIndex: -1,
+  mode: '',
   url: '',
   controller: null
 };
 
 const fileInfoCache = new Map();
 const playerObjectUrls = ['', ''];
+const playerStreamSessions = [null, null];
 
 let currentTrack = null;
 let manualLoadController = null;
@@ -643,7 +681,45 @@ function bindEvents() {
       clearStandby();
     }
   });
-  els.seek.addEventListener('input', () => { const player = activeAudio(); if (Number.isFinite(player.duration)) { player.currentTime = Number(els.seek.value); } });
+  els.seek.addEventListener('input', () => {
+    const player = activeAudio();
+    const target = Number(els.seek.value);
+
+    const session =
+      playerStreamSessions[
+        activePlayerIndex
+      ];
+
+    if (
+      session &&
+      !session.completed &&
+      player.buffered &&
+      player.buffered.length
+    ) {
+      let bufferedEnd = 0;
+
+      try {
+        bufferedEnd =
+          player.buffered.end(
+            player.buffered.length - 1
+          );
+      } catch (_) {}
+
+      if (target > bufferedEnd + 0.5) {
+        showToast(
+          `Vị trí này chưa được tải. Hiện đã tải đến ${formatTime(bufferedEnd)}.`,
+          false
+        );
+
+        els.seek.value =
+          player.currentTime || 0;
+
+        return;
+      }
+    }
+
+    player.currentTime = target;
+  });
   window.addEventListener('beforeunload', cleanupEverything);
 }
 
@@ -1029,10 +1105,30 @@ function updateNetworkDiagnostics() {
 
   footer.className = 'network-diagnostics';
 
+  const activeSession =
+    playerStreamSessions[
+      activePlayerIndex
+    ];
+
+  const activeStreaming =
+    Boolean(
+      activeSession &&
+      !activeSession.completed &&
+      !activeSession.cancelled
+    );
+
   els.diagnosticText.textContent =
     standbyState.ready
-      ? 'Kết nối ổn định • bài kế tiếp đã sẵn sàng'
-      : 'Kết nối ổn định';
+      ? (
+          activeStreaming
+            ? 'Đang phát và tải nền • bài kế tiếp đã sẵn sàng'
+            : 'Kết nối ổn định • bài kế tiếp đã sẵn sàng'
+        )
+      : (
+          activeStreaming
+            ? 'Đang phát khi file tiếp tục tải nền'
+            : 'Kết nối ổn định'
+        );
 }
 
 function startStreamWatchdog() {}
@@ -1336,10 +1432,12 @@ async function downloadTrackBlob(
   signal,
   options = {}
 ) {
-  const info = await getFileInfoCached(
-    file,
-    signal
-  );
+  const info =
+    options.info ||
+    await getFileInfoCached(
+      file,
+      signal
+    );
 
   const parts =
     new Array(info.totalChunks);
@@ -1414,11 +1512,39 @@ async function downloadTrackBlob(
   };
 }
 
+function stopPlayerStreamSession(index) {
+  const session =
+    playerStreamSessions[index];
+
+  if (!session) return;
+
+  session.cancelled = true;
+
+  if (session.controller) {
+    try {
+      session.controller.abort();
+    } catch (_) {}
+  }
+
+  if (
+    session.mediaSource &&
+    session.mediaSource.readyState === 'open'
+  ) {
+    try {
+      session.mediaSource.endOfStream();
+    } catch (_) {}
+  }
+
+  playerStreamSessions[index] = null;
+}
+
 function releasePlayer(
   index,
   revokeUrl = true
 ) {
   const player = players[index];
+
+  stopPlayerStreamSession(index);
 
   try {
     player.pause();
@@ -1461,6 +1587,1012 @@ function assignPlayerUrl(
   player.src = url;
   player.preload = 'auto';
   player.load();
+}
+
+
+function canUseProgressiveStreaming(info) {
+  if (
+    !window.MediaSource ||
+    typeof MediaSource.isTypeSupported !==
+      'function'
+  ) {
+    return false;
+  }
+
+  const extension =
+    String(info.extension || '')
+      .toLowerCase();
+
+  const mime =
+    String(info.mimeType || '')
+      .toLowerCase();
+
+  const isMp3 =
+    extension === 'mp3' ||
+    mime === 'audio/mpeg' ||
+    mime === 'audio/mp3';
+
+  return (
+    isMp3 &&
+    MediaSource.isTypeSupported(MSE_MIME)
+  );
+}
+
+function waitForEvent(
+  target,
+  eventName,
+  signal,
+  timeoutMs = 15000
+) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timer);
+
+      target.removeEventListener(
+        eventName,
+        onEvent
+      );
+
+      target.removeEventListener(
+        'error',
+        onError
+      );
+
+      if (signal) {
+        signal.removeEventListener(
+          'abort',
+          onAbort
+        );
+      }
+    };
+
+    const onEvent = event => {
+      cleanup();
+      resolve(event);
+    };
+
+    const onError = () => {
+      cleanup();
+      reject(
+        new Error(
+          `Không thể xử lý sự kiện ${eventName}.`
+        )
+      );
+    };
+
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(
+        new Error(
+          `Chờ ${eventName} quá thời gian cho phép.`
+        )
+      );
+    }, timeoutMs);
+
+    target.addEventListener(
+      eventName,
+      onEvent,
+      { once: true }
+    );
+
+    target.addEventListener(
+      'error',
+      onError,
+      { once: true }
+    );
+
+    if (signal) {
+      signal.addEventListener(
+        'abort',
+        onAbort,
+        { once: true }
+      );
+    }
+  });
+}
+
+function waitForSourceBufferIdle(
+  sourceBuffer,
+  signal
+) {
+  if (!sourceBuffer.updating) {
+    return Promise.resolve();
+  }
+
+  return waitForEvent(
+    sourceBuffer,
+    'updateend',
+    signal,
+    20000
+  );
+}
+
+function appendSourceBufferOnce(
+  sourceBuffer,
+  bytes,
+  signal
+) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      sourceBuffer.removeEventListener(
+        'updateend',
+        onDone
+      );
+
+      sourceBuffer.removeEventListener(
+        'error',
+        onError
+      );
+
+      if (signal) {
+        signal.removeEventListener(
+          'abort',
+          onAbort
+        );
+      }
+    };
+
+    const onDone = () => {
+      cleanup();
+      resolve();
+    };
+
+    const onError = () => {
+      cleanup();
+      reject(
+        new Error(
+          'Không thể nối dữ liệu âm thanh.'
+        )
+      );
+    };
+
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+
+    sourceBuffer.addEventListener(
+      'updateend',
+      onDone,
+      { once: true }
+    );
+
+    sourceBuffer.addEventListener(
+      'error',
+      onError,
+      { once: true }
+    );
+
+    if (signal) {
+      signal.addEventListener(
+        'abort',
+        onAbort,
+        { once: true }
+      );
+    }
+
+    try {
+      sourceBuffer.appendBuffer(bytes);
+    } catch (error) {
+      cleanup();
+      reject(error);
+    }
+  });
+}
+
+function isQuotaExceededError(error) {
+  const name =
+    String(error && error.name || '')
+      .toLowerCase();
+
+  const message =
+    String(error && error.message || error || '')
+      .toLowerCase();
+
+  return (
+    name === 'quotaexceedederror' ||
+    message.includes('sourcebuffer is full') ||
+    message.includes('cannot free space') ||
+    message.includes('quota exceeded') ||
+    message.includes('quotaexceeded')
+  );
+}
+
+function getBufferedAhead(player) {
+  try {
+    const current =
+      Number(player.currentTime || 0);
+
+    for (
+      let index = 0;
+      index < player.buffered.length;
+      index++
+    ) {
+      const start =
+        player.buffered.start(index);
+
+      const end =
+        player.buffered.end(index);
+
+      if (
+        current >= start - 0.15 &&
+        current <= end + 0.15
+      ) {
+        return Math.max(
+          0,
+          end - current
+        );
+      }
+    }
+  } catch (_) {}
+
+  return 0;
+}
+
+async function removePlayedBuffer(
+  session,
+  aggressive = false
+) {
+  const sourceBuffer =
+    session.sourceBuffer;
+
+  const player =
+    session.player;
+
+  if (
+    !sourceBuffer ||
+    !sourceBuffer.buffered ||
+    sourceBuffer.buffered.length === 0
+  ) {
+    return false;
+  }
+
+  const current =
+    Number(player.currentTime || 0);
+
+  const keep =
+    aggressive
+      ? Math.min(
+          6,
+          PROGRESSIVE_KEEP_BEHIND
+        )
+      : PROGRESSIVE_KEEP_BEHIND;
+
+  const removeEnd =
+    current - keep;
+
+  if (removeEnd <= 1) {
+    return false;
+  }
+
+  let removeStart = 0;
+
+  try {
+    removeStart =
+      sourceBuffer.buffered.start(0);
+  } catch (_) {
+    return false;
+  }
+
+  if (
+    removeEnd <= removeStart + 0.5
+  ) {
+    return false;
+  }
+
+  await waitForSourceBufferIdle(
+    sourceBuffer,
+    session.signal
+  );
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      sourceBuffer.removeEventListener(
+        'updateend',
+        onDone
+      );
+
+      sourceBuffer.removeEventListener(
+        'error',
+        onError
+      );
+
+      session.signal.removeEventListener(
+        'abort',
+        onAbort
+      );
+    };
+
+    const onDone = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const onError = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+
+    sourceBuffer.addEventListener(
+      'updateend',
+      onDone,
+      { once: true }
+    );
+
+    sourceBuffer.addEventListener(
+      'error',
+      onError,
+      { once: true }
+    );
+
+    session.signal.addEventListener(
+      'abort',
+      onAbort,
+      { once: true }
+    );
+
+    try {
+      sourceBuffer.remove(
+        removeStart,
+        removeEnd
+      );
+    } catch (_) {
+      cleanup();
+      resolve(false);
+    }
+  });
+}
+
+async function waitForProgressiveBufferRoom(
+  session
+) {
+  while (
+    !session.cancelled &&
+    getBufferedAhead(session.player) >=
+      PROGRESSIVE_MAX_BUFFER_AHEAD
+  ) {
+    await removePlayedBuffer(
+      session,
+      false
+    );
+
+    if (
+      getBufferedAhead(session.player) <=
+      PROGRESSIVE_RESUME_BUFFER_AHEAD
+    ) {
+      return;
+    }
+
+    await delay(
+      MSE_BUFFER_CHECK_INTERVAL_MS,
+      session.signal
+    );
+  }
+}
+
+async function appendProgressiveChunk(
+  session,
+  bytes
+) {
+  while (true) {
+    throwIfAborted(session.signal);
+
+    await waitForProgressiveBufferRoom(
+      session
+    );
+
+    await waitForSourceBufferIdle(
+      session.sourceBuffer,
+      session.signal
+    );
+
+    try {
+      await appendSourceBufferOnce(
+        session.sourceBuffer,
+        bytes,
+        session.signal
+      );
+
+      await removePlayedBuffer(
+        session,
+        false
+      );
+
+      return;
+    } catch (error) {
+      if (!isQuotaExceededError(error)) {
+        throw error;
+      }
+
+      const cleaned =
+        await removePlayedBuffer(
+          session,
+          true
+        );
+
+      showMode(
+        cleaned
+          ? 'Đã dọn bộ đệm cũ • tiếp tục tải nền'
+          : 'Bộ nhớ đệm đang đầy • chờ phát bớt dữ liệu'
+      );
+
+      await delay(
+        cleaned
+          ? 180
+          : MSE_QUOTA_RETRY_DELAY_MS,
+        session.signal
+      );
+    }
+  }
+}
+
+function parseMp3BitrateKbps(bytes) {
+  if (!bytes || bytes.length < 4) {
+    return 0;
+  }
+
+  let start = 0;
+
+  if (
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x44 &&
+    bytes[2] === 0x33 &&
+    bytes.length >= 10
+  ) {
+    const tagSize =
+      (
+        (bytes[6] & 0x7f) << 21
+      ) |
+      (
+        (bytes[7] & 0x7f) << 14
+      ) |
+      (
+        (bytes[8] & 0x7f) << 7
+      ) |
+      (bytes[9] & 0x7f);
+
+    start = 10 + tagSize;
+  }
+
+  const mpeg1Layer3 =
+    [
+      0, 32, 40, 48, 56, 64, 80, 96,
+      112, 128, 160, 192, 224, 256, 320, 0
+    ];
+
+  const mpeg2Layer3 =
+    [
+      0, 8, 16, 24, 32, 40, 48, 56,
+      64, 80, 96, 112, 128, 144, 160, 0
+    ];
+
+  for (
+    let index = start;
+    index < bytes.length - 4;
+    index++
+  ) {
+    if (
+      bytes[index] !== 0xff ||
+      (bytes[index + 1] & 0xe0) !== 0xe0
+    ) {
+      continue;
+    }
+
+    const versionBits =
+      (bytes[index + 1] >> 3) & 0x03;
+
+    const layerBits =
+      (bytes[index + 1] >> 1) & 0x03;
+
+    const bitrateIndex =
+      (bytes[index + 2] >> 4) & 0x0f;
+
+    if (
+      layerBits !== 0x01 ||
+      bitrateIndex === 0 ||
+      bitrateIndex === 0x0f
+    ) {
+      continue;
+    }
+
+    const table =
+      versionBits === 0x03
+        ? mpeg1Layer3
+        : mpeg2Layer3;
+
+    return table[bitrateIndex] || 0;
+  }
+
+  return 0;
+}
+
+function estimateMp3Duration(
+  bytes,
+  info,
+  fileName = ''
+) {
+  const nameMatch =
+    String(fileName).match(
+      /(?:^|[^0-9])(64|80|96|112|128|160|192|224|256|320|384|512)\s*kbps/i
+    );
+
+  const bitrate =
+    parseMp3BitrateKbps(bytes) ||
+    (
+      nameMatch
+        ? Number(nameMatch[1])
+        : 0
+    );
+
+  if (
+    bitrate <= 0 ||
+    !info.size
+  ) {
+    return 0;
+  }
+
+  return (
+    Number(info.size) *
+    8 /
+    (
+      bitrate *
+      1000
+    )
+  );
+}
+
+async function fetchTrackChunkResilient(
+  file,
+  info,
+  index,
+  signal
+) {
+  let cycle = 0;
+
+  while (true) {
+    throwIfAborted(signal);
+
+    try {
+      return await fetchTrackChunk(
+        file,
+        info,
+        index,
+        signal
+      );
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw error;
+      }
+
+      cycle++;
+
+      showRecoveryStatus(
+        navigator.onLine
+          ? `Tải nền bị gián đoạn • thử lại phần ${index + 1}/${info.totalChunks}`
+          : `Mất mạng • chờ tải tiếp phần ${index + 1}/${info.totalChunks}`
+      );
+
+      if (!navigator.onLine) {
+        await waitUntilOnline(signal);
+      }
+
+      await delay(
+        Math.min(
+          10000,
+          PROGRESSIVE_RETRY_DELAY_MS *
+            Math.pow(
+              1.45,
+              Math.min(
+                cycle - 1,
+                6
+              )
+            )
+        ),
+        signal
+      );
+    }
+  }
+}
+
+async function streamRemainingTrack(
+  session,
+  startIndex,
+  onProgress
+) {
+  let index = startIndex;
+
+  try {
+    while (
+      index < session.info.totalChunks &&
+      !session.cancelled
+    ) {
+      await waitForProgressiveBufferRoom(
+        session
+      );
+
+      const end =
+        Math.min(
+          session.info.totalChunks,
+          index + PROGRESSIVE_BATCH_SIZE
+        );
+
+      const indexes = [];
+
+      for (
+        let current = index;
+        current < end;
+        current++
+      ) {
+        indexes.push(current);
+      }
+
+      const chunks =
+        await Promise.all(
+          indexes.map(current =>
+            fetchTrackChunkResilient(
+              session.file,
+              session.info,
+              current,
+              session.signal
+            )
+          )
+        );
+
+      for (
+        let offset = 0;
+        offset < chunks.length;
+        offset++
+      ) {
+        if (session.cancelled) {
+          throw createAbortError();
+        }
+
+        await appendProgressiveChunk(
+          session,
+          chunks[offset]
+        );
+
+        session.loadedChunks++;
+
+        if (onProgress) {
+          onProgress(
+            session.loadedChunks,
+            session.info.totalChunks,
+            session.info,
+            true
+          );
+        }
+      }
+
+      index = end;
+    }
+
+    if (
+      !session.cancelled &&
+      session.mediaSource.readyState === 'open'
+    ) {
+      await waitForSourceBufferIdle(
+        session.sourceBuffer,
+        session.signal
+      );
+
+      try {
+        session.mediaSource.endOfStream();
+      } catch (_) {}
+    }
+
+    session.completed = true;
+
+    if (onProgress) {
+      onProgress(
+        session.info.totalChunks,
+        session.info.totalChunks,
+        session.info,
+        true
+      );
+    }
+  } catch (error) {
+    if (!isAbortError(error)) {
+      session.error = error;
+
+      if (
+        session.playerIndex ===
+        activePlayerIndex
+      ) {
+        showRecoveryStatus(
+          'Luồng tải nền đang tự khôi phục...'
+        );
+      }
+    }
+  }
+}
+
+async function prepareProgressivePlayer(
+  file,
+  info,
+  playerIndex,
+  controller,
+  options = {}
+) {
+  const signal =
+    controller.signal;
+
+  releasePlayer(
+    playerIndex,
+    true
+  );
+
+  const player =
+    players[playerIndex];
+
+  const mediaSource =
+    new MediaSource();
+
+  const url =
+    URL.createObjectURL(mediaSource);
+
+  playerObjectUrls[playerIndex] = url;
+  player.src = url;
+  player.preload = 'auto';
+  player.load();
+
+  await waitForEvent(
+    mediaSource,
+    'sourceopen',
+    signal,
+    12000
+  );
+
+  const sourceBuffer =
+    mediaSource.addSourceBuffer(
+      MSE_MIME
+    );
+
+  try {
+    sourceBuffer.mode = 'sequence';
+  } catch (_) {}
+
+  const session = {
+    type: 'progressive',
+    file,
+    info,
+    player,
+    playerIndex,
+    controller,
+    signal,
+    mediaSource,
+    sourceBuffer,
+    url,
+    loadedChunks: 0,
+    completed: false,
+    cancelled: false,
+    estimatedDuration: 0,
+    error: null
+  };
+
+  playerStreamSessions[playerIndex] =
+    session;
+
+  const initialCount =
+    Math.min(
+      PROGRESSIVE_INITIAL_CHUNKS,
+      info.totalChunks
+    );
+
+  for (
+    let index = 0;
+    index < initialCount;
+    index++
+  ) {
+    const bytes =
+      await fetchTrackChunkResilient(
+        file,
+        info,
+        index,
+        signal
+      );
+
+    if (index === 0) {
+      const estimatedDuration =
+        estimateMp3Duration(
+          bytes,
+          info,
+          file.name
+        );
+
+      if (estimatedDuration > 0) {
+        session.estimatedDuration =
+          estimatedDuration;
+
+        try {
+          mediaSource.duration =
+            estimatedDuration;
+        } catch (_) {}
+      }
+    }
+
+    await appendProgressiveChunk(
+      session,
+      bytes
+    );
+
+    session.loadedChunks++;
+
+    if (options.onProgress) {
+      options.onProgress(
+        session.loadedChunks,
+        info.totalChunks,
+        info,
+        false
+      );
+    }
+  }
+
+  applyPlayerPreferences(player);
+
+  await waitForProgressiveReady(
+    player,
+    signal
+  );
+
+  streamRemainingTrack(
+    session,
+    initialCount,
+    options.onProgress
+  );
+
+  return {
+    mode: 'progressive',
+    info,
+    url,
+    session
+  };
+}
+
+async function waitForProgressiveReady(
+  player,
+  signal
+) {
+  const startedAt = Date.now();
+
+  while (true) {
+    throwIfAborted(signal);
+
+    if (
+      player.readyState >= 2 &&
+      (
+        getBufferedAhead(player) >=
+          PROGRESSIVE_READY_SECONDS ||
+        player.readyState >= 3
+      )
+    ) {
+      return;
+    }
+
+    if (
+      Date.now() - startedAt >
+      15000
+    ) {
+      /*
+       * Một số trình duyệt không cập nhật readyState đúng lúc nhưng
+       * vẫn có thể phát sau khi đã append chunk đầu.
+       */
+      return;
+    }
+
+    await delay(120, signal);
+  }
+}
+
+async function prepareTrackPlayer(
+  file,
+  info,
+  playerIndex,
+  controller,
+  options = {}
+) {
+  if (canUseProgressiveStreaming(info)) {
+    try {
+      return await prepareProgressivePlayer(
+        file,
+        info,
+        playerIndex,
+        controller,
+        options
+      );
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw error;
+      }
+
+      /*
+       * Nếu MediaSource không tương thích với file MP3 cụ thể, tự động
+       * quay về tải đủ file để bảo đảm vẫn phát được.
+       */
+      releasePlayer(
+        playerIndex,
+        true
+      );
+
+      showMode(
+        'Thiết bị không phát nối tiếp được file này • chuyển sang chế độ tương thích'
+      );
+    }
+  }
+
+  const result =
+    await downloadTrackBlob(
+      file,
+      controller.signal,
+      {
+        info,
+        concurrency:
+          options.concurrency ||
+          DOWNLOAD_CONCURRENCY,
+        onProgress:
+          options.onProgress
+      }
+    );
+
+  assignPlayerUrl(
+    playerIndex,
+    result.url
+  );
+
+  const player =
+    players[playerIndex];
+
+  applyPlayerPreferences(player);
+
+  await waitForMediaReady(
+    player,
+    controller.signal
+  );
+
+  return {
+    mode: 'blob',
+    info: result.info,
+    url: result.url,
+    session: null
+  };
+}
+
+function getEffectiveDuration(
+  player = activeAudio()
+) {
+  if (
+    Number.isFinite(player.duration) &&
+    player.duration > 0
+  ) {
+    return player.duration;
+  }
+
+  const index =
+    players.indexOf(player);
+
+  if (index >= 0) {
+    const session =
+      playerStreamSessions[index];
+
+    if (
+      session &&
+      session.estimatedDuration > 0
+    ) {
+      return session.estimatedDuration;
+    }
+  }
+
+  return 0;
 }
 
 function waitForMediaReady(
@@ -1593,8 +2725,22 @@ function updateCurrentTrackUi(
     file.name;
 
   if (info) {
+    const duration =
+      getEffectiveDuration(
+        activeAudio()
+      );
+
     els.trackSub.textContent =
-      `${formatBytes(info.size || 0)} • ${String(info.extension || '').toUpperCase()}`;
+      [
+        formatBytes(info.size || 0),
+        duration > 0
+          ? formatTime(duration)
+          : '',
+        String(info.extension || '')
+          .toUpperCase()
+      ]
+        .filter(Boolean)
+        .join(' • ');
   }
 
   renderList();
@@ -1646,8 +2792,11 @@ async function openAudio(
   manualLoadController =
     new AbortController();
 
+  const controller =
+    manualLoadController;
+
   const signal =
-    manualLoadController.signal;
+    controller.signal;
 
   const hasCurrentAudio =
     Boolean(
@@ -1670,12 +2819,13 @@ async function openAudio(
       ready: false,
       loading: true,
       playerIndex: targetIndex,
+      mode: '',
       url: '',
-      controller: manualLoadController
+      controller
     };
 
     showMode(
-      `Đang chuẩn bị “${file.name}” • bài hiện tại vẫn tiếp tục phát`
+      `Đang lấy phần đầu “${file.name}” • bài hiện tại vẫn tiếp tục phát`
     );
   } else {
     resetTimeDisplay();
@@ -1684,16 +2834,24 @@ async function openAudio(
       file.name;
 
     els.trackSub.textContent =
-      'Đang tải bài hát...';
+      'Đang lấy phần đầu để phát...';
 
     els.play.disabled = true;
   }
 
   try {
-    const result =
-      await downloadTrackBlob(
+    const info =
+      await getFileInfoCached(
         file,
-        signal,
+        signal
+      );
+
+    const prepared =
+      await prepareTrackPlayer(
+        file,
+        info,
+        targetIndex,
+        controller,
         {
           concurrency:
             hasCurrentAudio
@@ -1701,8 +2859,15 @@ async function openAudio(
               : DOWNLOAD_CONCURRENCY,
 
           onProgress:
-            (completed, total) => {
-              if (requestToken !== loadToken) {
+            (
+              completed,
+              total,
+              fileInfo,
+              background
+            ) => {
+              if (
+                requestToken !== loadToken
+              ) {
                 return;
               }
 
@@ -1713,11 +2878,42 @@ async function openAudio(
                   100
                 );
 
-              setLoading(
-                true,
-                `Đang tải ${file.name} (${completed}/${total})`,
-                percent
-              );
+              if (
+                targetIndex ===
+                activePlayerIndex
+              ) {
+                if (background) {
+                  setLoading(
+                    true,
+                    `Đang phát • tải nền ${completed}/${total}`,
+                    percent
+                  );
+                } else {
+                  setLoading(
+                    true,
+                    `Đang chuẩn bị ${file.name} (${completed}/${total})`,
+                    percent
+                  );
+                }
+              } else {
+                els.mode.hidden = false;
+                els.mode.textContent =
+                  background
+                    ? `Bài mới đã có thể phát • tiếp tục tải nền ${percent}%`
+                    : `Chuẩn bị bài mới: ${percent}%`;
+              }
+
+              if (
+                background &&
+                percent >= 100 &&
+                targetIndex ===
+                  activePlayerIndex
+              ) {
+                setLoading(false);
+                showMode(
+                  'Đã tải đủ bài • phát cục bộ ổn định'
+                );
+              }
             }
         }
       );
@@ -1726,37 +2922,31 @@ async function openAudio(
       requestToken !== loadToken ||
       signal.aborted
     ) {
-      URL.revokeObjectURL(result.url);
+      releasePlayer(
+        targetIndex,
+        true
+      );
+
       return;
     }
 
-    assignPlayerUrl(
-      targetIndex,
-      result.url
-    );
-
     const targetPlayer =
       players[targetIndex];
-
-    applyPlayerPreferences(
-      targetPlayer
-    );
 
     targetPlayer.volume =
       hasCurrentAudio
         ? 0
         : getUserVolume();
 
-    await waitForMediaReady(
-      targetPlayer,
-      signal
-    );
-
     if (hasCurrentAudio) {
-      standbyState.info = result.info;
+      standbyState.info = info;
       standbyState.ready = true;
       standbyState.loading = false;
-      standbyState.url = result.url;
+      standbyState.mode =
+        prepared.mode;
+
+      standbyState.url =
+        prepared.url;
 
       setLoading(false);
 
@@ -1768,11 +2958,12 @@ async function openAudio(
     } else {
       updateCurrentTrackUi(
         file,
-        result.info
+        info
       );
 
       els.play.disabled = false;
       els.seek.disabled = false;
+
       setLoading(false);
 
       restoreTrackPosition(
@@ -1783,6 +2974,12 @@ async function openAudio(
       if (autoplay) {
         await targetPlayer.play();
       }
+
+      showMode(
+        prepared.mode === 'progressive'
+          ? 'Đang phát khi file vẫn tiếp tục tải nền'
+          : 'Đã tải đủ file • phát ở chế độ tương thích'
+      );
 
       startPlaybackUiTicker();
       scheduleNextPreload();
@@ -1804,8 +3001,8 @@ async function openAudio(
     );
   } finally {
     if (
-      manualLoadController &&
-      manualLoadController.signal === signal
+      manualLoadController ===
+      controller
     ) {
       manualLoadController = null;
     }
@@ -1850,7 +3047,9 @@ function getRelativeTrack(step) {
   return audioItems[index];
 }
 
-async function prepareNextTrack(force = false) {
+async function prepareNextTrack(
+  force = false
+) {
   if (
     !els.autoNext.checked ||
     transitionInProgress ||
@@ -1867,7 +3066,8 @@ async function prepareNextTrack(force = false) {
 
   if (
     standbyState.track &&
-    standbyState.track.id === nextTrack.id &&
+    standbyState.track.id ===
+      nextTrack.id &&
     (
       standbyState.ready ||
       standbyState.loading
@@ -1894,6 +3094,7 @@ async function prepareNextTrack(force = false) {
     ready: false,
     loading: true,
     playerIndex: targetIndex,
+    mode: '',
     url: '',
     controller
   };
@@ -1901,10 +3102,18 @@ async function prepareNextTrack(force = false) {
   updateNetworkDiagnostics();
 
   try {
-    const result =
-      await downloadTrackBlob(
+    const info =
+      await getFileInfoCached(
         nextTrack,
-        controller.signal,
+        controller.signal
+      );
+
+    const prepared =
+      await prepareTrackPlayer(
+        nextTrack,
+        info,
+        targetIndex,
+        controller,
         {
           concurrency:
             force
@@ -1912,7 +3121,12 @@ async function prepareNextTrack(force = false) {
               : PRELOAD_CONCURRENCY,
 
           onProgress:
-            (completed, total) => {
+            (
+              completed,
+              total,
+              fileInfo,
+              background
+            ) => {
               if (
                 token !==
                 standbyState.token
@@ -1928,8 +3142,11 @@ async function prepareNextTrack(force = false) {
                 );
 
               els.mode.hidden = false;
+
               els.mode.textContent =
-                `Nạp bài kế tiếp: ${percent}%`;
+                background
+                  ? `Bài kế tiếp có thể phát • đang tải nền ${percent}%`
+                  : `Nạp phần đầu bài kế tiếp: ${percent}%`;
             }
         }
       );
@@ -1938,48 +3155,46 @@ async function prepareNextTrack(force = false) {
       token !== standbyState.token ||
       controller.signal.aborted
     ) {
-      URL.revokeObjectURL(result.url);
+      releasePlayer(
+        targetIndex,
+        true
+      );
+
       return;
     }
-
-    assignPlayerUrl(
-      targetIndex,
-      result.url
-    );
 
     const player =
       players[targetIndex];
 
-    applyPlayerPreferences(player);
     player.volume = 0;
 
-    await waitForMediaReady(
-      player,
-      controller.signal
-    );
+    standbyState.info = info;
+    standbyState.url =
+      prepared.url;
 
-    if (
-      token !== standbyState.token
-    ) {
-      return;
-    }
+    standbyState.mode =
+      prepared.mode;
 
-    standbyState.info = result.info;
-    standbyState.url = result.url;
     standbyState.ready = true;
     standbyState.loading = false;
 
     showMode(
-      `Bài kế tiếp đã sẵn sàng: ${nextTrack.name}`
+      prepared.mode === 'progressive'
+        ? `Bài kế tiếp đã có thể phát: ${nextTrack.name}`
+        : `Bài kế tiếp đã tải đủ: ${nextTrack.name}`
     );
 
     updateNetworkDiagnostics();
 
-    const active = activeAudio();
+    const active =
+      activeAudio();
+
+    const duration =
+      getEffectiveDuration(active);
 
     if (
-      Number.isFinite(active.duration) &&
-      active.duration -
+      duration > 0 &&
+      duration -
         active.currentTime <=
         CROSSFADE_TRIGGER_SECONDS
     ) {
@@ -1994,7 +3209,7 @@ async function prepareNextTrack(force = false) {
     standbyState.ready = false;
 
     showMode(
-      'Chưa thể nạp bài kế tiếp • sẽ thử lại gần cuối bài'
+      'Chưa thể nạp bài kế tiếp • sẽ tự thử lại'
     );
 
     updateNetworkDiagnostics();
@@ -2097,6 +3312,7 @@ async function activateStandby(
       ready: false,
       loading: false,
       playerIndex: -1,
+      mode: '',
       url: '',
       controller: null
     };
@@ -2432,9 +3648,7 @@ function syncPlaybackUi() {
     Number(player.currentTime || 0);
 
   const duration =
-    Number.isFinite(player.duration)
-      ? player.duration
-      : 0;
+    getEffectiveDuration(player);
 
   els.current.textContent =
     formatTime(current);
@@ -2479,15 +3693,15 @@ function syncPlaybackUi() {
 function updateMetadata() {
   const player = activeAudio();
 
-  if (
-    Number.isFinite(player.duration) &&
-    player.duration > 0
-  ) {
+  const duration =
+    getEffectiveDuration(player);
+
+  if (duration > 0) {
     els.duration.textContent =
-      formatTime(player.duration);
+      formatTime(duration);
 
     els.seek.max =
-      player.duration;
+      duration;
 
     els.seek.disabled = false;
   }
@@ -2551,10 +3765,13 @@ function restoreTrackPosition(
       ) || 0
     );
 
+  const duration =
+    getEffectiveDuration(player);
+
   if (
     saved > 0 &&
-    Number.isFinite(player.duration) &&
-    saved < player.duration - 8
+    duration > 0 &&
+    saved < duration - 8
   ) {
     try {
       player.currentTime = saved;
@@ -2591,6 +3808,7 @@ function clearStandby() {
     ready: false,
     loading: false,
     playerIndex: -1,
+    mode: '',
     url: '',
     controller: null
   };
