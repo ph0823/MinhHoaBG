@@ -7,7 +7,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
-  <title>Tủ sách PDF Nhi hư Google Drive</title>
+  <title>Tủ sách PDF Google Drive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <style>
     :root {
@@ -46,9 +46,47 @@
     .status-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
     .progress { height: 7px; overflow: hidden; background: #e2e8f0; border-radius: 999px; }
     .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .2s ease; }
-    .layout { min-height: 0; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 14px; padding: 14px; }
-    .sidebar, .viewer { min-height: 0; background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-    .sidebar { display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; }
+    .layout {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+      transition: grid-template-columns .24s ease, gap .24s ease;
+    }
+    .sidebar, .viewer {
+      min-height: 0;
+      background: var(--surface);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      overflow: hidden;
+      min-width: 0;
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        opacity .18s ease,
+        transform .24s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+    }
+
+    /* Chế độ đọc: ẩn khung trái và dành toàn bộ chiều ngang cho PDF. */
+    .layout.sidebar-collapsed {
+      grid-template-columns: 0 minmax(0, 1fr);
+      gap: 0;
+    }
+    .layout.sidebar-collapsed .sidebar {
+      opacity: 0;
+      transform: translateX(-18px);
+      pointer-events: none;
+      border-color: transparent;
+      box-shadow: none;
+    }
     .sidebar-head { padding: 14px; border-bottom: 1px solid var(--border); }
     .folder-title { font-weight: 750; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .breadcrumb { margin-top: 6px; font-size: 12px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -79,6 +117,20 @@
     .toolbar button:disabled { opacity: .45; cursor: not-allowed; }
     .toolbar .primary { background: var(--primary); color: white; border-color: var(--primary); }
     .toolbar .primary:hover:not(:disabled) { background: var(--primary-dark); color: white; }
+    .toolbar .library-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      color: var(--primary);
+      border-color: #99f6e4;
+      background: #ecfdf5;
+    }
+    .toolbar .library-toggle:hover:not(:disabled) {
+      color: white;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
     .page-input { width: 62px; padding: 0 8px; text-align: center; }
     .divider { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
     .document-name { flex: 1 1 200px; min-width: 140px; max-width: 420px; margin-right: auto; padding: 0 8px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -104,9 +156,30 @@
       .brand { min-width: 0; }
       .brand small, .status { display: none; }
       .mobile-menu { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 10px; background: white; }
-      .layout { grid-template-columns: 1fr; min-height: calc(100vh - 66px); }
-      .sidebar { position: fixed; inset: 66px auto 0 0; z-index: 10; width: min(88vw, 350px); border-radius: 0 14px 14px 0; transform: translateX(-105%); transition: transform .22s ease; }
-      .sidebar.open { transform: translateX(0); }
+      .layout,
+      .layout.sidebar-collapsed {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        min-height: calc(100vh - 66px);
+      }
+      .sidebar,
+      .layout.sidebar-collapsed .sidebar {
+        position: fixed;
+        inset: 66px auto 0 0;
+        z-index: 10;
+        width: min(88vw, 350px);
+        border-radius: 0 14px 14px 0;
+        opacity: 1;
+        pointer-events: auto;
+        border-color: var(--border);
+        box-shadow: var(--shadow);
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+      }
+      .sidebar.open,
+      .layout.sidebar-collapsed .sidebar.open {
+        transform: translateX(0);
+      }
       .viewer { min-height: calc(100vh - 94px); }
       .canvas-wrap { padding: 12px; }
       .document-name { flex-basis: 100%; max-width: none; text-align: center; }
@@ -128,7 +201,7 @@
     </div>
   </header>
 
-  <main class="layout">
+  <main id="mainLayout" class="layout">
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-head">
         <div id="folderTitle" class="folder-title">Đang kết nối...</div>
@@ -140,6 +213,7 @@
 
     <section class="viewer">
       <div class="toolbar">
+        <button id="btnLibrary" class="library-toggle" type="button" aria-label="Hiện hoặc ẩn tủ sách">☰ Tủ sách</button>
         <div id="documentName" class="document-name">Chưa chọn tài liệu</div>
         <button id="btnPrev" type="button" disabled>← Trước</button>
         <input id="pageInput" class="page-input" type="number" min="1" value="1" disabled aria-label="Số trang">
@@ -170,7 +244,9 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
   const els = {
+    mainLayout: document.getElementById('mainLayout'),
     sidebar: document.getElementById('sidebar'), mobileMenu: document.getElementById('mobileMenu'),
+    btnLibrary: document.getElementById('btnLibrary'),
     folderTitle: document.getElementById('folderTitle'), breadcrumb: document.getElementById('breadcrumb'),
     searchInput: document.getElementById('searchInput'), fileList: document.getElementById('fileList'),
     statusBox: document.getElementById('statusBox'), statusText: document.getElementById('statusText'),
@@ -195,16 +271,21 @@
   let renderTask = null;
   let loadToken = 0;
   let toastTimer = null;
+  let sidebarCollapsed = false;
+  let resizeTimer = null;
 
   document.addEventListener('DOMContentLoaded', init);
 
   function init() {
     bindEvents();
+    els.btnLibrary.textContent = '✕ Đóng tủ sách';
+    els.btnLibrary.setAttribute('aria-expanded', 'true');
     loadDirectory(ROOT_MARKER, true);
   }
 
   function bindEvents() {
     els.mobileMenu.addEventListener('click', () => els.sidebar.classList.toggle('open'));
+    els.btnLibrary.addEventListener('click', toggleLibrary);
     els.searchInput.addEventListener('input', renderFileList);
     els.btnPrev.addEventListener('click', () => goToPage(pageNum - 1));
     els.btnNext.addEventListener('click', () => goToPage(pageNum + 1));
@@ -214,6 +295,7 @@
     els.btnZoomIn.addEventListener('click', () => setScale(scale + SCALE_STEP));
     els.btnFit.addEventListener('click', fitToWidth);
     window.addEventListener('keydown', handleShortcuts);
+    window.addEventListener('resize', handleViewportResize);
   }
 
   async function api(action, params = {}) {
@@ -285,11 +367,13 @@
   }
 
   function openFolder(item) {
+    showLibrary();
     folderStack.push({ id: item.id, name: item.name });
     loadDirectory(item.id);
   }
 
   function goBack() {
+    showLibrary();
     if (folderStack.length <= 1) return;
     folderStack.pop();
     const previous = folderStack[folderStack.length - 1];
@@ -302,6 +386,10 @@
     renderFileList();
     els.sidebar.classList.remove('open');
     els.documentName.textContent = file.name;
+
+    // Trên màn hình lớn, tự ẩn tủ sách ngay khi chọn tài liệu.
+    // Trên điện thoại, chỉ đóng ngăn kéo.
+    hideLibrary();
 
     // Ẩn màn hình chào ngay khi người dùng chọn file.
     // Không chờ tải xong PDF mới ẩn để tránh hiển thị chồng lên tài liệu.
@@ -339,7 +427,11 @@
       els.welcome.hidden = true;
       els.canvas.hidden = false;
       setViewerEnabled(true);
+
+      // Chờ hiệu ứng thu gọn khung trái kết thúc rồi mới tính chiều rộng PDF.
+      await waitForLayoutTransition();
       await fitToWidth();
+
       setLoading(false);
       showToast(`Đã mở “${file.name}”.`);
     } catch (error) {
@@ -351,11 +443,87 @@
         els.welcome.hidden = false;
         els.canvas.hidden = true;
         els.documentName.textContent = 'Chưa chọn tài liệu';
+        showLibrary();
       }
 
       showToast(error.message, true);
       console.error(error);
     }
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 860px)').matches;
+  }
+
+  function hideLibrary() {
+    if (isMobileViewport()) {
+      els.sidebar.classList.remove('open');
+      return;
+    }
+
+    sidebarCollapsed = true;
+    els.mainLayout.classList.add('sidebar-collapsed');
+    els.btnLibrary.textContent = '☰ Tủ sách';
+    els.btnLibrary.setAttribute('aria-expanded', 'false');
+  }
+
+  function showLibrary() {
+    if (isMobileViewport()) {
+      els.sidebar.classList.add('open');
+      return;
+    }
+
+    sidebarCollapsed = false;
+    els.mainLayout.classList.remove('sidebar-collapsed');
+    els.btnLibrary.textContent = '✕ Đóng tủ sách';
+    els.btnLibrary.setAttribute('aria-expanded', 'true');
+
+    if (pdfDoc) {
+      window.setTimeout(() => {
+        fitToWidth().catch(error => showToast(error.message, true));
+      }, 260);
+    }
+  }
+
+  function toggleLibrary() {
+    if (isMobileViewport()) {
+      els.sidebar.classList.toggle('open');
+      return;
+    }
+
+    if (sidebarCollapsed) {
+      showLibrary();
+    } else {
+      hideLibrary();
+
+      if (pdfDoc) {
+        window.setTimeout(() => {
+          fitToWidth().catch(error => showToast(error.message, true));
+        }, 260);
+      }
+    }
+  }
+
+  function waitForLayoutTransition() {
+    if (isMobileViewport()) return Promise.resolve();
+
+    return new Promise(resolve => {
+      window.setTimeout(resolve, 260);
+    });
+  }
+
+  function handleViewportResize() {
+    clearTimeout(resizeTimer);
+
+    resizeTimer = window.setTimeout(() => {
+      if (!isMobileViewport()) {
+        els.sidebar.classList.remove('open');
+      }
+
+      if (pdfDoc) {
+        fitToWidth().catch(error => showToast(error.message, true));
+      }
+    }, 180);
   }
 
   async function renderPage() {
@@ -440,6 +608,7 @@
     if (event.key === '+' || event.key === '=') setScale(scale + SCALE_STEP);
     if (event.key === '-') setScale(scale - SCALE_STEP);
     if (event.key === '0') fitToWidth();
+    if (event.key.toLowerCase() === 'l') toggleLibrary();
   }
 
   function base64ToBytes(base64) {
