@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện mp3 Google Drive</title>
+<title>Thư viện Nhi hư - Google Drive</title>
 <style>
 :root{
   --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
@@ -274,6 +274,8 @@ const CACHE_DB_NAME = 'gdrive-music-chunks-v5';
 const CACHE_STORE_NAME = 'chunks';
 const CACHE_DB_VERSION = 1;
 const MAX_CACHE_ENTRIES = 320;
+const PLAYBACK_UI_INTERVAL_MS = 250;
+const RECOVERY_BUFFER_TARGET_SECONDS = 300;
 
 const $ = id => document.getElementById(id);
 
@@ -324,13 +326,17 @@ let toastTimer = null;
 let activeSession = null;
 let cacheWriteCount = 0;
 let cacheDbPromise = null;
+let playbackUiTimer = null;
+let lastEffectiveDuration = 0;
+let lastSavedSecond = -1;
 
 const networkState = {
   offline: !navigator.onLine,
   retrying: 0,
   failures: 0,
   lastSuccessAt: 0,
-  urgent: false
+  urgent: false,
+  recoveryMessage: ''
 };
 
 let standbyState = {
@@ -475,12 +481,15 @@ function configurePlayers() {
     player.addEventListener('play', () => {
       if (index === activePlayerIndex) {
         els.play.textContent = '⏸';
+        startPlaybackUiTicker();
       }
     });
 
     player.addEventListener('playing', () => {
       if (index === activePlayerIndex) {
         networkState.urgent = false;
+        startPlaybackUiTicker();
+        syncPlaybackUi();
         refreshPlaybackStatus();
       }
     });
@@ -488,6 +497,7 @@ function configurePlayers() {
     player.addEventListener('pause', () => {
       if (index === activePlayerIndex) {
         els.play.textContent = '▶';
+        syncPlaybackUi();
       }
     });
 
@@ -514,6 +524,7 @@ function configurePlayers() {
 
     player.addEventListener('ended', () => {
       if (index === activePlayerIndex) {
+        syncPlaybackUi();
         handleEnded();
       }
     });
@@ -1214,6 +1225,9 @@ async function openAudio(file, options = {}) {
   els.seek.disabled = true;
 
   resetTimeDisplay();
+  lastEffectiveDuration = 0;
+  lastSavedSecond = -1;
+  startPlaybackUiTicker();
 
   const controller = new AbortController();
 
@@ -1305,6 +1319,8 @@ async function startProgressiveMse(
     info.totalChunks
   );
 
+  let firstChunkBytes = null;
+
   for (let index = 0; index < initialCount; index++) {
     setLoading(
       true,
@@ -1319,6 +1335,10 @@ async function startProgressiveMse(
       controller.signal
     );
 
+    if (index === 0) {
+      firstChunkBytes = bytes;
+    }
+
     throwIfSessionInactive(session);
 
     await appendSourceBuffer(
@@ -1329,6 +1349,28 @@ async function startProgressiveMse(
     );
 
     session.loadedChunks++;
+  }
+
+  const estimatedDuration = estimateMp3Duration(
+    firstChunkBytes,
+    info.size,
+    file.name
+  );
+
+  if (estimatedDuration > 0) {
+    session.estimatedDuration = estimatedDuration;
+    lastEffectiveDuration = estimatedDuration;
+
+    try {
+      if (
+        mediaSource.readyState === 'open' &&
+        (!Number.isFinite(mediaSource.duration) || mediaSource.duration <= 0)
+      ) {
+        mediaSource.duration = estimatedDuration;
+      }
+    } catch (_) {}
+
+    updateMetadata();
   }
 
   await waitForPlayable(
@@ -1786,11 +1828,14 @@ function markReady(file, info, modeText, autoplay) {
   els.play.disabled = false;
   els.seek.disabled = false;
 
+  const duration = getEffectiveDuration(player);
+
   els.trackSub.textContent =
-    `${formatBytes(info.size)} • ${formatTime(player.duration)}`;
+    `${formatBytes(info.size)} • ${formatTime(duration)}`;
 
   showMode(modeText);
   updateMetadata();
+  startPlaybackUiTicker();
 
   if (autoplay) {
     player.play().catch(() => {
@@ -1948,7 +1993,9 @@ async function activateStandby(track, autoplay = true) {
 
   renderList();
   updateButtons();
+  lastEffectiveDuration = 0;
   updateMetadata();
+  startPlaybackUiTicker();
 
   showMode('Phát từ bộ nhớ đệm');
 
@@ -2032,36 +2079,233 @@ function togglePlay() {
   }
 }
 
+function getEffectiveDuration(player = activeAudio()) {
+  const nativeDuration = Number(player && player.duration);
+
+  if (Number.isFinite(nativeDuration) && nativeDuration > 0) {
+    lastEffectiveDuration = nativeDuration;
+    return nativeDuration;
+  }
+
+  const sessionDuration = Number(
+    activeSession && activeSession.estimatedDuration
+  );
+
+  if (Number.isFinite(sessionDuration) && sessionDuration > 0) {
+    lastEffectiveDuration = sessionDuration;
+    return sessionDuration;
+  }
+
+  return lastEffectiveDuration > 0
+    ? lastEffectiveDuration
+    : 0;
+}
+
 function updateMetadata() {
   const player = activeAudio();
+  const duration = getEffectiveDuration(player);
 
-  els.duration.textContent = formatTime(player.duration);
+  els.duration.textContent = formatTime(duration);
 
-  els.seek.max = Number.isFinite(player.duration)
-    ? player.duration
-    : 0;
+  if (duration > 0) {
+    els.seek.max = duration;
+  } else {
+    els.seek.max = Math.max(
+      100,
+      Number(player.currentTime || 0) + 1
+    );
+  }
 
   applyPlayerSettings(player);
+  syncPlaybackUi();
 }
 
 function updateTime() {
+  syncPlaybackUi();
+}
+
+function startPlaybackUiTicker() {
+  if (playbackUiTimer) return;
+
+  playbackUiTimer = window.setInterval(
+    syncPlaybackUi,
+    PLAYBACK_UI_INTERVAL_MS
+  );
+}
+
+function stopPlaybackUiTicker() {
+  if (!playbackUiTimer) return;
+
+  clearInterval(playbackUiTimer);
+  playbackUiTimer = null;
+}
+
+function syncPlaybackUi() {
   const player = activeAudio();
 
-  els.current.textContent = formatTime(player.currentTime);
-  els.seek.value = player.currentTime || 0;
+  if (!player) return;
 
-  if (Math.floor(player.currentTime) % 5 === 0) {
+  const current = Number.isFinite(player.currentTime)
+    ? Math.max(0, player.currentTime)
+    : 0;
+
+  const duration = getEffectiveDuration(player);
+
+  els.current.textContent = formatTime(current);
+
+  if (duration > 0) {
+    els.duration.textContent = formatTime(duration);
+    els.seek.max = duration;
+    els.seek.value = Math.min(current, duration);
+  } else {
+    // Không để max=0 vì input range sẽ bị khóa ở đầu thanh.
+    els.seek.max = Math.max(100, current + 1);
+    els.seek.value = current;
+  }
+
+  const currentSecond = Math.floor(current);
+
+  if (
+    currentSecond >= 0 &&
+    currentSecond % 5 === 0 &&
+    currentSecond !== lastSavedSecond
+  ) {
+    lastSavedSecond = currentSecond;
     savePosition();
   }
 
   if (
     els.autoNext.checked &&
-    Number.isFinite(player.duration) &&
-    player.duration - player.currentTime <= PREFETCH_SECONDS &&
+    duration > 0 &&
+    duration - current <= PREFETCH_SECONDS &&
     !standbyState.ready
   ) {
     prepareNextTrack();
   }
+
+  if (
+    networkState.offline ||
+    networkState.retrying > 0 ||
+    networkState.urgent
+  ) {
+    updateRecoveryProgress();
+  }
+}
+
+function estimateMp3Duration(bytes, totalSize, fileName = '') {
+  if (!totalSize) return 0;
+
+  const nameBitrateMatch = String(fileName).match(
+    /(64|80|96|112|128|160|192|224|256|320)\s*kbps/i
+  );
+
+  const bitrateFromName = nameBitrateMatch
+    ? Number(nameBitrateMatch[1])
+    : 0;
+
+  if (!bytes || bytes.length < 4) {
+    return bitrateFromName
+      ? totalSize * 8 / (bitrateFromName * 1000)
+      : 0;
+  }
+
+  let offset = 0;
+
+  // Bỏ qua ID3v2.
+  if (
+    bytes.length >= 10 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x44 &&
+    bytes[2] === 0x33
+  ) {
+    const tagSize =
+      ((bytes[6] & 0x7f) << 21) |
+      ((bytes[7] & 0x7f) << 14) |
+      ((bytes[8] & 0x7f) << 7) |
+      (bytes[9] & 0x7f);
+
+    offset = 10 + tagSize;
+
+    if (bytes[5] & 0x10) {
+      offset += 10;
+    }
+  }
+
+  const mpeg1Layer3 = [
+    0, 32, 40, 48, 56, 64, 80, 96,
+    112, 128, 160, 192, 224, 256, 320, 0
+  ];
+
+  const mpeg2Layer3 = [
+    0, 8, 16, 24, 32, 40, 48, 56,
+    64, 80, 96, 112, 128, 144, 160, 0
+  ];
+
+  const limit = Math.min(
+    bytes.length - 4,
+    Math.max(offset + 262144, 262144)
+  );
+
+  for (let index = offset; index < limit; index++) {
+    const b0 = bytes[index];
+    const b1 = bytes[index + 1];
+    const b2 = bytes[index + 2];
+
+    if (
+      b0 !== 0xff ||
+      (b1 & 0xe0) !== 0xe0
+    ) {
+      continue;
+    }
+
+    const versionBits = (b1 >> 3) & 0x03;
+    const layerBits = (b1 >> 1) & 0x03;
+    const bitrateIndex = (b2 >> 4) & 0x0f;
+    const sampleRateIndex = (b2 >> 2) & 0x03;
+
+    // Chỉ xử lý MPEG Layer III hợp lệ.
+    if (
+      versionBits === 1 ||
+      layerBits !== 1 ||
+      bitrateIndex === 0 ||
+      bitrateIndex === 15 ||
+      sampleRateIndex === 3
+    ) {
+      continue;
+    }
+
+    const bitrateTable =
+      versionBits === 3
+        ? mpeg1Layer3
+        : mpeg2Layer3;
+
+    const bitrateKbps =
+      bitrateTable[bitrateIndex];
+
+    if (!bitrateKbps) continue;
+
+    const audioBytes = Math.max(
+      0,
+      totalSize - offset
+    );
+
+    const duration =
+      audioBytes * 8 /
+      (bitrateKbps * 1000);
+
+    if (
+      Number.isFinite(duration) &&
+      duration > 1
+    ) {
+      return duration;
+    }
+  }
+
+  if (bitrateFromName) {
+    return totalSize * 8 / (bitrateFromName * 1000);
+  }
+
+  return 0;
 }
 
 function getBufferAhead(player) {
@@ -2095,6 +2339,8 @@ function refreshPlaybackStatus() {
 
   if (networkState.retrying > 0) return;
 
+  networkState.recoveryMessage = '';
+
   if (activeSession && activeSession.type === 'mse') {
     const percent = Math.round(
       activeSession.loadedChunks / activeSession.totalChunks * 100
@@ -2105,16 +2351,58 @@ function refreshPlaybackStatus() {
 }
 
 function showRecoveryStatus(message) {
+  networkState.recoveryMessage = message || '';
+  updateRecoveryProgress();
+}
+
+function updateRecoveryProgress() {
+  const player = activeAudio();
+  const bufferAhead = getBufferAhead(player);
+  const duration = getEffectiveDuration(player);
+
+  const targetSeconds = Math.max(
+    60,
+    Math.min(
+      RECOVERY_BUFFER_TARGET_SECONDS,
+      duration > 0
+        ? duration
+        : RECOVERY_BUFFER_TARGET_SECONDS
+    )
+  );
+
+  const bufferPercent = Math.max(
+    1,
+    Math.min(
+      100,
+      bufferAhead / targetSeconds * 100
+    )
+  );
+
   els.status.hidden = false;
-  els.statusText.textContent = message;
 
-  const bufferAhead = getBufferAhead(activeAudio());
+  els.statusText.textContent =
+    networkState.recoveryMessage ||
+    (
+      networkState.offline
+        ? 'Mất kết nối • đang phát bằng dữ liệu đã đệm...'
+        : 'Đường truyền chập chờn • đang tự động thử lại...'
+    );
 
-  els.statusPct.textContent = bufferAhead > 0
-    ? `${Math.round(bufferAhead)} giây`
-    : 'đang thử lại';
+  els.statusPct.textContent =
+    bufferAhead > 0
+      ? `${Math.round(bufferAhead)} giây`
+      : 'đang thử lại';
 
-  showMode(message);
+  // Trước đây chiều rộng giữ nguyên phần trăm tải cũ.
+  // Bây giờ thanh này biểu diễn lượng bộ đệm còn lại và thay đổi liên tục.
+  els.progress.style.width =
+    `${bufferPercent}%`;
+
+  showMode(
+    bufferAhead > 0
+      ? `${els.statusText.textContent} • còn ${Math.round(bufferAhead)} giây`
+      : els.statusText.textContent
+  );
 }
 
 function savePosition() {
@@ -2213,6 +2501,8 @@ function resetTimeDisplay() {
   els.duration.textContent = '0:00';
   els.seek.value = 0;
   els.seek.max = 100;
+  lastEffectiveDuration = 0;
+  lastSavedSecond = -1;
 }
 
 function showToast(message, isError = false) {
@@ -2305,6 +2595,7 @@ function resetPlayer(player) {
 
 function cleanupEverything() {
   savePosition();
+  stopPlaybackUiTicker();
   cancelActiveSession();
   clearStandby();
 }
