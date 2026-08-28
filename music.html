@@ -4,859 +4,2316 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7c3aed">
-<title>Thư viện nhạc Nhi hư Google Drive</title>
+<title>Thư viện âm thanh Google Drive</title>
 <style>
-:root{--p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;--muted:#64748b;--border:#dbe3ea;--danger:#b91c1c}
-*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
-button,input,select{font:inherit}[hidden]{display:none!important}.app{min-height:100%;display:grid;grid-template-rows:auto 1fr}
-.top{display:flex;align-items:center;gap:12px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--border)}
-.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:13px;background:#ede9fe;display:grid;place-items:center;font-size:24px}.brand h1{margin:0;font-size:18px}.brand small{color:var(--muted)}
-.status{margin-left:auto;min-width:320px;max-width:460px}.status-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;gap:10px}.status-row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar{height:7px;background:#e2e8f0;border-radius:999px;overflow:hidden}.bar>div{height:100%;width:0;background:var(--p);transition:width .2s}
-.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;padding:14px;min-height:0}.sidebar,.player{background:#fff;border:1px solid var(--border);border-radius:15px;overflow:hidden}
-.sidebar{display:grid;grid-template-rows:auto auto 1fr;height:calc(100vh - 96px)}.head{padding:14px;border-bottom:1px solid var(--border)}.folder{font-weight:800}.crumb{font-size:12px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.search{padding:12px 14px;border-bottom:1px solid var(--border)}.search input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px}.folder-actions{display:flex;gap:8px;margin-top:10px}.folder-actions button{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:#f5f3ff;color:var(--p);font-weight:750;cursor:pointer}.folder-actions button:disabled{opacity:.45;cursor:not-allowed}
-.list{list-style:none;padding:8px;margin:0;overflow:auto}.item{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;width:100%;padding:10px;border:0;border-radius:11px;background:transparent;text-align:left;color:var(--text);cursor:pointer}.item:hover,.item.active{background:#f5f3ff}.item.active{outline:1px solid #c4b5fd}
-.icon{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#f1f5f9;font-size:20px}.name{font-weight:700;font-size:14px;overflow-wrap:anywhere}.meta{font-size:11px;color:var(--muted);margin-top:3px}.empty{padding:30px 16px;text-align:center;color:var(--muted)}
-.player{display:grid;place-items:center;padding:28px;min-height:calc(100vh - 96px);background:linear-gradient(145deg,#fff,#f5f3ff)}.card{width:min(620px,100%);text-align:center}.cover{width:180px;height:180px;border-radius:34px;margin:0 auto 22px;display:grid;place-items:center;font-size:78px;background:linear-gradient(145deg,#ede9fe,#ddd6fe)}
-.title{font-size:24px;font-weight:850;margin:0 0 6px;overflow-wrap:anywhere}.sub{color:var(--muted);margin-bottom:22px}.seek{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;font-size:12px;color:var(--muted)}input[type=range]{width:100%;accent-color:var(--p)}
-.controls{display:flex;justify-content:center;align-items:center;gap:14px;margin:22px 0}.ctrl{width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:20px}.play{width:66px;height:66px;background:var(--p);color:#fff;border-color:var(--p);font-size:26px}.ctrl:disabled{opacity:.45;cursor:not-allowed}
-.options{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;color:var(--muted);font-size:13px}.options label{display:flex;align-items:center;gap:7px}.options select{padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:#fff}
-.loading{padding:14px 18px;margin:16px auto 0;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--p);font-weight:700;max-width:440px}.mode{display:inline-block;margin-top:8px;padding:4px 9px;border-radius:999px;background:#ede9fe;color:var(--p);font-size:11px;font-weight:750}
-.toast{position:fixed;right:18px;bottom:18px;max-width:min(420px,calc(100vw - 36px));padding:12px 14px;border-radius:11px;background:#0f172a;color:#fff;opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}.toast.error{background:var(--danger)}
-.menu{display:none}@media(max-width:820px){.status{display:none}.menu{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);border-radius:10px;background:#fff}.layout{grid-template-columns:1fr;padding:10px}.sidebar{position:fixed;z-index:10;left:0;top:67px;bottom:0;width:min(88vw,360px);height:auto;border-radius:0 15px 15px 0;transform:translateX(-105%);transition:.22s}.sidebar.open{transform:translateX(0)}.player{min-height:calc(100vh - 88px);padding:18px}.cover{width:145px;height:145px;font-size:64px}.title{font-size:20px}}
+:root{
+  --p:#7c3aed;--pd:#6d28d9;--bg:#f1f5f9;--text:#172033;
+  --muted:#64748b;--border:#dbe3ea;--danger:#b91c1c
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif
+}
+button,input,select{font:inherit}
+[hidden]{display:none!important}
+.app{min-height:100%;display:grid;grid-template-rows:auto 1fr}
+.top{
+  display:flex;align-items:center;gap:12px;padding:12px 18px;
+  background:#fff;border-bottom:1px solid var(--border)
+}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{
+  width:42px;height:42px;border-radius:13px;background:#ede9fe;
+  display:grid;place-items:center;font-size:24px
+}
+.brand h1{margin:0;font-size:18px}
+.brand small{color:var(--muted)}
+.status{margin-left:auto;min-width:320px;max-width:470px}
+.status-row{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:12px;color:var(--muted);margin-bottom:5px
+}
+.status-row span:first-child{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.bar{height:7px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.bar>div{height:100%;width:0;background:var(--p);transition:width .2s}
+.layout{
+  display:grid;grid-template-columns:340px minmax(0,1fr);
+  gap:14px;padding:14px;min-height:0
+}
+.sidebar,.player{
+  background:#fff;border:1px solid var(--border);
+  border-radius:15px;overflow:hidden
+}
+.sidebar{
+  display:grid;grid-template-rows:auto auto 1fr;
+  height:calc(100vh - 96px)
+}
+.head{padding:14px;border-bottom:1px solid var(--border)}
+.folder{font-weight:800}
+.crumb{
+  font-size:12px;color:var(--muted);margin-top:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.folder-actions{display:flex;gap:8px;margin-top:10px}
+.folder-actions button{
+  flex:1;padding:8px 10px;border:1px solid var(--border);
+  border-radius:9px;background:#f5f3ff;color:var(--p);
+  font-weight:750;cursor:pointer
+}
+.folder-actions button:disabled{opacity:.45;cursor:not-allowed}
+.search{padding:12px 14px;border-bottom:1px solid var(--border)}
+.search input{
+  width:100%;padding:10px 12px;border:1px solid var(--border);
+  border-radius:10px
+}
+.list{list-style:none;padding:8px;margin:0;overflow:auto}
+.item{
+  display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;
+  align-items:center;width:100%;padding:10px;border:0;border-radius:11px;
+  background:transparent;text-align:left;color:var(--text);cursor:pointer
+}
+.item:hover,.item.active{background:#f5f3ff}
+.item.active{outline:1px solid #c4b5fd}
+.icon{
+  width:38px;height:38px;display:grid;place-items:center;
+  border-radius:10px;background:#f1f5f9;font-size:20px
+}
+.name{font-weight:700;font-size:14px;overflow-wrap:anywhere}
+.meta{font-size:11px;color:var(--muted);margin-top:3px}
+.empty{padding:30px 16px;text-align:center;color:var(--muted)}
+.player{
+  display:grid;place-items:center;padding:28px;
+  min-height:calc(100vh - 96px);
+  background:linear-gradient(145deg,#fff,#f5f3ff)
+}
+.card{width:min(620px,100%);text-align:center}
+.cover{
+  width:180px;height:180px;border-radius:34px;margin:0 auto 22px;
+  display:grid;place-items:center;font-size:78px;
+  background:linear-gradient(145deg,#ede9fe,#ddd6fe)
+}
+.title{
+  font-size:24px;font-weight:850;margin:0 0 6px;
+  overflow-wrap:anywhere
+}
+.sub{color:var(--muted);margin-bottom:22px}
+.seek{
+  display:grid;grid-template-columns:48px 1fr 48px;
+  align-items:center;gap:10px;font-size:12px;color:var(--muted)
+}
+input[type=range]{width:100%;accent-color:var(--p)}
+.controls{
+  display:flex;justify-content:center;align-items:center;
+  gap:14px;margin:22px 0
+}
+.ctrl{
+  width:48px;height:48px;border-radius:50%;
+  border:1px solid var(--border);background:#fff;
+  cursor:pointer;font-size:20px
+}
+.play{
+  width:66px;height:66px;background:var(--p);
+  color:#fff;border-color:var(--p);font-size:26px
+}
+.ctrl:disabled{opacity:.45;cursor:not-allowed}
+.options{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  align-items:center;gap:16px;color:var(--muted);font-size:13px
+}
+.options label{display:flex;align-items:center;gap:7px}
+.options select{
+  padding:7px 9px;border:1px solid var(--border);
+  border-radius:8px;background:#fff
+}
+.loading{
+  padding:14px 18px;margin:16px auto 0;background:#fff;
+  border:1px solid var(--border);border-radius:12px;
+  color:var(--p);font-weight:700;max-width:440px
+}
+.mode{
+  display:inline-block;margin-top:8px;padding:5px 10px;
+  border-radius:999px;background:#ede9fe;color:var(--p);
+  font-size:11px;font-weight:750
+}
+.toast{
+  position:fixed;right:18px;bottom:18px;
+  max-width:min(420px,calc(100vw - 36px));
+  padding:12px 14px;border-radius:11px;background:#0f172a;
+  color:#fff;opacity:0;transform:translateY(12px);
+  pointer-events:none;transition:.2s;z-index:20
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--danger)}
+.menu{display:none}
+@media(max-width:820px){
+  .status{display:none}
+  .menu{
+    display:grid;place-items:center;width:40px;height:40px;
+    border:1px solid var(--border);border-radius:10px;background:#fff
+  }
+  .layout{grid-template-columns:1fr;padding:10px}
+  .sidebar{
+    position:fixed;z-index:10;left:0;top:67px;bottom:0;
+    width:min(88vw,360px);height:auto;border-radius:0 15px 15px 0;
+    transform:translateX(-105%);transition:.22s
+  }
+  .sidebar.open{transform:translateX(0)}
+  .player{min-height:calc(100vh - 88px);padding:18px}
+  .cover{width:145px;height:145px;font-size:64px}
+  .title{font-size:20px}
+}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top">
-<button id="menu" class="menu">☰</button>
-<div class="brand"><div class="logo">🎧</div><div><h1>Thư viện âm thanh</h1><small>Phát trực tiếp từ Google Drive</small></div></div>
-<div id="status" class="status" hidden><div class="status-row"><span id="statusText">Đang tải...</span><span id="statusPct">0%</span></div><div class="bar"><div id="progress"></div></div></div>
-</header>
+  <header class="top">
+    <button id="menu" class="menu" type="button">☰</button>
+    <div class="brand">
+      <div class="logo">🎧</div>
+      <div>
+        <h1>Thư viện âm thanh</h1>
+        <small>Phát nhanh theo từng phần từ Google Drive</small>
+      </div>
+    </div>
+    <div id="status" class="status" hidden>
+      <div class="status-row">
+        <span id="statusText">Đang tải...</span>
+        <span id="statusPct">0%</span>
+      </div>
+      <div class="bar"><div id="progress"></div></div>
+    </div>
+  </header>
 
-<main class="layout">
-<aside id="sidebar" class="sidebar">
-<div class="head"><div id="folderTitle" class="folder">Đang kết nối...</div><div id="breadcrumb" class="crumb">Thư mục gốc</div><div class="folder-actions"><button id="playFolder" type="button" disabled>▶ Phát tất cả</button></div></div>
-<div class="search"><input id="search" type="search" placeholder="Tìm thư mục hoặc file âm thanh..."></div>
-<ul id="fileList" class="list"><li class="empty">Đang tải danh sách...</li></ul>
-</aside>
+  <main class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="head">
+        <div id="folderTitle" class="folder">Đang kết nối...</div>
+        <div id="breadcrumb" class="crumb">Thư mục gốc</div>
+        <div class="folder-actions">
+          <button id="playFolder" type="button" disabled>▶ Phát tất cả</button>
+        </div>
+      </div>
 
-<section class="player">
-<div class="card">
-<div class="cover">🎵</div>
-<h2 id="trackTitle" class="title">Chưa chọn bài</h2>
-<div id="trackSub" class="sub">Chọn một file âm thanh trong danh sách.</div>
-<div class="seek"><span id="current">0:00</span><input id="seek" type="range" min="0" max="100" value="0" disabled><span id="duration">0:00</span></div>
-<div class="controls"><button id="prev" class="ctrl" disabled>⏮</button><button id="play" class="ctrl play" disabled>▶</button><button id="next" class="ctrl" disabled>⏭</button></div>
-<div class="options">
-<label>🔊 <input id="volume" type="range" min="0" max="1" value="1" step=".05"></label>
-<label>Tốc độ <select id="speed"><option value=".75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
-<label><input id="autoNext" type="checkbox" checked> Tự phát bài sau</label>
+      <div class="search">
+        <input id="search" type="search" placeholder="Tìm thư mục hoặc file âm thanh...">
+      </div>
+
+      <ul id="fileList" class="list">
+        <li class="empty">Đang tải danh sách...</li>
+      </ul>
+    </aside>
+
+    <section class="player">
+      <div class="card">
+        <div class="cover">🎵</div>
+        <h2 id="trackTitle" class="title">Chưa chọn bài</h2>
+        <div id="trackSub" class="sub">Chọn một file âm thanh trong danh sách.</div>
+
+        <div class="seek">
+          <span id="current">0:00</span>
+          <input id="seek" type="range" min="0" max="100" value="0" disabled>
+          <span id="duration">0:00</span>
+        </div>
+
+        <div class="controls">
+          <button id="prev" class="ctrl" type="button" disabled>⏮</button>
+          <button id="play" class="ctrl play" type="button" disabled>▶</button>
+          <button id="next" class="ctrl" type="button" disabled>⏭</button>
+        </div>
+
+        <div class="options">
+          <label>🔊
+            <input id="volume" type="range" min="0" max="1" value="1" step=".05">
+          </label>
+
+          <label>Tốc độ
+            <select id="speed">
+              <option value=".75">0.75×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.25">1.25×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+            </select>
+          </label>
+
+          <label>
+            <input id="autoNext" type="checkbox" checked>
+            Tự phát bài sau
+          </label>
+        </div>
+
+        <div id="loading" class="loading" hidden>Đang chuẩn bị phát...</div>
+        <div id="mode" class="mode" hidden></div>
+
+        <audio id="audioA" preload="auto"></audio>
+        <audio id="audioB" preload="auto"></audio>
+      </div>
+    </section>
+  </main>
 </div>
-<div id="loading" class="loading" hidden>Đang chuẩn bị phát...</div>
-<div id="mode" class="mode" hidden></div>
-<audio id="audioA" preload="auto"></audio>
-<audio id="audioB" preload="auto"></audio>
-</div>
-</section>
-</main>
-</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
-const WEB_APP_URL='https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
-const APP_TYPE='audio';
-const DIRECT_TIMEOUT_MS=12000;
-const PRELOAD_SECONDS=25;
+const WEB_APP_URL =
+  'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
 
-const $=id=>document.getElementById(id);
-const els={menu:$('menu'),sidebar:$('sidebar'),folderTitle:$('folderTitle'),breadcrumb:$('breadcrumb'),playFolder:$('playFolder'),search:$('search'),fileList:$('fileList'),status:$('status'),statusText:$('statusText'),statusPct:$('statusPct'),progress:$('progress'),trackTitle:$('trackTitle'),trackSub:$('trackSub'),current:$('current'),duration:$('duration'),seek:$('seek'),prev:$('prev'),play:$('play'),next:$('next'),volume:$('volume'),speed:$('speed'),autoNext:$('autoNext'),loading:$('loading'),mode:$('mode'),toast:$('toast')};
+const APP_TYPE = 'audio';
+const MSE_MIME = 'audio/mpeg';
+const DOWNLOAD_CONCURRENCY = 4;
+const PREFETCH_SECONDS = 40;
 
-const players=[$('audioA'),$('audioB')];
-let activePlayerIndex=0;
-let folderStack=[],currentItems=[],audioItems=[];
-let activeFileId='',activeIndex=-1,currentFolderId='',currentFolderName='';
-let loadToken=0,folderScanToken=0,toastTimer=null;
-let activeObjectUrl='',standbyObjectUrl='';
-let standbyTrack=null,standbyReady=false,preloadToken=0;
-const streamInfoCache=new Map();
+const $ = id => document.getElementById(id);
 
-document.addEventListener('DOMContentLoaded',init);
+const els = {
+  menu: $('menu'),
+  sidebar: $('sidebar'),
+  folderTitle: $('folderTitle'),
+  breadcrumb: $('breadcrumb'),
+  playFolder: $('playFolder'),
+  search: $('search'),
+  fileList: $('fileList'),
+  status: $('status'),
+  statusText: $('statusText'),
+  statusPct: $('statusPct'),
+  progress: $('progress'),
+  trackTitle: $('trackTitle'),
+  trackSub: $('trackSub'),
+  current: $('current'),
+  duration: $('duration'),
+  seek: $('seek'),
+  prev: $('prev'),
+  play: $('play'),
+  next: $('next'),
+  volume: $('volume'),
+  speed: $('speed'),
+  autoNext: $('autoNext'),
+  loading: $('loading'),
+  mode: $('mode'),
+  toast: $('toast')
+};
 
-function activeAudio(){return players[activePlayerIndex]}
-function standbyAudio(){return players[1-activePlayerIndex]}
+const players = [
+  $('audioA'),
+  $('audioB')
+];
 
-function init(){
-  bind();
-  restore();
+let activePlayerIndex = 0;
+let folderStack = [];
+let currentItems = [];
+let audioItems = [];
+let currentFolderId = '';
+let currentFolderName = '';
+let activeFileId = '';
+let activeIndex = -1;
+let loadToken = 0;
+let folderToken = 0;
+let toastTimer = null;
+let activeSession = null;
+
+let standbyState = {
+  token: 0,
+  track: null,
+  ready: false,
+  url: '',
+  controller: null
+};
+
+const fileInfoCache = new Map();
+
+document.addEventListener('DOMContentLoaded', init);
+
+function activeAudio() {
+  return players[activePlayerIndex];
+}
+
+function standbyAudio() {
+  return players[1 - activePlayerIndex];
+}
+
+function init() {
+  bindEvents();
+  restorePreferences();
   configurePlayers();
-  loadDirectory('',true);
+  loadDirectory('', true);
 }
 
-function configurePlayers(){
-  players.forEach((player,index)=>{
-    player.preload='auto';
-    player.addEventListener('loadedmetadata',()=>{if(index===activePlayerIndex)onMetadata()});
-    player.addEventListener('timeupdate',()=>{if(index===activePlayerIndex)onTimeUpdate()});
-    player.addEventListener('progress',()=>{if(index===activePlayerIndex)onBufferProgress()});
-    player.addEventListener('play',()=>{if(index===activePlayerIndex)els.play.textContent='⏸'});
-    player.addEventListener('pause',()=>{if(index===activePlayerIndex)els.play.textContent='▶'});
-    player.addEventListener('ended',()=>{if(index===activePlayerIndex)handleEnded()});
+function bindEvents() {
+  els.menu.addEventListener(
+    'click',
+    () => els.sidebar.classList.toggle('open')
+  );
+
+  els.search.addEventListener(
+    'input',
+    renderList
+  );
+
+  els.playFolder.addEventListener(
+    'click',
+    playAllCurrentFolder
+  );
+
+  els.play.addEventListener(
+    'click',
+    togglePlay
+  );
+
+  els.prev.addEventListener(
+    'click',
+    () => playRelative(-1)
+  );
+
+  els.next.addEventListener(
+    'click',
+    () => playRelative(1)
+  );
+
+  els.volume.addEventListener('input', () => {
+    players.forEach(
+      player => player.volume = Number(els.volume.value)
+    );
+
+    localStorage.setItem(
+      'audio_volume',
+      els.volume.value
+    );
+  });
+
+  els.speed.addEventListener('change', () => {
+    players.forEach(
+      player => player.playbackRate = Number(els.speed.value)
+    );
+
+    localStorage.setItem(
+      'audio_speed',
+      els.speed.value
+    );
+  });
+
+  els.autoNext.addEventListener('change', () => {
+    localStorage.setItem(
+      'audio_auto_next',
+      els.autoNext.checked ? '1' : '0'
+    );
+
+    if (els.autoNext.checked) {
+      prepareNextTrack();
+    } else {
+      clearStandby();
+    }
+  });
+
+  els.seek.addEventListener('input', () => {
+    const player = activeAudio();
+
+    if (Number.isFinite(player.duration)) {
+      player.currentTime = Number(els.seek.value);
+    }
+  });
+
+  window.addEventListener(
+    'beforeunload',
+    cleanupEverything
+  );
+}
+
+function configurePlayers() {
+  players.forEach((player, index) => {
+    player.preload = 'auto';
+
+    player.addEventListener('loadedmetadata', () => {
+      if (index === activePlayerIndex) {
+        updateMetadata();
+      }
+    });
+
+    player.addEventListener('durationchange', () => {
+      if (index === activePlayerIndex) {
+        updateMetadata();
+      }
+    });
+
+    player.addEventListener('timeupdate', () => {
+      if (index === activePlayerIndex) {
+        updateTime();
+      }
+    });
+
+    player.addEventListener('play', () => {
+      if (index === activePlayerIndex) {
+        els.play.textContent = '⏸';
+      }
+    });
+
+    player.addEventListener('pause', () => {
+      if (index === activePlayerIndex) {
+        els.play.textContent = '▶';
+      }
+    });
+
+    player.addEventListener('ended', () => {
+      if (index === activePlayerIndex) {
+        handleEnded();
+      }
+    });
+
+    player.addEventListener('error', () => {
+      if (
+        index === activePlayerIndex &&
+        player.error &&
+        activeFileId
+      ) {
+        showToast(
+          'Trình duyệt không thể giải mã file âm thanh này.',
+          true
+        );
+      }
+    });
   });
 }
 
-function bind(){
-  els.menu.onclick=()=>els.sidebar.classList.toggle('open');
-  els.search.oninput=renderList;
-  els.playFolder.onclick=playAllCurrentFolder;
-  els.play.onclick=togglePlay;
-  els.prev.onclick=()=>playRelative(-1);
-  els.next.onclick=()=>playRelative(1);
+async function api(action, params = {}, signal = undefined) {
+  const url = new URL(WEB_APP_URL);
 
-  els.volume.oninput=()=>{
-    players.forEach(p=>p.volume=+els.volume.value);
-    localStorage.setItem('audio_volume',els.volume.value);
-  };
+  url.searchParams.set('action', action);
+  url.searchParams.set('appType', APP_TYPE);
+  url.searchParams.set('_', Date.now().toString());
 
-  els.speed.onchange=()=>{
-    players.forEach(p=>p.playbackRate=+els.speed.value);
-    localStorage.setItem('audio_speed',els.speed.value);
-  };
-
-  els.autoNext.onchange=()=>{
-    localStorage.setItem('audio_auto_next',els.autoNext.checked?'1':'0');
-    if(els.autoNext.checked)prepareNextTrack();
-  };
-
-  els.seek.oninput=()=>{
-    const player=activeAudio();
-    if(Number.isFinite(player.duration))player.currentTime=+els.seek.value;
-  };
-
-  window.addEventListener('beforeunload',cleanup);
-}
-
-async function api(action,params={}){
-  const url=new URL(WEB_APP_URL);
-  url.searchParams.set('action',action);
-  url.searchParams.set('appType',APP_TYPE);
-  url.searchParams.set('_',Date.now());
-  Object.entries(params).forEach(([k,v])=>{
-    if(v!==''&&v!==null&&v!==undefined)url.searchParams.set(k,String(v));
+  Object.entries(params).forEach(([key, value]) => {
+    if (
+      value !== '' &&
+      value !== null &&
+      value !== undefined
+    ) {
+      url.searchParams.set(
+        key,
+        String(value)
+      );
+    }
   });
 
-  const res=await fetch(url,{cache:'no-store',redirect:'follow'});
-  if(!res.ok)throw new Error(`Máy chủ trả về HTTP ${res.status}.`);
+  const response = await fetch(
+    url.toString(),
+    {
+      method: 'GET',
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: signal
+    }
+  );
 
-  const data=await res.json();
-  if(data.ok===false||data.error)throw new Error(data.error||'Máy chủ xử lý thất bại.');
+  if (!response.ok) {
+    throw new Error(
+      `Máy chủ trả về HTTP ${response.status}.`
+    );
+  }
+
+  const data = await response.json();
+
+  if (data.ok === false || data.error) {
+    throw new Error(
+      data.error ||
+      'Máy chủ xử lý thất bại.'
+    );
+  }
+
   return data;
 }
 
-async function loadDirectory(folderId,reset=false){
-  setLoading(true,'Đang lấy danh sách âm thanh...',15);
-  els.fileList.innerHTML='<li class="empty">Đang tải...</li>';
+async function loadDirectory(folderId, reset = false) {
+  const token = ++folderToken;
 
-  try{
-    const data=await api('list',folderId?{folderId}:{});
-    currentItems=Array.isArray(data.files)?data.files:[];
-    audioItems=currentItems.filter(x=>!x.isFolder);
-    currentFolderId=data.folder.id;
-    currentFolderName=data.folder.name;
-    activeIndex=audioItems.findIndex(x=>x.id===activeFileId);
+  setLoading(
+    true,
+    'Đang lấy danh sách âm thanh...',
+    15
+  );
 
-    folderStack=Array.isArray(data.breadcrumbs)&&data.breadcrumbs.length
-      ?data.breadcrumbs
-      :[{id:data.folder.id,name:data.folder.name}];
+  els.fileList.innerHTML =
+    '<li class="empty">Đang tải...</li>';
 
-    if(reset&&folderStack.length>1)folderStack=[folderStack[0]];
+  try {
+    const data = await api(
+      'list',
+      folderId ? { folderId } : {}
+    );
 
-    els.folderTitle.textContent=data.folder.name;
-    els.breadcrumb.textContent=folderStack.map(x=>x.name).join(' › ');
-    els.search.value='';
-    els.playFolder.disabled=currentItems.length===0;
-    els.playFolder.textContent=audioItems.length
-      ?`▶ Phát ${audioItems.length} bài`
-      :'▶ Quét và phát';
+    if (token !== folderToken) return;
+
+    currentItems =
+      Array.isArray(data.files)
+        ? data.files
+        : [];
+
+    audioItems =
+      currentItems.filter(
+        item => !item.isFolder
+      );
+
+    currentFolderId = data.folder.id;
+    currentFolderName = data.folder.name;
+
+    activeIndex =
+      audioItems.findIndex(
+        item => item.id === activeFileId
+      );
+
+    folderStack =
+      Array.isArray(data.breadcrumbs) &&
+      data.breadcrumbs.length
+        ? data.breadcrumbs
+        : [{
+            id: data.folder.id,
+            name: data.folder.name
+          }];
+
+    if (reset && folderStack.length > 1) {
+      folderStack = [folderStack[0]];
+    }
+
+    els.folderTitle.textContent =
+      data.folder.name;
+
+    els.breadcrumb.textContent =
+      folderStack
+        .map(item => item.name)
+        .join(' › ');
+
+    els.search.value = '';
+
+    els.playFolder.disabled =
+      currentItems.length === 0;
+
+    els.playFolder.textContent =
+      audioItems.length
+        ? `▶ Phát ${audioItems.length} bài`
+        : '▶ Quét và phát';
 
     renderList();
     updateButtons();
-  }catch(e){
-    els.fileList.innerHTML=`<li class="empty">❌ ${esc(e.message)}</li>`;
-    els.playFolder.disabled=true;
-    els.playFolder.textContent='Không thể phát';
-    toast(e.message,true);
-  }finally{
-    setLoading(false);
-  }
-}
+  } catch (error) {
+    if (token !== folderToken) return;
 
-function renderList(){
-  const keyword=norm(els.search.value);
-  const filtered=currentItems.filter(x=>norm(x.name).includes(keyword));
-  const fragment=document.createDocumentFragment();
+    els.fileList.innerHTML =
+      `<li class="empty">❌ ${escapeHtml(error.message)}</li>`;
 
-  if(folderStack.length>1){
-    fragment.appendChild(makeItem({name:'Quay lại thư mục trước',isFolder:true},true));
-  }
+    els.playFolder.disabled = true;
+    els.playFolder.textContent =
+      'Không thể phát';
 
-  if(!filtered.length){
-    const li=document.createElement('li');
-    li.className='empty';
-    li.textContent=keyword
-      ?'Không tìm thấy nội dung phù hợp.'
-      :'Thư mục không có file âm thanh.';
-    fragment.appendChild(li);
-  }else{
-    filtered.forEach(x=>fragment.appendChild(makeItem(x,false)));
-  }
-
-  els.fileList.replaceChildren(fragment);
-}
-
-function makeItem(item,isBack){
-  const li=document.createElement('li');
-  const button=document.createElement('button');
-
-  button.className='item'+(!isBack&&item.id===activeFileId?' active':'');
-  button.innerHTML=`<span class="icon">${isBack?'↩️':item.isFolder?'📁':'🎵'}</span><span><div class="name">${esc(item.name)}</div>${!isBack&&!item.isFolder?`<div class="meta">${fmtBytes(item.size||0)}</div>`:''}</span>`;
-
-  button.onclick=()=>{
-    if(isBack)return goBack();
-    if(item.isFolder)return openFolder(item);
-    openAudio(item);
-  };
-
-  li.appendChild(button);
-  return li;
-}
-
-function goBack(){
-  if(folderStack.length>1){
-    loadDirectory(folderStack[folderStack.length-2].id);
-  }
-}
-
-async function openFolder(folder){
-  const token=++folderScanToken;
-  els.folderTitle.textContent='Đang mở '+folder.name+'...';
-  els.playFolder.disabled=true;
-  els.playFolder.textContent='Đang tải...';
-  els.fileList.innerHTML='<li class="empty">Đang tải nội dung thư mục...</li>';
-
-  try{
-    await loadDirectory(folder.id);
-  }catch(e){
-    if(token===folderScanToken)toast(e.message,true);
-  }
-}
-
-async function playAllCurrentFolder(){
-  if(!currentFolderId)return;
-
-  const token=++folderScanToken;
-  els.playFolder.disabled=true;
-  els.playFolder.textContent='Đang quét...';
-  setLoading(true,'Đang tạo danh sách phát...',10);
-
-  try{
-    const data=await api('playlist',{folderId:currentFolderId});
-    const tracks=Array.isArray(data.tracks)?data.tracks:[];
-
-    if(token!==folderScanToken)return;
-    if(!tracks.length)throw new Error('Không tìm thấy file âm thanh trong thư mục này.');
-
-    audioItems=tracks;
-    activeIndex=0;
-    els.playFolder.textContent=`▶ Phát ${tracks.length} bài`;
-    toast(`Đã tạo danh sách “${currentFolderName}” gồm ${tracks.length} bài.`);
-    await openAudio(tracks[0]);
-  }catch(e){
-    if(token===folderScanToken)toast(e.message,true);
-  }finally{
-    if(token===folderScanToken){
-      els.playFolder.disabled=false;
+    showToast(
+      error.message,
+      true
+    );
+  } finally {
+    if (token === folderToken) {
       setLoading(false);
     }
   }
 }
 
-async function getStreamInfo(file){
-  if(streamInfoCache.has(file.id))return streamInfoCache.get(file.id);
+function renderList() {
+  const keyword =
+    normalizeText(els.search.value);
 
-  const promise=api('getStreamInfo',{
-    fileId:file.id,
-    folderId:file.folderId||''
-  }).then(data=>data.file);
+  const filtered =
+    currentItems.filter(
+      item =>
+        normalizeText(item.name)
+          .includes(keyword)
+    );
 
-  streamInfoCache.set(file.id,promise);
+  const fragment =
+    document.createDocumentFragment();
 
-  try{
-    return await promise;
-  }catch(e){
-    streamInfoCache.delete(file.id);
-    throw e;
+  if (folderStack.length > 1) {
+    fragment.appendChild(
+      makeItem(
+        {
+          name: 'Quay lại thư mục trước',
+          isFolder: true
+        },
+        true
+      )
+    );
   }
+
+  if (!filtered.length) {
+    const li =
+      document.createElement('li');
+
+    li.className = 'empty';
+
+    li.textContent =
+      keyword
+        ? 'Không tìm thấy nội dung phù hợp.'
+        : 'Thư mục không có file âm thanh.';
+
+    fragment.appendChild(li);
+  } else {
+    filtered.forEach(
+      item =>
+        fragment.appendChild(
+          makeItem(item, false)
+        )
+    );
+  }
+
+  els.fileList.replaceChildren(fragment);
 }
 
-async function openAudio(file,options={}){
-  const token=++loadToken;
-  const autoplay=options.autoplay!==false;
+function makeItem(item, isBack) {
+  const li =
+    document.createElement('li');
 
-  savePosition();
-  cancelStandby();
-  stopPlayer(activeAudio());
+  const button =
+    document.createElement('button');
 
-  if(activeObjectUrl){
-    URL.revokeObjectURL(activeObjectUrl);
-    activeObjectUrl='';
-  }
+  button.type = 'button';
 
-  activeFileId=file.id;
-  activeIndex=audioItems.findIndex(x=>x.id===file.id);
-  renderList();
-  updateButtons();
-  els.sidebar.classList.remove('open');
+  button.className =
+    'item' +
+    (
+      !isBack &&
+      item.id === activeFileId
+        ? ' active'
+        : ''
+    );
 
-  els.trackTitle.textContent=file.name;
-  els.trackSub.textContent='Đang kết nối Google Drive...';
-  els.loading.hidden=false;
-  els.loading.textContent='Đang mở luồng âm thanh...';
-  els.mode.hidden=true;
-  els.play.disabled=true;
-  els.seek.disabled=true;
-  resetTimeDisplay();
+  button.innerHTML =
+    `<span class="icon">${
+      isBack
+        ? '↩️'
+        : item.isFolder
+          ? '📁'
+          : '🎵'
+    }</span>` +
+    `<span>` +
+      `<div class="name">${escapeHtml(item.name)}</div>` +
+      (
+        !isBack && !item.isFolder
+          ? `<div class="meta">${formatBytes(item.size || 0)}</div>`
+          : ''
+      ) +
+    `</span>`;
 
-  try{
-    const info=await getStreamInfo(file);
-    if(token!==loadToken)return;
-
-    let directError=null;
-
-    try{
-      setLoading(true,'Đang mở luồng trực tiếp...',20);
-      await loadDirect(activeAudio(),info.downloadUrl,token);
-      showMode('Phát trực tiếp');
-    }catch(error){
-      directError=error;
+  button.addEventListener('click', () => {
+    if (isBack) {
+      goBack();
+      return;
     }
 
-    if(directError){
-      if(token!==loadToken)return;
-      els.loading.textContent='Luồng trực tiếp không khả dụng. Đang tải dự phòng...';
-      showMode('Chế độ dự phòng');
-      await loadByChunks(activeAudio(),file,info,token);
+    if (item.isFolder) {
+      openFolder(item);
+      return;
     }
 
-    if(token!==loadToken)return;
-
-    restorePosition(file,activeAudio());
-    applyPlayerSettings(activeAudio());
-
-    els.trackSub.textContent=`${fmtBytes(info.size)} • ${fmtTime(activeAudio().duration)}`;
-    els.loading.hidden=true;
-    els.play.disabled=false;
-    els.seek.disabled=false;
-    setLoading(false);
-
-    if(autoplay){
-      try{
-        await activeAudio().play();
-      }catch(_){
-        toast('Bài đã sẵn sàng. Nhấn nút Phát để nghe.');
-      }
-    }
-
-    prepareNextTrack();
-  }catch(e){
-    if(token!==loadToken)return;
-    els.loading.hidden=true;
-    els.trackSub.textContent='Không thể tải file.';
-    setLoading(false);
-    toast(e.message,true);
-    console.error(e);
-  }
-}
-
-function loadDirect(player,url,token){
-  return new Promise((resolve,reject)=>{
-    let timer=null;
-
-    const cleanup=()=>{
-      clearTimeout(timer);
-      player.removeEventListener('canplay',ready);
-      player.removeEventListener('error',failed);
-      player.removeEventListener('stalled',stalled);
-    };
-
-    const ready=()=>{
-      cleanup();
-      if(token!==loadToken)return reject(new Error('Đã hủy tải.'));
-      resolve();
-    };
-
-    const failed=()=>{
-      cleanup();
-      reject(new Error('Google Drive không cho phát trực tiếp.'));
-    };
-
-    const stalled=()=>{
-      els.trackSub.textContent='Đang đệm dữ liệu từ Google Drive...';
-    };
-
-    player.addEventListener('canplay',ready,{once:true});
-    player.addEventListener('error',failed,{once:true});
-    player.addEventListener('stalled',stalled);
-
-    timer=setTimeout(()=>{
-      cleanup();
-      reject(new Error('Mở luồng trực tiếp quá thời gian.'));
-    },DIRECT_TIMEOUT_MS);
-
-    player.preload='auto';
-    player.src=url;
-    player.load();
+    openAudio(item);
   });
+
+  li.appendChild(button);
+  return li;
 }
 
-async function loadByChunks(player,file,knownInfo,token){
-  const info=knownInfo&&knownInfo.totalChunks
-    ?knownInfo
-    :(await api('getFileInfo',{
-      fileId:file.id,
-      folderId:file.folderId||''
-    })).file;
+function goBack() {
+  if (folderStack.length <= 1) return;
 
-  const fullInfo=info.totalChunks
-    ?info
-    :(await api('getFileInfo',{
-      fileId:file.id,
-      folderId:file.folderId||''
-    })).file;
+  const parent =
+    folderStack[
+      folderStack.length - 2
+    ];
 
-  const chunks=new Array(fullInfo.totalChunks);
+  loadDirectory(parent.id);
+}
 
-  for(let i=0;i<fullInfo.totalChunks;i++){
-    if(token!==loadToken)throw new Error('Đã hủy tải.');
+async function openFolder(folder) {
+  els.folderTitle.textContent =
+    'Đang mở ' + folder.name + '...';
 
-    const pct=Math.round(((i+1)/fullInfo.totalChunks)*92);
-    els.loading.textContent=`Đang tải dự phòng: ${i+1}/${fullInfo.totalChunks}`;
-    setLoading(true,`Đang tải ${file.name} (${i+1}/${fullInfo.totalChunks})...`,pct);
+  els.playFolder.disabled = true;
+  els.playFolder.textContent =
+    'Đang tải...';
 
-    chunks[i]=b64((await api('getFileChunk',{
-      fileId:file.id,
-      folderId:file.folderId||'',
-      index:i
-    })).base64);
-  }
+  els.fileList.innerHTML =
+    '<li class="empty">Đang tải nội dung thư mục...</li>';
 
-  const blob=new Blob(
-    [join(chunks,fullInfo.size)],
-    {type:fullInfo.mimeType||guessMime(fullInfo.extension)}
+  await loadDirectory(folder.id);
+}
+
+async function playAllCurrentFolder() {
+  if (!currentFolderId) return;
+
+  const token = ++folderToken;
+
+  els.playFolder.disabled = true;
+  els.playFolder.textContent =
+    'Đang quét...';
+
+  setLoading(
+    true,
+    'Đang tạo danh sách phát...',
+    10
   );
 
-  if(activeObjectUrl)URL.revokeObjectURL(activeObjectUrl);
-  activeObjectUrl=URL.createObjectURL(blob);
+  try {
+    const data = await api(
+      'playlist',
+      {
+        folderId: currentFolderId
+      }
+    );
 
-  player.src=activeObjectUrl;
-  player.load();
-  await waitForCanPlay(player,10000);
-}
+    if (token !== folderToken) return;
 
-function waitForCanPlay(player,timeout){
-  if(player.readyState>=3)return Promise.resolve();
+    const tracks =
+      Array.isArray(data.tracks)
+        ? data.tracks
+        : [];
 
-  return new Promise((resolve,reject)=>{
-    let timer=null;
+    if (!tracks.length) {
+      throw new Error(
+        'Không tìm thấy file âm thanh trong thư mục này.'
+      );
+    }
 
-    const cleanup=()=>{
-      clearTimeout(timer);
-      player.removeEventListener('canplay',ok);
-      player.removeEventListener('error',bad);
-    };
+    audioItems = tracks;
+    activeIndex = 0;
 
-    const ok=()=>{cleanup();resolve()};
-    const bad=()=>{cleanup();reject(new Error('Không đọc được file âm thanh.'))};
+    els.playFolder.textContent =
+      `▶ Phát ${tracks.length} bài`;
 
-    player.addEventListener('canplay',ok,{once:true});
-    player.addEventListener('error',bad,{once:true});
-    timer=setTimeout(()=>{cleanup();reject(new Error('Chờ phát quá lâu.'))},timeout);
-  });
-}
+    showToast(
+      `Đã tạo danh sách “${currentFolderName}” gồm ${tracks.length} bài.`
+    );
 
-async function prepareNextTrack(){
-  if(!els.autoNext.checked||audioItems.length<2||activeIndex<0)return;
-
-  const token=++preloadToken;
-  const nextIndex=(activeIndex+1)%audioItems.length;
-  const track=audioItems[nextIndex];
-  const player=standbyAudio();
-
-  standbyTrack=null;
-  standbyReady=false;
-  resetPlayer(player);
-
-  try{
-    const info=await getStreamInfo(track);
-    if(token!==preloadToken)return;
-
-    await preloadDirect(player,info.downloadUrl,token);
-    if(token!==preloadToken)return;
-
-    standbyTrack=track;
-    standbyReady=true;
-  }catch(_){
-    // Không tải chunk nền để tránh chiếm băng thông của bài đang phát.
-    standbyTrack=null;
-    standbyReady=false;
+    await openAudio(tracks[0]);
+  } catch (error) {
+    if (token === folderToken) {
+      showToast(
+        error.message,
+        true
+      );
+    }
+  } finally {
+    if (token === folderToken) {
+      els.playFolder.disabled = false;
+      setLoading(false);
+    }
   }
 }
 
-function preloadDirect(player,url,token){
-  return new Promise((resolve,reject)=>{
-    let timer=null;
+async function getFileInfo(file, signal) {
+  if (fileInfoCache.has(file.id)) {
+    return fileInfoCache.get(file.id);
+  }
 
-    const cleanup=()=>{
-      clearTimeout(timer);
-      player.removeEventListener('canplay',ready);
-      player.removeEventListener('error',failed);
-    };
+  const promise =
+    api(
+      'getFileInfo',
+      {
+        fileId: file.id,
+        folderId: file.folderId || ''
+      },
+      signal
+    ).then(data => data.file);
 
-    const ready=()=>{
-      cleanup();
-      if(token!==preloadToken)return reject(new Error('Đã hủy preload.'));
-      resolve();
-    };
+  fileInfoCache.set(
+    file.id,
+    promise
+  );
 
-    const failed=()=>{
-      cleanup();
-      reject(new Error('Không preload được.'));
-    };
-
-    player.addEventListener('canplay',ready,{once:true});
-    player.addEventListener('error',failed,{once:true});
-    timer=setTimeout(()=>{cleanup();reject(new Error('Preload quá thời gian.'))},15000);
-
-    player.preload='auto';
-    player.src=url;
-    player.load();
-  });
+  try {
+    return await promise;
+  } catch (error) {
+    fileInfoCache.delete(file.id);
+    throw error;
+  }
 }
 
-async function useStandbyTrack(track){
-  if(!standbyReady||!standbyTrack||standbyTrack.id!==track.id){
+async function fetchChunk(
+  file,
+  info,
+  index,
+  signal
+) {
+  const data = await api(
+    'getFileChunk',
+    {
+      fileId: file.id,
+      folderId:
+        file.folderId ||
+        info.folderId ||
+        '',
+      index: index
+    },
+    signal
+  );
+
+  return base64ToBytes(
+    data.base64
+  );
+}
+
+function canUseProgressiveMse(info) {
+  if (
+    !window.MediaSource ||
+    typeof MediaSource.isTypeSupported !== 'function'
+  ) {
     return false;
   }
 
-  const oldPlayer=activeAudio();
-  activePlayerIndex=1-activePlayerIndex;
-  const newPlayer=activeAudio();
+  const extension =
+    String(info.extension || '')
+      .toLowerCase();
 
-  activeFileId=track.id;
-  activeIndex=audioItems.findIndex(x=>x.id===track.id);
-  standbyReady=false;
-  standbyTrack=null;
+  const mime =
+    String(info.mimeType || '')
+      .toLowerCase();
 
-  stopPlayer(oldPlayer);
-  resetPlayer(oldPlayer);
+  const isMp3 =
+    extension === 'mp3' ||
+    mime === 'audio/mpeg' ||
+    mime === 'audio/mp3';
 
-  if(activeObjectUrl){
-    URL.revokeObjectURL(activeObjectUrl);
-    activeObjectUrl='';
+  return (
+    isMp3 &&
+    MediaSource.isTypeSupported(MSE_MIME)
+  );
+}
+
+async function openAudio(
+  file,
+  options = {}
+) {
+  const autoplay =
+    options.autoplay !== false;
+
+  if (
+    standbyState.ready &&
+    standbyState.track &&
+    standbyState.track.id === file.id
+  ) {
+    await activateStandby(file, autoplay);
+    return;
   }
 
-  els.trackTitle.textContent=track.name;
-  els.trackSub.textContent='Đã nạp trước • đang phát';
-  els.loading.hidden=true;
-  showMode('Đã nạp trước');
+  const token = ++loadToken;
+
+  savePosition();
+  cancelActiveSession();
+  clearStandby();
+
+  activeFileId = file.id;
+
+  activeIndex =
+    audioItems.findIndex(
+      item => item.id === file.id
+    );
+
   renderList();
   updateButtons();
-  applyPlayerSettings(newPlayer);
-  onMetadata();
 
-  try{
-    await newPlayer.play();
-  }catch(e){
-    toast('Nhấn nút Phát để tiếp tục.');
+  els.sidebar.classList.remove('open');
+
+  els.trackTitle.textContent =
+    file.name;
+
+  els.trackSub.textContent =
+    'Đang lấy phần đầu của bài hát...';
+
+  els.loading.hidden = false;
+  els.loading.textContent =
+    'Đang chuẩn bị phát nhanh...';
+
+  els.mode.hidden = true;
+  els.play.disabled = true;
+  els.seek.disabled = true;
+
+  resetTimeDisplay();
+
+  const controller =
+    new AbortController();
+
+  try {
+    const info =
+      await getFileInfo(
+        file,
+        controller.signal
+      );
+
+    if (token !== loadToken) return;
+
+    if (canUseProgressiveMse(info)) {
+      await startProgressiveMse(
+        file,
+        info,
+        token,
+        controller,
+        autoplay
+      );
+    } else {
+      await startFullBlob(
+        file,
+        info,
+        token,
+        controller,
+        autoplay
+      );
+    }
+  } catch (error) {
+    if (
+      token !== loadToken ||
+      error.name === 'AbortError'
+    ) {
+      return;
+    }
+
+    els.loading.hidden = true;
+    els.trackSub.textContent =
+      'Không thể tải file.';
+
+    setLoading(false);
+
+    showToast(
+      error.message,
+      true
+    );
+
+    console.error(error);
+  }
+}
+
+async function startProgressiveMse(
+  file,
+  info,
+  token,
+  controller,
+  autoplay
+) {
+  const player = activeAudio();
+  const mediaSource = new MediaSource();
+  const mediaUrl =
+    URL.createObjectURL(mediaSource);
+
+  const session = {
+    type: 'mse',
+    token: token,
+    controller: controller,
+    player: player,
+    mediaSource: mediaSource,
+    sourceBuffer: null,
+    url: mediaUrl,
+    cancelled: false,
+    loadedChunks: 0,
+    totalChunks: info.totalChunks
+  };
+
+  activeSession = session;
+
+  player.src = mediaUrl;
+  player.load();
+
+  await waitEvent(
+    mediaSource,
+    'sourceopen',
+    10000,
+    controller.signal
+  );
+
+  if (
+    token !== loadToken ||
+    session.cancelled
+  ) {
+    throw new DOMException(
+      'Đã hủy tải.',
+      'AbortError'
+    );
+  }
+
+  const sourceBuffer =
+    mediaSource.addSourceBuffer(
+      MSE_MIME
+    );
+
+  session.sourceBuffer =
+    sourceBuffer;
+
+  try {
+    sourceBuffer.mode = 'sequence';
+  } catch (_) {}
+
+  setLoading(
+    true,
+    `Đang lấy 1 MB đầu của ${file.name}...`,
+    4
+  );
+
+  const firstChunk =
+    await fetchChunk(
+      file,
+      info,
+      0,
+      controller.signal
+    );
+
+  await appendSourceBuffer(
+    sourceBuffer,
+    firstChunk,
+    controller.signal
+  );
+
+  session.loadedChunks = 1;
+
+  updateBackgroundProgress(
+    file,
+    session
+  );
+
+  await waitForPlayable(
+    player,
+    7000,
+    controller.signal
+  ).catch(() => {});
+
+  if (
+    token !== loadToken ||
+    session.cancelled
+  ) {
+    throw new DOMException(
+      'Đã hủy tải.',
+      'AbortError'
+    );
+  }
+
+  restorePosition(
+    file,
+    player
+  );
+
+  applyPlayerSettings(player);
+  markReady(
+    file,
+    info,
+    'Phát sau khi tải phần đầu',
+    autoplay
+  );
+
+  streamRemainingChunks(
+    session,
+    file,
+    info
+  ).catch(error => {
+    if (
+      !session.cancelled &&
+      token === loadToken &&
+      error.name !== 'AbortError'
+    ) {
+      showToast(
+        'Luồng nền bị gián đoạn: ' +
+        error.message,
+        true
+      );
+    }
+  });
+}
+
+async function streamRemainingChunks(
+  session,
+  file,
+  info
+) {
+  let index = 1;
+
+  while (
+    index < info.totalChunks &&
+    !session.cancelled
+  ) {
+    const end =
+      Math.min(
+        index + DOWNLOAD_CONCURRENCY,
+        info.totalChunks
+      );
+
+    const indexes = [];
+
+    for (
+      let current = index;
+      current < end;
+      current++
+    ) {
+      indexes.push(current);
+    }
+
+    const batch =
+      await Promise.all(
+        indexes.map(
+          current =>
+            fetchChunk(
+              file,
+              info,
+              current,
+              session.controller.signal
+            )
+        )
+      );
+
+    for (
+      let offset = 0;
+      offset < batch.length;
+      offset++
+    ) {
+      if (session.cancelled) {
+        throw new DOMException(
+          'Đã hủy tải.',
+          'AbortError'
+        );
+      }
+
+      await appendSourceBuffer(
+        session.sourceBuffer,
+        batch[offset],
+        session.controller.signal
+      );
+
+      session.loadedChunks++;
+
+      updateBackgroundProgress(
+        file,
+        session
+      );
+    }
+
+    index = end;
+  }
+
+  if (
+    !session.cancelled &&
+    session.mediaSource.readyState === 'open'
+  ) {
+    await waitSourceBufferIdle(
+      session.sourceBuffer,
+      session.controller.signal
+    );
+
+    try {
+      session.mediaSource.endOfStream();
+    } catch (_) {}
+  }
+
+  if (
+    !session.cancelled &&
+    session.token === loadToken
+  ) {
+    setLoading(false);
+
+    els.trackSub.textContent =
+      `${formatBytes(info.size)} • ${formatTime(activeAudio().duration)}`;
+
+    showMode(
+      'Đã tải đủ bài • đang nạp bài kế tiếp'
+    );
+
+    prepareNextTrack();
+  }
+}
+
+async function appendSourceBuffer(
+  sourceBuffer,
+  bytes,
+  signal
+) {
+  await waitSourceBufferIdle(
+    sourceBuffer,
+    signal
+  );
+
+  return new Promise(
+    (resolve, reject) => {
+      const cleanup = () => {
+        sourceBuffer.removeEventListener(
+          'updateend',
+          onUpdateEnd
+        );
+
+        sourceBuffer.removeEventListener(
+          'error',
+          onError
+        );
+
+        if (signal) {
+          signal.removeEventListener(
+            'abort',
+            onAbort
+          );
+        }
+      };
+
+      const onUpdateEnd = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(
+          new Error(
+            'Không thể nối dữ liệu MP3.'
+          )
+        );
+      };
+
+      const onAbort = () => {
+        cleanup();
+        reject(
+          new DOMException(
+            'Đã hủy tải.',
+            'AbortError'
+          )
+        );
+      };
+
+      sourceBuffer.addEventListener(
+        'updateend',
+        onUpdateEnd,
+        { once: true }
+      );
+
+      sourceBuffer.addEventListener(
+        'error',
+        onError,
+        { once: true }
+      );
+
+      if (signal) {
+        signal.addEventListener(
+          'abort',
+          onAbort,
+          { once: true }
+        );
+      }
+
+      try {
+        sourceBuffer.appendBuffer(
+          bytes
+        );
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    }
+  );
+}
+
+function waitSourceBufferIdle(
+  sourceBuffer,
+  signal
+) {
+  if (!sourceBuffer.updating) {
+    return Promise.resolve();
+  }
+
+  return waitEvent(
+    sourceBuffer,
+    'updateend',
+    15000,
+    signal
+  );
+}
+
+async function startFullBlob(
+  file,
+  info,
+  token,
+  controller,
+  autoplay
+) {
+  showMode(
+    'Trình duyệt không hỗ trợ MP3 nối tiếp • tải song song'
+  );
+
+  const parts =
+    await downloadAllChunks(
+      file,
+      info,
+      DOWNLOAD_CONCURRENCY,
+      controller.signal,
+      (completed, total) => {
+        if (token !== loadToken) return;
+
+        const percent =
+          Math.round(
+            completed / total * 94
+          );
+
+        els.loading.textContent =
+          `Đang tải nhanh: ${completed}/${total}`;
+
+        setLoading(
+          true,
+          `Đang tải ${file.name} (${completed}/${total})...`,
+          percent
+        );
+      }
+    );
+
+  if (token !== loadToken) return;
+
+  const blob =
+    new Blob(
+      [concatUint8Arrays(parts, info.size)],
+      {
+        type:
+          info.mimeType ||
+          guessMime(info.extension)
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const player = activeAudio();
+
+  activeSession = {
+    type: 'blob',
+    token: token,
+    controller: controller,
+    player: player,
+    url: url,
+    cancelled: false
+  };
+
+  player.src = url;
+  player.load();
+
+  await waitForPlayable(
+    player,
+    12000,
+    controller.signal
+  );
+
+  restorePosition(
+    file,
+    player
+  );
+
+  applyPlayerSettings(player);
+
+  markReady(
+    file,
+    info,
+    'Đã tải song song',
+    autoplay
+  );
+
+  prepareNextTrack();
+}
+
+async function downloadAllChunks(
+  file,
+  info,
+  concurrency,
+  signal,
+  onProgress
+) {
+  const parts =
+    new Array(info.totalChunks);
+
+  let nextIndex = 0;
+  let completed = 0;
+
+  async function worker() {
+    while (true) {
+      if (signal && signal.aborted) {
+        throw new DOMException(
+          'Đã hủy tải.',
+          'AbortError'
+        );
+      }
+
+      const index = nextIndex++;
+      if (index >= info.totalChunks) {
+        return;
+      }
+
+      parts[index] =
+        await fetchChunk(
+          file,
+          info,
+          index,
+          signal
+        );
+
+      completed++;
+
+      if (onProgress) {
+        onProgress(
+          completed,
+          info.totalChunks
+        );
+      }
+    }
+  }
+
+  const workerCount =
+    Math.min(
+      concurrency,
+      info.totalChunks
+    );
+
+  await Promise.all(
+    Array.from(
+      { length: workerCount },
+      () => worker()
+    )
+  );
+
+  return parts;
+}
+
+function markReady(
+  file,
+  info,
+  modeText,
+  autoplay
+) {
+  const player = activeAudio();
+
+  els.loading.hidden = true;
+  els.play.disabled = false;
+  els.seek.disabled = false;
+
+  els.trackSub.textContent =
+    `${formatBytes(info.size)} • ${formatTime(player.duration)}`;
+
+  showMode(modeText);
+  updateMetadata();
+
+  if (autoplay) {
+    player.play().catch(() => {
+      showToast(
+        'Bài đã sẵn sàng. Nhấn nút Phát để nghe.'
+      );
+    });
+  }
+}
+
+function updateBackgroundProgress(
+  file,
+  session
+) {
+  const percent =
+    Math.round(
+      session.loadedChunks /
+      session.totalChunks *
+      100
+    );
+
+  setLoading(
+    true,
+    `Đang đệm nền ${file.name}`,
+    percent
+  );
+
+  els.statusPct.textContent =
+    `${percent}%`;
+
+  els.progress.style.width =
+    `${percent}%`;
+
+  showMode(
+    `Đang phát • đã đệm ${percent}%`
+  );
+}
+
+async function prepareNextTrack() {
+  if (
+    !els.autoNext.checked ||
+    audioItems.length < 2 ||
+    activeIndex < 0
+  ) {
+    return;
+  }
+
+  const next =
+    getRelativeTrack(1);
+
+  if (!next) return;
+
+  if (
+    standbyState.ready &&
+    standbyState.track &&
+    standbyState.track.id === next.id
+  ) {
+    return;
+  }
+
+  clearStandby();
+
+  const token =
+    ++standbyState.token;
+
+  const controller =
+    new AbortController();
+
+  standbyState.controller =
+    controller;
+  standbyState.track =
+    next;
+
+  try {
+    const info =
+      await getFileInfo(
+        next,
+        controller.signal
+      );
+
+    const parts =
+      await downloadAllChunks(
+        next,
+        info,
+        DOWNLOAD_CONCURRENCY,
+        controller.signal
+      );
+
+    if (
+      token !== standbyState.token
+    ) {
+      return;
+    }
+
+    const blob =
+      new Blob(
+        [concatUint8Arrays(parts, info.size)],
+        {
+          type:
+            info.mimeType ||
+            guessMime(info.extension)
+        }
+      );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const player =
+      standbyAudio();
+
+    player.src = url;
+    player.load();
+
+    await waitForPlayable(
+      player,
+      15000,
+      controller.signal
+    );
+
+    if (
+      token !== standbyState.token
+    ) {
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    applyPlayerSettings(player);
+
+    standbyState.url = url;
+    standbyState.ready = true;
+
+    showMode(
+      'Đã nạp sẵn bài kế tiếp'
+    );
+  } catch (error) {
+    if (
+      error.name !== 'AbortError' &&
+      token === standbyState.token
+    ) {
+      standbyState.ready = false;
+    }
+  }
+}
+
+async function activateStandby(
+  track,
+  autoplay = true
+) {
+  if (
+    !standbyState.ready ||
+    !standbyState.track ||
+    standbyState.track.id !== track.id
+  ) {
+    await openAudio(
+      track,
+      { autoplay: autoplay }
+    );
+    return;
+  }
+
+  savePosition();
+
+  const oldPlayer =
+    activeAudio();
+
+  cancelActiveSession(false);
+
+  activePlayerIndex =
+    1 - activePlayerIndex;
+
+  const newPlayer =
+    activeAudio();
+
+  const url =
+    standbyState.url;
+
+  activeSession = {
+    type: 'blob',
+    token: ++loadToken,
+    controller: null,
+    player: newPlayer,
+    url: url,
+    cancelled: false
+  };
+
+  standbyState = {
+    token: standbyState.token + 1,
+    track: null,
+    ready: false,
+    url: '',
+    controller: null
+  };
+
+  resetPlayer(oldPlayer);
+
+  activeFileId = track.id;
+
+  activeIndex =
+    audioItems.findIndex(
+      item => item.id === track.id
+    );
+
+  els.trackTitle.textContent =
+    track.name;
+
+  els.trackSub.textContent =
+    'Đã nạp trước • chuyển bài nhanh';
+
+  els.loading.hidden = true;
+  els.play.disabled = false;
+  els.seek.disabled = false;
+
+  renderList();
+  updateButtons();
+  updateMetadata();
+
+  showMode(
+    'Phát từ bộ nhớ đệm'
+  );
+
+  applyPlayerSettings(newPlayer);
+
+  if (autoplay) {
+    newPlayer.play().catch(() => {
+      showToast(
+        'Nhấn nút Phát để tiếp tục.'
+      );
+    });
   }
 
   prepareNextTrack();
-  return true;
 }
 
-async function handleEnded(){
+async function handleEnded() {
   savePosition();
 
-  if(!els.autoNext.checked)return;
+  if (!els.autoNext.checked) {
+    return;
+  }
 
-  const next=nextTrack(1);
-  if(!next)return;
+  const next =
+    getRelativeTrack(1);
 
-  if(await useStandbyTrack(next))return;
+  if (!next) return;
+
+  if (
+    standbyState.ready &&
+    standbyState.track &&
+    standbyState.track.id === next.id
+  ) {
+    await activateStandby(
+      next,
+      true
+    );
+    return;
+  }
+
   openAudio(next);
 }
 
-async function playRelative(step){
-  const target=nextTrack(step);
-  if(!target)return;
+async function playRelative(step) {
+  const target =
+    getRelativeTrack(step);
 
-  if(step===1&&await useStandbyTrack(target))return;
+  if (!target) return;
+
+  if (
+    step === 1 &&
+    standbyState.ready &&
+    standbyState.track &&
+    standbyState.track.id === target.id
+  ) {
+    await activateStandby(
+      target,
+      true
+    );
+    return;
+  }
+
   openAudio(target);
 }
 
-function nextTrack(step){
-  if(!audioItems.length)return null;
+function getRelativeTrack(step) {
+  if (!audioItems.length) {
+    return null;
+  }
 
-  let index=activeIndex+step;
-  if(index<0)index=audioItems.length-1;
-  if(index>=audioItems.length)index=0;
+  let index =
+    activeIndex + step;
+
+  if (index < 0) {
+    index =
+      audioItems.length - 1;
+  }
+
+  if (index >= audioItems.length) {
+    index = 0;
+  }
 
   return audioItems[index];
 }
 
-function togglePlay(){
-  const player=activeAudio();
-  if(!player.src)return;
+function togglePlay() {
+  const player =
+    activeAudio();
 
-  if(player.paused){
-    player.play().catch(e=>toast(e.message,true));
-  }else{
+  if (!player.src) return;
+
+  if (player.paused) {
+    player.play().catch(
+      error =>
+        showToast(
+          error.message,
+          true
+        )
+    );
+  } else {
     player.pause();
   }
 }
 
-function onMetadata(){
-  const player=activeAudio();
+function updateMetadata() {
+  const player =
+    activeAudio();
 
-  els.duration.textContent=fmtTime(player.duration);
-  els.seek.max=Number.isFinite(player.duration)?player.duration:0;
+  els.duration.textContent =
+    formatTime(player.duration);
+
+  els.seek.max =
+    Number.isFinite(player.duration)
+      ? player.duration
+      : 0;
+
   applyPlayerSettings(player);
 }
 
-function onTimeUpdate(){
-  const player=activeAudio();
+function updateTime() {
+  const player =
+    activeAudio();
 
-  els.current.textContent=fmtTime(player.currentTime);
-  els.seek.value=player.currentTime||0;
+  els.current.textContent =
+    formatTime(player.currentTime);
 
-  if(Math.floor(player.currentTime)%5===0)savePosition();
+  els.seek.value =
+    player.currentTime || 0;
 
-  if(
-    els.autoNext.checked&&
-    Number.isFinite(player.duration)&&
-    player.duration-player.currentTime<=PRELOAD_SECONDS&&
-    !standbyReady
-  ){
+  if (
+    Math.floor(player.currentTime) % 5 === 0
+  ) {
+    savePosition();
+  }
+
+  if (
+    els.autoNext.checked &&
+    Number.isFinite(player.duration) &&
+    player.duration - player.currentTime <= PREFETCH_SECONDS &&
+    !standbyState.ready
+  ) {
     prepareNextTrack();
   }
 }
 
-function onBufferProgress(){
-  const player=activeAudio();
+function savePosition() {
+  const player =
+    activeAudio();
 
-  if(!Number.isFinite(player.duration)||!player.buffered.length)return;
-
-  try{
-    const end=player.buffered.end(player.buffered.length-1);
-    const pct=Math.min(100,Math.round(end/player.duration*100));
-
-    if(!els.status.hidden){
-      els.statusPct.textContent=`${pct}% đệm`;
-      els.progress.style.width=`${pct}%`;
-    }
-  }catch(_){}
-}
-
-function restorePosition(file,player){
-  const saved=+(localStorage.getItem(posKey(file.id))||0);
-
-  if(
-    saved>0&&
-    Number.isFinite(player.duration)&&
-    saved<player.duration-5
-  ){
-    player.currentTime=saved;
-  }
-}
-
-function savePosition(){
-  const player=activeAudio();
-
-  if(
-    activeFileId&&
+  if (
+    activeFileId &&
     Number.isFinite(player.currentTime)
-  ){
+  ) {
     localStorage.setItem(
-      posKey(activeFileId),
+      positionKey(activeFileId),
       String(player.currentTime)
     );
   }
 }
 
-function posKey(id){return`audio_position_${id}`}
+function restorePosition(
+  file,
+  player
+) {
+  const saved =
+    Number(
+      localStorage.getItem(
+        positionKey(file.id)
+      ) || 0
+    );
 
-function applyPlayerSettings(player){
-  player.volume=+els.volume.value;
-  player.playbackRate=+els.speed.value;
-}
-
-function updateButtons(){
-  const ok=audioItems.length>0&&activeIndex>=0;
-  els.prev.disabled=!ok;
-  els.next.disabled=!ok;
-}
-
-function restore(){
-  const volume=localStorage.getItem('audio_volume');
-  const speed=localStorage.getItem('audio_speed');
-  const auto=localStorage.getItem('audio_auto_next');
-
-  if(volume!==null)els.volume.value=volume;
-  if(speed!==null)els.speed.value=speed;
-  if(auto!==null)els.autoNext.checked=auto==='1';
-
-  players.forEach(applyPlayerSettings);
-}
-
-function showMode(text){
-  els.mode.hidden=false;
-  els.mode.textContent=text;
-}
-
-function resetTimeDisplay(){
-  els.current.textContent='0:00';
-  els.duration.textContent='0:00';
-  els.seek.value=0;
-  els.seek.max=100;
-}
-
-function setLoading(show,text='',pct=0){
-  els.status.hidden=!show;
-  if(!show)return;
-
-  const value=Math.max(0,Math.min(100,Math.round(pct)));
-  els.statusText.textContent=text;
-  els.statusPct.textContent=`${value}%`;
-  els.progress.style.width=`${value}%`;
-}
-
-function toast(message,isError=false){
-  clearTimeout(toastTimer);
-  els.toast.textContent=message;
-  els.toast.className=`toast show${isError?' error':''}`;
-  toastTimer=setTimeout(()=>els.toast.className='toast',3500);
-}
-
-function cancelStandby(){
-  preloadToken++;
-  standbyReady=false;
-  standbyTrack=null;
-  resetPlayer(standbyAudio());
-
-  if(standbyObjectUrl){
-    URL.revokeObjectURL(standbyObjectUrl);
-    standbyObjectUrl='';
+  if (
+    saved > 0 &&
+    Number.isFinite(player.duration) &&
+    saved < player.duration - 5
+  ) {
+    try {
+      player.currentTime = saved;
+    } catch (_) {}
   }
 }
 
-function stopPlayer(player){
-  try{player.pause()}catch(_){}
+function positionKey(id) {
+  return `audio_position_${id}`;
 }
 
-function resetPlayer(player){
-  try{
+function updateButtons() {
+  const enabled =
+    audioItems.length > 0 &&
+    activeIndex >= 0;
+
+  els.prev.disabled =
+    !enabled;
+
+  els.next.disabled =
+    !enabled;
+}
+
+function restorePreferences() {
+  const volume =
+    localStorage.getItem(
+      'audio_volume'
+    );
+
+  const speed =
+    localStorage.getItem(
+      'audio_speed'
+    );
+
+  const autoNext =
+    localStorage.getItem(
+      'audio_auto_next'
+    );
+
+  if (volume !== null) {
+    els.volume.value = volume;
+  }
+
+  if (speed !== null) {
+    els.speed.value = speed;
+  }
+
+  if (autoNext !== null) {
+    els.autoNext.checked =
+      autoNext === '1';
+  }
+
+  players.forEach(
+    applyPlayerSettings
+  );
+}
+
+function applyPlayerSettings(player) {
+  player.volume =
+    Number(els.volume.value);
+
+  player.playbackRate =
+    Number(els.speed.value);
+}
+
+function showMode(text) {
+  els.mode.hidden = false;
+  els.mode.textContent = text;
+}
+
+function setLoading(
+  visible,
+  text = '',
+  percent = 0
+) {
+  els.status.hidden = !visible;
+
+  if (!visible) return;
+
+  const safePercent =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(percent)
+      )
+    );
+
+  els.statusText.textContent =
+    text;
+
+  els.statusPct.textContent =
+    `${safePercent}%`;
+
+  els.progress.style.width =
+    `${safePercent}%`;
+}
+
+function resetTimeDisplay() {
+  els.current.textContent = '0:00';
+  els.duration.textContent = '0:00';
+  els.seek.value = 0;
+  els.seek.max = 100;
+}
+
+function showToast(
+  message,
+  isError = false
+) {
+  clearTimeout(toastTimer);
+
+  els.toast.textContent =
+    message;
+
+  els.toast.className =
+    `toast show${isError ? ' error' : ''}`;
+
+  toastTimer =
+    setTimeout(
+      () =>
+        els.toast.className =
+          'toast',
+      3500
+    );
+}
+
+function cancelActiveSession(
+  resetAudio = true
+) {
+  const session =
+    activeSession;
+
+  activeSession = null;
+
+  if (!session) {
+    if (resetAudio) {
+      resetPlayer(activeAudio());
+    }
+
+    return;
+  }
+
+  session.cancelled = true;
+
+  if (session.controller) {
+    try {
+      session.controller.abort();
+    } catch (_) {}
+  }
+
+  if (resetAudio) {
+    resetPlayer(session.player);
+  }
+
+  if (session.url) {
+    try {
+      URL.revokeObjectURL(
+        session.url
+      );
+    } catch (_) {}
+  }
+}
+
+function clearStandby() {
+  standbyState.token++;
+
+  if (standbyState.controller) {
+    try {
+      standbyState.controller.abort();
+    } catch (_) {}
+  }
+
+  resetPlayer(
+    standbyAudio()
+  );
+
+  if (standbyState.url) {
+    try {
+      URL.revokeObjectURL(
+        standbyState.url
+      );
+    } catch (_) {}
+  }
+
+  standbyState = {
+    token: standbyState.token,
+    track: null,
+    ready: false,
+    url: '',
+    controller: null
+  };
+}
+
+function resetPlayer(player) {
+  try {
     player.pause();
     player.removeAttribute('src');
     player.load();
-  }catch(_){}
+  } catch (_) {}
 }
 
-function cleanup(){
+function cleanupEverything() {
   savePosition();
-  players.forEach(resetPlayer);
-
-  if(activeObjectUrl)URL.revokeObjectURL(activeObjectUrl);
-  if(standbyObjectUrl)URL.revokeObjectURL(standbyObjectUrl);
+  cancelActiveSession();
+  clearStandby();
 }
 
-function b64(value){
-  const binary=atob(value);
-  const bytes=new Uint8Array(binary.length);
+function waitEvent(
+  target,
+  eventName,
+  timeout,
+  signal
+) {
+  return new Promise(
+    (resolve, reject) => {
+      let timer = null;
 
-  for(let i=0;i<binary.length;i++){
-    bytes[i]=binary.charCodeAt(i);
+      const cleanup = () => {
+        clearTimeout(timer);
+
+        target.removeEventListener(
+          eventName,
+          onEvent
+        );
+
+        if (signal) {
+          signal.removeEventListener(
+            'abort',
+            onAbort
+          );
+        }
+      };
+
+      const onEvent = event => {
+        cleanup();
+        resolve(event);
+      };
+
+      const onAbort = () => {
+        cleanup();
+
+        reject(
+          new DOMException(
+            'Đã hủy tải.',
+            'AbortError'
+          )
+        );
+      };
+
+      target.addEventListener(
+        eventName,
+        onEvent,
+        { once: true }
+      );
+
+      if (signal) {
+        signal.addEventListener(
+          'abort',
+          onAbort,
+          { once: true }
+        );
+      }
+
+      timer = setTimeout(
+        () => {
+          cleanup();
+
+          reject(
+            new Error(
+              `Chờ sự kiện ${eventName} quá lâu.`
+            )
+          );
+        },
+        timeout
+      );
+    }
+  );
+}
+
+function waitForPlayable(
+  player,
+  timeout,
+  signal
+) {
+  if (player.readyState >= 3) {
+    return Promise.resolve();
+  }
+
+  return Promise.race([
+    waitEvent(
+      player,
+      'canplay',
+      timeout,
+      signal
+    ),
+    waitEvent(
+      player,
+      'loadedmetadata',
+      timeout,
+      signal
+    )
+  ]);
+}
+
+function base64ToBytes(base64) {
+  const binary =
+    atob(base64);
+
+  const bytes =
+    new Uint8Array(
+      binary.length
+    );
+
+  for (
+    let index = 0;
+    index < binary.length;
+    index++
+  ) {
+    bytes[index] =
+      binary.charCodeAt(index);
   }
 
   return bytes;
 }
 
-function join(parts,totalLength){
-  const result=new Uint8Array(totalLength);
-  let offset=0;
+function concatUint8Arrays(
+  parts,
+  totalLength
+) {
+  const result =
+    new Uint8Array(totalLength);
 
-  parts.forEach(part=>{
-    result.set(part,offset);
-    offset+=part.length;
+  let offset = 0;
+
+  parts.forEach(part => {
+    result.set(
+      part,
+      offset
+    );
+
+    offset += part.length;
   });
 
   return result;
 }
 
-function norm(value){
-  return String(value||'')
+function normalizeText(value) {
+  return String(value || '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
+    .replace(
+      /[\u0300-\u036f]/g,
+      ''
+    )
     .toLowerCase()
     .trim();
 }
 
-function fmtBytes(bytes){
-  if(!bytes)return'0 B';
+function formatBytes(bytes) {
+  if (!bytes) return '0 B';
 
-  const units=['B','KB','MB','GB'];
-  const index=Math.min(
-    Math.floor(Math.log(bytes)/Math.log(1024)),
-    units.length-1
-  );
+  const units =
+    ['B', 'KB', 'MB', 'GB'];
 
-  return`${(bytes/Math.pow(1024,index)).toFixed(index?1:0)} ${units[index]}`;
+  const index =
+    Math.min(
+      Math.floor(
+        Math.log(bytes) /
+        Math.log(1024)
+      ),
+      units.length - 1
+    );
+
+  return (
+    bytes /
+    Math.pow(1024, index)
+  ).toFixed(
+    index ? 1 : 0
+  ) + ' ' + units[index];
 }
 
-function fmtTime(value){
-  if(!Number.isFinite(value)||value<0)return'0:00';
+function formatTime(value) {
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    return '0:00';
+  }
 
-  const hours=Math.floor(value/3600);
-  const minutes=Math.floor(value%3600/60);
-  const seconds=Math.floor(value%60);
+  const hours =
+    Math.floor(value / 3600);
+
+  const minutes =
+    Math.floor(
+      value % 3600 / 60
+    );
+
+  const seconds =
+    Math.floor(value % 60);
 
   return hours
-    ?`${hours}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`
-    :`${minutes}:${String(seconds).padStart(2,'0')}`;
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function guessMime(extension){
-  return({
-    mp3:'audio/mpeg',
-    m4a:'audio/mp4',
-    aac:'audio/aac',
-    wav:'audio/wav',
-    ogg:'audio/ogg',
-    oga:'audio/ogg',
-    opus:'audio/ogg',
-    flac:'audio/flac',
-    webm:'audio/webm'
-  })[String(extension||'').toLowerCase()]||'audio/mpeg';
+function guessMime(extension) {
+  return ({
+    mp3: 'audio/mpeg',
+    m4a: 'audio/mp4',
+    aac: 'audio/aac',
+    wav: 'audio/wav',
+    ogg: 'audio/ogg',
+    oga: 'audio/ogg',
+    opus: 'audio/ogg',
+    flac: 'audio/flac',
+    webm: 'audio/webm'
+  })[
+    String(extension || '')
+      .toLowerCase()
+  ] || 'audio/mpeg';
 }
 
-function esc(value){
+function escapeHtml(value) {
   return String(value).replace(
     /[&<>'"]/g,
-    character=>({
-      '&':'&amp;',
-      '<':'&lt;',
-      '>':'&gt;',
-      "'":'&#39;',
-      '"':'&quot;'
+    character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
     })[character]
   );
 }
