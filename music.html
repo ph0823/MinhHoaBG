@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc Nhi hư - v2.6 playback-safe</title>
+<title>Trình nhạc - v2.7 Dynamic LED</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -421,6 +421,161 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
   .controls{margin:18px 0}
   .effects-panel{margin-top:18px}
 }
+
+
+/* ===== GIAO DIỆN TỐI ƯU & LED NÂNG CAO ===== */
+:root{
+  --accent:#1ed760;
+  --accent-2:#5bff8a;
+  --cyan:#26e9ff;
+  --panel-glass:rgba(22,26,24,.76);
+  --panel-edge:rgba(255,255,255,.09);
+}
+body{
+  background:
+    radial-gradient(circle at 16% 4%,rgba(30,215,96,.11),transparent 31%),
+    radial-gradient(circle at 92% 92%,rgba(38,233,255,.065),transparent 32%),
+    #0b0d0c;
+}
+.top{
+  min-height:54px;padding:8px 18px;
+  background:rgba(8,10,9,.84);
+  border-bottom-color:rgba(255,255,255,.075);
+  box-shadow:0 10px 35px rgba(0,0,0,.22);
+}
+.brand h1{
+  font-size:15px;font-weight:850;letter-spacing:.035em;
+  background:linear-gradient(90deg,#fff,#a9ffbf);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.layout{grid-template-columns:320px minmax(0,1fr);gap:12px;padding:12px}
+.sidebar,.player{
+  border:1px solid var(--panel-edge);
+  background:var(--panel-glass);
+  box-shadow:0 24px 75px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+}
+.sidebar{border-radius:18px;height:calc(100vh - 78px)}
+.player{
+  border-radius:22px;min-height:calc(100vh - 78px);
+  padding:18px 24px 28px;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(30,215,96,.115),transparent 36%),
+    radial-gradient(circle at 88% 76%,rgba(38,233,255,.055),transparent 30%),
+    linear-gradient(165deg,rgba(30,34,32,.94),rgba(13,15,14,.97));
+}
+.head{padding:18px;border-bottom-color:rgba(255,255,255,.07)}
+.folder{font-size:17px;letter-spacing:-.01em}
+.folder-actions button{
+  padding:11px 12px;background:linear-gradient(135deg,#69ff91,#1ed760);
+  box-shadow:0 9px 25px rgba(30,215,96,.2);transition:.2s ease;
+}
+.search{padding:13px 16px;border-bottom-color:rgba(255,255,255,.07)}
+.search input{
+  background:rgba(255,255,255,.07);border:1px solid transparent;
+  transition:background .2s,border-color .2s,box-shadow .2s
+}
+.search input:focus{
+  background:rgba(255,255,255,.095);border-color:rgba(94,255,139,.45);
+  box-shadow:0 0 0 3px rgba(30,215,96,.12)
+}
+.item{border:1px solid transparent;transition:background .2s,border-color .2s,transform .2s}
+.item:hover{background:rgba(255,255,255,.07);transform:translateX(2px)}
+.item.active{
+  background:linear-gradient(90deg,rgba(30,215,96,.17),rgba(255,255,255,.035));
+  border-color:rgba(73,255,124,.16)
+}
+.icon{background:linear-gradient(145deg,#303632,#202522);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.card{width:min(1040px,100%)}
+.title{margin:20px 0 6px;text-shadow:0 6px 25px rgba(0,0,0,.25)}
+.sub{margin-bottom:20px}
+.visualizer-wrap{
+  height:clamp(270px,42vh,450px);border-radius:28px;
+  border-color:rgba(255,255,255,.09);
+  background:
+    radial-gradient(circle at 50% 45%,rgba(30,215,96,.15),transparent 45%),
+    linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.065),
+    inset 0 -70px 130px rgba(0,0,0,.3),
+    0 28px 85px rgba(0,0,0,.42);
+}
+.visualizer-wrap.playing{transform:translateY(-1px)}
+.visualizer-wrap[data-visualizer-mode="led"]{
+  background:
+    radial-gradient(circle at 50% 42%,rgba(38,255,100,.115),transparent 48%),
+    linear-gradient(180deg,#080d09 0%,#020403 100%);
+  border-color:rgba(100,255,137,.22);
+}
+.visualizer-live{
+  position:absolute;z-index:5;left:15px;top:15px;
+  display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;
+  border:1px solid rgba(255,255,255,.095);border-radius:12px;
+  background:rgba(7,10,8,.64);color:rgba(255,255,255,.6);
+  font-size:10px;font-weight:850;letter-spacing:.11em;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 10px 28px rgba(0,0,0,.24)
+}
+.visualizer-live-dot{
+  width:8px;height:8px;border-radius:50%;background:#4d5b51;
+  box-shadow:0 0 0 4px rgba(255,255,255,.025);transition:.25s ease
+}
+.visualizer-wrap.playing .visualizer-live{color:#baffcb;border-color:rgba(80,255,128,.2)}
+.visualizer-wrap.playing .visualizer-live-dot{
+  background:#55ff7e;box-shadow:0 0 0 4px rgba(85,255,126,.09),0 0 16px rgba(85,255,126,.85);
+  animation:livePulse 1.15s ease-in-out infinite
+}
+@keyframes livePulse{50%{transform:scale(.7);opacity:.48}}
+.visualizer-toolbar{top:15px;right:15px;background:rgba(7,10,8,.7)}
+.visualizer-mode{height:36px;border-radius:11px}
+.visualizer-mode.active{
+  background:linear-gradient(135deg,#86ffa5,#1ed760);
+  box-shadow:0 9px 28px rgba(30,215,96,.25),inset 0 1px 0 rgba(255,255,255,.5)
+}
+.seek{margin-top:2px}
+.seek input[type=range]{height:8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.42)}
+.controls{gap:22px;margin:22px 0}
+.ctrl{
+  width:44px;height:44px;background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.055);color:#c3c9c5
+}
+.ctrl:hover{background:rgba(255,255,255,.085);border-color:rgba(255,255,255,.11)}
+.play{
+  width:62px;height:62px;color:#041008;
+  background:linear-gradient(145deg,#fff,#c8ffd6);
+  border:0;box-shadow:0 13px 32px rgba(30,215,96,.23),0 3px 10px rgba(0,0,0,.3)
+}
+.options{
+  width:min(650px,100%);margin:0 auto;padding:12px 16px;border-radius:16px;
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055)
+}
+.options select,.effects-panel select{
+  border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.065)
+}
+.effects-panel{
+  width:min(650px,100%);margin-top:18px;padding:17px 18px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.065);
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)
+}
+.effect-badge.active{box-shadow:0 0 18px rgba(30,215,96,.1)}
+.loading,.mode{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.055)}
+.network-diagnostics{background:rgba(0,0,0,.9);backdrop-filter:blur(10px)}
+@media(max-width:820px){
+  .layout{padding:0}.player{border-radius:0;border-left:0;border-right:0;padding:13px 11px 24px}
+  .visualizer-wrap{height:clamp(220px,37vh,330px);border-radius:21px}
+  .visualizer-live{left:9px;top:9px;height:31px;padding:0 9px;font-size:9px}
+  .sidebar{border-radius:0;height:auto}
+}
+@media(max-width:520px){
+  .visualizer-live span:last-child{display:none}
+  .visualizer-live{width:31px;justify-content:center;padding:0}
+  .controls{gap:16px}
+  .options{gap:14px;padding:11px 12px}
+  .effects-panel{padding:15px 13px}
+}
+@media(prefers-reduced-motion:reduce){.visualizer-live-dot{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -428,7 +583,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
   <header class="top">
     <button id="menu" class="menu" type="button">☰</button>
     <div class="brand">
-      <h1>Thư viện nhạc</h1>
+      <h1>Thư viện nhạc Nguyên Nhi</h1>
     </div>
     <div id="status" class="status" hidden>
       <div class="status-row">
@@ -461,6 +616,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
     <section class="player">
       <div class="card">
         <div id="visualizerWrap" class="visualizer-wrap" data-visualizer-mode="wave" aria-label="Hiệu ứng sóng âm dạng mềm">
+          <div class="visualizer-live" aria-hidden="true"><span class="visualizer-live-dot"></span><span>LIVE AUDIO</span></div>
           <div class="visualizer-toolbar" role="group" aria-label="Chọn kiểu hiển thị sóng âm">
             <span class="visualizer-mode-label">HIỂN THỊ</span>
             <div class="visualizer-switch">
@@ -557,7 +713,7 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
 </footer>
 <div id="toast" class="toast"></div>
 
-<!-- Bản v2.5: phát nhanh, hai chế độ visualizer Sóng và LED xếp tầng -->
+<!-- Bản v2.7: giao diện tối ưu, LED động theo bass–mid–treble và nhịp nhạc -->
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
 const APP_TYPE = 'audio';
@@ -663,8 +819,9 @@ let compressorNode = null, dryGainNode = null, delayNode = null, feedbackGainNod
 let wetGainNode = null, masterGainNode = null, mediaSourceNodes = [];
 let visualizerFrame = 0, frequencyData = null, audioEffectsAvailable = true;
 let visualizerMode = 'wave';
-let ledLevels = [], ledPeaks = [], ledPeakHoldUntil = [];
+let ledLevels = [], ledVelocities = [], ledPeaks = [], ledPeakHoldUntil = [];
 let ledGridPattern = null, ledGridPatternDpr = 0;
+let ledBassAverage = 0.08, ledBeatPulse = 0, ledEnergyTrail = 0;
 
 const effectState = { preset: 'off', bass: 0, treble: 0, echo: 0, feedback: 0, delay: 0.18, compressorRatio: 1, master: 1 };
 const EFFECT_PRESETS = {
@@ -997,8 +1154,8 @@ async function ensureAudioEffects() {
       
       // TĂNG ĐỘ PHÂN GIẢI FFT[cite: 5]
       analyserNode = audioContext.createAnalyser();
-      analyserNode.fftSize = 1024;
-      analyserNode.smoothingTimeConstant = 0.68;
+      analyserNode.fftSize = 2048;
+      analyserNode.smoothingTimeConstant = 0.61;
       frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
       masterGainNode = audioContext.createGain();
 
@@ -1072,8 +1229,12 @@ function setVisualizerMode(mode, options = {}) {
 
   visualizerMode = nextMode;
   ledLevels = [];
+  ledVelocities = [];
   ledPeaks = [];
   ledPeakHoldUntil = [];
+  ledBassAverage = 0.08;
+  ledBeatPulse = 0;
+  ledEnergyTrail = 0;
 
   els.visualizerWrap.dataset.visualizerMode = nextMode;
   els.visualizerWrap.setAttribute(
@@ -1272,6 +1433,32 @@ function createLedGridPattern(context, dpr) {
   return ledGridPattern;
 }
 
+function getLedBandEnergy(data, fromRatio, toRatio) {
+  if (!data || !data.length) return 0;
+  const start = Math.max(0, Math.floor(data.length * fromRatio));
+  const end = Math.min(data.length, Math.max(start + 1, Math.ceil(data.length * toRatio)));
+  let sum = 0;
+  let weightSum = 0;
+
+  for (let index = start; index < end; index++) {
+    const position = (index - start) / Math.max(1, end - start - 1);
+    const weight = 1 - position * 0.25;
+    sum += (data[index] / 255) * weight;
+    weightSum += weight;
+  }
+
+  return weightSum ? sum / weightSum : 0;
+}
+
+function ledRoundedRect(context, x, y, width, height, radius) {
+  context.beginPath();
+  if (typeof context.roundRect === 'function') {
+    context.roundRect(x, y, width, height, radius);
+  } else {
+    context.rect(x, y, width, height);
+  }
+}
+
 function drawLedVisualizer(canvas, context) {
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1289,337 +1476,321 @@ function drawLedVisualizer(canvas, context) {
   const player = activeAudio();
   const playing = Boolean(player && !player.paused && !player.ended);
   const now = performance.now();
-  const nowSeconds = now * 0.001;
+  const seconds = now * 0.001;
 
   if (playing && analyserNode && frequencyData) {
     analyserNode.getByteFrequencyData(frequencyData);
   }
 
-  const padding = (IS_MOBILE_DEVICE ? 12 : 20) * dpr;
+  const bassEnergy = playing ? getLedBandEnergy(frequencyData, 0.002, 0.055) : 0.055;
+  const midEnergy = playing ? getLedBandEnergy(frequencyData, 0.055, 0.24) : 0.045;
+  const trebleEnergy = playing ? getLedBandEnergy(frequencyData, 0.24, 0.7) : 0.035;
+  const totalEnergy = Math.min(1, bassEnergy * 0.52 + midEnergy * 0.31 + trebleEnergy * 0.17);
+
+  ledBassAverage += (bassEnergy - ledBassAverage) * (playing ? 0.025 : 0.06);
+  const beatThreshold = Math.max(0.115, ledBassAverage * 1.42);
+  if (playing && bassEnergy > beatThreshold && bassEnergy > 0.22) {
+    ledBeatPulse = Math.min(1, ledBeatPulse + 0.34 + bassEnergy * 0.42);
+  }
+  ledBeatPulse *= playing ? 0.89 : 0.78;
+  ledEnergyTrail += (totalEnergy - ledEnergyTrail) * (totalEnergy > ledEnergyTrail ? 0.25 : 0.055);
+
+  const padding = (IS_MOBILE_DEVICE ? 9 : 17) * dpr;
   const panelX = padding;
   const panelY = padding;
   const panelWidth = width - padding * 2;
   const panelHeight = height - padding * 2;
-  const radius = 18 * dpr;
+  const radius = (IS_MOBILE_DEVICE ? 15 : 21) * dpr;
+  const pulseScale = 1 + ledBeatPulse * 0.006;
 
   context.save();
+  context.translate(width * 0.5, height * 0.5);
+  context.scale(pulseScale, pulseScale);
+  context.translate(-width * 0.5, -height * 0.5);
   context.shadowColor = playing
-    ? 'rgba(57,255,99,.22)'
-    : 'rgba(0,0,0,.35)';
-  context.shadowBlur = (playing ? 22 : 12) * dpr;
-  context.fillStyle = '#030604';
-  context.beginPath();
-  if (typeof context.roundRect === 'function') {
-    context.roundRect(
-      panelX,
-      panelY,
-      panelWidth,
-      panelHeight,
-      radius
-    );
-  } else {
-    context.rect(panelX, panelY, panelWidth, panelHeight);
-  }
+    ? `rgba(71,255,116,${0.16 + ledEnergyTrail * 0.28 + ledBeatPulse * 0.22})`
+    : 'rgba(0,0,0,.38)';
+  context.shadowBlur = (playing ? 20 + ledEnergyTrail * 30 + ledBeatPulse * 22 : 11) * dpr;
+  context.fillStyle = '#020503';
+  ledRoundedRect(context, panelX, panelY, panelWidth, panelHeight, radius);
   context.fill();
   context.restore();
 
   context.save();
-  context.beginPath();
-  if (typeof context.roundRect === 'function') {
-    context.roundRect(
-      panelX,
-      panelY,
-      panelWidth,
-      panelHeight,
-      radius
-    );
-  } else {
-    context.rect(panelX, panelY, panelWidth, panelHeight);
-  }
+  ledRoundedRect(context, panelX, panelY, panelWidth, panelHeight, radius);
   context.clip();
 
-  const panelGradient = context.createLinearGradient(
-    0,
-    panelY,
-    0,
-    panelY + panelHeight
-  );
-  panelGradient.addColorStop(0, 'rgba(11,19,12,.98)');
-  panelGradient.addColorStop(0.52, 'rgba(3,7,4,.99)');
+  const panelGradient = context.createLinearGradient(0, panelY, 0, panelY + panelHeight);
+  panelGradient.addColorStop(0, `rgba(13,25,16,${0.96 + ledEnergyTrail * 0.03})`);
+  panelGradient.addColorStop(0.48, 'rgba(3,8,5,.995)');
   panelGradient.addColorStop(1, 'rgba(0,2,1,1)');
   context.fillStyle = panelGradient;
   context.fillRect(panelX, panelY, panelWidth, panelHeight);
 
+  /* Nhịp bass tạo quầng sáng lan rộng phía sau các cột LED. */
+  const pulseGlow = context.createRadialGradient(
+    panelX + panelWidth * 0.5,
+    panelY + panelHeight * 0.7,
+    0,
+    panelX + panelWidth * 0.5,
+    panelY + panelHeight * 0.7,
+    panelWidth * 0.56
+  );
+  pulseGlow.addColorStop(0, `rgba(47,255,101,${0.025 + ledEnergyTrail * 0.13 + ledBeatPulse * 0.12})`);
+  pulseGlow.addColorStop(0.5, `rgba(24,230,255,${0.01 + trebleEnergy * 0.055})`);
+  pulseGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  context.fillStyle = pulseGlow;
+  context.fillRect(panelX, panelY, panelWidth, panelHeight);
+
   const grid = createLedGridPattern(context, dpr);
   if (grid) {
-    context.globalAlpha = playing ? 0.92 : 0.62;
+    context.globalAlpha = playing ? 0.72 + ledEnergyTrail * 0.22 : 0.48;
     context.fillStyle = grid;
     context.fillRect(panelX, panelY, panelWidth, panelHeight);
     context.globalAlpha = 1;
   }
 
-  const scanline = context.createLinearGradient(
-    0,
-    panelY,
-    0,
-    panelY + panelHeight
-  );
-  scanline.addColorStop(0, 'rgba(255,255,255,.035)');
-  scanline.addColorStop(0.5, 'rgba(255,255,255,0)');
-  scanline.addColorStop(1, 'rgba(0,0,0,.28)');
-  context.fillStyle = scanline;
-  context.fillRect(panelX, panelY, panelWidth, panelHeight);
+  /* Vệt quét chuyển động giúp mặt LED không bị phẳng. */
+  const scanY = panelY + ((seconds * (playing ? 0.115 + totalEnergy * 0.075 : 0.035)) % 1) * panelHeight;
+  const scanBeam = context.createLinearGradient(0, scanY - 28 * dpr, 0, scanY + 28 * dpr);
+  scanBeam.addColorStop(0, 'rgba(80,255,126,0)');
+  scanBeam.addColorStop(0.5, `rgba(111,255,148,${playing ? 0.035 + totalEnergy * 0.075 : 0.018})`);
+  scanBeam.addColorStop(1, 'rgba(80,255,126,0)');
+  context.fillStyle = scanBeam;
+  context.fillRect(panelX, scanY - 28 * dpr, panelWidth, 56 * dpr);
 
   const compact = width < 700 * dpr;
-  const headerHeight = (compact ? 68 : 84) * dpr;
-  const headerTop = panelY + (compact ? 12 : 15) * dpr;
-  const green = '#56ff63';
-  const dimGreen = 'rgba(86,255,99,.34)';
+  const headerHeight = (compact ? 60 : 76) * dpr;
+  const headerTop = panelY + (compact ? 10 : 13) * dpr;
+  const green = '#62ff82';
+  const dimGreen = 'rgba(103,255,139,.34)';
 
   context.save();
   context.textBaseline = 'middle';
-  context.font = `800 ${compact ? 9 : 11}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  context.font = `850 ${compact ? 8 : 10}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
   context.fillStyle = dimGreen;
-  context.fillText('L', panelX + 16 * dpr, headerTop + 12 * dpr);
-  context.fillText('R', panelX + 16 * dpr, headerTop + 33 * dpr);
+  context.fillText('BASS', panelX + 14 * dpr, headerTop + 9 * dpr);
+  context.fillText('MID', panelX + 14 * dpr, headerTop + 27 * dpr);
+  context.fillText('HIGH', panelX + 14 * dpr, headerTop + 45 * dpr);
 
-  const meterX = panelX + 31 * dpr;
-  const meterWidth = (compact ? 22 : 29) * dpr;
-  const meterHeight = 7 * dpr;
-  const rawBass = (
-    playing &&
-    frequencyData &&
-    frequencyData.length
-  )
-    ? (frequencyData[3] || 0) / 255
-    : 0.14 + Math.sin(nowSeconds * 1.5) * 0.03;
+  const meterX = panelX + (compact ? 47 : 55) * dpr;
+  const meterWidth = (compact ? 35 : 48) * dpr;
+  const meterHeight = (compact ? 5 : 6) * dpr;
+  const meters = [bassEnergy, midEnergy, trebleEnergy];
+  const meterColors = ['#59ff72', '#d9ff54', '#32e9ff'];
 
-  context.fillStyle = 'rgba(86,255,99,.13)';
-  context.fillRect(meterX, headerTop + 8 * dpr, meterWidth, meterHeight);
-  context.fillRect(meterX, headerTop + 29 * dpr, meterWidth, meterHeight);
-  context.fillStyle = green;
-  context.fillRect(
-    meterX,
-    headerTop + 8 * dpr,
-    meterWidth * Math.max(0.08, rawBass),
-    meterHeight
-  );
-  context.fillRect(
-    meterX,
-    headerTop + 29 * dpr,
-    meterWidth * Math.max(0.06, rawBass * 0.88),
-    meterHeight
-  );
+  meters.forEach((energy, index) => {
+    const y = headerTop + (7 + index * 18) * dpr;
+    context.fillStyle = 'rgba(105,255,139,.105)';
+    ledRoundedRect(context, meterX, y, meterWidth, meterHeight, meterHeight / 2);
+    context.fill();
+    context.fillStyle = meterColors[index];
+    context.shadowColor = meterColors[index];
+    context.shadowBlur = playing ? (4 + energy * 10) * dpr : 0;
+    ledRoundedRect(context, meterX, y, meterWidth * Math.max(0.035, energy), meterHeight, meterHeight / 2);
+    context.fill();
+    context.shadowBlur = 0;
+  });
 
-  const playX = panelX + (compact ? 67 : 82) * dpr;
-  const playY = headerTop + 10 * dpr;
-  context.shadowColor = 'rgba(86,255,99,.75)';
-  context.shadowBlur = playing ? 10 * dpr : 2 * dpr;
-  context.fillStyle = playing ? green : 'rgba(86,255,99,.32)';
+  const playX = panelX + (compact ? 101 : 126) * dpr;
+  const playY = headerTop + (compact ? 13 : 14) * dpr;
+  context.shadowColor = 'rgba(96,255,132,.8)';
+  context.shadowBlur = playing ? (7 + ledBeatPulse * 12) * dpr : 2 * dpr;
+  context.fillStyle = playing ? green : 'rgba(98,255,130,.28)';
   context.beginPath();
   context.moveTo(playX, playY);
-  context.lineTo(playX, playY + 31 * dpr);
-  context.lineTo(playX + 24 * dpr, playY + 15.5 * dpr);
+  context.lineTo(playX, playY + (compact ? 25 : 31) * dpr);
+  context.lineTo(playX + (compact ? 19 : 24) * dpr, playY + (compact ? 12.5 : 15.5) * dpr);
   context.closePath();
   context.fill();
   context.restore();
 
   const elapsed = formatTime(player && Number.isFinite(player.currentTime) ? player.currentTime : 0);
-  const displayTime = elapsed.includes(':')
-    ? elapsed.padStart(compact ? 4 : 5, '0')
-    : `0:${elapsed.padStart(2, '0')}`;
-
   context.save();
   context.textAlign = 'right';
   context.textBaseline = 'middle';
-  context.font = `800 ${compact ? 29 : 46}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  context.letterSpacing = '0.04em';
-  context.shadowColor = 'rgba(86,255,99,.65)';
-  context.shadowBlur = playing ? 14 * dpr : 5 * dpr;
-  context.fillStyle = playing ? green : 'rgba(86,255,99,.48)';
-  context.fillText(
-    displayTime,
-    panelX + panelWidth - 18 * dpr,
-    headerTop + (compact ? 24 : 28) * dpr
-  );
+  context.font = `900 ${compact ? 25 : 43}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  context.shadowColor = 'rgba(86,255,121,.72)';
+  context.shadowBlur = playing ? (10 + totalEnergy * 17 + ledBeatPulse * 9) * dpr : 4 * dpr;
+  context.fillStyle = playing ? green : 'rgba(98,255,130,.43)';
+  context.fillText(elapsed, panelX + panelWidth - 17 * dpr, headerTop + (compact ? 22 : 25) * dpr);
   context.restore();
 
   context.save();
-  context.fillStyle = 'rgba(139,255,155,.42)';
-  context.font = `750 ${compact ? 8 : 10}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  context.fillStyle = `rgba(145,255,167,${playing ? 0.42 + totalEnergy * 0.25 : 0.32})`;
+  context.font = `800 ${compact ? 7 : 9}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
   context.textAlign = 'right';
-  context.fillText(
-    'LED SPECTRUM',
-    panelX + panelWidth - 19 * dpr,
-    headerTop + (compact ? 47 : 56) * dpr
-  );
+  context.fillText('DYNAMIC LED SPECTRUM', panelX + panelWidth - 18 * dpr, headerTop + (compact ? 43 : 53) * dpr);
   context.restore();
 
-  const columns = compact ? 20 : (width > 1500 ? 34 : 28);
-  const segments = compact ? 9 : 12;
-  const chartLeft = panelX + 16 * dpr;
-  const chartRight = panelX + panelWidth - 16 * dpr;
+  const columns = compact ? 22 : (width > 1500 ? 38 : 32);
+  const segments = compact ? 10 : 14;
+  const chartLeft = panelX + 15 * dpr;
+  const chartRight = panelX + panelWidth - 15 * dpr;
   const chartTop = panelY + headerHeight;
   const chartBottom = panelY + panelHeight - 17 * dpr;
-  const chartHeight = Math.max(24 * dpr, chartBottom - chartTop);
-  const columnGap = (compact ? 3 : 4) * dpr;
-  const columnWidth = Math.max(
-    3 * dpr,
-    (chartRight - chartLeft - columnGap * (columns - 1)) / columns
-  );
-  const segmentGap = (compact ? 2.3 : 3) * dpr;
-  const segmentHeight = Math.max(
-    2.5 * dpr,
-    (chartHeight - segmentGap * (segments - 1)) / segments
-  );
+  const chartHeight = Math.max(30 * dpr, chartBottom - chartTop);
+  const columnGap = (compact ? 2.6 : 3.6) * dpr;
+  const columnWidth = Math.max(3 * dpr, (chartRight - chartLeft - columnGap * (columns - 1)) / columns);
+  const segmentGap = (compact ? 2.2 : 2.75) * dpr;
+  const segmentHeight = Math.max(2.35 * dpr, (chartHeight - segmentGap * (segments - 1)) / segments);
 
   if (ledLevels.length !== columns) {
     ledLevels = new Array(columns).fill(0);
+    ledVelocities = new Array(columns).fill(0);
     ledPeaks = new Array(columns).fill(0);
     ledPeakHoldUntil = new Array(columns).fill(0);
   }
+
+  /* Đường chân phổ và phản xạ nhẹ. */
+  const floorGlow = context.createLinearGradient(chartLeft, 0, chartRight, 0);
+  floorGlow.addColorStop(0, 'rgba(53,255,103,0)');
+  floorGlow.addColorStop(0.5, `rgba(86,255,126,${0.13 + ledEnergyTrail * 0.24})`);
+  floorGlow.addColorStop(1, 'rgba(38,233,255,0)');
+  context.fillStyle = floorGlow;
+  context.fillRect(chartLeft, chartBottom + 3 * dpr, chartRight - chartLeft, Math.max(1, dpr));
 
   for (let column = 0; column < columns; column++) {
     const normalized = column / Math.max(1, columns - 1);
     let targetLevel;
 
     if (playing && frequencyData && frequencyData.length) {
-      const curved = Math.pow(normalized, 1.7);
-      const startIndex = Math.min(
-        frequencyData.length - 1,
-        Math.floor(curved * frequencyData.length * 0.78)
-      );
-      const sampleA = frequencyData[startIndex] || 0;
-      const sampleB = frequencyData[Math.min(frequencyData.length - 1, startIndex + 2)] || 0;
-      const sampleC = frequencyData[Math.min(frequencyData.length - 1, startIndex + 5)] || 0;
-      targetLevel = Math.pow(
-        Math.max(sampleA, sampleB * 0.94, sampleC * 0.84) / 255,
-        0.86
-      );
-      targetLevel *= 0.88 + 0.12 * Math.sin(normalized * Math.PI);
+      const curved = Math.pow(normalized, 1.58);
+      const sourcePosition = curved * frequencyData.length * 0.69;
+      const centerIndex = Math.min(frequencyData.length - 1, Math.floor(sourcePosition));
+      let weighted = 0;
+      let weight = 0;
+
+      for (let offset = -2; offset <= 4; offset++) {
+        const index = Math.max(0, Math.min(frequencyData.length - 1, centerIndex + offset));
+        const localWeight = 1 - Math.abs(offset - 0.5) / 7;
+        weighted += (frequencyData[index] / 255) * localWeight;
+        weight += localWeight;
+      }
+
+      targetLevel = Math.pow(weighted / Math.max(0.001, weight), 0.73);
+      const musicalShape = 0.86 + Math.sin(normalized * Math.PI) * 0.14;
+      const shimmer = 1 + Math.sin(seconds * 7.5 + column * 0.62) * trebleEnergy * 0.055;
+      targetLevel = Math.min(1, targetLevel * musicalShape * shimmer + bassEnergy * Math.max(0, 0.11 - normalized * 0.08));
     } else {
-      targetLevel =
-        0.08 +
-        (Math.sin(nowSeconds * 1.3 + column * 0.71) + 1) * 0.025;
+      targetLevel = 0.045 + (Math.sin(seconds * 1.2 + column * 0.67) + 1) * 0.018;
     }
 
-    const previous = ledLevels[column];
-    const response = targetLevel > previous ? 0.44 : 0.12;
-    const smoothLevel = previous + (targetLevel - previous) * response;
+    /* Chuyển động kiểu lò xo: lên nhanh, xuống mềm, không giật cột. */
+    const level = ledLevels[column];
+    const velocity = ledVelocities[column] || 0;
+    const stiffness = targetLevel > level ? 0.29 : 0.105;
+    const damping = targetLevel > level ? 0.63 : 0.77;
+    const nextVelocity = velocity * damping + (targetLevel - level) * stiffness;
+    const smoothLevel = Math.max(0, Math.min(1, level + nextVelocity));
+    ledVelocities[column] = nextVelocity;
     ledLevels[column] = smoothLevel;
 
-    const activeSegments = Math.max(
-      playing ? 1 : 0,
-      Math.min(segments, Math.round(smoothLevel * segments))
-    );
+    const activeSegments = Math.max(playing ? 1 : 0, Math.min(segments, Math.ceil(smoothLevel * segments)));
 
     if (activeSegments >= ledPeaks[column]) {
       ledPeaks[column] = activeSegments;
-      ledPeakHoldUntil[column] = now + 380;
+      ledPeakHoldUntil[column] = now + 330 + bassEnergy * 260;
     } else if (now > ledPeakHoldUntil[column]) {
-      ledPeaks[column] = Math.max(
-        activeSegments,
-        ledPeaks[column] - 0.085
-      );
+      ledPeaks[column] = Math.max(activeSegments, ledPeaks[column] - 0.11);
     }
 
-    const peakSegment = Math.max(
-      0,
-      Math.min(segments - 1, Math.round(ledPeaks[column]) - 1)
-    );
+    const peakSegment = Math.max(0, Math.min(segments - 1, Math.round(ledPeaks[column]) - 1));
     const x = chartLeft + column * (columnWidth + columnGap);
 
     for (let segment = 0; segment < segments; segment++) {
-      const y =
-        chartBottom -
-        (segment + 1) * segmentHeight -
-        segment * segmentGap;
-
+      const y = chartBottom - (segment + 1) * segmentHeight - segment * segmentGap;
       const ratio = (segment + 1) / segments;
       const lit = segment < activeSegments;
       let color;
       let dimColor;
 
-      if (ratio > 0.84) {
-        color = '#ff5c48';
-        dimColor = 'rgba(255,92,72,.095)';
-      } else if (ratio > 0.67) {
-        color = '#d9ff4b';
-        dimColor = 'rgba(217,255,75,.085)';
+      if (ratio > 0.87) {
+        color = column % 3 === 0 ? '#ff4776' : '#ff6250';
+        dimColor = 'rgba(255,82,85,.085)';
+      } else if (ratio > 0.68) {
+        color = '#e9ff51';
+        dimColor = 'rgba(231,255,75,.075)';
+      } else if (ratio < 0.24 && normalized > 0.55) {
+        color = '#30eaff';
+        dimColor = 'rgba(48,234,255,.065)';
       } else {
-        color = segment % 2 ? '#42ef4f' : '#62ff68';
-        dimColor = 'rgba(74,255,89,.075)';
+        color = segment % 2 ? '#44f568' : '#6aff82';
+        dimColor = 'rgba(78,255,112,.062)';
       }
 
+      const brightness = lit ? 0.72 + Math.min(0.28, smoothLevel * 0.32) : 1;
       context.save();
+      context.globalAlpha = brightness;
       context.fillStyle = lit ? color : dimColor;
       if (lit) {
         context.shadowColor = color;
-        context.shadowBlur = (ratio > 0.84 ? 7 : 4) * dpr;
+        context.shadowBlur = (ratio > 0.84 ? 6 + ledBeatPulse * 4 : 3.5 + totalEnergy * 4) * dpr;
       }
 
-      const corner = Math.min(2.2 * dpr, segmentHeight * 0.25);
-      context.beginPath();
-      if (typeof context.roundRect === 'function') {
-        context.roundRect(
-          x,
-          y,
-          columnWidth,
-          segmentHeight,
+      const corner = Math.min(2.2 * dpr, segmentHeight * 0.28);
+      ledRoundedRect(context, x, y, columnWidth, segmentHeight, corner);
+      context.fill();
+
+      if (lit) {
+        context.globalAlpha = 0.34;
+        context.fillStyle = '#ffffff';
+        ledRoundedRect(
+          context,
+          x + columnWidth * 0.16,
+          y + segmentHeight * 0.12,
+          columnWidth * 0.68,
+          Math.max(0.7 * dpr, segmentHeight * 0.16),
           corner
         );
-      } else {
-        context.rect(x, y, columnWidth, segmentHeight);
+        context.fill();
       }
-      context.fill();
       context.restore();
     }
 
     if (playing && ledPeaks[column] > 0) {
-      const peakY =
-        chartBottom -
-        (peakSegment + 1) * segmentHeight -
-        peakSegment * segmentGap;
-
+      const peakY = chartBottom - (peakSegment + 1) * segmentHeight - peakSegment * segmentGap;
+      const peakColor = peakSegment / segments > 0.82 ? '#ff8b75' : '#f3ff83';
       context.save();
-      context.fillStyle =
-        peakSegment / segments > 0.82
-          ? '#ff846e'
-          : '#ecff7a';
-      context.shadowColor = context.fillStyle;
-      context.shadowBlur = 7 * dpr;
-      context.fillRect(
-        x,
-        peakY,
-        columnWidth,
-        Math.max(1.5 * dpr, segmentHeight * 0.28)
-      );
+      context.fillStyle = peakColor;
+      context.shadowColor = peakColor;
+      context.shadowBlur = (6 + ledBeatPulse * 7) * dpr;
+      ledRoundedRect(context, x, peakY, columnWidth, Math.max(1.45 * dpr, segmentHeight * 0.24), 1.2 * dpr);
+      context.fill();
       context.restore();
     }
+  }
+
+  /* Hạt sáng rất nhẹ xuất hiện theo nhịp, không dùng random để tránh nhấp nháy. */
+  if (playing && ledBeatPulse > 0.08) {
+    context.save();
+    for (let particle = 0; particle < (compact ? 4 : 7); particle++) {
+      const phase = seconds * (0.38 + particle * 0.028) + particle * 1.73;
+      const px = chartLeft + ((Math.sin(phase) + 1) * 0.5) * (chartRight - chartLeft);
+      const py = chartTop + ((Math.cos(phase * 1.31) + 1) * 0.5) * chartHeight * 0.72;
+      const alpha = ledBeatPulse * (0.05 + (particle % 3) * 0.025);
+      context.fillStyle = `rgba(${particle % 2 ? '86,255,128' : '48,234,255'},${alpha})`;
+      context.shadowColor = context.fillStyle;
+      context.shadowBlur = 8 * dpr;
+      context.beginPath();
+      context.arc(px, py, (0.7 + particle % 2 * 0.45) * dpr, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.restore();
   }
 
   context.restore();
 
   context.save();
   context.strokeStyle = playing
-    ? 'rgba(93,255,111,.34)'
-    : 'rgba(93,255,111,.17)';
+    ? `rgba(102,255,139,${0.24 + ledEnergyTrail * 0.28 + ledBeatPulse * 0.16})`
+    : 'rgba(93,255,111,.14)';
   context.lineWidth = dpr;
-  context.beginPath();
-  if (typeof context.roundRect === 'function') {
-    context.roundRect(
-      panelX + 0.5 * dpr,
-      panelY + 0.5 * dpr,
-      panelWidth - dpr,
-      panelHeight - dpr,
-      radius
-    );
-  } else {
-    context.rect(panelX, panelY, panelWidth, panelHeight);
-  }
+  ledRoundedRect(context, panelX + 0.5 * dpr, panelY + 0.5 * dpr, panelWidth - dpr, panelHeight - dpr, radius);
   context.stroke();
   context.restore();
 }
+
 // ========================
 
 // (CÁC HÀM CÒN LẠI ĐƯỢC GIỮ NGUYÊN ĐỂ HOẠT ĐỘNG LOGIC, đã ẩn bớt độ dài để hiển thị code gọn gàng)
