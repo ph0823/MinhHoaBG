@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc Nhi hư - v2.5 dual visualizer</title>
+<title>Trình nhạc Nhi hư - v2.6 playback-safe</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -577,6 +577,9 @@ const MSE_MIME = 'audio/mpeg';
 const NEXT_PRELOAD_DELAY_MS = IS_TV_DEVICE ? 320 : IS_MOBILE_DEVICE ? 380 : 180;
 const NEXT_PRELOAD_URGENT_SECONDS = 40;
 const CROSSFADE_MS = IS_TV_DEVICE ? 420 : IS_MOBILE_DEVICE ? 560 : 760;
+const MANUAL_SWITCH_FADE_MS = IS_TV_DEVICE ? 120 : IS_MOBILE_DEVICE ? 150 : 180;
+const PLAYBACK_START_TIMEOUT_MS = IS_TV_DEVICE ? 5200 : IS_MOBILE_DEVICE ? 4200 : 3200;
+const CROSSFADE_FAILSAFE_PADDING_MS = 360;
 /*
  * Kiểm tra chuyển bài độc lập với UI. Khoảng dự phòng nhỏ này bù cho
  * độ trễ play() nhưng không cắt mất phần đuôi bài hát quá sớm.
@@ -683,7 +686,8 @@ let standbyState = {
   playerIndex: -1,
   mode: '',
   url: '',
-  controller: null
+  controller: null,
+  ownerToken: 0
 };
 
 const fileInfoCache = new Map();
@@ -696,12 +700,277 @@ let preloadTimer = 0;
 let transitionInProgress = false;
 let transitionToken = 0;
 let transitionMonitorTimer = 0;
+const playerOwnerTokens = [0, 0];
+let playerOwnerSeed = 0;
 
 class RetryableRequestError extends Error { constructor(message, status = 0) { super(message); this.name = 'RetryableRequestError'; this.status = status; } }
 
 document.addEventListener('DOMContentLoaded', init);
 function activeAudio() { return players[activePlayerIndex]; }
 function standbyAudio() { return players[1 - activePlayerIndex]; }
+
+function clampAudioLevel(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function claimPlayer(index) {
+  const token = ++playerOwnerSeed;
+  playerOwnerTokens[index] = token;
+  return token;
+}
+
+function isPlayerOwner(index, token) {
+  return Boolean(
+    token &&
+    playerOwnerTokens[index] === token
+  );
+}
+
+function throwIfPlayerOwnerLost(
+  index,
+  token
+) {
+  if (
+    token &&
+    !isPlayerOwner(index, token)
+  ) {
+    throw createAbortError();
+  }
+}
+
+function setPlayerOutputLevel(index, value) {
+  const player = players[index];
+  if (!player) return;
+
+  const level = clampAudioLevel(value);
+  const gainNode =
+    mediaSourceNodes[index] &&
+    mediaSourceNodes[index].gain;
+
+  if (audioContext && gainNode) {
+    try {
+      /*
+       * Khi audio đã đi qua Web Audio, dùng GainNode làm nguồn sự thật
+       * duy nhất. Cách này ổn định hơn player.volume trên TV và Safari.
+       */
+      player.volume = 1;
+      const now = audioContext.currentTime;
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.setValueAtTime(level, now);
+      return;
+    } catch (_) {}
+  }
+
+  try {
+    player.volume = level;
+  } catch (_) {}
+}
+
+function rampPlayerOutputLevel(
+  index,
+  target,
+  durationMs
+) {
+  const player = players[index];
+  const gainNode =
+    mediaSourceNodes[index] &&
+    mediaSourceNodes[index].gain;
+
+  if (
+    !player ||
+    !audioContext ||
+    !gainNode
+  ) {
+    return false;
+  }
+
+  try {
+    player.volume = 1;
+
+    const now = audioContext.currentTime;
+    const end =
+      now + Math.max(0, durationMs) / 1000;
+
+    gainNode.gain.cancelScheduledValues(now);
+    gainNode.gain.setValueAtTime(
+      clampAudioLevel(gainNode.gain.value),
+      now
+    );
+    gainNode.gain.linearRampToValueAtTime(
+      clampAudioLevel(target),
+      end
+    );
+
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function releasePlayerIfOwned(
+  index,
+  ownerToken,
+  revokeUrl = true
+) {
+  if (!isPlayerOwner(index, ownerToken)) {
+    return false;
+  }
+
+  claimPlayer(index);
+  releasePlayer(index, revokeUrl);
+  return true;
+}
+
+function invalidateAndReleasePlayer(
+  index,
+  revokeUrl = true
+) {
+  claimPlayer(index);
+  releasePlayer(index, revokeUrl);
+}
+
+function stopUnexpectedPlayers(
+  keepIndex = activePlayerIndex
+) {
+  players.forEach((player, index) => {
+    if (index === keepIndex) return;
+
+    if (
+      player.src ||
+      !player.paused ||
+      playerStreamSessions[index]
+    ) {
+      invalidateAndReleasePlayer(index, true);
+    }
+  });
+}
+
+function cancelTransitionKeepCurrent() {
+  ++transitionToken;
+  transitionInProgress = false;
+
+  stopUnexpectedPlayers(activePlayerIndex);
+
+  if (
+    activeAudio().src &&
+    !activeAudio().ended
+  ) {
+    setPlayerOutputLevel(
+      activePlayerIndex,
+      getUserVolume()
+    );
+  }
+}
+
+function waitForPlaybackStart(
+  player,
+  signal,
+  timeoutMs = PLAYBACK_START_TIMEOUT_MS
+) {
+  if (
+    !player.paused &&
+    player.readyState >= 3
+  ) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const startedAt =
+      Number(player.currentTime || 0);
+
+    const cleanup = () => {
+      clearInterval(pollTimer);
+      clearTimeout(timeoutTimer);
+      player.removeEventListener(
+        'playing',
+        onPlaying
+      );
+      player.removeEventListener(
+        'error',
+        onError
+      );
+
+      if (signal) {
+        signal.removeEventListener(
+          'abort',
+          onAbort
+        );
+      }
+    };
+
+    const finish = error => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    };
+
+    const onPlaying = () => finish();
+    const onError = () => finish(
+      new Error(
+        'Bài mới chưa thể bắt đầu phát.'
+      )
+    );
+    const onAbort = () =>
+      finish(createAbortError());
+
+    const pollTimer = window.setInterval(
+      () => {
+        if (
+          !player.paused &&
+          (
+            player.readyState >= 3 ||
+            Number(player.currentTime || 0) >
+              startedAt + 0.015
+          )
+        ) {
+          finish();
+        }
+      },
+      40
+    );
+
+    const timeoutTimer = window.setTimeout(
+      () => finish(
+        new Error(
+          'Bài mới chưa phát sau thời gian chờ.'
+        )
+      ),
+      timeoutMs
+    );
+
+    player.addEventListener(
+      'playing',
+      onPlaying,
+      { once: true }
+    );
+
+    player.addEventListener(
+      'error',
+      onError,
+      { once: true }
+    );
+
+    if (signal) {
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+
+      signal.addEventListener(
+        'abort',
+        onAbort,
+        { once: true }
+      );
+    }
+  });
+}
 
 function init() {
   bindEvents(); restorePreferences(); configurePlayers();
@@ -744,10 +1013,22 @@ async function ensureAudioEffects() {
       wetGainNode.connect(masterGainNode);
       masterGainNode.connect(audioContext.destination);
 
-      mediaSourceNodes = players.map(player => {
+      mediaSourceNodes = players.map((player, index) => {
         const source = audioContext.createMediaElementSource(player);
-        const gain = audioContext.createGain(); gain.gain.value = 1;
-        
+        const gain = audioContext.createGain();
+
+        /*
+         * Mỗi audio element có gain riêng. Player đang hoạt động được mở,
+         * player chờ luôn bằng 0 để không thể rò âm của bài cũ/bài kế tiếp.
+         */
+        player.volume = 1;
+        gain.gain.value =
+          index === activePlayerIndex &&
+          player.src &&
+          !player.ended
+            ? getUserVolume()
+            : 0;
+
         // CẮM ANALYSER TRỰC TIẾP VÀO SOURCE RAW[cite: 5]
         source.connect(analyserNode); 
         source.connect(gain);
@@ -1358,12 +1639,19 @@ function bindEvents() {
     const volume = getUserVolume();
 
     if (!transitionInProgress) {
-      activeAudio().volume = volume;
+      setPlayerOutputLevel(
+        activePlayerIndex,
+        volume
+      );
 
-      const standby = standbyAudio();
-      if (!standbyState.ready) {
-        standby.volume = volume;
-      }
+      /*
+       * Player không hoạt động phải luôn im lặng. Bản cũ đặt cùng âm lượng
+       * cho standby nên một luồng phát sót có thể làm lộ tiếng bài cũ.
+       */
+      setPlayerOutputLevel(
+        1 - activePlayerIndex,
+        0
+      );
     }
 
     localStorage.setItem(
@@ -2269,6 +2557,11 @@ function releasePlayer(
 ) {
   const player = players[index];
 
+  /*
+   * Tắt gain trước khi pause/remove src để không còn một frame âm thanh
+   * rò ra từ player cũ trên thiết bị xử lý chậm.
+   */
+  setPlayerOutputLevel(index, 0);
   stopPlayerStreamSession(index);
 
   try {
@@ -3152,7 +3445,14 @@ async function streamRemainingTrack(
   try {
     while (
       index < session.info.totalChunks &&
-      !session.cancelled
+      !session.cancelled &&
+      (
+        !session.ownerToken ||
+        isPlayerOwner(
+          session.playerIndex,
+          session.ownerToken
+        )
+      )
     ) {
       await waitForProgressiveBufferRoom(
         session
@@ -3191,7 +3491,16 @@ async function streamRemainingTrack(
         offset < chunks.length;
         offset++
       ) {
-        if (session.cancelled) {
+        if (
+          session.cancelled ||
+          (
+            session.ownerToken &&
+            !isPlayerOwner(
+              session.playerIndex,
+              session.ownerToken
+            )
+          )
+        ) {
           throw createAbortError();
         }
 
@@ -3217,6 +3526,13 @@ async function streamRemainingTrack(
 
     if (
       !session.cancelled &&
+      (
+        !session.ownerToken ||
+        isPlayerOwner(
+          session.playerIndex,
+          session.ownerToken
+        )
+      ) &&
       session.mediaSource.readyState === 'open'
     ) {
       await waitForSourceBufferIdle(
@@ -3245,6 +3561,16 @@ async function streamRemainingTrack(
       try {
         session.mediaSource.endOfStream();
       } catch (_) {}
+    }
+
+    if (
+      session.ownerToken &&
+      !isPlayerOwner(
+        session.playerIndex,
+        session.ownerToken
+      )
+    ) {
+      throw createAbortError();
     }
 
     session.completed = true;
@@ -3283,9 +3609,26 @@ async function prepareProgressivePlayer(
   const signal =
     controller.signal;
 
+  const ownerToken =
+    options.ownerToken || 0;
+
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
+  /*
+   * Synchronous release is safe only after the owner check. A newer
+   * request that claims this slot will make every later check abort.
+   */
   releasePlayer(
     playerIndex,
     true
+  );
+
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
   );
 
   const player =
@@ -3311,6 +3654,11 @@ async function prepareProgressivePlayer(
     12000
   );
 
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   const sourceBuffer =
     mediaSource.addSourceBuffer(
       MSE_MIME
@@ -3331,6 +3679,7 @@ async function prepareProgressivePlayer(
     mediaSource,
     sourceBuffer,
     url,
+    ownerToken,
     loadedChunks: 0,
     completed: false,
     cancelled: false,
@@ -3352,6 +3701,11 @@ async function prepareProgressivePlayer(
     index < initialCount;
     index++
   ) {
+    throwIfPlayerOwnerLost(
+      playerIndex,
+      ownerToken
+    );
+
     const bytes =
       await fetchTrackChunkResilient(
         file,
@@ -3359,6 +3713,11 @@ async function prepareProgressivePlayer(
         index,
         signal
       );
+
+    throwIfPlayerOwnerLost(
+      playerIndex,
+      ownerToken
+    );
 
     if (index === 0) {
       const estimatedDuration =
@@ -3382,6 +3741,11 @@ async function prepareProgressivePlayer(
     await appendProgressiveChunk(
       session,
       bytes
+    );
+
+    throwIfPlayerOwnerLost(
+      playerIndex,
+      ownerToken
     );
 
     session.loadedChunks++;
@@ -3411,6 +3775,11 @@ async function prepareProgressivePlayer(
     signal
   );
 
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   if (options.autoplay) {
     try {
       await player.play();
@@ -3422,11 +3791,17 @@ async function prepareProgressivePlayer(
     }
   }
 
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   return {
     mode: 'progressive',
     info,
     url,
-    session
+    session,
+    ownerToken
   };
 }
 
@@ -3485,6 +3860,14 @@ async function prepareTrackPlayer(
   controller,
   options = {}
 ) {
+  const ownerToken =
+    options.ownerToken || 0;
+
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   if (canUseProgressiveStreaming(info)) {
     try {
       return await prepareProgressivePlayer(
@@ -3499,9 +3882,14 @@ async function prepareTrackPlayer(
         throw error;
       }
 
+      throwIfPlayerOwnerLost(
+        playerIndex,
+        ownerToken
+      );
+
       /*
-       * Nếu MediaSource không tương thích với file MP3 cụ thể, tự động
-       * quay về tải đủ file để bảo đảm vẫn phát được.
+       * Chỉ request còn sở hữu player mới được phép dọn MediaSource.
+       * Callback cũ tuyệt đối không được xóa src của lần chọn mới hơn.
        */
       releasePlayer(
         playerIndex,
@@ -3528,6 +3916,11 @@ async function prepareTrackPlayer(
       }
     );
 
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   assignPlayerUrl(
     playerIndex,
     result.url
@@ -3543,11 +3936,17 @@ async function prepareTrackPlayer(
     controller.signal
   );
 
+  throwIfPlayerOwnerLost(
+    playerIndex,
+    ownerToken
+  );
+
   return {
     mode: 'blob',
     info: result.info,
     url: result.url,
-    session: null
+    session: null,
+    ownerToken
   };
 }
 
@@ -3904,41 +4303,70 @@ async function openAudio(
   file,
   options = {}
 ) {
+  if (!file || !file.id) return;
+
   const autoplay =
     options.autoplay !== false;
 
   shouldBePlaying = autoplay;
 
+  /*
+   * Chỉ coi bài là đang hoạt động khi file id và player thực tế cùng khớp.
+   * Không đổi tiêu đề trước khi player mới đã bắt đầu và player cũ đã tắt.
+   */
   if (
     file.id === activeFileId &&
-    activeAudio().src
+    activeAudio().src &&
+    !transitionInProgress
   ) {
     if (autoplay) {
+      setPlayerOutputLevel(
+        activePlayerIndex,
+        getUserVolume()
+      );
       await activeAudio().play();
     }
 
     return;
   }
 
+  /*
+   * Nếu đúng bài đã preload thì dùng luôn, nhưng vẫn đi qua quy trình
+   * chuyển đổi có xác nhận playback và khóa owner.
+   */
   if (
+    !transitionInProgress &&
     standbyState.ready &&
     standbyState.track &&
     standbyState.track.id === file.id
   ) {
-    await activateStandby(
-      file,
-      autoplay,
-      true
-    );
+    const activated =
+      await activateStandby(
+        file,
+        autoplay,
+        true,
+        true
+      );
 
-    return;
+    if (activated) {
+      return;
+    }
   }
 
   const requestToken = ++loadToken;
 
   if (manualLoadController) {
-    manualLoadController.abort();
+    try {
+      manualLoadController.abort();
+    } catch (_) {}
   }
+
+  /*
+   * Hủy fade cũ và dọn mọi player không phải player đang được công nhận.
+   * Đây là lớp bảo vệ chống hai bài cùng phát sau thao tác chọn liên tiếp.
+   */
+  cancelTransitionKeepCurrent();
+  clearStandby();
 
   manualLoadController =
     new AbortController();
@@ -3955,14 +4383,22 @@ async function openAudio(
       !activeAudio().ended
     );
 
+  const oldActiveIndex =
+    activePlayerIndex;
+
   const targetIndex =
     hasCurrentAudio
-      ? 1 - activePlayerIndex
-      : activePlayerIndex;
+      ? 1 - oldActiveIndex
+      : oldActiveIndex;
+
+  /*
+   * Mỗi lần dùng một player đều nhận owner token mới. Callback cũ chỉ
+   * được phép dọn player khi token vẫn còn thuộc về nó.
+   */
+  const targetOwner =
+    claimPlayer(targetIndex);
 
   if (hasCurrentAudio) {
-    clearStandby();
-
     standbyState = {
       token: standbyState.token + 1,
       track: file,
@@ -3972,11 +4408,12 @@ async function openAudio(
       playerIndex: targetIndex,
       mode: '',
       url: '',
-      controller
+      controller,
+      ownerToken: targetOwner
     };
 
     showMode(
-      `Đang lấy phần đầu “${file.name}” • sẽ chuyển ngay khi đủ dữ liệu`
+      `Đang lấy phần đầu “${file.name}” • bài hiện tại sẽ dừng ngay khi bài mới phát`
     );
   } else {
     resetTimeDisplay();
@@ -3991,17 +4428,12 @@ async function openAudio(
   }
 
   try {
-    const targetPlayer =
-      players[targetIndex];
-
-    /*
-     * Đặt âm lượng trước khi chuẩn bị nguồn. Chunk đầu sẵn sàng là player
-     * có thể phát ngay, không phải đợi các bước cập nhật giao diện.
-     */
-    targetPlayer.volume =
+    setPlayerOutputLevel(
+      targetIndex,
       hasCurrentAudio
         ? 0
-        : getUserVolume();
+        : getUserVolume()
+    );
 
     const info =
       await getFileInfoCached(
@@ -4021,6 +4453,9 @@ async function openAudio(
               ? PRELOAD_CONCURRENCY
               : DOWNLOAD_CONCURRENCY,
 
+          ownerToken:
+            targetOwner,
+
           autoplay:
             autoplay &&
             !hasCurrentAudio,
@@ -4033,7 +4468,11 @@ async function openAudio(
               background
             ) => {
               if (
-                requestToken !== loadToken
+                requestToken !== loadToken ||
+                !isPlayerOwner(
+                  targetIndex,
+                  targetOwner
+                )
               ) {
                 return;
               }
@@ -4091,34 +4530,109 @@ async function openAudio(
 
     if (
       requestToken !== loadToken ||
-      signal.aborted
-    ) {
-      releasePlayer(
+      signal.aborted ||
+      !isPlayerOwner(
         targetIndex,
+        targetOwner
+      )
+    ) {
+      releasePlayerIfOwned(
+        targetIndex,
+        targetOwner,
         true
       );
-
       return;
     }
 
     if (hasCurrentAudio) {
+      /*
+       * Chỉ cập nhật standby nếu request này vẫn là request mới nhất.
+       */
+      if (
+        standbyState.controller !== controller ||
+        standbyState.ownerToken !== targetOwner
+      ) {
+        releasePlayerIfOwned(
+          targetIndex,
+          targetOwner,
+          true
+        );
+        return;
+      }
+
       standbyState.info = info;
       standbyState.ready = true;
       standbyState.loading = false;
       standbyState.mode =
         prepared.mode;
-
       standbyState.url =
         prepared.url;
 
       setLoading(false);
 
-      await activateStandby(
-        file,
-        autoplay,
-        true
-      );
+      const activated =
+        await activateStandby(
+          file,
+          autoplay,
+          true,
+          true
+        );
+
+      if (
+        !activated &&
+        requestToken === loadToken &&
+        !signal.aborted
+      ) {
+        throw new Error(
+          'Bài mới đã tải nhưng chưa thể thay thế bài đang phát.'
+        );
+      }
     } else {
+      const targetPlayer =
+        players[targetIndex];
+
+      restoreTrackPosition(
+        file,
+        targetPlayer
+      );
+
+      if (autoplay) {
+        if (targetPlayer.paused) {
+          await targetPlayer.play();
+        }
+
+        await waitForPlaybackStart(
+          targetPlayer,
+          signal
+        );
+      }
+
+      if (
+        requestToken !== loadToken ||
+        signal.aborted ||
+        !isPlayerOwner(
+          targetIndex,
+          targetOwner
+        )
+      ) {
+        releasePlayerIfOwned(
+          targetIndex,
+          targetOwner,
+          true
+        );
+        return;
+      }
+
+      activePlayerIndex =
+        targetIndex;
+
+      setPlayerOutputLevel(
+        targetIndex,
+        autoplay
+          ? getUserVolume()
+          : 0
+      );
+
       updateCurrentTrackUi(
         file,
         info
@@ -4128,18 +4642,6 @@ async function openAudio(
       els.seek.disabled = false;
 
       setLoading(false);
-
-      restoreTrackPosition(
-        file,
-        targetPlayer
-      );
-
-      if (
-        autoplay &&
-        targetPlayer.paused
-      ) {
-        await targetPlayer.play();
-      }
 
       showMode(
         prepared.mode === 'progressive'
@@ -4151,11 +4653,36 @@ async function openAudio(
       scheduleNextPreload();
     }
   } catch (error) {
+    releasePlayerIfOwned(
+      targetIndex,
+      targetOwner,
+      true
+    );
+
+    if (
+      hasCurrentAudio &&
+      oldActiveIndex ===
+        activePlayerIndex &&
+      activeAudio().src
+    ) {
+      setPlayerOutputLevel(
+        oldActiveIndex,
+        getUserVolume()
+      );
+    }
+
     if (isAbortError(error)) {
       return;
     }
 
-    standbyState.loading = false;
+    if (
+      standbyState.controller ===
+      controller
+    ) {
+      standbyState.loading = false;
+      standbyState.ready = false;
+    }
+
     setLoading(false);
 
     els.play.disabled =
@@ -4253,6 +4780,14 @@ async function prepareNextTrack(
   const targetIndex =
     1 - activePlayerIndex;
 
+  const ownerToken =
+    claimPlayer(targetIndex);
+
+  setPlayerOutputLevel(
+    targetIndex,
+    0
+  );
+
   standbyState = {
     token,
     track: nextTrack,
@@ -4262,7 +4797,8 @@ async function prepareNextTrack(
     playerIndex: targetIndex,
     mode: '',
     url: '',
-    controller
+    controller,
+    ownerToken
   };
 
   updateNetworkDiagnostics();
@@ -4286,6 +4822,8 @@ async function prepareNextTrack(
               ? DOWNLOAD_CONCURRENCY
               : PRELOAD_CONCURRENCY,
 
+          ownerToken,
+
           onProgress:
             (
               completed,
@@ -4295,7 +4833,11 @@ async function prepareNextTrack(
             ) => {
               if (
                 token !==
-                standbyState.token
+                  standbyState.token ||
+                !isPlayerOwner(
+                  targetIndex,
+                  ownerToken
+                )
               ) {
                 return;
               }
@@ -4319,28 +4861,30 @@ async function prepareNextTrack(
 
     if (
       token !== standbyState.token ||
-      controller.signal.aborted
-    ) {
-      releasePlayer(
+      controller.signal.aborted ||
+      !isPlayerOwner(
         targetIndex,
+        ownerToken
+      )
+    ) {
+      releasePlayerIfOwned(
+        targetIndex,
+        ownerToken,
         true
       );
-
       return;
     }
 
-    const player =
-      players[targetIndex];
-
-    player.volume = 0;
+    setPlayerOutputLevel(
+      targetIndex,
+      0
+    );
 
     standbyState.info = info;
     standbyState.url =
       prepared.url;
-
     standbyState.mode =
       prepared.mode;
-
     standbyState.ready = true;
     standbyState.loading = false;
 
@@ -4370,12 +4914,23 @@ async function prepareNextTrack(
       startSeamlessNext();
     }
   } catch (error) {
+    releasePlayerIfOwned(
+      targetIndex,
+      ownerToken,
+      true
+    );
+
+    if (
+      standbyState.token === token &&
+      standbyState.controller === controller
+    ) {
+      standbyState.loading = false;
+      standbyState.ready = false;
+    }
+
     if (isAbortError(error)) {
       return;
     }
-
-    standbyState.loading = false;
-    standbyState.ready = false;
 
     showMode(
       'Chưa thể nạp bài kế tiếp • sẽ tự thử lại'
@@ -4388,26 +4943,52 @@ async function prepareNextTrack(
 async function activateStandby(
   track,
   autoplay = true,
-  smooth = true
+  smooth = true,
+  manualSelection = false
 ) {
+  const newIndex =
+    standbyState.playerIndex;
+
+  const ownerToken =
+    standbyState.ownerToken;
+
   if (
     transitionInProgress ||
     !standbyState.ready ||
     !standbyState.track ||
-    standbyState.track.id !== track.id
+    standbyState.track.id !== track.id ||
+    newIndex < 0 ||
+    newIndex === activePlayerIndex ||
+    !isPlayerOwner(
+      newIndex,
+      ownerToken
+    )
   ) {
     return false;
   }
 
+  /*
+   * Chụp lại toàn bộ trạng thái. Các callback tải cũ không được phép
+   * ghi đè hoặc giải phóng player của một lần chọn mới hơn.
+   */
+  const pending = {
+    token: standbyState.token,
+    track: standbyState.track,
+    info: standbyState.info,
+    playerIndex: newIndex,
+    mode: standbyState.mode,
+    url: standbyState.url,
+    controller: standbyState.controller,
+    ownerToken
+  };
+
   transitionInProgress = true;
+
   const localTransitionToken =
     ++transitionToken;
 
   const oldIndex =
     activePlayerIndex;
-
-  const newIndex =
-    standbyState.playerIndex;
 
   const oldPlayer =
     players[oldIndex];
@@ -4415,16 +4996,43 @@ async function activateStandby(
   const newPlayer =
     players[newIndex];
 
-  const info =
-    standbyState.info;
-
   const baseVolume =
     getUserVolume();
 
   try {
     applyPlayerPreferences(newPlayer);
     newPlayer.currentTime = 0;
-    newPlayer.volume = 0;
+
+    setPlayerOutputLevel(
+      newIndex,
+      0
+    );
+
+    if (autoplay) {
+      await newPlayer.play();
+
+      /*
+       * play() resolve chưa luôn đồng nghĩa đã có frame âm thanh. Chờ
+       * playing/currentTime để không đổi tiêu đề trong khi bài cũ còn kêu.
+       */
+      await waitForPlaybackStart(
+        newPlayer,
+        pending.controller
+          ? pending.controller.signal
+          : undefined
+      );
+    }
+
+    if (
+      localTransitionToken !==
+        transitionToken ||
+      !isPlayerOwner(
+        newIndex,
+        ownerToken
+      )
+    ) {
+      throw createAbortError();
+    }
 
     const canCrossfade =
       autoplay &&
@@ -4434,73 +5042,97 @@ async function activateStandby(
 
     const fadeDuration =
       canCrossfade
-        ? CROSSFADE_MS
+        ? (
+            manualSelection
+              ? Math.min(
+                  MANUAL_SWITCH_FADE_MS,
+                  CROSSFADE_MS
+                )
+              : CROSSFADE_MS
+          )
         : 0;
 
     if (autoplay) {
-      /*
-       * Đợi player mới thực sự vào trạng thái phát trong khi player cũ
-       * vẫn tiếp tục. Nhờ vậy độ trễ giải mã không biến thành khoảng im.
-       */
-      await newPlayer.play();
+      const completed =
+        await crossfadePlayers(
+          oldIndex,
+          newIndex,
+          fadeDuration,
+          baseVolume,
+          localTransitionToken
+        );
+
+      if (!completed) {
+        throw createAbortError();
+      }
+    } else {
+      setPlayerOutputLevel(
+        oldIndex,
+        0
+      );
+      setPlayerOutputLevel(
+        newIndex,
+        0
+      );
+    }
+
+    if (
+      localTransitionToken !==
+        transitionToken ||
+      !isPlayerOwner(
+        newIndex,
+        ownerToken
+      )
+    ) {
+      throw createAbortError();
     }
 
     /*
-     * Khởi động đường cong âm lượng trước các thao tác DOM. Bản cũ dựng
-     * lại danh sách và metadata trước khi fade nên TV/điện thoại chậm có
-     * thể tạo ra một khoảng lặng dễ nghe thấy.
+     * Dừng tuyệt đối player cũ trước, rồi mới công bố bài mới trên UI.
+     * Nhờ vậy tên bài, thanh thời gian và âm thanh luôn cùng một nguồn.
      */
-    const fadePromise =
-      autoplay
-        ? crossfadePlayers(
-            oldPlayer,
-            newPlayer,
-            fadeDuration,
-            baseVolume,
-            localTransitionToken
-          )
-        : Promise.resolve();
+    invalidateAndReleasePlayer(
+      oldIndex,
+      true
+    );
 
     activePlayerIndex = newIndex;
     shouldBePlaying = autoplay;
 
-    updateCurrentTrackUi(
-      track,
-      info
+    setPlayerOutputLevel(
+      newIndex,
+      autoplay
+        ? baseVolume
+        : 0
     );
 
     resetTimeDisplay();
-    updateMetadata();
 
-    if (!autoplay) {
-      newPlayer.volume = baseVolume;
-    }
-
-    await fadePromise;
+    updateCurrentTrackUi(
+      track,
+      pending.info
+    );
 
     if (
-      localTransitionToken !==
-      transitionToken
+      standbyState.token ===
+        pending.token &&
+      standbyState.ownerToken ===
+        ownerToken
     ) {
-      return false;
+      standbyState = {
+        token:
+          standbyState.token + 1,
+        track: null,
+        info: null,
+        ready: false,
+        loading: false,
+        playerIndex: -1,
+        mode: '',
+        url: '',
+        controller: null,
+        ownerToken: 0
+      };
     }
-
-    oldPlayer.pause();
-    releasePlayer(oldIndex, true);
-
-    newPlayer.volume = baseVolume;
-
-    standbyState = {
-      token: standbyState.token + 1,
-      track: null,
-      info: null,
-      ready: false,
-      loading: false,
-      playerIndex: -1,
-      mode: '',
-      url: '',
-      controller: null
-    };
 
     els.play.textContent =
       autoplay
@@ -4520,91 +5152,235 @@ async function activateStandby(
     return true;
   } catch (error) {
     /*
-     * Nếu player mới chưa chạy được, giữ nguyên player cũ và âm lượng
-     * thay vì vô tình để cả hai ở mức 0.
+     * Nếu bài mới chưa thực sự phát, giữ nguyên bài cũ và không đổi tên.
+     * Player mới chỉ được dọn nếu owner token vẫn còn thuộc lần này.
      */
-    oldPlayer.volume = baseVolume;
-    newPlayer.volume = 0;
+    if (
+      oldIndex === activePlayerIndex &&
+      oldPlayer.src &&
+      !oldPlayer.ended
+    ) {
+      setPlayerOutputLevel(
+        oldIndex,
+        baseVolume
+      );
+    }
 
-    showToast(
-      'Không thể chuyển sang bài kế tiếp: ' +
-      error.message,
+    setPlayerOutputLevel(
+      newIndex,
+      0
+    );
+
+    try {
+      newPlayer.pause();
+    } catch (_) {}
+
+    releasePlayerIfOwned(
+      newIndex,
+      ownerToken,
       true
     );
 
+    if (!isAbortError(error)) {
+      showToast(
+        'Không thể chuyển sang bài đã chọn: ' +
+        error.message,
+        true
+      );
+    }
+
     return false;
   } finally {
-    transitionInProgress = false;
+    if (
+      localTransitionToken ===
+      transitionToken
+    ) {
+      transitionInProgress = false;
+    }
   }
 }
 
 function crossfadePlayers(
-  oldPlayer,
-  newPlayer,
+  oldIndex,
+  newIndex,
   durationMs,
   baseVolume,
   token
 ) {
+  const oldPlayer =
+    players[oldIndex];
+
+  const newPlayer =
+    players[newIndex];
+
+  const duration =
+    Math.max(0, Number(durationMs) || 0);
+
   if (
-    durationMs <= 0 ||
-    oldPlayer.paused
+    duration <= 0 ||
+    oldPlayer.paused ||
+    oldPlayer.ended
   ) {
-    oldPlayer.volume = 0;
-    newPlayer.volume = baseVolume;
-    return Promise.resolve();
+    setPlayerOutputLevel(
+      oldIndex,
+      0
+    );
+    setPlayerOutputLevel(
+      newIndex,
+      baseVolume
+    );
+    return Promise.resolve(
+      token === transitionToken
+    );
   }
 
+  setPlayerOutputLevel(
+    oldIndex,
+    baseVolume
+  );
+  setPlayerOutputLevel(
+    newIndex,
+    0
+  );
+
+  /*
+   * Ưu tiên ramp trên AudioContext: nó chạy ở audio thread nên không bị
+   * kẹt khi requestAnimationFrame chậm hoặc tab/TV giảm tần số vẽ.
+   */
+  const audioRampStarted =
+    rampPlayerOutputLevel(
+      oldIndex,
+      0,
+      duration
+    ) &&
+    rampPlayerOutputLevel(
+      newIndex,
+      baseVolume,
+      duration
+    );
+
+  if (audioRampStarted) {
+    return new Promise(resolve => {
+      window.setTimeout(
+        () => {
+          const valid =
+            token === transitionToken;
+
+          if (valid) {
+            setPlayerOutputLevel(
+              oldIndex,
+              0
+            );
+            setPlayerOutputLevel(
+              newIndex,
+              baseVolume
+            );
+          }
+
+          resolve(valid);
+        },
+        duration + 36
+      );
+    });
+  }
+
+  /*
+   * Fallback cho thiết bị không có Web Audio. Có failsafe độc lập để
+   * callback vẽ bị lỗi cũng không khiến bài cũ phát vô hạn.
+   */
   return new Promise(resolve => {
+    let settled = false;
+    let frameId = 0;
+
     const startedAt =
       performance.now();
 
+    const finish = valid => {
+      if (settled) return;
+      settled = true;
+
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+
+      clearTimeout(failsafeTimer);
+
+      if (valid) {
+        setPlayerOutputLevel(
+          oldIndex,
+          0
+        );
+        setPlayerOutputLevel(
+          newIndex,
+          baseVolume
+        );
+      }
+
+      resolve(valid);
+    };
+
     const frame = now => {
       if (token !== transitionToken) {
-        resolve();
+        finish(false);
         return;
       }
 
-      const progress =
-        Math.min(
-          1,
-          (now - startedAt) /
-          durationMs
+      try {
+        const progress =
+          Math.min(
+            1,
+            (now - startedAt) /
+              duration
+          );
+
+        const oldGain =
+          Math.cos(
+            progress *
+            Math.PI /
+            2
+          );
+
+        const newGain =
+          Math.sin(
+            progress *
+            Math.PI /
+            2
+          );
+
+        setPlayerOutputLevel(
+          oldIndex,
+          baseVolume * oldGain
         );
 
-      /*
-       * Đường cong equal-power giúp âm lượng tổng không bị hụt giữa
-       * hai bài trong quá trình chồng âm.
-       */
-      const oldGain =
-        Math.cos(
-          progress *
-          Math.PI /
-          2
+        setPlayerOutputLevel(
+          newIndex,
+          baseVolume * newGain
         );
 
-      const newGain =
-        Math.sin(
-          progress *
-          Math.PI /
-          2
+        if (progress < 1) {
+          frameId =
+            requestAnimationFrame(frame);
+        } else {
+          finish(true);
+        }
+      } catch (_) {
+        finish(
+          token === transitionToken
         );
-
-      oldPlayer.volume =
-        baseVolume * oldGain;
-
-      newPlayer.volume =
-        baseVolume * newGain;
-
-      if (progress < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        oldPlayer.volume = 0;
-        newPlayer.volume = baseVolume;
-        resolve();
       }
     };
 
-    requestAnimationFrame(frame);
+    const failsafeTimer =
+      window.setTimeout(
+        () => finish(
+          token === transitionToken
+        ),
+        duration +
+          CROSSFADE_FAILSAFE_PADDING_MS
+      );
+
+    frameId =
+      requestAnimationFrame(frame);
   });
 }
 
@@ -4725,8 +5501,13 @@ function restorePreferences() {
       savedAutoNext === '1';
   }
 
-  players.forEach(player => {
-    player.volume = getUserVolume();
+  players.forEach((player, index) => {
+    setPlayerOutputLevel(
+      index,
+      index === activePlayerIndex
+        ? getUserVolume()
+        : 0
+    );
     applyPlayerPreferences(player);
   });
 
@@ -5050,6 +5831,12 @@ function clearStandby() {
   clearTimeout(preloadTimer);
   preloadTimer = 0;
 
+  const index =
+    standbyState.playerIndex;
+
+  const ownerToken =
+    standbyState.ownerToken;
+
   standbyState.token++;
 
   if (standbyState.controller) {
@@ -5058,14 +5845,22 @@ function clearStandby() {
     } catch (_) {}
   }
 
-  const index =
-    standbyState.playerIndex;
-
   if (
     index >= 0 &&
     index !== activePlayerIndex
   ) {
-    releasePlayer(index, true);
+    if (ownerToken) {
+      releasePlayerIfOwned(
+        index,
+        ownerToken,
+        true
+      );
+    } else {
+      invalidateAndReleasePlayer(
+        index,
+        true
+      );
+    }
   }
 
   standbyState = {
@@ -5077,7 +5872,8 @@ function clearStandby() {
     playerIndex: -1,
     mode: '',
     url: '',
-    controller: null
+    controller: null,
+    ownerToken: 0
   };
 
   updateNetworkDiagnostics();
@@ -5097,8 +5893,14 @@ function cancelActiveSession() {
 
   transitionInProgress = false;
 
-  releasePlayer(0, true);
-  releasePlayer(1, true);
+  invalidateAndReleasePlayer(
+    0,
+    true
+  );
+  invalidateAndReleasePlayer(
+    1,
+    true
+  );
 
   activeFileId = '';
   activeIndex = -1;
