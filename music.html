@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc Nhi hư - v2.2</title>
+<title>Trình nhạc Nhi hư - v2.3 gapless</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -432,8 +432,8 @@ input[type=range]:hover::-moz-range-thumb{opacity:1;}
         <div id="loading" class="loading" hidden>Đang chuẩn bị phát...</div>
         <div id="mode" class="mode" hidden></div>
 
-        <audio id="audioA" preload="auto"></audio>
-        <audio id="audioB" preload="auto"></audio>
+        <audio id="audioA" preload="auto" playsinline></audio>
+        <audio id="audioB" preload="auto" playsinline></audio>
       </div>
     </section>
   </main>
@@ -462,10 +462,15 @@ const IS_MEMORY_CONSTRAINED_DEVICE = IS_TV_DEVICE || IS_MOBILE_DEVICE;
 const MSE_MIME = 'audio/mpeg';
 
 /* Tối ưu chuyển bài liền mạch */
-const NEXT_PRELOAD_DELAY_MS = IS_MOBILE_DEVICE ? 1200 : 700;
-const NEXT_PRELOAD_URGENT_SECONDS = 35;
-const CROSSFADE_MS = IS_TV_DEVICE ? 240 : IS_MOBILE_DEVICE ? 420 : 720;
-const CROSSFADE_TRIGGER_SECONDS = CROSSFADE_MS / 1000 + 0.22;
+const NEXT_PRELOAD_DELAY_MS = IS_TV_DEVICE ? 320 : IS_MOBILE_DEVICE ? 380 : 180;
+const NEXT_PRELOAD_URGENT_SECONDS = 40;
+const CROSSFADE_MS = IS_TV_DEVICE ? 420 : IS_MOBILE_DEVICE ? 560 : 760;
+/*
+ * Kiểm tra chuyển bài độc lập với UI. Khoảng dự phòng nhỏ này bù cho
+ * độ trễ play() nhưng không cắt mất phần đuôi bài hát quá sớm.
+ */
+const CROSSFADE_TRIGGER_SECONDS = CROSSFADE_MS / 1000 + 0.18;
+const TRANSITION_MONITOR_INTERVAL_MS = IS_TV_DEVICE ? 110 : 70;
 const DOWNLOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 3 : 5;
 const PRELOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 2 : 4;
 
@@ -575,6 +580,7 @@ let manualLoadController = null;
 let preloadTimer = 0;
 let transitionInProgress = false;
 let transitionToken = 0;
+let transitionMonitorTimer = 0;
 
 class RetryableRequestError extends Error { constructor(message, status = 0) { super(message); this.name = 'RetryableRequestError'; this.status = status; } }
 
@@ -1371,6 +1377,16 @@ function createListItem(item, isBack) {
         : ''
     );
 
+  if (!isBack && item.id) {
+    button.dataset.fileId = item.id;
+    button.setAttribute(
+      'aria-current',
+      item.id === activeFileId
+        ? 'true'
+        : 'false'
+    );
+  }
+
   const icon =
     isBack
       ? '←'
@@ -2125,32 +2141,81 @@ async function appendProgressiveChunk(
   }
 }
 
-function parseMp3BitrateKbps(bytes) {
-  if (!bytes || bytes.length < 4) {
+function readUint32Be(bytes, offset) {
+  if (
+    !bytes ||
+    offset < 0 ||
+    offset + 4 > bytes.length
+  ) {
     return 0;
   }
 
-  let start = 0;
+  return (
+    (
+      bytes[offset] * 0x1000000
+    ) +
+    (
+      bytes[offset + 1] << 16
+    ) +
+    (
+      bytes[offset + 2] << 8
+    ) +
+    bytes[offset + 3]
+  ) >>> 0;
+}
 
+function readAscii4(bytes, offset) {
   if (
-    bytes[0] === 0x49 &&
-    bytes[1] === 0x44 &&
-    bytes[2] === 0x33 &&
-    bytes.length >= 10
+    !bytes ||
+    offset < 0 ||
+    offset + 4 > bytes.length
   ) {
-    const tagSize =
-      (
-        (bytes[6] & 0x7f) << 21
-      ) |
-      (
-        (bytes[7] & 0x7f) << 14
-      ) |
-      (
-        (bytes[8] & 0x7f) << 7
-      ) |
-      (bytes[9] & 0x7f);
+    return '';
+  }
 
-    start = 10 + tagSize;
+  return String.fromCharCode(
+    bytes[offset],
+    bytes[offset + 1],
+    bytes[offset + 2],
+    bytes[offset + 3]
+  );
+}
+
+function getMp3DataStart(bytes) {
+  if (
+    !bytes ||
+    bytes.length < 10 ||
+    bytes[0] !== 0x49 ||
+    bytes[1] !== 0x44 ||
+    bytes[2] !== 0x33
+  ) {
+    return 0;
+  }
+
+  const tagSize =
+    (
+      (bytes[6] & 0x7f) << 21
+    ) |
+    (
+      (bytes[7] & 0x7f) << 14
+    ) |
+    (
+      (bytes[8] & 0x7f) << 7
+    ) |
+    (bytes[9] & 0x7f);
+
+  const hasFooter =
+    Boolean(bytes[5] & 0x10);
+
+  return Math.min(
+    bytes.length,
+    10 + tagSize + (hasFooter ? 10 : 0)
+  );
+}
+
+function findMp3FrameHeader(bytes) {
+  if (!bytes || bytes.length < 4) {
+    return null;
   }
 
   const mpeg1Layer3 =
@@ -2164,6 +2229,9 @@ function parseMp3BitrateKbps(bytes) {
       0, 8, 16, 24, 32, 40, 48, 56,
       64, 80, 96, 112, 128, 144, 160, 0
     ];
+
+  const start =
+    getMp3DataStart(bytes);
 
   for (
     let index = start;
@@ -2186,23 +2254,171 @@ function parseMp3BitrateKbps(bytes) {
     const bitrateIndex =
       (bytes[index + 2] >> 4) & 0x0f;
 
+    const sampleRateIndex =
+      (bytes[index + 2] >> 2) & 0x03;
+
     if (
+      versionBits === 0x01 ||
       layerBits !== 0x01 ||
       bitrateIndex === 0 ||
-      bitrateIndex === 0x0f
+      bitrateIndex === 0x0f ||
+      sampleRateIndex === 0x03
     ) {
       continue;
     }
 
-    const table =
+    const bitrateTable =
       versionBits === 0x03
         ? mpeg1Layer3
         : mpeg2Layer3;
 
-    return table[bitrateIndex] || 0;
+    const sampleRates =
+      versionBits === 0x03
+        ? [44100, 48000, 32000]
+        : versionBits === 0x02
+          ? [22050, 24000, 16000]
+          : [11025, 12000, 8000];
+
+    const bitrateKbps =
+      bitrateTable[bitrateIndex] || 0;
+
+    const sampleRate =
+      sampleRates[sampleRateIndex] || 0;
+
+    if (!bitrateKbps || !sampleRate) {
+      continue;
+    }
+
+    const channelMode =
+      (bytes[index + 3] >> 6) & 0x03;
+
+    const mono =
+      channelMode === 0x03;
+
+    const hasCrc =
+      (bytes[index + 1] & 0x01) === 0;
+
+    const samplesPerFrame =
+      versionBits === 0x03
+        ? 1152
+        : 576;
+
+    const sideInfoSize =
+      versionBits === 0x03
+        ? (mono ? 17 : 32)
+        : (mono ? 9 : 17);
+
+    return {
+      index,
+      versionBits,
+      bitrateKbps,
+      sampleRate,
+      samplesPerFrame,
+      sideInfoSize,
+      hasCrc
+    };
+  }
+
+  return null;
+}
+
+function parseMp3VbrDuration(bytes) {
+  const header =
+    findMp3FrameHeader(bytes);
+
+  if (!header) {
+    return 0;
+  }
+
+  const xingOffset =
+    header.index +
+    4 +
+    (header.hasCrc ? 2 : 0) +
+    header.sideInfoSize;
+
+  const xingMarker =
+    readAscii4(bytes, xingOffset);
+
+  if (
+    xingMarker === 'Xing' ||
+    xingMarker === 'Info'
+  ) {
+    const flags =
+      readUint32Be(
+        bytes,
+        xingOffset + 4
+      );
+
+    if (flags & 0x01) {
+      const frameCount =
+        readUint32Be(
+          bytes,
+          xingOffset + 8
+        );
+
+      if (frameCount > 0) {
+        return (
+          frameCount *
+          header.samplesPerFrame /
+          header.sampleRate
+        );
+      }
+    }
+  }
+
+  /*
+   * VBRI thường nằm gần byte 36 của frame đầu. Quét một vùng nhỏ giúp
+   * tương thích cả frame có CRC và các encoder đặt header hơi khác.
+   */
+  const scanStart =
+    Math.max(
+      header.index + 4,
+      header.index + 28
+    );
+
+  const scanEnd =
+    Math.min(
+      bytes.length - 18,
+      header.index + 96
+    );
+
+  for (
+    let offset = scanStart;
+    offset <= scanEnd;
+    offset++
+  ) {
+    if (
+      readAscii4(bytes, offset) !==
+      'VBRI'
+    ) {
+      continue;
+    }
+
+    const frameCount =
+      readUint32Be(
+        bytes,
+        offset + 14
+      );
+
+    if (frameCount > 0) {
+      return (
+        frameCount *
+        header.samplesPerFrame /
+        header.sampleRate
+      );
+    }
   }
 
   return 0;
+}
+
+function parseMp3BitrateKbps(bytes) {
+  const header =
+    findMp3FrameHeader(bytes);
+
+  return header
+    ? header.bitrateKbps
+    : 0;
 }
 
 function estimateMp3Duration(
@@ -2210,6 +2426,18 @@ function estimateMp3Duration(
   info,
   fileName = ''
 ) {
+  /*
+   * Xing/Info/VBRI cho thời lượng chính xác hơn rất nhiều với MP3 VBR.
+   * Ước lượng theo bitrate frame đầu có thể lệch vài giây và khiến
+   * chuyển bài bị kích hoạt sau khi bài cũ đã kết thúc.
+   */
+  const vbrDuration =
+    parseMp3VbrDuration(bytes);
+
+  if (vbrDuration > 0) {
+    return vbrDuration;
+  }
+
   const nameMatch =
     String(fileName).match(
       /(?:^|[^0-9])(64|80|96|112|128|160|192|224|256|320|384|512)\s*kbps/i
@@ -2239,6 +2467,7 @@ function estimateMp3Duration(
     )
   );
 }
+
 
 async function fetchTrackChunkResilient(
   file,
@@ -2374,6 +2603,24 @@ async function streamRemainingTrack(
         session.sourceBuffer,
         session.signal
       );
+
+      /*
+       * Khi đã append đủ file, lấy mốc cuối thật của SourceBuffer.
+       * Đây là thời lượng đáng tin cậy nhất cho MP3 VBR và giúp bộ
+       * chuyển bài không phải chờ sự kiện ended mới chạy.
+       */
+      const finalDuration =
+        getBufferedEnd(session.player);
+
+      if (finalDuration > 0) {
+        session.estimatedDuration =
+          finalDuration;
+
+        try {
+          session.mediaSource.duration =
+            finalDuration;
+        } catch (_) {}
+      }
 
       try {
         session.mediaSource.endOfStream();
@@ -2938,6 +3185,29 @@ function getUserVolume() {
   );
 }
 
+function syncActiveListSelection() {
+  const buttons =
+    els.fileList.querySelectorAll(
+      '.item[data-file-id]'
+    );
+
+  buttons.forEach(button => {
+    const active =
+      button.dataset.fileId ===
+      activeFileId;
+
+    button.classList.toggle(
+      'active',
+      active
+    );
+
+    button.setAttribute(
+      'aria-current',
+      active ? 'true' : 'false'
+    );
+  });
+}
+
 function updateCurrentTrackUi(
   file,
   info = null
@@ -2972,7 +3242,11 @@ function updateCurrentTrackUi(
         .join(' • ');
   }
 
-  renderList();
+  /*
+   * Không dựng lại toàn bộ danh sách khi chuyển bài. Việc rebuild DOM
+   * trước crossfade từng gây trễ rõ rệt trên TV và danh sách dài.
+   */
+  syncActiveListSelection();
   updateButtons();
   updateMetadata();
   updateNetworkDiagnostics();
@@ -3426,10 +3700,13 @@ async function prepareNextTrack(
       getEffectiveDuration(active);
 
     if (
-      duration > 0 &&
-      duration -
-        active.currentTime <=
-        CROSSFADE_TRIGGER_SECONDS
+      active.ended ||
+      (
+        duration > 0 &&
+        duration -
+          active.currentTime <=
+          CROSSFADE_TRIGGER_SECONDS
+      )
     ) {
       startSeamlessNext();
     }
@@ -3490,15 +3767,43 @@ async function activateStandby(
     newPlayer.currentTime = 0;
     newPlayer.volume = 0;
 
+    const canCrossfade =
+      autoplay &&
+      smooth &&
+      !oldPlayer.ended &&
+      !oldPlayer.paused;
+
+    const fadeDuration =
+      canCrossfade
+        ? CROSSFADE_MS
+        : 0;
+
     if (autoplay) {
+      /*
+       * Đợi player mới thực sự vào trạng thái phát trong khi player cũ
+       * vẫn tiếp tục. Nhờ vậy độ trễ giải mã không biến thành khoảng im.
+       */
       await newPlayer.play();
     }
 
     /*
-     * Chuyển player hoạt động ngay khi bài mới đã phát, để giao diện
-     * và visualizer theo đúng bài mới trong lúc crossfade.
+     * Khởi động đường cong âm lượng trước các thao tác DOM. Bản cũ dựng
+     * lại danh sách và metadata trước khi fade nên TV/điện thoại chậm có
+     * thể tạo ra một khoảng lặng dễ nghe thấy.
      */
+    const fadePromise =
+      autoplay
+        ? crossfadePlayers(
+            oldPlayer,
+            newPlayer,
+            fadeDuration,
+            baseVolume,
+            localTransitionToken
+          )
+        : Promise.resolve();
+
     activePlayerIndex = newIndex;
+    shouldBePlaying = autoplay;
 
     updateCurrentTrackUi(
       track,
@@ -3508,23 +3813,11 @@ async function activateStandby(
     resetTimeDisplay();
     updateMetadata();
 
-    const fadeDuration =
-      smooth &&
-      !oldPlayer.ended &&
-      !oldPlayer.paused
-        ? CROSSFADE_MS
-        : Math.min(
-            240,
-            CROSSFADE_MS
-          );
+    if (!autoplay) {
+      newPlayer.volume = baseVolume;
+    }
 
-    await crossfadePlayers(
-      oldPlayer,
-      newPlayer,
-      fadeDuration,
-      baseVolume,
-      localTransitionToken
-    );
+    await fadePromise;
 
     if (
       localTransitionToken !==
@@ -3567,6 +3860,13 @@ async function activateStandby(
 
     return true;
   } catch (error) {
+    /*
+     * Nếu player mới chưa chạy được, giữ nguyên player cũ và âm lượng
+     * thay vì vô tình để cả hai ở mức 0.
+     */
+    oldPlayer.volume = baseVolume;
+    newPlayer.volume = 0;
+
     showToast(
       'Không thể chuyển sang bài kế tiếp: ' +
       error.message,
@@ -3898,28 +4198,7 @@ function syncPlaybackUi() {
 
     updateSeekProgressVisual(player);
 
-    const remaining =
-      duration - current;
-
-    if (
-      els.autoNext.checked &&
-      remaining <=
-        NEXT_PRELOAD_URGENT_SECONDS &&
-      !standbyState.ready &&
-      !standbyState.loading
-    ) {
-      prepareNextTrack(true);
-    }
-
-    if (
-      els.autoNext.checked &&
-      remaining <=
-        CROSSFADE_TRIGGER_SECONDS &&
-      standbyState.ready &&
-      !transitionInProgress
-    ) {
-      startSeamlessNext();
-    }
+    monitorSeamlessTransition();
   } else {
     updateSeekProgressVisual(player);
   }
@@ -3947,7 +4226,84 @@ function updateMetadata() {
   applyPlayerPreferences(player);
 }
 
+function monitorSeamlessTransition() {
+  if (
+    !els.autoNext.checked ||
+    transitionInProgress ||
+    audioItems.length < 2 ||
+    activeIndex < 0
+  ) {
+    return;
+  }
+
+  const player =
+    activeAudio();
+
+  if (
+    !player ||
+    !player.src ||
+    player.paused ||
+    player.ended
+  ) {
+    return;
+  }
+
+  const duration =
+    getEffectiveDuration(player);
+
+  if (!(duration > 0)) {
+    return;
+  }
+
+  const remaining =
+    duration -
+    Number(player.currentTime || 0);
+
+  if (
+    remaining <=
+      NEXT_PRELOAD_URGENT_SECONDS &&
+    !standbyState.ready &&
+    !standbyState.loading
+  ) {
+    prepareNextTrack(true);
+  }
+
+  if (
+    remaining <=
+      CROSSFADE_TRIGGER_SECONDS &&
+    standbyState.ready
+  ) {
+    startSeamlessNext();
+  }
+}
+
+function startTransitionMonitor() {
+  if (transitionMonitorTimer) {
+    return;
+  }
+
+  transitionMonitorTimer =
+    window.setInterval(
+      monitorSeamlessTransition,
+      TRANSITION_MONITOR_INTERVAL_MS
+    );
+}
+
+function stopTransitionMonitor() {
+  if (!transitionMonitorTimer) {
+    return;
+  }
+
+  clearInterval(
+    transitionMonitorTimer
+  );
+
+  transitionMonitorTimer = 0;
+}
+
 function startPlaybackUiTicker() {
+  startTransitionMonitor();
+
   if (playbackUiTimer) return;
 
   playbackUiTimer =
@@ -3958,6 +4314,8 @@ function startPlaybackUiTicker() {
 }
 
 function stopPlaybackUiTicker() {
+  stopTransitionMonitor();
+
   if (!playbackUiTimer) return;
 
   clearInterval(playbackUiTimer);
