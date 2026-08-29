@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v2.7 Dynamic LED</title>
+<title>Trình nhạc - v2.8 High Energy LED</title>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -819,7 +819,7 @@ let compressorNode = null, dryGainNode = null, delayNode = null, feedbackGainNod
 let wetGainNode = null, masterGainNode = null, mediaSourceNodes = [];
 let visualizerFrame = 0, frequencyData = null, audioEffectsAvailable = true;
 let visualizerMode = 'wave';
-let ledLevels = [], ledVelocities = [], ledPeaks = [], ledPeakHoldUntil = [];
+let ledLevels = [], ledVelocities = [], ledPeaks = [], ledPeakHoldUntil = [], ledPreviousTargets = [];
 let ledGridPattern = null, ledGridPatternDpr = 0;
 let ledBassAverage = 0.08, ledBeatPulse = 0, ledEnergyTrail = 0;
 
@@ -1155,7 +1155,8 @@ async function ensureAudioEffects() {
       // TĂNG ĐỘ PHÂN GIẢI FFT[cite: 5]
       analyserNode = audioContext.createAnalyser();
       analyserNode.fftSize = 2048;
-      analyserNode.smoothingTimeConstant = 0.61;
+      // Giảm làm mượt để LED bám nhịp nhanh và dồn dập hơn.
+      analyserNode.smoothingTimeConstant = 0.48;
       frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
       masterGainNode = audioContext.createGain();
 
@@ -1232,6 +1233,7 @@ function setVisualizerMode(mode, options = {}) {
   ledVelocities = [];
   ledPeaks = [];
   ledPeakHoldUntil = [];
+  ledPreviousTargets = [];
   ledBassAverage = 0.08;
   ledBeatPulse = 0;
   ledEnergyTrail = 0;
@@ -1640,6 +1642,7 @@ function drawLedVisualizer(canvas, context) {
     ledVelocities = new Array(columns).fill(0);
     ledPeaks = new Array(columns).fill(0);
     ledPeakHoldUntil = new Array(columns).fill(0);
+    ledPreviousTargets = new Array(columns).fill(0);
   }
 
   /* Đường chân phổ và phản xạ nhẹ. */
@@ -1661,26 +1664,59 @@ function drawLedVisualizer(canvas, context) {
       let weighted = 0;
       let weight = 0;
 
-      for (let offset = -2; offset <= 4; offset++) {
+      /*
+       * Chỉ lấy vùng tần số hẹp hơn. Nhờ vậy các cột liền nhau không còn
+       * nhận gần như cùng một mức năng lượng và hình LED có độ trồi sụt rõ.
+       */
+      for (let offset = -1; offset <= 2; offset++) {
         const index = Math.max(0, Math.min(frequencyData.length - 1, centerIndex + offset));
-        const localWeight = 1 - Math.abs(offset - 0.5) / 7;
+        const localWeight = offset === 0 ? 1.35 : (offset === 1 ? 1 : 0.62);
         weighted += (frequencyData[index] / 255) * localWeight;
         weight += localWeight;
       }
 
-      targetLevel = Math.pow(weighted / Math.max(0.001, weight), 0.73);
-      const musicalShape = 0.86 + Math.sin(normalized * Math.PI) * 0.14;
-      const shimmer = 1 + Math.sin(seconds * 7.5 + column * 0.62) * trebleEnergy * 0.055;
-      targetLevel = Math.min(1, targetLevel * musicalShape * shimmer + bassEnergy * Math.max(0, 0.11 - normalized * 0.08));
+      const rawLevel = weighted / Math.max(0.001, weight);
+      const leftIndex = Math.max(0, centerIndex - 4);
+      const rightIndex = Math.min(frequencyData.length - 1, centerIndex + 4);
+      const localContrast = Math.abs(
+        (frequencyData[leftIndex] || 0) - (frequencyData[rightIndex] || 0)
+      ) / 255;
+
+      /* Nén phần thấp, đẩy mạnh phần cao để biên độ nhảy lớn hơn. */
+      targetLevel = Math.pow(Math.max(0, rawLevel - 0.035), 0.58) * 1.18;
+
+      /* Tạo chênh lệch tự nhiên giữa các cột, mạnh hơn khi bài hát giàu năng lượng. */
+      const columnSeparation =
+        1 +
+        Math.sin(column * 1.87 + seconds * 10.5) * (0.10 + totalEnergy * 0.13) +
+        Math.sin(column * 3.21 - seconds * 7.2) * (0.045 + trebleEnergy * 0.09);
+
+      const musicalShape = 0.78 + Math.sin(normalized * Math.PI) * 0.22;
+      const transientBoost = Math.max(0, rawLevel - (ledPreviousTargets[column] || 0)) * 1.9;
+      const beatKick = ledBeatPulse * (0.10 + (1 - normalized) * 0.22);
+
+      targetLevel = Math.min(
+        1,
+        targetLevel * musicalShape * columnSeparation +
+        localContrast * (0.16 + totalEnergy * 0.24) +
+        transientBoost +
+        beatKick
+      );
+
+      ledPreviousTargets[column] = rawLevel;
     } else {
       targetLevel = 0.045 + (Math.sin(seconds * 1.2 + column * 0.67) + 1) * 0.018;
     }
 
-    /* Chuyển động kiểu lò xo: lên nhanh, xuống mềm, không giật cột. */
+    /*
+     * Lò xo tốc độ cao: cột bật lên nhanh, rơi đủ nhanh để tạo khoảng trống
+     * rõ rệt trước nhịp kế tiếp. Đây là phần quyết định cảm giác sôi động.
+     */
     const level = ledLevels[column];
     const velocity = ledVelocities[column] || 0;
-    const stiffness = targetLevel > level ? 0.29 : 0.105;
-    const damping = targetLevel > level ? 0.63 : 0.77;
+    const rising = targetLevel > level;
+    const stiffness = rising ? 0.46 : 0.19;
+    const damping = rising ? 0.54 : 0.66;
     const nextVelocity = velocity * damping + (targetLevel - level) * stiffness;
     const smoothLevel = Math.max(0, Math.min(1, level + nextVelocity));
     ledVelocities[column] = nextVelocity;
