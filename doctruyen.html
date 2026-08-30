@@ -19,7 +19,7 @@
             padding: 20px;
             text-align: center;
         }
-        header { margin-bottom: 30px; }
+        header { margin-bottom: 20px; }
         input[type="text"] {
             padding: 10px;
             width: 60%;
@@ -37,13 +37,22 @@
             color: white;
             cursor: pointer;
             margin-left: 5px;
+            transition: 0.2s;
         }
-        button:hover { background-color: #ff1744; }
+        button:hover:not(:disabled) { background-color: #ff1744; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
         
+        #section-title {
+            text-align: left;
+            padding-left: 20px;
+            margin-top: 20px;
+            color: var(--primary-color);
+        }
+
         /* Grid Truyện */
         #results {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 20px;
             padding: 20px;
         }
@@ -53,21 +62,33 @@
             overflow: hidden;
             cursor: pointer;
             transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
         }
         .manga-card:hover { transform: scale(1.05); }
         .manga-card img {
             width: 100%;
-            height: 220px;
+            height: 240px;
             object-fit: cover;
         }
         .manga-card h3 {
             font-size: 14px;
-            padding: 10px;
+            padding: 12px 10px;
             margin: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Phân trang */
+        .pagination {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .pagination span { font-weight: bold; }
 
         /* Chi tiết truyện & Chapter */
         #details, #reader { display: none; }
@@ -96,167 +117,18 @@
             margin-right: auto;
         }
         
-        .nav-buttons { margin-bottom: 20px; }
-        #loading { display: none; margin: 20px; color: var(--primary-color); }
+        .nav-buttons { margin-bottom: 20px; text-align: left; padding-left: 20px; }
+        #loading { display: none; margin: 20px; color: var(--primary-color); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>📖 Manga Reader</h1>
+        <h1 style="cursor: pointer;" onclick="loadHomePage(1)">📖 Manga Reader</h1>
         <div id="search-bar">
-            <input type="text" id="searchInput" placeholder="Nhập tên truyện (VD: One Piece, Naruto)...">
-            <button onclick="searchManga()">Tìm kiếm</button>
+            <input type="text" id="searchInput" placeholder="Nhập tên truyện (VD: One Piece, Naruto)..." onkeypress="if(event.key === 'Enter') searchManga(1)">
+            <button onclick="searchManga(1)">Tìm kiếm</button>
         </div>
     </header>
 
-    <div id="loading">Đang tải dữ liệu...</div>
-
-    <!-- Container Danh sách truyện -->
-    <div id="results"></div>
-
-    <!-- Container Chi tiết truyện (Danh sách Chapter) -->
-    <div id="details">
-        <div class="nav-buttons">
-            <button onclick="showHome()">⬅ Quay lại danh sách</button>
-        </div>
-        <h2 id="manga-title">Tên Truyện</h2>
-        <div class="chapter-list" id="chapter-list"></div>
-    </div>
-
-    <!-- Container Đọc truyện -->
-    <div id="reader">
-        <div class="nav-buttons">
-            <button onclick="showDetails()">⬅ Quay lại mục lục</button>
-        </div>
-        <div id="reader-pages"></div>
-    </div>
-
-    <script>
-        const API_BASE = "https://api.mangadex.org";
-        const UPLOAD_BASE = "https://uploads.mangadex.org";
-
-        // Tìm kiếm truyện
-        async function searchManga() {
-            const query = document.getElementById("searchInput").value;
-            if (!query) return;
-            
-            showLoading(true);
-            showHome(); // Đảm bảo đang ở trang chủ
-            document.getElementById("results").innerHTML = "";
-
-            try {
-                // Fetch truyện kèm theo cover_art
-                const res = await fetch(`${API_BASE}/manga?title=${query}&limit=12&includes[]=cover_art`);
-                const data = await res.json();
-                
-                data.data.forEach(manga => {
-                    const title = manga.attributes.title.en || manga.attributes.title["ja-ro"] || "Không rõ tên";
-                    
-                    // Tìm file ảnh bìa
-                    const coverRel = manga.relationships.find(rel => rel.type === 'cover_art');
-                    const coverFileName = coverRel ? coverRel.attributes.fileName : null;
-                    const coverUrl = coverFileName ? `${UPLOAD_BASE}/covers/${manga.id}/${coverFileName}.256.jpg` : "https://via.placeholder.com/150x220?text=No+Cover";
-
-                    const card = document.createElement("div");
-                    card.className = "manga-card";
-                    card.innerHTML = `
-                        <img src="${coverUrl}" alt="${title}">
-                        <h3>${title}</h3>
-                    `;
-                    card.onclick = () => getChapters(manga.id, title);
-                    document.getElementById("results").appendChild(card);
-                });
-            } catch (err) {
-                alert("Lỗi khi tải dữ liệu: " + err.message);
-            }
-            showLoading(false);
-        }
-
-        // Lấy danh sách Chapter (Ưu tiên tiếng Việt, sau đó tiếng Anh)
-        async function getChapters(mangaId, title) {
-            showLoading(true);
-            document.getElementById("results").style.display = "none";
-            document.getElementById("reader").style.display = "none";
-            document.getElementById("details").style.display = "block";
-            
-            document.getElementById("manga-title").innerText = title;
-            const chapterList = document.getElementById("chapter-list");
-            chapterList.innerHTML = "";
-
-            try {
-                const res = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&translatedLanguage[]=en&order[chapter]=desc&limit=50`);
-                const data = await res.json();
-                
-                if(data.data.length === 0) {
-                    chapterList.innerHTML = "<p>Không tìm thấy chapter nào (Tiếng Việt/Anh).</p>";
-                }
-
-                data.data.forEach(ch => {
-                    const chNum = ch.attributes.chapter ? `Chapter ${ch.attributes.chapter}` : "Oneshot";
-                    const chTitle = ch.attributes.title ? `- ${ch.attributes.title}` : "";
-                    const lang = ch.attributes.translatedLanguage.toUpperCase();
-                    
-                    const btn = document.createElement("div");
-                    btn.className = "chapter-item";
-                    btn.innerHTML = `<strong>[${lang}]</strong> ${chNum} ${chTitle}`;
-                    btn.onclick = () => readChapter(ch.id);
-                    chapterList.appendChild(btn);
-                });
-            } catch (err) {
-                alert("Lỗi khi tải chapter: " + err.message);
-            }
-            showLoading(false);
-        }
-
-        // Đọc truyện (Lấy link ảnh của từng trang)
-        async function readChapter(chapterId) {
-            showLoading(true);
-            document.getElementById("details").style.display = "none";
-            document.getElementById("reader").style.display = "block";
-            
-            const readerPages = document.getElementById("reader-pages");
-            readerPages.innerHTML = "";
-
-            try {
-                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`);
-                const data = await res.json();
-                
-                const baseUrl = data.baseUrl;
-                const hash = data.chapter.hash;
-                const pages = data.chapter.data;
-
-                pages.forEach(page => {
-                    const imgUrl = `${baseUrl}/data/${hash}/${page}`;
-                    const img = document.createElement("img");
-                    img.className = "page-image";
-                    img.src = imgUrl;
-                    img.loading = "lazy"; // Tối ưu hóa tải trang
-                    readerPages.appendChild(img);
-                });
-            } catch (err) {
-                alert("Lỗi tải trang truyện: " + err.message);
-            }
-            showLoading(false);
-            window.scrollTo(0,0);
-        }
-
-        // Quản lý hiển thị các màn hình
-        function showHome() {
-            document.getElementById("results").style.display = "grid";
-            document.getElementById("details").style.display = "none";
-            document.getElementById("reader").style.display = "none";
-        }
-
-        function showDetails() {
-            document.getElementById("results").style.display = "none";
-            document.getElementById("details").style.display = "block";
-            document.getElementById("reader").style.display = "none";
-        }
-
-        function showLoading(show) {
-            document.getElementById("loading").style.display = show ? "block" : "none";
-        }
-    </script>
-</body>
-</html>
+    <div id="loading">Đang tải dữ liệu, vui lòng chờ...</div>
