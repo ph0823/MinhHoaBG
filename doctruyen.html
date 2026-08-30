@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Đọc Tranh</title>
+    <title>Web Đọc Truyện Tranh</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -132,3 +132,216 @@
     </header>
 
     <div id="loading">Đang tải dữ liệu, vui lòng chờ...</div>
+
+    <div id="home-screen">
+        <h2 id="section-title">🔥 Truyện Mới Cập Nhật</h2>
+        <div id="results"></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div id="details">
+        <div class="nav-buttons">
+            <button onclick="showHome()">⬅ Quay lại danh sách</button>
+        </div>
+        <h2 id="manga-title">Tên Truyện</h2>
+        <div class="chapter-list" id="chapter-list"></div>
+    </div>
+
+    <div id="reader">
+        <div class="nav-buttons">
+            <button onclick="showDetails()">⬅ Quay lại mục lục</button>
+        </div>
+        <div id="reader-pages"></div>
+    </div>
+
+    <script>
+        const API_BASE = "https://api.mangadex.org";
+        const UPLOAD_BASE = "https://uploads.mangadex.org";
+        
+        let currentPage = 1;
+        const limit = 12;
+        let isSearching = false;
+        let currentQuery = "";
+
+        // Tự động tải lúc mở trang
+        window.onload = () => loadHomePage(1);
+
+        async function loadHomePage(page = 1) {
+            isSearching = false;
+            currentPage = page;
+            const offset = (page - 1) * limit;
+            
+            const url = `${API_BASE}/manga?limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en&hasAvailableChapters=true&order[latestUploadedChapter]=desc`;
+            
+            document.getElementById("section-title").innerText = "🔥 Truyện Mới Cập Nhật";
+            document.getElementById("searchInput").value = ""; 
+            await fetchAndRenderManga(url);
+        }
+
+        async function searchManga(page = 1) {
+            const query = document.getElementById("searchInput").value.trim();
+            if (!query) {
+                loadHomePage(1);
+                return;
+            }
+            
+            isSearching = true;
+            currentQuery = query;
+            currentPage = page;
+            const offset = (page - 1) * limit;
+            
+            const url = `${API_BASE}/manga?title=${currentQuery}&limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en`;
+            
+            document.getElementById("section-title").innerText = `🔍 Kết quả tìm kiếm cho: "${currentQuery}"`;
+            await fetchAndRenderManga(url);
+        }
+
+        async function fetchAndRenderManga(url) {
+            showLoading(true);
+            showHome();
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (!data.data || data.data.length === 0) {
+                    resultsDiv.innerHTML = "<p>Không tìm thấy truyện nào.</p>";
+                    renderPagination(0);
+                } else {
+                    data.data.forEach(manga => {
+                        // Toán tử an toàn (?.) chống crash khi thiếu data ngôn ngữ
+                        const title = manga.attributes.title?.en || manga.attributes.title?.vi || manga.attributes.title?.["ja-ro"] || "Không rõ tên";
+                        
+                        const coverRel = manga.relationships?.find(rel => rel.type === 'cover_art');
+                        const coverFileName = coverRel ? coverRel.attributes.fileName : null;
+                        const coverUrl = coverFileName ? `${UPLOAD_BASE}/covers/${manga.id}/${coverFileName}.256.jpg` : "https://via.placeholder.com/160x240?text=No+Cover";
+
+                        const card = document.createElement("div");
+                        card.className = "manga-card";
+                        card.innerHTML = `
+                            <img src="${coverUrl}" alt="${title}" loading="lazy">
+                            <h3>${title}</h3>
+                        `;
+                        card.onclick = () => getChapters(manga.id, title);
+                        resultsDiv.appendChild(card);
+                    });
+                    renderPagination(data.total);
+                }
+            } catch (err) {
+                console.error("Fetch Error:", err);
+            }
+            showLoading(false);
+        }
+
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / limit);
+            const paginationDiv = document.getElementById("pagination");
+            paginationDiv.innerHTML = "";
+            
+            if (totalPages > 1) {
+                const prevBtn = document.createElement("button");
+                prevBtn.innerText = "⬅ Trang trước";
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.onclick = () => isSearching ? searchManga(currentPage - 1) : loadHomePage(currentPage - 1);
+                
+                const pageInfo = document.createElement("span");
+                pageInfo.innerText = ` Trang ${currentPage} / ${totalPages > 800 ? "800+" : totalPages} `;
+                
+                const nextBtn = document.createElement("button");
+                nextBtn.innerText = "Trang sau ➡";
+                const maxPages = Math.floor(10000 / limit); 
+                nextBtn.disabled = currentPage >= totalPages || currentPage >= maxPages;
+                nextBtn.onclick = () => isSearching ? searchManga(currentPage + 1) : loadHomePage(currentPage + 1);
+                
+                paginationDiv.appendChild(prevBtn);
+                paginationDiv.appendChild(pageInfo);
+                paginationDiv.appendChild(nextBtn);
+            }
+        }
+
+        async function getChapters(mangaId, title) {
+            showLoading(true);
+            document.getElementById("home-screen").style.display = "none";
+            document.getElementById("reader").style.display = "none";
+            document.getElementById("details").style.display = "block";
+            
+            document.getElementById("manga-title").innerText = title;
+            const chapterList = document.getElementById("chapter-list");
+            chapterList.innerHTML = "";
+
+            try {
+                const res = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&translatedLanguage[]=en&order[chapter]=desc&limit=100`);
+                const data = await res.json();
+                
+                if(!data.data || data.data.length === 0) {
+                    chapterList.innerHTML = "<p>Truyện này chưa có chapter (Tiếng Việt/Anh).</p>";
+                } else {
+                    data.data.forEach(ch => {
+                        const chNum = ch.attributes.chapter ? `Chapter ${ch.attributes.chapter}` : "Oneshot";
+                        const chTitle = ch.attributes.title ? `- ${ch.attributes.title}` : "";
+                        const lang = ch.attributes.translatedLanguage ? ch.attributes.translatedLanguage.toUpperCase() : "N/A";
+                        
+                        const btn = document.createElement("div");
+                        btn.className = "chapter-item";
+                        btn.innerHTML = `<strong>[${lang}]</strong> ${chNum} ${chTitle}`;
+                        btn.onclick = () => readChapter(ch.id);
+                        chapterList.appendChild(btn);
+                    });
+                }
+            } catch (err) {
+                console.error("Chapter Error:", err);
+            }
+            showLoading(false);
+        }
+
+        async function readChapter(chapterId) {
+            showLoading(true);
+            document.getElementById("details").style.display = "none";
+            document.getElementById("reader").style.display = "block";
+            
+            const readerPages = document.getElementById("reader-pages");
+            readerPages.innerHTML = "";
+
+            try {
+                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`);
+                const data = await res.json();
+                
+                const baseUrl = data.baseUrl;
+                const hash = data.chapter.hash;
+                const pages = data.chapter.data;
+
+                pages.forEach(page => {
+                    const imgUrl = `${baseUrl}/data/${hash}/${page}`;
+                    const img = document.createElement("img");
+                    img.className = "page-image";
+                    img.src = imgUrl;
+                    img.loading = "lazy";
+                    readerPages.appendChild(img);
+                });
+            } catch (err) {
+                console.error("Read Error:", err);
+            }
+            showLoading(false);
+            window.scrollTo(0,0);
+        }
+
+        function showHome() {
+            document.getElementById("home-screen").style.display = "block";
+            document.getElementById("details").style.display = "none";
+            document.getElementById("reader").style.display = "none";
+        }
+
+        function showDetails() {
+            document.getElementById("home-screen").style.display = "none";
+            document.getElementById("details").style.display = "block";
+            document.getElementById("reader").style.display = "none";
+        }
+
+        function showLoading(show) {
+            document.getElementById("loading").style.display = show ? "block" : "none";
+        }
+    </script>
+</body>
+</html>
