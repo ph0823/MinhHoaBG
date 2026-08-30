@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <title>PHIM K-WORLD</title>
+    <title>NGUYEN NHI</title>
 
     <!-- Cố định phiên bản để tránh lỗi bất ngờ khi thư viện cập nhật -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
@@ -151,6 +151,13 @@
             line-height: 1.6;
         }
 
+        .today-time {
+            display: inline-block;
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
         .search-wrap {
             width: min(760px, calc(100% - 30px));
             margin: 24px auto 0;
@@ -200,6 +207,8 @@
 
         .section {
             margin-top: 34px;
+            content-visibility: auto;
+            contain-intrinsic-size: 720px;
         }
 
         .section-header {
@@ -670,6 +679,15 @@
         @media (min-width: 1500px) {
             .movie-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
     </style>
 </head>
 
@@ -688,7 +706,7 @@
 </nav>
 
 <header>
-    <h1>Hôm nay xem gì?</h1>
+    <h1>Hôm nay <span class="today-time" id="today-time">(-- - -- --:--)</span> xem gì?</h1>
     <p>Tìm phim, tiếp tục tập đang xem và tự động chuyển máy chủ khi nguồn phát gặp lỗi.</p>
 
     <div class="search-wrap">
@@ -885,6 +903,11 @@ let autoNextTimer = null;
 let stallCount = 0;
 let lastRequestedUrl = "";
 let resumeTime = 0;
+let clockTimerId = null;
+
+const storageCache = new Map();
+const responseCache = new Map();
+const pendingRequests = new Map();
 
 const settings = Object.assign({
     autoNext: true,
@@ -924,19 +947,26 @@ const els = {
     favoriteBtn: document.getElementById("favorite-btn"),
     resumePrompt: document.getElementById("resume-prompt"),
     resumeText: document.getElementById("resume-text"),
-    onlineIndicator: document.getElementById("online-indicator")
+    onlineIndicator: document.getElementById("online-indicator"),
+    todayTime: document.getElementById("today-time")
 };
 
 function loadJSON(key, fallback) {
+    if (storageCache.has(key)) return storageCache.get(key);
+
     try {
         const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
+        const value = raw ? JSON.parse(raw) : fallback;
+        storageCache.set(key, value);
+        return value;
     } catch {
+        storageCache.set(key, fallback);
         return fallback;
     }
 }
 
 function saveJSON(key, value) {
+    storageCache.set(key, value);
     try {
         localStorage.setItem(key, JSON.stringify(value));
     } catch {
@@ -998,6 +1028,25 @@ function formatTime(seconds) {
         : `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function updateCurrentTime() {
+    if (!els.todayTime) return;
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const hour = String(now.getHours()).padStart(2, "0");
+    const minute = String(now.getMinutes()).padStart(2, "0");
+    els.todayTime.textContent = `(${day} - ${month} ${hour}:${minute})`;
+    els.todayTime.setAttribute("aria-label", `Ngày ${day} tháng ${month}, ${hour} giờ ${minute} phút`);
+}
+
+function startClock() {
+    clearTimeout(clockTimerId);
+    updateCurrentTime();
+
+    const delayToNextMinute = 60000 - (Date.now() % 60000) + 25;
+    clockTimerId = setTimeout(startClock, delayToNextMinute);
+}
+
 function setOverlay({show = true, loading = false, title = "", message = "", retry = false} = {}) {
     els.overlay.classList.toggle("show", show);
     els.overlaySpinner.style.display = loading ? "block" : "none";
@@ -1042,7 +1091,14 @@ function setView(view, title = "") {
     els.clearListBtn.style.display = "none";
 }
 
-function fetchJSON(url, timeout = 9000, externalSignal = null) {
+function fetchJSON(url, timeout = 9000, externalSignal = null, cacheTtl = 60000) {
+    const cached = responseCache.get(url);
+    if (cached && Date.now() - cached.time < cacheTtl) {
+        return Promise.resolve(cached.data);
+    }
+
+    if (pendingRequests.has(url)) return pendingRequests.get(url);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -1050,12 +1106,22 @@ function fetchJSON(url, timeout = 9000, externalSignal = null) {
         externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
     }
 
-    return fetch(url, { signal: controller.signal, cache: "no-store" })
+    const request = fetch(url, { signal: controller.signal, cache: "default" })
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
-        .finally(() => clearTimeout(timeoutId));
+        .then(data => {
+            responseCache.set(url, { data, time: Date.now() });
+            return data;
+        })
+        .finally(() => {
+            clearTimeout(timeoutId);
+            pendingRequests.delete(url);
+        });
+
+    pendingRequests.set(url, request);
+    return request;
 }
 
 function createMovieCard(movie, options = {}) {
@@ -1067,7 +1133,7 @@ function createMovieCard(movie, options = {}) {
     const slug = movie.slug || movie._id || "";
     const name = movie.name || movie.title || "Không rõ tên";
     const poster = moviePoster(movie, options.domain);
-    const progressData = getProgress()[slug];
+    const progressData = options.progressMap?.[slug];
     const percent = progressData?.duration > 0
         ? Math.min(100, Math.max(0, (progressData.time / progressData.duration) * 100))
         : 0;
@@ -1076,7 +1142,8 @@ function createMovieCard(movie, options = {}) {
     posterWrap.className = "poster-wrap";
 
     const img = document.createElement("img");
-    img.loading = "lazy";
+    img.loading = options.index < 4 ? "eager" : "lazy";
+    if (options.index < 4) img.fetchPriority = "high";
     img.decoding = "async";
     img.src = poster;
     img.alt = `Poster ${name}`;
@@ -1094,8 +1161,9 @@ function createMovieCard(movie, options = {}) {
     favorite.className = "favorite-mini";
     favorite.type = "button";
     favorite.setAttribute("aria-label", "Thêm hoặc bỏ yêu thích");
-    favorite.textContent = isFavorite(slug) ? "♥" : "♡";
-    favorite.classList.toggle("active", isFavorite(slug));
+    const favoriteSlugs = options.favoriteSlugs || new Set();
+    favorite.textContent = favoriteSlugs.has(slug) ? "♥" : "♡";
+    favorite.classList.toggle("active", favoriteSlugs.has(slug));
     favorite.addEventListener("click", event => {
         event.stopPropagation();
         toggleFavorite(movie);
@@ -1155,8 +1223,16 @@ function renderGrid(items, container, options = {}) {
         return;
     }
 
+    const sharedOptions = {
+        ...options,
+        progressMap: getProgress(),
+        favoriteSlugs: new Set(getFavorites().map(item => item.slug))
+    };
+
     const fragment = document.createDocumentFragment();
-    items.forEach(movie => fragment.appendChild(createMovieCard(movie, options)));
+    items.forEach((movie, index) => {
+        fragment.appendChild(createMovieCard(movie, { ...sharedOptions, index }));
+    });
     container.appendChild(fragment);
 }
 
@@ -2141,6 +2217,17 @@ function setupEvents() {
     window.addEventListener("beforeunload", () => saveProgress(true));
     window.addEventListener("online", updateOnlineState);
     window.addEventListener("offline", updateOnlineState);
+    window.addEventListener("storage", event => {
+        if (event.key) storageCache.delete(event.key);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            clearTimeout(clockTimerId);
+        } else {
+            startClock();
+        }
+    });
 
     window.addEventListener("popstate", () => {
         if (els.playerModal.classList.contains("open")) closePlayer({ fromPopState: true });
@@ -2167,6 +2254,7 @@ function setupEvents() {
 async function init() {
     if (isSmartTV()) document.body.classList.add("is-tv");
     setupEvents();
+    startClock();
     updateAutoNextButton();
     updateOnlineState();
     renderContinueSection();
