@@ -158,11 +158,11 @@
     </div>
 
     <script>
-        const API_BASE = "https://api.mangadex.org";
+        const API_BASE = "/api";
         const UPLOAD_BASE = "https://uploads.mangadex.org";
         
         // BẬT/TẮT PROXY: Đổi thành 'false' nếu bạn đã cấu hình Vercel Rewrite
-        const USE_PROXY = true; 
+        const USE_PROXY = false; 
 
         // Hàm bọc URL để xử lý lỗi CORS an toàn với allorigins
         function buildUrl(path) {
