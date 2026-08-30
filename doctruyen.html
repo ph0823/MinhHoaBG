@@ -133,12 +133,14 @@
 
     <div id="loading">Đang tải dữ liệu, vui lòng chờ...</div>
 
+    <!-- Màn hình chính -->
     <div id="home-screen">
         <h2 id="section-title">🔥 Truyện Mới Cập Nhật</h2>
         <div id="results"></div>
         <div class="pagination" id="pagination"></div>
     </div>
 
+    <!-- Màn hình 2: Chi tiết truyện -->
     <div id="details">
         <div class="nav-buttons">
             <button onclick="showHome()">⬅ Quay lại danh sách</button>
@@ -147,6 +149,7 @@
         <div class="chapter-list" id="chapter-list"></div>
     </div>
 
+    <!-- Màn hình 3: Đọc truyện -->
     <div id="reader">
         <div class="nav-buttons">
             <button onclick="showDetails()">⬅ Quay lại mục lục</button>
@@ -155,8 +158,9 @@
     </div>
 
     <script>
-        const API_BASE = "https://api.mangadex.org";
-        const UPLOAD_BASE = "https://uploads.mangadex.org";
+        // SỬ DỤNG CORS PROXY ĐỂ TRÁNH LỖI KHI DEPLOY LÊN VERCEL
+        const API_BASE = "https://corsproxy.io/?https://api.mangadex.org";
+        const UPLOAD_BASE = "https://uploads.mangadex.org"; // Ảnh không bị block CORS nên giữ nguyên
         
         let currentPage = 1;
         const limit = 12;
@@ -211,7 +215,6 @@
                     renderPagination(0);
                 } else {
                     data.data.forEach(manga => {
-                        // Toán tử an toàn (?.) chống crash khi thiếu data ngôn ngữ
                         const title = manga.attributes.title?.en || manga.attributes.title?.vi || manga.attributes.title?.["ja-ro"] || "Không rõ tên";
                         
                         const coverRel = manga.relationships?.find(rel => rel.type === 'cover_art');
@@ -231,6 +234,7 @@
                 }
             } catch (err) {
                 console.error("Fetch Error:", err);
+                resultsDiv.innerHTML = "<p style='color: #ff5252;'>Lỗi tải dữ liệu. Máy chủ Proxy có thể đang quá tải, vui lòng thử lại sau.</p>";
             }
             showLoading(false);
         }
