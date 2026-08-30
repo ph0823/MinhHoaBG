@@ -8,6 +8,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
   <title>Tủ sách XNhi Google Drive - 2026</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.googleusercontent.com">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     :root {
@@ -117,6 +120,15 @@
     .toolbar button:disabled { opacity: .45; cursor: not-allowed; }
     .toolbar .primary { background: var(--primary); color: white; border-color: var(--primary); }
     .toolbar .primary:hover:not(:disabled) { background: var(--primary-dark); color: white; }
+    .toolbar .fit-active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .toolbar .fit-active:hover:not(:disabled) {
+      background: var(--primary-dark);
+      color: white;
+    }
     .toolbar .library-toggle {
       display: inline-flex;
       align-items: center;
@@ -223,7 +235,8 @@
         <button id="btnZoomOut" type="button" disabled>−</button>
         <strong id="zoomLabel">100%</strong>
         <button id="btnZoomIn" type="button" disabled>+</button>
-        <button id="btnFit" class="primary" type="button" disabled>Vừa chiều rộng</button>
+        <button id="btnFit" type="button" disabled title="Phím 0">↔ Vừa chiều rộng</button>
+        <button id="btnFitHeight" type="button" disabled title="Phím 9 hoặc H">↕ Vừa chiều cao</button>
       </div>
       <div id="canvasWrap" class="canvas-wrap">
         <div id="welcome" class="welcome"><div class="welcome-box"><div class="welcome-icon">📄</div><h2>Chọn một file PDF để bắt đầu</h2><p>Dùng danh sách bên trái để mở thư mục và tài liệu.</p></div></div>
@@ -264,7 +277,8 @@
     pageInput: document.getElementById('pageInput'), pageCount: document.getElementById('pageCount'),
     btnNext: document.getElementById('btnNext'), btnZoomOut: document.getElementById('btnZoomOut'),
     zoomLabel: document.getElementById('zoomLabel'), btnZoomIn: document.getElementById('btnZoomIn'),
-    btnFit: document.getElementById('btnFit'), canvasWrap: document.getElementById('canvasWrap'),
+    btnFit: document.getElementById('btnFit'), btnFitHeight: document.getElementById('btnFitHeight'),
+    canvasWrap: document.getElementById('canvasWrap'),
     canvas: document.getElementById('pdfCanvas'), welcome: document.getElementById('welcome'),
     toast: document.getElementById('toast')
   };
@@ -285,6 +299,7 @@
   let prefetchedPage = null;
   let pageNum = 1;
   let scale = 1.25;
+  let fitMode = 'width'; // width | height | manual
   let renderTask = null;
   let renderSerial = 0;
   let loadToken = 0;
@@ -317,6 +332,7 @@
     els.btnZoomOut.addEventListener('click', () => setScale(scale - SCALE_STEP));
     els.btnZoomIn.addEventListener('click', () => setScale(scale + SCALE_STEP));
     els.btnFit.addEventListener('click', fitToWidth);
+    els.btnFitHeight.addEventListener('click', fitToHeight);
     window.addEventListener('keydown', handleShortcuts);
     window.addEventListener('resize', handleViewportResize);
     window.addEventListener('beforeunload', abortCurrentWork);
@@ -490,22 +506,6 @@
     }
   }
 
-  async function fetchInitialChunk(file, info, signal) {
-    const version = getFileVersion(info);
-    const key = makeChunkCacheKey(file.id, version, 0);
-    const cached = getGlobalChunk(key);
-    if (cached) return cached;
-
-    const data = await api(
-      'getFileChunk',
-      { fileId: file.id, index: 0, v: version },
-      { signal, cache: 'default', bustCache: false, retries: 1 }
-    );
-    const bytes = base64ToBytes(data.base64);
-    putGlobalChunk(key, bytes);
-    return bytes;
-  }
-
   function createChunkRangeTransport(file, info, token, firstChunk, signal) {
     // Không đưa cùng một TypedArray vào cache và transport vì PDF.js có thể chuyển quyền sở hữu buffer cho worker.
     const initialData = firstChunk.slice();
@@ -646,10 +646,25 @@
     setViewerEnabled(false);
 
     try {
-      setLoading(true, 'Đang đọc thông tin file...', 2);
+      setLoading(true, 'Đang lấy cấu trúc và phần đầu PDF...', 2);
 
-      const [infoData] = await Promise.all([
-        api('getFileInfo', { fileId: file.id }, { signal }),
+      // getFileInfo và khối đầu không phụ thuộc nhau: chạy song song để giảm một vòng chờ mạng.
+      const listedVersion = getFileVersion(file);
+      const listedCacheKey = makeChunkCacheKey(file.id, listedVersion, 0);
+      const listedCachedChunk = getGlobalChunk(listedCacheKey);
+
+      const infoPromise = api('getFileInfo', { fileId: file.id }, { signal, retries: 1 });
+      const firstChunkPromise = listedCachedChunk
+        ? Promise.resolve({ cachedBytes: listedCachedChunk })
+        : api(
+            'getFileChunk',
+            { fileId: file.id, index: 0, v: listedVersion },
+            { signal, cache: 'default', bustCache: false, retries: 1 }
+          );
+
+      const [infoData, firstChunkData] = await Promise.all([
+        infoPromise,
+        firstChunkPromise,
         disposePdfDocument()
       ]);
       if (token !== loadToken) return;
@@ -659,10 +674,11 @@
         throw new Error('Thông tin file PDF không hợp lệ.');
       }
 
-      setLoading(true, 'Đang tải phần đầu tài liệu...', 4);
-      const firstChunk = await fetchInitialChunk(file, info, signal);
-      if (token !== loadToken) return;
+      const firstChunk = firstChunkData.cachedBytes || base64ToBytes(firstChunkData.base64);
       if (!firstChunk.length) throw new Error('Không nhận được dữ liệu phần đầu của PDF.');
+
+      // Lưu lại theo phiên bản chính xác do getFileInfo trả về.
+      putGlobalChunk(makeChunkCacheKey(file.id, getFileVersion(info), 0), firstChunk);
 
       currentRangeTransport = createChunkRangeTransport(file, info, token, firstChunk, signal);
 
@@ -692,6 +708,7 @@
 
       pageNum = 1;
       scale = 1.25;
+      fitMode = isMobileViewport() ? 'width' : 'height';
       els.pageCount.textContent = pdfDoc.numPages;
       els.pageInput.max = pdfDoc.numPages;
       els.welcome.hidden = true;
@@ -701,7 +718,7 @@
       // Hai frame là đủ để trình duyệt cập nhật kích thước sau khi ẩn tủ sách,
       // không cần chờ cố định 260 ms.
       await waitForLayoutReady();
-      await renderPage({ fitWidth: true, loadingText: 'Đang hiển thị trang đầu...' });
+      await renderPage({ loadingText: 'Đang hiển thị trang đầu...' });
 
       setLoading(false);
       showToast(`Đã mở “${file.name}”. Các trang tiếp theo chỉ tải khi cần.`);
@@ -787,7 +804,7 @@
     els.btnLibrary.setAttribute('aria-expanded', 'true');
 
     if (pdfDoc) {
-      window.setTimeout(() => fitToWidth().catch(error => showToast(error.message, true)), 230);
+      window.setTimeout(() => reapplyFitMode().catch(error => showToast(error.message, true)), 230);
     }
   }
 
@@ -802,7 +819,7 @@
     } else {
       hideLibrary();
       if (pdfDoc) {
-        window.setTimeout(() => fitToWidth().catch(error => showToast(error.message, true)), 230);
+        window.setTimeout(() => reapplyFitMode().catch(error => showToast(error.message, true)), 230);
       }
     }
   }
@@ -817,12 +834,12 @@
     clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
       if (!isMobileViewport()) els.sidebar.classList.remove('open');
-      if (pdfDoc) fitToWidth().catch(error => showToast(error.message, true));
+      if (pdfDoc) reapplyFitMode().catch(error => showToast(error.message, true));
     }, 180);
   }
 
   async function renderPage(options = {}) {
-    const { fitWidth = false, loadingText = `Đang hiển thị trang ${pageNum}...` } = options;
+    const { loadingText = `Đang hiển thị trang ${pageNum}...` } = options;
     if (!pdfDoc) return;
 
     const documentRef = pdfDoc;
@@ -847,11 +864,19 @@
 
       if (serial !== renderSerial || documentRef !== pdfDoc) return;
 
-      if (fitWidth) {
+      if (fitMode !== 'manual') {
         const baseViewport = page.getViewport({ scale: 1 });
-        const horizontalPadding = isMobileViewport() ? 24 : 48;
-        const availableWidth = Math.max(260, els.canvasWrap.clientWidth - horizontalPadding);
-        scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
+        const mobile = isMobileViewport();
+        const horizontalPadding = mobile ? 24 : 48;
+        const verticalPadding = mobile ? 24 : 48;
+
+        if (fitMode === 'height') {
+          const availableHeight = Math.max(220, els.canvasWrap.clientHeight - verticalPadding);
+          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableHeight / baseViewport.height));
+        } else {
+          const availableWidth = Math.max(260, els.canvasWrap.clientWidth - horizontalPadding);
+          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
+        }
       }
 
       const viewport = page.getViewport({ scale });
@@ -975,12 +1000,14 @@
     if (target === pageNum && currentPageProxy) return;
     pageNum = target;
     els.canvasWrap.scrollTop = 0;
+    els.canvasWrap.scrollLeft = 0;
     renderPage().catch(error => showToast(error.message, true));
   }
 
   function setScale(value) {
     if (!pdfDoc) return;
     scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, Number(value.toFixed(2))));
+    fitMode = 'manual';
     updateControls();
 
     // Gộp nhiều lần bấm phóng to/thu nhỏ liên tiếp thành một lần dựng.
@@ -993,7 +1020,22 @@
   async function fitToWidth() {
     if (!pdfDoc) return;
     clearTimeout(zoomRenderTimer);
-    await renderPage({ fitWidth: true });
+    fitMode = 'width';
+    updateControls();
+    await renderPage();
+  }
+
+  async function fitToHeight() {
+    if (!pdfDoc) return;
+    clearTimeout(zoomRenderTimer);
+    fitMode = 'height';
+    updateControls();
+    await renderPage();
+  }
+
+  async function reapplyFitMode() {
+    if (!pdfDoc || fitMode === 'manual') return;
+    await renderPage();
   }
 
   function updateControls() {
@@ -1004,10 +1046,15 @@
     els.btnZoomOut.disabled = !ready || scale <= MIN_SCALE;
     els.btnZoomIn.disabled = !ready || scale >= MAX_SCALE;
     els.zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+    els.btnFit.classList.toggle('fit-active', ready && fitMode === 'width');
+    els.btnFitHeight.classList.toggle('fit-active', ready && fitMode === 'height');
+    els.btnFit.setAttribute('aria-pressed', String(ready && fitMode === 'width'));
+    els.btnFitHeight.setAttribute('aria-pressed', String(ready && fitMode === 'height'));
   }
 
   function setViewerEnabled(enabled) {
-    [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit].forEach(el => el.disabled = !enabled);
+    [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit, els.btnFitHeight]
+      .forEach(el => el.disabled = !enabled);
     if (!enabled) {
       els.btnPrev.disabled = true;
       els.btnNext.disabled = true;
@@ -1037,6 +1084,7 @@
     if (event.key === '+' || event.key === '=') setScale(scale + SCALE_STEP);
     if (event.key === '-') setScale(scale - SCALE_STEP);
     if (event.key === '0') fitToWidth();
+    if (event.key === '9' || event.key.toLowerCase() === 'h') fitToHeight();
     if (event.key.toLowerCase() === 'l') toggleLibrary();
   }
 
