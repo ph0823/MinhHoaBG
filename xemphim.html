@@ -706,7 +706,7 @@
 </nav>
 
 <header>
-    <h1>Hôm nay <span class="today-time" id="today-time">(-- - -- --:--)</span> xem gì?</h1>
+    <h1>Hôm nay <span class="today-time" id="today-time">(-- - -- lúc --:--)</span> xem gì?</h1>
     <p>Tìm phim, tiếp tục tập đang xem và tự động chuyển máy chủ khi nguồn phát gặp lỗi.</p>
 
     <div class="search-wrap">
@@ -1653,21 +1653,33 @@ async function playMovie(slug, previewMovie = {}) {
     }
 }
 
+function normalizeMetaList(value) {
+    if (value == null || value === "") return "";
+
+    const list = Array.isArray(value) ? value : [value];
+    return list
+        .flatMap(item => {
+            if (item == null) return [];
+            if (typeof item === "string" || typeof item === "number") return [String(item)];
+            if (typeof item === "object") {
+                const text = item.name || item.title || item.slug || item.value || "";
+                return text ? [String(text)] : [];
+            }
+            return [];
+        })
+        .map(text => text.trim())
+        .filter(Boolean)
+        .join(", ");
+}
+
 function renderMovieDetails() {
     const name = currentMovie.name || currentMovie.title || "Không rõ tên";
     els.title.textContent = name;
     els.detailPoster.src = moviePoster(currentMovie);
     els.detailPoster.alt = `Poster ${name}`;
 
-    const categories = (currentMovie.category || currentMovie.categories || [])
-        .map(item => item.name || item)
-        .filter(Boolean)
-        .join(", ");
-
-    const countries = (currentMovie.country || currentMovie.countries || [])
-        .map(item => item.name || item)
-        .filter(Boolean)
-        .join(", ");
+    const categories = normalizeMetaList(currentMovie.category ?? currentMovie.categories);
+    const countries = normalizeMetaList(currentMovie.country ?? currentMovie.countries);
 
     els.detailMeta.textContent = [
         currentMovie.origin_name,
