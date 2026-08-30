@@ -7,8 +7,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
-  <title>Tủ sách XNhi Google Drive</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <title>Tủ sách XNhi Google Drive - 2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     :root {
       --primary: #0f766e;
@@ -241,7 +241,16 @@
   const MAX_SCALE = 3;
   const SCALE_STEP = 0.2;
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  // Tối ưu cho PDF scan: hạn chế số yêu cầu song song và kích thước bitmap.
+  const MAX_PARALLEL_CHUNK_REQUESTS = 3;
+  const GLOBAL_CHUNK_CACHE_LIMIT = 48 * 1024 * 1024;
+  const DESKTOP_MAX_CANVAS_PIXELS = 10_000_000;
+  const MOBILE_MAX_CANVAS_PIXELS = 5_000_000;
+  const DESKTOP_DPR_LIMIT = 1.5;
+  const MOBILE_DPR_LIMIT = 1.2;
+  const ZOOM_RENDER_DELAY = 90;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   const els = {
     mainLayout: document.getElementById('mainLayout'),
@@ -261,19 +270,30 @@
   };
 
   const ctx = els.canvas.getContext('2d', { alpha: false });
+  const globalChunkCache = new Map();
+
+  let globalChunkCacheBytes = 0;
   let folderStack = [];
   let currentItems = [];
   let currentFolderId = ROOT_MARKER;
   let activeFileId = '';
   let pdfDoc = null;
   let pdfLoadingTask = null;
+  let currentRangeTransport = null;
+  let currentAbortController = null;
+  let currentPageProxy = null;
+  let prefetchedPage = null;
   let pageNum = 1;
   let scale = 1.25;
   let renderTask = null;
+  let renderSerial = 0;
   let loadToken = 0;
   let toastTimer = null;
   let sidebarCollapsed = false;
   let resizeTimer = null;
+  let zoomRenderTimer = null;
+  let cleanupTimer = null;
+  let idlePrefetchHandle = null;
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -291,25 +311,58 @@
     els.btnPrev.addEventListener('click', () => goToPage(pageNum - 1));
     els.btnNext.addEventListener('click', () => goToPage(pageNum + 1));
     els.pageInput.addEventListener('change', () => goToPage(Number(els.pageInput.value)));
-    els.pageInput.addEventListener('keydown', e => { if (e.key === 'Enter') goToPage(Number(els.pageInput.value)); });
+    els.pageInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') goToPage(Number(els.pageInput.value));
+    });
     els.btnZoomOut.addEventListener('click', () => setScale(scale - SCALE_STEP));
     els.btnZoomIn.addEventListener('click', () => setScale(scale + SCALE_STEP));
     els.btnFit.addEventListener('click', fitToWidth);
     window.addEventListener('keydown', handleShortcuts);
     window.addEventListener('resize', handleViewportResize);
+    window.addEventListener('beforeunload', abortCurrentWork);
   }
 
-  async function api(action, params = {}) {
-    const url = new URL(WEB_APP_URL);
-    url.searchParams.set('action', action);
-    url.searchParams.set('appType', 'pdf'); // Thêm dòng này để báo cho server mở thư mục pdf
-    url.searchParams.set('_', Date.now().toString());
-    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
-    const response = await fetch(url.toString(), { method: 'GET', cache: 'no-store', redirect: 'follow' });
-    if (!response.ok) throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
-    const data = await response.json();
-    if (data.ok === false || data.error) throw new Error(data.error || 'Máy chủ xử lý không thành công.');
-    return data;
+  async function api(action, params = {}, options = {}) {
+    const {
+      signal,
+      cache = 'no-store',
+      bustCache = true,
+      retries = 0
+    } = options;
+
+    let lastError;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const url = new URL(WEB_APP_URL);
+        url.searchParams.set('action', action);
+        url.searchParams.set('appType', 'pdf');
+        if (bustCache) url.searchParams.set('_', Date.now().toString());
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            url.searchParams.set(key, String(value));
+          }
+        });
+
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          cache,
+          redirect: 'follow',
+          signal
+        });
+
+        if (!response.ok) throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+        const data = await response.json();
+        if (data.ok === false || data.error) {
+          throw new Error(data.error || 'Máy chủ xử lý không thành công.');
+        }
+        return data;
+      } catch (error) {
+        if (error?.name === 'AbortError') throw error;
+        lastError = error;
+        if (attempt < retries) await delay(250 * (attempt + 1));
+      }
+    }
+    throw lastError;
   }
 
   async function loadDirectory(folderId, reset = false) {
@@ -381,43 +434,136 @@
     loadDirectory(previous.id);
   }
 
-  function createChunkRangeTransport(file, info, token, firstChunk) {
+  function createLimiter(maxConcurrent) {
+    let active = 0;
+    const queue = [];
+
+    const runNext = () => {
+      while (active < maxConcurrent && queue.length) {
+        const job = queue.shift();
+        active++;
+        Promise.resolve()
+          .then(job.task)
+          .then(job.resolve, job.reject)
+          .finally(() => {
+            active--;
+            runNext();
+          });
+      }
+    };
+
+    return task => new Promise((resolve, reject) => {
+      queue.push({ task, resolve, reject });
+      runNext();
+    });
+  }
+
+  function makeChunkCacheKey(fileId, version, index) {
+    return `${fileId}::${version}::${index}`;
+  }
+
+  function getGlobalChunk(key) {
+    const bytes = globalChunkCache.get(key);
+    if (!bytes) return null;
+    globalChunkCache.delete(key);
+    globalChunkCache.set(key, bytes);
+    return bytes;
+  }
+
+  function putGlobalChunk(key, bytes) {
+    if (!bytes?.byteLength || bytes.byteLength > GLOBAL_CHUNK_CACHE_LIMIT / 2) return;
+
+    const old = globalChunkCache.get(key);
+    if (old) {
+      globalChunkCacheBytes -= old.byteLength;
+      globalChunkCache.delete(key);
+    }
+
+    globalChunkCache.set(key, bytes);
+    globalChunkCacheBytes += bytes.byteLength;
+
+    while (globalChunkCacheBytes > GLOBAL_CHUNK_CACHE_LIMIT && globalChunkCache.size) {
+      const oldestKey = globalChunkCache.keys().next().value;
+      const oldestBytes = globalChunkCache.get(oldestKey);
+      globalChunkCache.delete(oldestKey);
+      globalChunkCacheBytes -= oldestBytes.byteLength;
+    }
+  }
+
+  async function fetchInitialChunk(file, info, signal) {
+    const version = getFileVersion(info);
+    const key = makeChunkCacheKey(file.id, version, 0);
+    const cached = getGlobalChunk(key);
+    if (cached) return cached;
+
+    const data = await api(
+      'getFileChunk',
+      { fileId: file.id, index: 0, v: version },
+      { signal, cache: 'default', bustCache: false, retries: 1 }
+    );
+    const bytes = base64ToBytes(data.base64);
+    putGlobalChunk(key, bytes);
+    return bytes;
+  }
+
+  function createChunkRangeTransport(file, info, token, firstChunk, signal) {
+    // Không đưa cùng một TypedArray vào cache và transport vì PDF.js có thể chuyển quyền sở hữu buffer cho worker.
+    const initialData = firstChunk.slice();
     const chunkCache = new Map([[0, firstChunk]]);
     const pendingChunks = new Map();
-    const chunkSize = firstChunk.length;
+    const loadedChunkIndexes = new Set([0]);
+    const requestLimit = createLimiter(MAX_PARALLEL_CHUNK_REQUESTS);
+    const fileSize = Number(info.size);
+    const totalChunks = Number(info.totalChunks);
+    const chunkSize = Number(info.chunkSize) || firstChunk.length;
+    const version = getFileVersion(info);
     let loadedBytes = firstChunk.length;
+    let aborted = false;
 
     const transport = new pdfjsLib.PDFDataRangeTransport(
-      Number(info.size),
-      firstChunk,
-      false
+      fileSize,
+      initialData,
+      false,
+      file.name
     );
 
-    function updateChunkProgress() {
-      const percent = Math.min(99, Math.round((loadedBytes / Number(info.size)) * 100));
-      setLoading(
-        true,
-        `Đang tải dữ liệu cần thiết của ${file.name}...`,
-        percent
-      );
-      transport.onDataProgress(loadedBytes, Number(info.size));
+    function reportProgress(label = `Đang tải dữ liệu cần thiết của ${file.name}...`) {
+      const percent = Math.min(99, Math.max(1, Math.round((loadedBytes / fileSize) * 100)));
+      setLoading(true, label, percent);
+      transport.onDataProgress(loadedBytes, fileSize);
+    }
+
+    function rememberChunk(index, bytes) {
+      chunkCache.set(index, bytes);
+      if (!loadedChunkIndexes.has(index)) {
+        loadedChunkIndexes.add(index);
+        loadedBytes = Math.min(fileSize, loadedBytes + bytes.length);
+      }
+      putGlobalChunk(makeChunkCacheKey(file.id, version, index), bytes);
+      reportProgress();
+      return bytes;
     }
 
     async function fetchChunk(index) {
-      if (token !== loadToken) throw new Error('Đã hủy tải tài liệu cũ.');
+      if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
+      if (index < 0 || index >= totalChunks) throw new Error(`Khối PDF ${index} không hợp lệ.`);
       if (chunkCache.has(index)) return chunkCache.get(index);
       if (pendingChunks.has(index)) return pendingChunks.get(index);
 
-      const request = api('getFileChunk', { fileId: file.id, index })
-        .then(chunkData => {
-          if (token !== loadToken) throw new Error('Đã hủy tải tài liệu cũ.');
-          const bytes = base64ToBytes(chunkData.base64);
-          chunkCache.set(index, bytes);
-          loadedBytes += bytes.length;
-          updateChunkProgress();
-          return bytes;
-        })
-        .finally(() => pendingChunks.delete(index));
+      const globalKey = makeChunkCacheKey(file.id, version, index);
+      const globalBytes = getGlobalChunk(globalKey);
+      if (globalBytes) return rememberChunk(index, globalBytes);
+
+      const request = requestLimit(async () => {
+        if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
+        const chunkData = await api(
+          'getFileChunk',
+          { fileId: file.id, index, v: version },
+          { signal, cache: 'default', bustCache: false, retries: 1 }
+        );
+        if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
+        return rememberChunk(index, base64ToBytes(chunkData.base64));
+      }).finally(() => pendingChunks.delete(index));
 
       pendingChunks.set(index, request);
       return request;
@@ -425,46 +571,70 @@
 
     transport.requestDataRange = async function(begin, end) {
       try {
-        const firstIndex = Math.floor(begin / chunkSize);
-        const lastIndex = Math.floor((end - 1) / chunkSize);
-        const parts = [];
+        if (aborted || token !== loadToken || signal.aborted) return;
 
-        for (let index = firstIndex; index <= lastIndex; index++) {
-          parts.push(await fetchChunk(index));
-        }
+        const safeBegin = Math.max(0, Math.floor(begin));
+        const safeEnd = Math.min(fileSize, Math.ceil(end));
+        if (safeEnd <= safeBegin) return;
 
-        if (token !== loadToken) return;
+        const firstIndex = Math.floor(safeBegin / chunkSize);
+        const lastIndex = Math.floor((safeEnd - 1) / chunkSize);
+        const indexes = [];
+        for (let index = firstIndex; index <= lastIndex; index++) indexes.push(index);
 
-        const joinedLength = parts.reduce((sum, part) => sum + part.length, 0);
-        const joined = new Uint8Array(joinedLength);
-        let offset = 0;
-        for (const part of parts) {
-          joined.set(part, offset);
-          offset += part.length;
-        }
+        // Tải song song các khối trong cùng một vùng, nhưng giới hạn tổng số kết nối.
+        const parts = await Promise.all(indexes.map(fetchChunk));
+        if (aborted || token !== loadToken || signal.aborted) return;
 
-        const absoluteStart = firstIndex * chunkSize;
-        const sliceStart = Math.max(0, begin - absoluteStart);
-        const sliceEnd = Math.min(joined.length, end - absoluteStart);
-        this.onDataRange(begin, joined.slice(sliceStart, sliceEnd));
+        // Chỉ tạo đúng số byte PDF.js yêu cầu, tránh ghép các khối đầy đủ rồi lại cắt.
+        const requestedBytes = new Uint8Array(safeEnd - safeBegin);
+        let destinationOffset = 0;
+
+        parts.forEach((part, partPosition) => {
+          const chunkIndex = indexes[partPosition];
+          const chunkStart = chunkIndex * chunkSize;
+          const sourceStart = Math.max(0, safeBegin - chunkStart);
+          const sourceEnd = Math.min(part.length, safeEnd - chunkStart);
+          if (sourceEnd <= sourceStart) return;
+          const slice = part.subarray(sourceStart, sourceEnd);
+          requestedBytes.set(slice, destinationOffset);
+          destinationOffset += slice.length;
+        });
+
+        // requestedBytes là bản sao riêng, nên cache không bị detach khi chuyển sang worker.
+        this.onDataRange(safeBegin, requestedBytes);
       } catch (error) {
-        if (token === loadToken) {
-          showToast(error.message || 'Không thể tải phần dữ liệu PDF.', true);
-          console.error(error);
-        }
+        if (error?.name === 'AbortError' || token !== loadToken) return;
+        showToast(error.message || 'Không thể tải phần dữ liệu PDF.', true);
+        console.error(error);
       }
     };
 
+    transport.prefetchChunk = index => {
+      if (index < 0 || index >= totalChunks) return Promise.resolve(null);
+      return fetchChunk(index).catch(error => {
+        if (error?.name !== 'AbortError') console.warn('Không thể nạp trước khối PDF:', index, error);
+        return null;
+      });
+    };
+
     transport.abort = function() {
+      aborted = true;
       pendingChunks.clear();
     };
 
-    updateChunkProgress();
+    transport.chunkSize = chunkSize;
+    transport.totalChunks = totalChunks;
+    reportProgress('Đang chuẩn bị cấu trúc PDF...');
     return transport;
   }
 
   async function openPdf(file) {
     const token = ++loadToken;
+    abortCurrentWork();
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
+
     activeFileId = file.id;
     renderFileList();
     els.sidebar.classList.remove('open');
@@ -477,44 +647,43 @@
 
     try {
       setLoading(true, 'Đang đọc thông tin file...', 2);
-      const infoData = await api('getFileInfo', { fileId: file.id });
-      if (token !== loadToken) return;
-      const info = infoData.file;
 
+      const [infoData] = await Promise.all([
+        api('getFileInfo', { fileId: file.id }, { signal }),
+        disposePdfDocument()
+      ]);
+      if (token !== loadToken) return;
+
+      const info = infoData.file;
       if (!info || !Number(info.size) || !Number(info.totalChunks)) {
         throw new Error('Thông tin file PDF không hợp lệ.');
       }
 
       setLoading(true, 'Đang tải phần đầu tài liệu...', 4);
-      const firstChunkData = await api('getFileChunk', { fileId: file.id, index: 0 });
+      const firstChunk = await fetchInitialChunk(file, info, signal);
       if (token !== loadToken) return;
-      const firstChunk = base64ToBytes(firstChunkData.base64);
+      if (!firstChunk.length) throw new Error('Không nhận được dữ liệu phần đầu của PDF.');
 
-      if (!firstChunk.length) {
-        throw new Error('Không nhận được dữ liệu phần đầu của PDF.');
-      }
+      currentRangeTransport = createChunkRangeTransport(file, info, token, firstChunk, signal);
 
-      if (pdfLoadingTask) {
-        try { await pdfLoadingTask.destroy(); } catch (_) {}
-        pdfLoadingTask = null;
-      }
-      if (pdfDoc) {
-        try { await pdfDoc.destroy(); } catch (_) {}
-        pdfDoc = null;
-      }
+      // Phần cuối thường chứa bảng tham chiếu; khối thứ hai thường chứa dữ liệu trang đầu.
+      // Nạp trước song song nhưng không chờ, giúp giảm vòng gọi Apps Script liên tiếp.
+      currentRangeTransport.prefetchChunk(Number(info.totalChunks) - 1);
+      if (Number(info.totalChunks) > 2) currentRangeTransport.prefetchChunk(1);
 
-      const rangeTransport = createChunkRangeTransport(file, info, token, firstChunk);
       pdfLoadingTask = pdfjsLib.getDocument({
-        range: rangeTransport,
+        range: currentRangeTransport,
         length: Number(info.size),
+        disableRange: false,
         disableStream: true,
-        disableAutoFetch: false,
-        rangeChunkSize: firstChunk.length
+        disableAutoFetch: true,
+        rangeChunkSize: currentRangeTransport.chunkSize,
+        verbosity: 0
       });
 
       pdfLoadingTask.onProgress = progress => {
         if (token !== loadToken || !progress?.total) return;
-        const percent = Math.min(99, Math.round((progress.loaded / progress.total) * 100));
+        const percent = Math.min(99, Math.max(1, Math.round((progress.loaded / progress.total) * 100)));
         setLoading(true, 'Đang chuẩn bị trang đầu...', percent);
       };
 
@@ -522,19 +691,22 @@
       if (token !== loadToken) return;
 
       pageNum = 1;
+      scale = 1.25;
       els.pageCount.textContent = pdfDoc.numPages;
       els.pageInput.max = pdfDoc.numPages;
       els.welcome.hidden = true;
       els.canvas.hidden = false;
       setViewerEnabled(true);
 
-      await waitForLayoutTransition();
-      await fitToWidth();
+      // Hai frame là đủ để trình duyệt cập nhật kích thước sau khi ẩn tủ sách,
+      // không cần chờ cố định 260 ms.
+      await waitForLayoutReady();
+      await renderPage({ fitWidth: true, loadingText: 'Đang hiển thị trang đầu...' });
 
       setLoading(false);
-      showToast(`Đã mở trang đầu của “${file.name}”. Các trang khác sẽ tải khi cần.`);
+      showToast(`Đã mở “${file.name}”. Các trang tiếp theo chỉ tải khi cần.`);
     } catch (error) {
-      if (token !== loadToken) return;
+      if (token !== loadToken || error?.name === 'AbortError') return;
       setLoading(false);
 
       if (!pdfDoc) {
@@ -546,6 +718,44 @@
 
       showToast(error.message, true);
       console.error(error);
+    }
+  }
+
+  function abortCurrentWork() {
+    if (currentAbortController && !currentAbortController.signal.aborted) {
+      currentAbortController.abort();
+    }
+    currentAbortController = null;
+
+    if (currentRangeTransport) {
+      try { currentRangeTransport.abort(); } catch (_) {}
+      currentRangeTransport = null;
+    }
+
+    if (renderTask) {
+      try { renderTask.cancel(); } catch (_) {}
+      renderTask = null;
+    }
+
+    clearTimeout(zoomRenderTimer);
+    cancelIdlePrefetch();
+  }
+
+  async function disposePdfDocument() {
+    renderSerial++;
+    clearTimeout(cleanupTimer);
+    prefetchedPage = null;
+    currentPageProxy = null;
+
+    const task = pdfLoadingTask;
+    const documentRef = pdfDoc;
+    pdfLoadingTask = null;
+    pdfDoc = null;
+
+    if (task) {
+      try { await task.destroy(); } catch (_) {}
+    } else if (documentRef) {
+      try { await documentRef.destroy(); } catch (_) {}
     }
   }
 
@@ -577,9 +787,7 @@
     els.btnLibrary.setAttribute('aria-expanded', 'true');
 
     if (pdfDoc) {
-      window.setTimeout(() => {
-        fitToWidth().catch(error => showToast(error.message, true));
-      }, 260);
+      window.setTimeout(() => fitToWidth().catch(error => showToast(error.message, true)), 230);
     }
   }
 
@@ -593,79 +801,199 @@
       showLibrary();
     } else {
       hideLibrary();
-
       if (pdfDoc) {
-        window.setTimeout(() => {
-          fitToWidth().catch(error => showToast(error.message, true));
-        }, 260);
+        window.setTimeout(() => fitToWidth().catch(error => showToast(error.message, true)), 230);
       }
     }
   }
 
-  function waitForLayoutTransition() {
-    if (isMobileViewport()) return Promise.resolve();
-
+  function waitForLayoutReady() {
     return new Promise(resolve => {
-      window.setTimeout(resolve, 260);
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
     });
   }
 
   function handleViewportResize() {
     clearTimeout(resizeTimer);
-
     resizeTimer = window.setTimeout(() => {
-      if (!isMobileViewport()) {
-        els.sidebar.classList.remove('open');
-      }
-
-      if (pdfDoc) {
-        fitToWidth().catch(error => showToast(error.message, true));
-      }
+      if (!isMobileViewport()) els.sidebar.classList.remove('open');
+      if (pdfDoc) fitToWidth().catch(error => showToast(error.message, true));
     }, 180);
   }
 
-  async function renderPage() {
+  async function renderPage(options = {}) {
+    const { fitWidth = false, loadingText = `Đang hiển thị trang ${pageNum}...` } = options;
     if (!pdfDoc) return;
+
+    const documentRef = pdfDoc;
+    const targetPageNumber = pageNum;
+    const serial = ++renderSerial;
+
     if (renderTask) {
       try { renderTask.cancel(); } catch (_) {}
       renderTask = null;
     }
 
-    const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale });
-    const outputScale = Math.min(window.devicePixelRatio || 1, 2);
-    els.canvas.width = Math.floor(viewport.width * outputScale);
-    els.canvas.height = Math.floor(viewport.height * outputScale);
-    els.canvas.style.width = `${Math.floor(viewport.width)}px`;
-    els.canvas.style.height = `${Math.floor(viewport.height)}px`;
+    setLoading(true, loadingText, 0);
 
-    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-    renderTask = page.render({ canvasContext: ctx, viewport, transform });
-    try { await renderTask.promise; } catch (error) { if (error?.name !== 'RenderingCancelledException') throw error; }
-    renderTask = null;
-    updateControls();
+    let page;
+    try {
+      if (prefetchedPage && prefetchedPage.number === targetPageNumber && prefetchedPage.token === loadToken) {
+        page = prefetchedPage.page;
+        prefetchedPage = null;
+      } else {
+        page = await documentRef.getPage(targetPageNumber);
+      }
+
+      if (serial !== renderSerial || documentRef !== pdfDoc) return;
+
+      if (fitWidth) {
+        const baseViewport = page.getViewport({ scale: 1 });
+        const horizontalPadding = isMobileViewport() ? 24 : 48;
+        const availableWidth = Math.max(260, els.canvasWrap.clientWidth - horizontalPadding);
+        scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
+      }
+
+      const viewport = page.getViewport({ scale });
+      const outputScale = calculateOutputScale(viewport);
+      const canvasWidth = Math.max(1, Math.floor(viewport.width * outputScale));
+      const canvasHeight = Math.max(1, Math.floor(viewport.height * outputScale));
+
+      els.canvas.width = canvasWidth;
+      els.canvas.height = canvasHeight;
+      els.canvas.style.width = `${Math.floor(viewport.width)}px`;
+      els.canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      const transform = outputScale !== 1
+        ? [outputScale, 0, 0, outputScale, 0, 0]
+        : null;
+
+      const localRenderTask = page.render({
+        canvasContext: ctx,
+        viewport,
+        transform,
+        intent: 'display'
+      });
+      renderTask = localRenderTask;
+
+      // Nhường luồng chính giữa các phần dựng để giao diện vẫn phản hồi tốt.
+      localRenderTask.onContinue = continueCallback => requestAnimationFrame(continueCallback);
+
+      try {
+        await localRenderTask.promise;
+      } catch (error) {
+        if (error?.name === 'RenderingCancelledException') return;
+        throw error;
+      } finally {
+        if (renderTask === localRenderTask) renderTask = null;
+      }
+
+      if (serial !== renderSerial || documentRef !== pdfDoc) return;
+
+      const previousPage = currentPageProxy;
+      currentPageProxy = page;
+      updateControls();
+      setLoading(false);
+
+      if (previousPage && previousPage !== page) {
+        clearTimeout(cleanupTimer);
+        cleanupTimer = window.setTimeout(() => {
+          try { previousPage.cleanup(); } catch (_) {}
+        }, 800);
+      }
+
+      scheduleAdjacentPagePrefetch(targetPageNumber, documentRef, serial);
+    } catch (error) {
+      if (serial !== renderSerial || error?.name === 'AbortError') return;
+      setLoading(false);
+      throw error;
+    }
+  }
+
+  function calculateOutputScale(viewport) {
+    const mobile = isMobileViewport();
+    const dprLimit = mobile ? MOBILE_DPR_LIMIT : DESKTOP_DPR_LIMIT;
+    const maxPixels = mobile ? MOBILE_MAX_CANVAS_PIXELS : DESKTOP_MAX_CANVAS_PIXELS;
+    const desiredScale = Math.min(window.devicePixelRatio || 1, dprLimit);
+    const viewportPixels = Math.max(1, viewport.width * viewport.height);
+    const pixelLimitedScale = Math.sqrt(maxPixels / viewportPixels);
+
+    // Cho phép xuống dưới 1 khi người dùng phóng rất lớn để tránh canvas hàng chục megapixel.
+    return Math.max(0.55, Math.min(desiredScale, pixelLimitedScale));
+  }
+
+  function scheduleAdjacentPagePrefetch(renderedPageNumber, documentRef, serial) {
+    cancelIdlePrefetch();
+    if (!shouldPrefetchNextPage()) return;
+
+    const nextPageNumber = renderedPageNumber + 1;
+    if (nextPageNumber > documentRef.numPages) return;
+
+    const prefetch = async () => {
+      try {
+        if (serial !== renderSerial || documentRef !== pdfDoc) return;
+        const page = await documentRef.getPage(nextPageNumber);
+        if (serial !== renderSerial || documentRef !== pdfDoc) return;
+
+        // getOperatorList nạp trước dữ liệu và giải mã cấu trúc trang scan kế tiếp trong worker.
+        await page.getOperatorList();
+        if (serial !== renderSerial || documentRef !== pdfDoc) {
+          try { page.cleanup(); } catch (_) {}
+          return;
+        }
+        prefetchedPage = { number: nextPageNumber, page, token: loadToken };
+      } catch (error) {
+        if (error?.name !== 'AbortError') console.debug('Bỏ qua nạp trước trang kế tiếp:', error);
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      idlePrefetchHandle = requestIdleCallback(prefetch, { timeout: 1800 });
+    } else {
+      idlePrefetchHandle = window.setTimeout(prefetch, 650);
+    }
+  }
+
+  function cancelIdlePrefetch() {
+    if (idlePrefetchHandle === null) return;
+    if ('cancelIdleCallback' in window) cancelIdleCallback(idlePrefetchHandle);
+    else clearTimeout(idlePrefetchHandle);
+    idlePrefetchHandle = null;
+  }
+
+  function shouldPrefetchNextPage() {
+    if (isMobileViewport()) return false;
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!connection) return true;
+    if (connection.saveData) return false;
+    return !['slow-2g', '2g'].includes(connection.effectiveType);
   }
 
   function goToPage(value) {
     if (!pdfDoc) return;
     const target = Math.max(1, Math.min(pdfDoc.numPages, Math.round(Number(value) || pageNum)));
+    if (target === pageNum && currentPageProxy) return;
     pageNum = target;
     els.canvasWrap.scrollTop = 0;
     renderPage().catch(error => showToast(error.message, true));
   }
 
   function setScale(value) {
+    if (!pdfDoc) return;
     scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, Number(value.toFixed(2))));
-    renderPage().catch(error => showToast(error.message, true));
+    updateControls();
+
+    // Gộp nhiều lần bấm phóng to/thu nhỏ liên tiếp thành một lần dựng.
+    clearTimeout(zoomRenderTimer);
+    zoomRenderTimer = window.setTimeout(() => {
+      renderPage().catch(error => showToast(error.message, true));
+    }, ZOOM_RENDER_DELAY);
   }
 
   async function fitToWidth() {
     if (!pdfDoc) return;
-    const page = await pdfDoc.getPage(pageNum);
-    const baseViewport = page.getViewport({ scale: 1 });
-    const availableWidth = Math.max(260, els.canvasWrap.clientWidth - (window.innerWidth <= 860 ? 24 : 48));
-    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
-    await renderPage();
+    clearTimeout(zoomRenderTimer);
+    await renderPage({ fitWidth: true });
   }
 
   function updateControls() {
@@ -680,7 +1008,10 @@
 
   function setViewerEnabled(enabled) {
     [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit].forEach(el => el.disabled = !enabled);
-    if (!enabled) { els.btnPrev.disabled = true; els.btnNext.disabled = true; }
+    if (!enabled) {
+      els.btnPrev.disabled = true;
+      els.btnNext.disabled = true;
+    }
   }
 
   function setLoading(show, text = '', percent = 0) {
@@ -688,8 +1019,8 @@
     if (!show) return;
     const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
     els.statusText.textContent = text;
-    els.statusPercent.textContent = `${safePercent}%`;
-    els.progressBar.style.width = `${safePercent}%`;
+    els.statusPercent.textContent = safePercent > 0 ? `${safePercent}%` : '';
+    els.progressBar.style.width = safePercent > 0 ? `${safePercent}%` : '12%';
   }
 
   function showToast(message, isError = false) {
@@ -709,18 +1040,34 @@
     if (event.key.toLowerCase() === 'l') toggleLibrary();
   }
 
+  function getFileVersion(info) {
+    return info.version || info.modifiedTime || info.md5Checksum || info.size || 'current';
+  }
+
+  function createAbortError() {
+    try {
+      return new DOMException('Đã hủy tải tài liệu cũ.', 'AbortError');
+    } catch (_) {
+      const error = new Error('Đã hủy tải tài liệu cũ.');
+      error.name = 'AbortError';
+      return error;
+    }
+  }
+
   function base64ToBytes(base64) {
+    if (!base64) return new Uint8Array(0);
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blockSize = 32 * 1024;
+    for (let start = 0; start < binary.length; start += blockSize) {
+      const end = Math.min(start + blockSize, binary.length);
+      for (let index = start; index < end; index++) bytes[index] = binary.charCodeAt(index);
+    }
     return bytes;
   }
 
-  function concatUint8Arrays(parts, totalLength) {
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    parts.forEach(part => { result.set(part, offset); offset += part.length; });
-    return result;
+  function delay(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
   }
 
   function normalize(value) {
@@ -735,8 +1082,11 @@
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    return String(value).replace(/[&<>'"]/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[char]));
   }
 </script>
+
 </body>
 </html>
