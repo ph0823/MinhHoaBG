@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#090b0f">
-<title>TH Nguyên Nhi</title>
+<title>TH Nguyên Nhi 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
 :root{--accent:#ef4444;--focus:#facc15;--bg:#090b0f;--panel:rgba(12,15,21,.94);--text:#fff;--muted:#aab2c0;--safe:clamp(10px,2vw,24px)}
@@ -19,7 +19,7 @@ video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:
 .channelStrip{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:3px 2px 5px;scrollbar-width:thin}.channelCard{flex:0 0 clamp(94px,11vw,132px);min-height:58px;padding:9px 8px;border-radius:9px;border:2px solid transparent;background:#20242c;color:#fff;text-align:center;cursor:pointer;outline:0;scroll-snap-align:center;font-weight:650}.channelCard:hover,.channelCard:focus-visible{border-color:var(--focus);background:#343a46;transform:translateY(-2px)}.channelCard.active{background:var(--accent);border-color:#fff}.tag{display:block;color:#fde047;font-size:10px;text-transform:uppercase;margin-top:4px}
 .mobileBar{display:none}.below{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0}.action{border:1px solid #ffffff28;background:#181c24;color:#fff;border-radius:10px;padding:11px 17px;min-height:46px;cursor:pointer;outline:0}.action:hover,.action:focus-visible{background:var(--accent);border-color:var(--focus)}.links{text-align:center;color:var(--muted);font-size:14px}.links a{color:#68b7ff;padding:8px;display:inline-block}
 .app:fullscreen,.app.fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0}.app:fullscreen .quickActions,.app.fullscreen .quickActions{bottom:var(--safe)}
-@media (min-width:768px){.menu{padding-bottom:12px}.channelStrip{max-height:78px}.app.menu-open .quickActions{bottom:102px}.app.menu-open .channelInfo{opacity:.35}}
+@media (min-width:768px){#recallFloat{display:none}.menu{padding-bottom:12px}.channelStrip{max-height:78px}.app.menu-open .quickActions{bottom:102px}.app.menu-open .channelInfo{opacity:.35}}
 @media (max-width:767px){body{padding-bottom:76px}.shell{padding:0}.title{font-size:20px;margin:8px}.app{border-radius:0;aspect-ratio:16/9}.topHud{top:8px;left:8px;right:8px}.channelInfo{font-size:13px;padding:6px 9px}.status{font-size:12px;padding:6px 9px}.quickActions{right:8px;bottom:8px}.iconBtn{width:42px;min-width:42px;height:42px}.menu{position:fixed;z-index:20;max-height:55dvh;background:#11151bf5;border-radius:18px 18px 0 0;padding:10px 12px calc(14px + env(safe-area-inset-bottom))}.menuHeader{margin:4px 2px 10px}.channelStrip{display:grid;grid-template-columns:repeat(3,1fr);max-height:40dvh;overflow-y:auto;scroll-snap-type:none}.channelCard{min-width:0;min-height:56px}.below{display:none}.links{padding:15px}.mobileBar{position:fixed;left:0;right:0;bottom:0;height:64px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));background:#10131aee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;z-index:15;border-top:1px solid #ffffff1f}.mobileBar button{border:0;border-radius:10px;background:#232833;color:#fff;font-size:13px}.mobileBar button:active{background:var(--accent)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
 </style>
@@ -27,7 +27,7 @@ video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:
 <body>
 <main class="shell">
 <h1 class="title">TIVI <span style="color:#fff">NGUYÊN</span> NHI</h1>
-<section class="app" id="app" aria-label="Trình phát truyền hình">
+<section class="app" id="app" aria-label="Trình phát">
 <div id="visualizer" aria-hidden="true"></div>
 <video id="video" playsinline crossorigin="anonymous" tabindex="0"></video>
 <div class="topHud"><div class="channelInfo"><span id="currentName">Đang tải…</span><small id="currentType">Trực tiếp</small></div><div class="status" id="status"></div></div>
@@ -36,7 +36,7 @@ video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:
 <button class="iconBtn" id="menuBtn" title="Danh sách kênh" aria-label="Mở danh sách kênh">☰</button>
 </div>
 <div class="menu" id="menu" aria-hidden="true">
-<div class="menuHeader"><strong>Danh sách kênh</strong><span class="hint">← → đổi nhanh · OK chọn · Back đóng</span></div>
+<div class="menuHeader"><strong>Danh sách kênh</strong><span class="hint">← → đổi nhanh · OK chọn · Back về kênh trước</span></div>
 <div class="channelStrip" id="playlist" role="listbox" aria-label="Danh sách kênh"></div>
 </div>
 </section>
@@ -110,13 +110,26 @@ video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visual
 function toggleFullscreen(){if(!document.fullscreenElement){(app.requestFullscreen||app.webkitRequestFullscreen)?.call(app);app.classList.add('fullscreen')}else{(document.exitFullscreen||document.webkitExitFullscreen)?.call(document);app.classList.remove('fullscreen')}}
 $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
-document.addEventListener('keydown',e=>{const inMenu=app.classList.contains('menu-open');const key=e.key;const isBack=key==='Escape'||key==='Backspace'||e.keyCode===461;
-if(isBack){e.preventDefault();if(inMenu)setMenu(false);else if(document.fullscreenElement)toggleFullscreen();else recall();return}
+document.addEventListener('keydown',e=>{const inMenu=app.classList.contains('menu-open');const key=e.key;
+const isTvBack=e.keyCode===461||key==='GoBack'||key==='BrowserBack';
+const isDesktopBack=key==='Escape'||key==='Backspace';
+
+// Trên LG webOS: nút Back luôn đổi qua lại giữa hai kênh gần nhất.
+// Menu đang mở cũng được đóng ngay để không che hình khi kênh được đổi.
+if(isTvBack){e.preventDefault();e.stopPropagation();setMenu(false);recall();return}
+
+// Escape/Backspace chỉ dùng cho trình duyệt máy tính.
+if(isDesktopBack){e.preventDefault();if(inMenu)setMenu(false);else if(document.fullscreenElement)toggleFullscreen();return}
 if(!inMenu&&(key==='ArrowLeft'||key==='ChannelDown')){e.preventDefault();changeChannel(-1)}
 if(!inMenu&&(key==='ArrowRight'||key==='ChannelUp')){e.preventDefault();changeChannel(1)}
 if(!inMenu&&(key==='Enter'||key===' ')){if(document.activeElement===video||document.activeElement===document.body){e.preventDefault();setMenu(true,true)}}
 if(key==='r'||key==='R'){e.preventDefault();recall()}
 });
+
+// Một số phiên bản trình duyệt LG gửi Back dưới dạng lịch sử trình duyệt
+// thay vì sự kiện phím 461. Giữ trang hiện tại và dùng Back để gọi lại kênh.
+try{history.replaceState({tvApp:true},'',location.href);history.pushState({tvApp:true},'',location.href)}catch(_){ }
+window.addEventListener('popstate',()=>{recall();try{history.pushState({tvApp:true},'',location.href)}catch(_){ }});
 
 updateUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>video.focus({preventScroll:true}),300);
 </script>
