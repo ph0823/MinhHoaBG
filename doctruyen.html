@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thư Viện OTruyen - Chế Độ An Toàn</title>
+    <title>Thư Viện Nguyên Nhi</title>
     <style>
         /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
         :root {
@@ -96,6 +96,13 @@
         .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; }
         .pagination span { font-weight: bold; color: var(--primary); }
 
+        .filter-note { background: #fff3cd; border: 1px solid #ffe69c; color: #664d03; padding: 10px 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; }
+        [data-theme="dark"] .filter-note { background: #3b3418; border-color: #6a5b20; color: #ffe69c; }
+        .badge { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
+        .badge-kids { background: #d1e7dd; color: #0f5132; }
+        .badge-safe { background: #e2e3e5; color: #41464b; }
+        .card-info { height: 88px; }
+
         @media (max-width: 600px) {
             .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .card img { height: 180px; }
@@ -108,7 +115,7 @@
 <body>
 
     <div class="toolbar">
-        <a href="#/" class="toolbar-title">OTruyen Quán</a>
+        <a href="#/" class="toolbar-title">A Truyen Nhi Quán</a>
         
         <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <input type="text" id="searchInput" placeholder="Nhập tên truyện...">
@@ -124,7 +131,8 @@
 
     <div class="container">
         <div id="view-list" class="view-section active">
-            <h2 id="list-title">Truyện Mới Cập Nhật</h2>
+            <h2 id="list-title">Truyện Thiếu Nhi Mới Cập Nhật</h2>
+            
             <div id="story-grid" class="grid">
                 <div class="loading">Đang tải dữ liệu...</div>
             </div>
@@ -158,16 +166,72 @@
         const readerTools = document.getElementById('reader-tools');
         const searchInput = document.getElementById('searchInput');
 
-        // --- BỘ LỌC TỪ KHÓA (SAFE SEARCH) ---
-        // Thêm các từ khóa nhạy cảm vào mảng này
-        const BLOCKED_KEYWORDS = ['18+', 'smut', 'adult', 'trưởng thành', 'hentai', 'r18', 'nsfw', 'sắc', 'song tu', 'dâm'];
+        // --- BỘ LỌC VÀ XẾP HẠNG NỘI DUNG THIẾU NHI ---
+        // Lưu ý: lọc theo từ khóa chỉ giúp giảm rủi ro, không thể thay thế kiểm duyệt nội dung thực tế.
+        const BLOCKED_KEYWORDS = [
+            '18+', '18 plus', 'smut', 'adult', 'mature', 'trưởng thành', 'hentai',
+            'ecchi', 'r18', 'r-18', 'nsfw', 'sex', 'sexy', 'sắc hiệp', 'sắc tình',
+            'song tu', 'song thể', 'dâm', 'loạn luân', 'ntr', 'netorare', 'boylove 18',
+            'girl love 18', 'yaoi 18', 'yuri 18', 'bdsm', 'cưỡng hiếp'
+        ];
+
+        const RISKY_KEYWORDS = [
+            'ngôn tình', 'tổng tài', 'xuyên không', 'tu tiên', 'võng du', 'ma đạo',
+            'kinh dị', 'máu me', 'bạo lực', 'sát thủ', 'trả thù', 'chiến tranh',
+            'romance', 'drama', 'supernatural', 'psychological'
+        ];
+
+        const KIDS_KEYWORDS = [
+            'thiếu nhi', 'trẻ em', 'kids', 'children', 'học đường', 'school life',
+            'hài hước', 'comedy', 'phiêu lưu', 'adventure', 'đời thường', 'slice of life',
+            'gia đình', 'family', 'thể thao', 'sports', 'khoa học', 'science',
+            'giáo dục', 'educational', 'động vật', 'animal', 'fantasy', 'cổ tích',
+            'siêu anh hùng', 'superhero', 'robot', 'mecha', 'trinh thám thiếu nhi'
+        ];
+
+        function normalizeText(value = '') {
+            return String(value)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+        }
+
+        function getItemText(item = {}) {
+            const categories = Array.isArray(item.category)
+                ? item.category.map(c => c?.name || c?.slug || '').join(' ')
+                : '';
+            return normalizeText([
+                item.name, item.slug, item.origin_name, item.content, item.description, categories
+            ].filter(Boolean).join(' '));
+        }
+
+        function containsAny(text, keywords) {
+            return keywords.some(keyword => text.includes(normalizeText(keyword)));
+        }
+
+        function getKidsScore(item) {
+            const text = getItemText(item);
+            if (containsAny(text, BLOCKED_KEYWORDS)) return -999;
+
+            let score = 0;
+            KIDS_KEYWORDS.forEach(keyword => {
+                if (text.includes(normalizeText(keyword))) score += 4;
+            });
+            RISKY_KEYWORDS.forEach(keyword => {
+                if (text.includes(normalizeText(keyword))) score -= 2;
+            });
+
+            // Truyện có trạng thái/cập nhật rõ ràng được ưu tiên nhẹ.
+            if (item.status === 'ongoing' || item.status === 'completed') score += 1;
+            return score;
+        }
 
         function isSafeForKids(item) {
-            // Chuyển tên truyện và slug về chữ thường để dễ so sánh
-            const textToCheck = (item.name + ' ' + (item.slug || '')).toLowerCase();
-            // Nếu có ít nhất 1 từ khóa cấm xuất hiện -> trả về false (Loại bỏ)
-            const hasBlockedWord = BLOCKED_KEYWORDS.some(keyword => textToCheck.includes(keyword));
-            return !hasBlockedWord;
+            return getKidsScore(item) > -999;
+        }
+
+        function sortKidsFirst(items) {
+            return [...items].sort((a, b) => getKidsScore(b) - getKidsScore(a));
         }
 
         // --- HỆ THỐNG ROUTER ---
@@ -176,7 +240,7 @@
             readerTools.style.display = 'none';
 
             if (!hash || hash === '' || hash === '#/') {
-                document.getElementById('list-title').innerText = "Truyện Mới Cập Nhật";
+                document.getElementById('list-title').innerText = "Truyện Thiếu Nhi Mới Cập Nhật";
                 switchView('view-list');
                 fetchList(`${BASE_API}/danh-sach/truyen-moi`);
             } else if (hash.startsWith('#/tim-kiem/')) {
@@ -210,6 +274,13 @@
             window.scrollTo(0, 0); 
         }
 
+
+        function escapeHTML(value = '') {
+            return String(value).replace(/[&<>'"]/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[char]));
+        }
+
         function handleSearch() {
             const keyword = searchInput.value.trim();
             if(keyword) window.location.hash = `#/tim-kiem/${encodeURIComponent(keyword)}`;
@@ -227,6 +298,7 @@
                 // Thêm tham số page vào URL
                 const separator = baseApiUrl.includes('?') ? '&' : '?';
                 const res = await fetch(`${baseApiUrl}${separator}page=${page}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 grid.innerHTML = ''; 
                 
@@ -234,7 +306,7 @@
                 let domainCdn = data.data?.domain_cdn || 'https://img.otruyenapi.com';
 
                 // BƯỚC LỌC DỮ LIỆU: Chỉ giữ lại các truyện an toàn
-                items = items.filter(isSafeForKids);
+                items = sortKidsFirst(items.filter(isSafeForKids));
 
                 if(items.length === 0) {
                     grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Không có dữ liệu hoặc các truyện đã bị ẩn bởi bộ lọc an toàn.</p>';
@@ -250,11 +322,16 @@
                             thumbUrl = thumbUrl.replace(/([^:]\/)\/+/g, "$1");
                         }
 
+                        const score = getKidsScore(item);
+                        const badge = score >= 4
+                            ? '<span class="badge badge-kids">Ưu tiên thiếu nhi</span>'
+                            : '<span class="badge badge-safe">Đã lọc an toàn</span>';
                         grid.innerHTML += `
-                            <a href="#/truyen/${item.slug}" class="card">
-                                <img src="${thumbUrl}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
+                            <a href="#/truyen/${encodeURIComponent(item.slug)}" class="card">
+                                <img src="${escapeHTML(thumbUrl)}" alt="${escapeHTML(item.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/200x300?text=No+Image'">
                                 <div class="card-info">
-                                    <h3>${item.name}</h3>
+                                    <h3>${escapeHTML(item.name)}</h3>
+                                    ${badge}
                                 </div>
                             </a>
                         `;
@@ -296,6 +373,18 @@
         }
 
         // --- CÁC HÀM CÒN LẠI (GIỮ NGUYÊN) ---
+        function sanitizeHTML(html = '') {
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            template.content.querySelectorAll('script, iframe, object, embed, form, style').forEach(el => el.remove());
+            template.content.querySelectorAll('*').forEach(el => {
+                [...el.attributes].forEach(attr => {
+                    if (/^on/i.test(attr.name) || ['srcdoc'].includes(attr.name.toLowerCase())) el.removeAttribute(attr.name);
+                });
+            });
+            return template.innerHTML;
+        }
+
         async function fetchStoryDetail(slug) {
             const titleEl = document.getElementById('detail-title');
             const descEl = document.getElementById('detail-desc');
@@ -308,13 +397,21 @@
 
             try {
                 const res = await fetch(`${BASE_API}/truyen-tranh/${slug}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const story = data.data?.item;
 
                 if(!story) throw new Error("Không tìm thấy truyện");
 
+                if (!isSafeForKids(story)) {
+                    titleEl.innerText = "Nội dung đã bị ẩn";
+                    descEl.textContent = "Truyện này có dấu hiệu không phù hợp với chế độ thiếu nhi.";
+                    chaptersUl.innerHTML = '';
+                    return;
+                }
+
                 titleEl.innerText = story.name;
-                descEl.innerHTML = story.content || "Chưa có giới thiệu.";
+                descEl.innerHTML = sanitizeHTML(story.content || "Chưa có giới thiệu.");
 
                 const savedChapterApi = localStorage.getItem(`history_api_${slug}`);
                 const savedChapterName = localStorage.getItem(`history_name_${slug}`);
@@ -351,6 +448,7 @@
 
             try {
                 const res = await fetch(apiUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const chapter = data.data?.item;
                 const domainCdn = data.data?.domain_cdn;
@@ -369,7 +467,7 @@
                     });
                     contentEl.innerHTML = html;
                 } else {
-                    contentEl.innerHTML = chapter.chapter_content || '<p>Đang cập nhật nội dung...</p>';
+                    contentEl.innerHTML = sanitizeHTML(chapter.chapter_content || '<p>Đang cập nhật nội dung...</p>');
                 }
             } catch (error) {
                 titleEl.innerText = "Lỗi tải chương";
