@@ -1,70 +1,520 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light dark">
-<title>Thư viện truyện thiếu nhi</title>
-<style>
-:root{--bg:#f5f7fb;--text:#243042;--muted:#687386;--card:#fff;--primary:#e96f00;--primary2:#bd5900;--border:#dfe5ed;--soft:#fff3e7;--ok:#17865d;--danger:#c0392b;--shadow:0 7px 22px rgba(31,41,55,.09)}
-[data-theme="dark"]{--bg:#111827;--text:#e5e7eb;--muted:#a7b0bf;--card:#1f2937;--primary:#ff9a3d;--primary2:#ffb168;--border:#394456;--soft:#30251c;--ok:#4ade80;--danger:#f87171;--shadow:0 7px 22px rgba(0,0,0,.3)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}a{color:inherit;text-decoration:none}button,input{font:inherit}.toolbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}.toolbar-inner{max-width:1180px;margin:auto;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.brand{font-weight:850;color:var(--primary);font-size:1.18rem;white-space:nowrap}.search{display:flex;gap:7px;flex:1;min-width:260px}.search input{flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text)}button,.button{border:0;border-radius:10px;padding:9px 13px;cursor:pointer;font-weight:750;background:#edf1f6;color:#243042}[data-theme="dark"] button,[data-theme="dark"] .button{background:#374151;color:#f3f4f6}.primary{background:var(--primary)!important;color:#fff!important}.secondary{border:1px solid var(--border);background:var(--card)!important;color:var(--text)!important}.reader-tools{display:none;gap:6px}.container{max-width:1180px;margin:auto;padding:18px 16px 40px}.hero{background:linear-gradient(135deg,var(--soft),var(--card));border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin-bottom:16px}.hero h1{font-size:1.45rem;margin:0 0 6px}.hero p{margin:0;color:var(--muted)}.tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 13px}.tab{white-space:nowrap;border:1px solid var(--border);background:var(--card);color:var(--text)}.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}.view{display:none}.view.active{display:block}.head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin:5px 0 12px}.head h2{margin:0;font-size:1.3rem}.note{color:var(--muted);font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:16px}.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:.18s transform}.card:hover{transform:translateY(-4px)}.cover{position:relative;aspect-ratio:2/3;background:#dfe3e8;overflow:hidden}.cover img{width:100%;height:100%;object-fit:cover;display:block}.badge{position:absolute;top:8px;padding:3px 7px;border-radius:999px;color:#fff;font-size:.7rem;font-weight:850}.badge.source{left:8px;background:rgba(17,24,39,.82)}.badge.safe{right:8px;background:rgba(23,134,93,.93)}.card-info{padding:10px 11px 12px;min-height:102px}.title{font-weight:850;font-size:.94rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.meta{font-size:.78rem;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.loading,.empty,.error{grid-column:1/-1;text-align:center;padding:46px 18px;border:1px dashed var(--border);border-radius:14px;background:var(--card);color:var(--muted)}.error{color:var(--danger)}.pagination{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin-top:24px}.pagination span{font-weight:850;color:var(--primary)}.back-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow)}.detail{display:grid;grid-template-columns:220px 1fr;gap:22px}.detail img{width:100%;border-radius:12px;border:1px solid var(--border);background:#ddd}.detail h1{margin:0 0 8px;font-size:1.6rem}.detail-meta{color:var(--muted);margin-bottom:12px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tag{font-size:.78rem;padding:3px 8px;border-radius:999px;background:var(--soft);border:1px solid var(--border)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.chapters{list-style:none;margin:14px 0 0;padding:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;max-height:520px;overflow-y:auto}.chapters li+li{border-top:1px solid var(--border)}.chapters a{display:flex;justify-content:space-between;gap:10px;padding:11px 14px}.chapters a:hover{background:var(--soft);color:var(--primary)}.notice{padding:10px 12px;border:1px solid #ffe08a;background:#fff7d6;color:#684f00;border-radius:10px;margin:10px 0}[data-theme="dark"] .notice{background:#3b3218;border-color:#6d5a18;color:#ffe89b}#chapterContent{text-align:center;font-size:22px}#chapterContent img{display:block;width:100%;max-width:920px;margin:0 auto;background:#ddd}.reader-status{text-align:center;color:var(--muted);margin:8px 0 14px}
-@media(max-width:700px){.brand{width:100%}.search{order:2;width:100%}.container{padding:12px 10px 30px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.detail{grid-template-columns:1fr}.detail img{max-width:230px;margin:auto}.box{padding:14px}.hero{padding:14px}.hero h1{font-size:1.25rem}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Viện Nguyên Nhi - Đọc Truyện An Toàn</title>
+    
+    <link rel="preconnect" href="https://otruyenapi.com">
+    <link rel="preconnect" href="https://img.otruyenapi.com">
+
+    <style>
+        /* --- CSS BIẾN & GIAO DIỆN CHUNG --- */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --primary: #e67e22;
+            --primary-hover: #d35400;
+            --border: #e0e0e0;
+            --btn-bg: #eeeeee;
+            --btn-hover: #dddddd;
+            --skeleton-base: #e2e5e7;
+            --skeleton-shine: #f0f2f3;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --border: #333333;
+            --btn-bg: #333333;
+            --btn-hover: #444444;
+            --skeleton-base: #2a2a2a;
+            --skeleton-shine: #3a3a3a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        .container { max-width: 900px; margin: 0 auto; padding: 15px; }
+
+        /* --- THANH CÔNG CỤ (TOOLBAR) --- */
+        .toolbar {
+            position: sticky; top: 0;
+            background-color: var(--card-bg);
+            padding: 12px 15px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            z-index: 100; gap: 10px;
+        }
+        .toolbar-title { font-weight: 800; color: var(--primary); font-size: 1.3em; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .search-box { display: flex; gap: 5px; flex-grow: 1; max-width: 350px; }
+        .search-box input { flex-grow: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color); color: var(--text-color); outline: none; }
+        .search-box input:focus { border-color: var(--primary); }
+        .search-box button, .toolbar-actions button, .pagination button {
+            background-color: var(--btn-bg); color: var(--text-color);
+            border: none; padding: 9px 14px; border-radius: 6px;
+            cursor: pointer; font-weight: bold; transition: background 0.2s;
+        }
+        .search-box button:hover, .toolbar-actions button:hover, .pagination button:hover { background-color: var(--btn-hover); }
+
+        /* --- QUẢN LÝ MÀN HÌNH --- */
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- COMPONENT: CARD & GRID --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; margin-top: 20px; }
+        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: block; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
+        
+        .card img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: var(--btn-bg); display: block; }
+        
+        .card-info { padding: 12px; height: 95px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;}
+        .card-info h3 { margin: 0; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; text-align: center; width: 100%;}
+
+        /* --- COMPONENT: NỘI DUNG CHI TIẾT & ĐỌC --- */
+        .content-box { background: var(--card-bg); padding: 25px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .btn-back { display: inline-block; background: var(--primary); color: white; padding: 10px 18px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; transition: background 0.2s; }
+        .btn-back:hover { background: var(--primary-hover); }
+        
+        .chapter-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+        .chapter-list li a { display: block; padding: 12px 15px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .chapter-list li:last-child a { border-bottom: none; }
+        .chapter-list li a:hover { background: var(--btn-bg); color: var(--primary); padding-left: 20px; }
+        
+        #chapter-content { font-size: 22px; text-align: center; margin-top: 20px; }
+        #chapter-content p { margin-bottom: 15px; text-align: justify; }
+        
+        #chapter-content img { 
+            width: 100%; max-width: 800px; 
+            display: block; margin: 0 auto 10px auto; 
+            background: var(--btn-bg);
+            min-height: 300px; 
+            content-visibility: auto; 
+            border-radius: 4px;
+        }
+        
+        /* --- HIỆU ỨNG LOADING (SKELETON) --- */
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .skel-card { height: 280px; width: 100%; }
+
+        /* --- PHÂN TRANG & BADGE --- */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; padding-bottom: 20px;}
+        .pagination span { font-weight: bold; color: var(--primary); font-size: 1.1em;}
+
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .badge-kids { background: #d1e7dd; color: #0f5132; }
+        .badge-safe { background: #e2e3e5; color: #41464b; }
+
+        .error-alert { padding: 15px; background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; border-radius: 8px; margin-bottom: 15px;}
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .card-info { height: 90px; }
+            .content-box { padding: 15px; border-radius: 8px; margin-top: 10px; }
+            #chapter-content { font-size: 18px; }
+            .search-box { max-width: 100%; order: 3; margin-top: 10px; }
+        }
+    </style>
 </head>
 <body>
-<header class="toolbar"><div class="toolbar-inner">
-<a class="brand" href="#/source/mangadex">📚 Thư viện truyện thiếu nhi</a>
-<form class="search" id="searchForm"><input id="searchInput" placeholder="Nhập tên truyện hoặc sách..." autocomplete="off"><button class="primary">Tìm</button></form>
-<div class="reader-tools" id="readerTools"><button id="fontDown" type="button">A−</button><button id="fontUp" type="button">A+</button></div>
-<button id="themeButton" type="button">Sáng/Tối</button>
-</div></header>
-<main class="container">
-<section id="listView" class="view active">
-<div class="hero"><h1>Nội dung ưu tiên trẻ em, không cần máy chủ riêng</h1><p>Bản này chỉ dùng các API có thể gọi trực tiếp từ trình duyệt, phù hợp triển khai một file HTML trên GitHub Pages, Vercel và Netlify.</p></div>
-<nav class="tabs" id="tabs"></nav>
-<div class="head"><div><h2 id="listTitle">Đang tải...</h2><div class="note" id="sourceNote"></div></div></div>
-<div class="grid" id="grid"><div class="loading">Đang tải dữ liệu...</div></div><div class="pagination" id="pagination"></div>
-</section>
-<section id="detailView" class="view"><div class="back-row"><a class="button secondary" id="detailBack" href="#/source/mangadex">← Danh sách</a></div><div class="box" id="detailBox"><div class="loading">Đang tải thông tin...</div></div></section>
-<section id="readerView" class="view"><div class="back-row"><a class="button secondary" id="readerBack" href="#/source/mangadex">← Danh sách chương</a><button class="primary" id="topButton" type="button">↑ Đầu chương</button></div><div class="box"><h2 id="readerTitle" style="text-align:center;margin-top:0">Đang tải...</h2><div class="reader-status" id="readerStatus"></div><div id="chapterContent"><div class="loading">Đang tải nội dung chương...</div></div></div></section>
-</main>
-<script>
-'use strict';
-const CFG={mangaDex:'https://api.mangadex.org',google:'https://www.googleapis.com/books/v1',openLibrary:'https://openlibrary.org',pageSize:20,googleKey:''};
-const SOURCES={
- mangadex:{label:'MangaDex',note:'Có thể đọc chương trực tiếp; chỉ lấy truyện mang nhãn contentRating=safe.'},
- google:{label:'Google Books',note:'Sách tranh và truyện thiếu nhi; mở bản xem trước hợp pháp khi có.'},
- openlibrary:{label:'Open Library',note:'Sách thiếu nhi và tác phẩm thư viện; mở trang đọc hoặc mượn khi có.'}
-};
-const BLOCK=['18+','adult','mature','smut','hentai','ecchi','r18','nsfw','sex','nudity','erotica','explicit','sexual content','gore','guro','torture','rape','prostitution','bdsm','ntr','netorare','cannibalism'];
-const KIDS=['children','juvenile','picture book','school life','comedy','adventure','family','sports','science','educational','animal','fairy tale','friendship','mystery','robot','superhero','thiếu nhi','trẻ em','học đường','hài hước','phiêu lưu','gia đình','giáo dục','động vật','cổ tích','tình bạn'];
-const state={source:'mangadex',page:1,query:''};let fontSize=Number(localStorage.getItem('fontSize'))||22;
-const $=s=>document.querySelector(s),grid=$('#grid'),pagination=$('#pagination'),searchInput=$('#searchInput'),detailBox=$('#detailBox'),chapterContent=$('#chapterContent');
-function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function norm(v=''){return String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
-function textOf(obj={},langs=['vi','en','ja-ro','ja']){for(const l of langs)if(obj[l])return obj[l];return Object.values(obj).find(Boolean)||''}
-function strip(v=''){const d=document.createElement('div');d.innerHTML=v;return d.textContent||''}
-function safeText(v=''){const t=norm(v);return !BLOCK.some(w=>t.includes(norm(w)))}
-function score(item){const t=norm([item.title,item.description,item.meta,(item.tags||[]).join(' ')].join(' '));if(!safeText(t))return-999;return KIDS.reduce((s,w)=>s+(t.includes(norm(w))?2:0),0)}
-function url(v=''){try{const u=new URL(v,location.href);return['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}
-async function json(u,o={}){const r=await fetch(u,o);if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
-function view(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));$('#readerTools').style.display=id==='readerView'?'flex':'none';scrollTo(0,0)}
-function tabs(){ $('#tabs').innerHTML=Object.entries(SOURCES).map(([k,v])=>`<button class="tab ${k===state.source?'active':''}" data-source="${k}">${esc(v.label)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>location.hash=`#/source/${b.dataset.source}`)}
-function cards(items){if(!items.length){grid.innerHTML='<div class="empty">Không tìm thấy nội dung phù hợp.</div>';return}grid.innerHTML=items.map(i=>`<a class="card" href="${esc(i.route)}"><div class="cover"><img src="${esc(url(i.cover)||'https://placehold.co/400x600?text=No+Image')}" alt="${esc(i.title)}" loading="lazy" referrerpolicy="no-referrer"><span class="badge source">${esc(SOURCES[i.source].label)}</span><span class="badge safe">${score(i)>=2?'Ưu tiên trẻ em':'Đã lọc'}</span></div><div class="card-info"><div class="title">${esc(i.title)}</div><div class="meta">${esc(i.meta||'')}</div></div></a>`).join('')}
-function pager(page,hasNext){pagination.innerHTML=`${page>1?'<button id="prev">← Trang trước</button>':''}<span>Trang ${page}</span>${hasNext?'<button id="next">Trang sau →</button>':''}`;$('#prev')?.addEventListener('click',()=>load(page-1));$('#next')?.addEventListener('click',()=>load(page+1))}
-async function load(page=1){state.page=Math.max(1,page);tabs();$('#sourceNote').textContent=SOURCES[state.source].note;$('#listTitle').textContent=state.query?`Kết quả “${state.query}” – ${SOURCES[state.source].label}`:`Gợi ý thiếu nhi – ${SOURCES[state.source].label}`;searchInput.value=state.query;grid.innerHTML='<div class="loading">Đang tải dữ liệu...</div>';pagination.innerHTML='';try{if(state.source==='mangadex')await loadMangaDex();else if(state.source==='google')await loadGoogle();else await loadOpen()}catch(e){console.error(e);grid.innerHTML=`<div class="error">Không thể tải dữ liệu. ${esc(e.message)}</div>`}}
-async function loadMangaDex(){const p=new URLSearchParams({limit:String(CFG.pageSize),offset:String((state.page-1)*CFG.pageSize)});if(state.query)p.set('title',state.query);p.append('contentRating[]','safe');p.append('includes[]','cover_art');p.set(state.query?'order[relevance]':'order[followedCount]','desc');const d=await json(`${CFG.mangaDex}/manga?${p}`);const items=(d.data||[]).map(r=>{const a=r.attributes||{},rel=(r.relationships||[]).find(x=>x.type==='cover_art'),file=rel?.attributes?.fileName,tags=(a.tags||[]).map(t=>textOf(t.attributes?.name||{},['vi','en'])).filter(Boolean);return{source:'mangadex',id:r.id,title:textOf(a.title||{}),cover:file?`https://uploads.mangadex.org/covers/${r.id}/${file}.512.jpg`:'',description:textOf(a.description||{}),tags,meta:tags.slice(0,3).join(' • ')||'Manga an toàn',route:`#/detail/mangadex/${r.id}`}}).filter(i=>score(i)>-999).sort((a,b)=>score(b)-score(a));cards(items);pager(state.page,(state.page-1)*CFG.pageSize+CFG.pageSize<(d.total||0))}
-async function loadGoogle(){const start=(state.page-1)*CFG.pageSize,q=state.query?`${state.query} subject:juvenile`:'subject:juvenile fiction',p=new URLSearchParams({q,startIndex:String(start),maxResults:String(CFG.pageSize),printType:'books',orderBy:'relevance'});if(CFG.googleKey)p.set('key',CFG.googleKey);const d=await json(`${CFG.google}/volumes?${p}`);const items=(d.items||[]).map(r=>{const i=r.volumeInfo||{},tags=i.categories||[];return{source:'google',id:r.id,title:i.title||'Không rõ tên',cover:(i.imageLinks?.thumbnail||i.imageLinks?.smallThumbnail||'').replace(/^http:/,'https:'),description:strip(i.description||''),tags,meta:[(i.authors||[]).slice(0,2).join(', '),tags[0]].filter(Boolean).join(' • '),route:`#/detail/google/${encodeURIComponent(r.id)}`}}).filter(i=>score(i)>-999);cards(items);pager(state.page,start+CFG.pageSize<(d.totalItems||0))}
-async function loadOpen(){let items=[],next=false;if(state.query){const p=new URLSearchParams({q:state.query,page:String(state.page),limit:String(CFG.pageSize),fields:'key,title,author_name,cover_i,subject,first_publish_year'}),d=await json(`${CFG.openLibrary}/search.json?${p}`);items=(d.docs||[]).map(r=>({source:'openlibrary',id:String(r.key||'').replace('/works/',''),title:r.title||'Không rõ tên',cover:r.cover_i?`https://covers.openlibrary.org/b/id/${r.cover_i}-L.jpg`:'',description:'',tags:(r.subject||[]).slice(0,12),meta:[(r.author_name||[]).slice(0,2).join(', '),r.first_publish_year].filter(Boolean).join(' • '),route:`#/detail/openlibrary/${String(r.key||'').replace('/works/','')}`})).filter(i=>score(i)>-999);next=state.page*CFG.pageSize<(d.numFound||0)}else{const off=(state.page-1)*CFG.pageSize,d=await json(`${CFG.openLibrary}/subjects/juvenile_fiction.json?limit=${CFG.pageSize}&offset=${off}`);items=(d.works||[]).map(r=>({source:'openlibrary',id:String(r.key||'').replace('/works/',''),title:r.title||'Không rõ tên',cover:r.cover_id?`https://covers.openlibrary.org/b/id/${r.cover_id}-L.jpg`:'',description:'',tags:(r.subject||[]).slice(0,12),meta:(r.authors||[]).slice(0,2).map(a=>a.name).join(', '),route:`#/detail/openlibrary/${String(r.key||'').replace('/works/','')}`})).filter(i=>score(i)>-999);next=off+CFG.pageSize<(d.work_count||0)}cards(items);pager(state.page,next)}
-function detailTemplate({title,cover,description,meta='',tags=[],actions='',chapters='',notice=''}){return`<div class="detail"><div><img src="${esc(url(cover)||'https://placehold.co/400x600?text=No+Image')}" alt="${esc(title)}" referrerpolicy="no-referrer"></div><div><h1>${esc(title)}</h1><div class="detail-meta">${esc(meta)}</div>${notice?`<div class="notice">${esc(notice)}</div>`:''}<div>${esc(strip(description||'Chưa có giới thiệu.'))}</div>${tags.length?`<div class="tags">${tags.slice(0,16).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}<div class="actions">${actions}</div></div></div>${chapters}`}
-async function detail(source,id){state.source=source;view('detailView');$('#detailBack').href=`#/source/${source}`;detailBox.innerHTML='<div class="loading">Đang tải thông tin...</div>';try{if(source==='mangadex')await detailManga(id);else if(source==='google')await detailGoogle(id);else await detailOpen(id)}catch(e){console.error(e);detailBox.innerHTML=`<div class="error">Không thể tải thông tin. ${esc(e.message)}</div>`}}
-async function detailManga(id){const d=await json(`${CFG.mangaDex}/manga/${id}?includes[]=cover_art`),m=d.data,a=m?.attributes||{};if(!m||a.contentRating!=='safe')throw new Error('Truyện không có nhãn safe');const rel=(m.relationships||[]).find(x=>x.type==='cover_art'),file=rel?.attributes?.fileName,title=textOf(a.title||{}),tags=(a.tags||[]).map(t=>textOf(t.attributes?.name||{},['vi','en'])).filter(Boolean),desc=textOf(a.description||{});if(!safeText([title,desc,tags.join(' ')].join(' ')))throw new Error('Truyện có tag rủi ro');const p=new URLSearchParams({limit:'100',offset:'0','order[chapter]':'desc','includeFutureUpdates':'0'});p.append('translatedLanguage[]','vi');p.append('translatedLanguage[]','en');p.append('contentRating[]','safe');const f=await json(`${CFG.mangaDex}/manga/${id}/feed?${p}`),chs=(f.data||[]).filter(c=>c.attributes?.pages>0);const list=chs.length?`<h3>Danh sách chương</h3><ul class="chapters">${chs.map(c=>{const x=c.attributes||{},label=x.title||`Chương ${x.chapter||'?'}`;return`<li><a href="#/read/mangadex/${id}?chapter=${c.id}&name=${encodeURIComponent(label)}"><span>${esc(label)}</span><span>${esc((x.translatedLanguage||'').toUpperCase())} →</span></a></li>`}).join('')}</ul>`:'<div class="notice">Chưa có chương tiếng Việt hoặc tiếng Anh.</div>';detailBox.innerHTML=detailTemplate({title,cover:file?`https://uploads.mangadex.org/covers/${id}/${file}.512.jpg`:'',description:desc,meta:`Trạng thái: ${a.status||'không rõ'} • Nhãn: safe`,tags,chapters:list,notice:'MangaDex đánh dấu nội dung là safe; ứng dụng tiếp tục lọc từ khóa nhạy cảm.'})}
-async function detailGoogle(id){const p=new URLSearchParams();if(CFG.googleKey)p.set('key',CFG.googleKey);const d=await json(`${CFG.google}/volumes/${encodeURIComponent(id)}${p.toString()?'?'+p:''}`),i=d.volumeInfo||{},a=d.accessInfo||{},preview=url(i.previewLink||a.webReaderLink||i.infoLink||'');detailBox.innerHTML=detailTemplate({title:i.title||'Không rõ tên',cover:(i.imageLinks?.large||i.imageLinks?.thumbnail||'').replace(/^http:/,'https:'),description:i.description,meta:[(i.authors||[]).join(', '),i.publishedDate,a.viewability].filter(Boolean).join(' • '),tags:i.categories||[],actions:preview?`<a class="button primary" href="${esc(preview)}" target="_blank" rel="noopener">Xem trước sách ↗</a>`:'',notice:'Chỉ mở các trang được chủ sở hữu cho phép xem trước.'})}
-async function detailOpen(id){const w=await json(`${CFG.openLibrary}/works/${encodeURIComponent(id)}.json`),desc=typeof w.description==='string'?w.description:w.description?.value||'',cover=w.covers?.[0];detailBox.innerHTML=detailTemplate({title:w.title||'Không rõ tên',cover:cover?`https://covers.openlibrary.org/b/id/${cover}-L.jpg`:'',description:desc,meta:w.first_publish_date||'',tags:w.subjects||[],actions:`<a class="button primary" href="https://openlibrary.org/works/${encodeURIComponent(id)}" target="_blank" rel="noopener">Mở Open Library ↗</a>`,notice:'Khả năng đọc hoặc mượn phụ thuộc từng ấn bản.'})}
-async function reader(id,p){view('readerView');$('#readerBack').href=`#/detail/mangadex/${id}`;$('#readerTitle').textContent=p.get('name')||'Chương truyện';$('#readerStatus').textContent='';chapterContent.innerHTML='<div class="loading">Đang tải nội dung chương...</div>';try{const ch=p.get('chapter');if(!ch)throw new Error('Thiếu mã chương');const d=await json(`${CFG.mangaDex}/at-home/server/${ch}`),files=d.chapter?.dataSaver?.length?d.chapter.dataSaver:d.chapter?.data||[],quality=d.chapter?.dataSaver?.length?'data-saver':'data';chapterContent.innerHTML=files.map(f=>`<img src="${esc(`${d.baseUrl}/${quality}/${d.chapter.hash}/${f}`)}" alt="Trang truyện" loading="lazy" referrerpolicy="no-referrer">`).join('')||'<div class="empty">Chương không có hình ảnh.</div>';$('#readerStatus').textContent=`${files.length} trang • MangaDex ${quality}`}catch(e){console.error(e);chapterContent.innerHTML=`<div class="error">${esc(e.message)}</div>`}}
-function route(){const raw=location.hash||'#/source/mangadex',[path,qs='']=raw.slice(1).split('?'),p=path.split('/').filter(Boolean),params=new URLSearchParams(qs);if(p[0]==='source'){state.source=SOURCES[p[1]]?p[1]:'mangadex';state.query='';state.page=1;view('listView');load();return}if(p[0]==='search'){state.source=SOURCES[p[1]]?p[1]:'mangadex';state.query=decodeURIComponent(p.slice(2).join('/'));state.page=1;view('listView');load();return}if(p[0]==='detail'&&p[1]&&p[2]){detail(p[1],decodeURIComponent(p.slice(2).join('/')));return}if(p[0]==='read'&&p[1]==='mangadex'&&p[2]){reader(p[2],params);return}location.hash='#/source/mangadex'}
-$('#searchForm').onsubmit=e=>{e.preventDefault();const q=searchInput.value.trim();location.hash=q?`#/search/${state.source}/${encodeURIComponent(q)}`:`#/source/${state.source}`};$('#themeButton').onclick=()=>{const dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('theme',dark?'light':'dark')};function setFont(n){fontSize=Math.min(40,Math.max(16,n));chapterContent.style.fontSize=fontSize+'px';localStorage.setItem('fontSize',fontSize)}$('#fontDown').onclick=()=>setFont(fontSize-2);$('#fontUp').onclick=()=>setFont(fontSize+2);$('#topButton').onclick=()=>scrollTo({top:0,behavior:'smooth'});addEventListener('hashchange',route);addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark');setFont(fontSize);route()});
-</script>
+
+    <div class="toolbar">
+        <a href="#/" class="toolbar-title">📖 Nguyên Nhi Quán</a>
+        
+        <form class="search-box" onsubmit="event.preventDefault(); handleSearch();">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm truyện...">
+            <button type="submit">Tìm</button>
+        </form>
+
+        <div class="toolbar-actions" id="reader-tools" style="display: none;">
+            <button onclick="changeFontSize(-2)">A-</button>
+            <button onclick="changeFontSize(2)">A+</button>
+            <button onclick="toggleTheme()">🌓 Sáng/Tối</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- TRANG DANH SÁCH -->
+        <div id="view-list" class="view-section active">
+            <h2 id="list-title" style="border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 5px;">Truyện Thiếu Nhi Mới Cập Nhật</h2>
+            <div id="story-grid" class="grid">
+                <div class="skeleton skel-card"></div>
+                <div class="skeleton skel-card"></div>
+                <div class="skeleton skel-card"></div>
+                <div class="skeleton skel-card"></div>
+                <div class="skeleton skel-card"></div>
+            </div>
+            <div id="pagination" class="pagination"></div>
+        </div>
+
+        <!-- TRANG CHI TIẾT -->
+        <div id="view-detail" class="view-section">
+            <a href="#/" class="btn-back">⬅ Quay lại trang chủ</a>
+            <div class="content-box">
+                <h2 id="detail-title" style="color: var(--primary);">Đang tải thông tin...</h2>
+                <div id="detail-desc" style="margin-bottom: 20px; line-height: 1.8;"></div>
+                <button id="btn-continue" class="btn-back" style="background: #27ae60; display: none;">📖 Đọc tiếp chương đang dở</button>
+                <h3 style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">Danh sách chương</h3>
+                <ul id="detail-chapters" class="chapter-list"></ul>
+            </div>
+        </div>
+
+        <!-- TRANG ĐỌC TRUYỆN -->
+        <div id="view-reader" class="view-section">
+            <a id="btn-back-detail" href="#/" class="btn-back">⬅ Quay lại danh sách chương</a>
+            <div class="content-box">
+                <h2 id="reader-title" style="text-align: center; color: var(--primary); margin-bottom: 30px;">Đang tải...</h2>
+                <div id="chapter-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_API = 'https://otruyenapi.com/v1/api';
+        let currentFontSize = 22;
+        const contentArea = document.getElementById('chapter-content');
+        const readerTools = document.getElementById('reader-tools');
+        const searchInput = document.getElementById('searchInput');
+
+        // --- HỆ THỐNG VƯỢT LỖI CORS (PROXY) ---
+        // Sử dụng các Proxy miễn phí để đánh lừa máy chủ khi bị chặn CORS
+        async function fetchWithProxy(url) {
+            try {
+                // Thử gọi trực tiếp trước
+                const res = await fetch(url);
+                if (res.ok) return await res.json();
+                throw new Error(`Direct fetch failed: ${res.status}`);
+            } catch (err) {
+                console.warn("Direct fetch failed, switching to Proxy 1...", err);
+                try {
+                    // Chuyển sang CORS Proxy 1
+                    const proxy1 = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                    const resProxy1 = await fetch(proxy1);
+                    if (resProxy1.ok) return await resProxy1.json();
+                    throw new Error(`Proxy 1 failed`);
+                } catch (err2) {
+                    console.warn("Proxy 1 failed, switching to Proxy 2...", err2);
+                    // Chuyển sang CORS Proxy 2 (AllOrigins)
+                    const proxy2 = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const resProxy2 = await fetch(proxy2);
+                    if (resProxy2.ok) {
+                        const data = await resProxy2.json();
+                        return JSON.parse(data.contents); // AllOrigins bọc JSON trong trường contents
+                    }
+                    throw new Error("Tất cả kết nối đều thất bại (Có thể máy chủ API gốc đang bảo trì - 504 Gateway Timeout)");
+                }
+            }
+        }
+
+        // --- CẢI TIẾN BỘ LỌC TỪ KHÓA ---
+        const BLOCKED_KEYWORDS = [
+            '18+', '18 plus', 'smut', 'adult', 'mature', 'trưởng thành', 'hentai',
+            'ecchi', 'r18', 'r-18', 'nsfw', 'sex', 'sexy', 'sắc hiệp', 'sắc tình',
+            'song tu', 'song thể', 'dâm', 'loạn luân', 'ntr', 'netorare', 'boylove 18',
+            'girl love 18', 'yaoi 18', 'yuri 18', 'bdsm', 'cưỡng hiếp', 'hiếp dâm', 
+            'tình dục', 'bạo dâm', 'khoái lạc', 'nhục dục', 'thịt', 'h văn'
+        ];
+
+        const RISKY_KEYWORDS = [
+            'ngôn tình', 'tổng tài', 'xuyên không', 'tu tiên', 'võng du', 'ma đạo',
+            'kinh dị', 'máu me', 'bạo lực', 'sát thủ', 'trả thù', 'chiến tranh',
+            'romance', 'drama', 'supernatural', 'psychological', 'đam mỹ', 'bách hợp',
+            'cung đấu', 'gia đấu', 'hắc bang'
+        ];
+
+        const KIDS_KEYWORDS = [
+            'thiếu nhi', 'trẻ em', 'kids', 'children', 'học đường', 'school life',
+            'hài hước', 'comedy', 'phiêu lưu', 'adventure', 'đời thường', 'slice of life',
+            'gia đình', 'family', 'thể thao', 'sports', 'khoa học', 'science',
+            'giáo dục', 'educational', 'động vật', 'animal', 'fantasy', 'cổ tích',
+            'siêu anh hùng', 'superhero', 'robot', 'mecha', 'trinh thám thiếu nhi',
+            'đồng thoại', 'manga', 'anime'
+        ];
+
+        function normalizeText(value = '') {
+            return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+
+        function getItemText(item = {}) {
+            const categories = Array.isArray(item.category) ? item.category.map(c => c?.name || c?.slug || '').join(' ') : '';
+            return normalizeText([item.name, item.slug, item.origin_name, item.content, item.description, categories].filter(Boolean).join(' '));
+        }
+
+        function containsAny(text, keywords) {
+            return keywords.some(keyword => text.includes(normalizeText(keyword)));
+        }
+
+        function getKidsScore(item) {
+            const text = getItemText(item);
+            if (containsAny(text, BLOCKED_KEYWORDS)) return -999;
+
+            let score = 0;
+            KIDS_KEYWORDS.forEach(kw => { if (text.includes(normalizeText(kw))) score += 5; });
+            RISKY_KEYWORDS.forEach(kw => { if (text.includes(normalizeText(kw))) score -= 3; });
+
+            if (item.status === 'ongoing' || item.status === 'completed') score += 1;
+            return score;
+        }
+
+        function isSafeForKids(item) {
+            return getKidsScore(item) >= -2;
+        }
+
+        // --- HỆ THỐNG ROUTER ---
+        function router() {
+            const hash = window.location.hash;
+            readerTools.style.display = 'none';
+
+            if (!hash || hash === '' || hash === '#/') {
+                document.getElementById('list-title').innerText = "Truyện Thiếu Nhi Mới Cập Nhật";
+                switchView('view-list');
+                fetchList(`${BASE_API}/danh-sach/truyen-moi`);
+            } else if (hash.startsWith('#/tim-kiem/')) {
+                const keyword = decodeURIComponent(hash.replace('#/tim-kiem/', ''));
+                document.getElementById('list-title').innerText = `Kết quả tìm kiếm: "${keyword}"`;
+                searchInput.value = keyword;
+                switchView('view-list');
+                fetchList(`${BASE_API}/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
+            } else if (hash.startsWith('#/truyen/')) {
+                const slug = hash.replace('#/truyen/', '');
+                switchView('view-detail');
+                fetchStoryDetail(slug);
+            } else if (hash.startsWith('#/chuong/')) {
+                const urlParams = new URLSearchParams(hash.split('?')[1]);
+                const apiUrl = urlParams.get('api');
+                const storySlug = urlParams.get('truyen');
+                const chapName = urlParams.get('name');
+                
+                readerTools.style.display = 'block'; 
+                switchView('view-reader');
+                fetchChapterContent(apiUrl, storySlug, chapName);
+            }
+        }
+
+        window.addEventListener('hashchange', router);
+        window.addEventListener('load', () => { initTheme(); router(); });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        }
+
+        function escapeHTML(value = '') {
+            return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+        }
+
+        function handleSearch() {
+            const keyword = searchInput.value.trim();
+            if(keyword) window.location.hash = `#/tim-kiem/${encodeURIComponent(keyword)}`;
+        }
+
+        function renderSkeletonGrid() {
+            let html = '';
+            for(let i=0; i<10; i++) html += '<div class="skeleton skel-card"></div>';
+            return html;
+        }
+
+        // --- GỌI API & RENDER ---
+        async function fetchList(baseApiUrl, page = 1) {
+            const grid = document.getElementById('story-grid');
+            const paginationEl = document.getElementById('pagination');
+            
+            grid.innerHTML = renderSkeletonGrid();
+            paginationEl.innerHTML = ''; 
+
+            try {
+                const separator = baseApiUrl.includes('?') ? '&' : '?';
+                const data = await fetchWithProxy(`${baseApiUrl}${separator}page=${page}`);
+                
+                let items = data.data?.items || [];
+                let domainCdn = data.data?.domain_cdn || 'https://img.otruyenapi.com';
+
+                items = items.filter(isSafeForKids).sort((a, b) => getKidsScore(b) - getKidsScore(a));
+                grid.innerHTML = ''; 
+
+                if(items.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 40px;">Không có dữ liệu hoặc các truyện trang này đã bị hệ thống lọc an toàn ẩn đi. Vui lòng chuyển sang trang tiếp theo.</p>';
+                } else {
+                    items.forEach(item => {
+                        let thumbUrl = item.thumb_url;
+                        if (!thumbUrl.startsWith('http')) {
+                            thumbUrl = thumbUrl.includes('uploads/comics') ? `${domainCdn}/${item.thumb_url}` : `${domainCdn}/uploads/comics/${item.thumb_url}`;
+                            thumbUrl = thumbUrl.replace(/([^:]\/)\/+/g, "$1");
+                        }
+
+                        const score = getKidsScore(item);
+                        const badge = score >= 5 ? '<span class="badge badge-kids">Khuyên Đọc</span>' : '<span class="badge badge-safe">Đã Kiểm Duyệt</span>';
+                        grid.innerHTML += `
+                            <a href="#/truyen/${encodeURIComponent(item.slug)}" class="card">
+                                <img src="${escapeHTML(thumbUrl)}" alt="${escapeHTML(item.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/200x300?text=Lỗi+Ảnh'">
+                                <div class="card-info">
+                                    <h3>${escapeHTML(item.name)}</h3>
+                                    ${badge}
+                                </div>
+                            </a>
+                        `;
+                    });
+                }
+                renderPagination(page, baseApiUrl, data.data?.params?.pagination);
+            } catch (error) {
+                grid.innerHTML = `<div class="error-alert" style="grid-column: 1/-1; text-align: center;">Lỗi tải dữ liệu: ${error.message}</div>`;
+            }
+        }
+
+        function renderPagination(currentPage, baseApiUrl, paginationData) {
+            const paginationEl = document.getElementById('pagination');
+            let html = '';
+            if (currentPage > 1) html += `<button onclick="fetchList('${baseApiUrl}', ${currentPage - 1})">⬅ Trang Trước</button>`;
+            html += `<span>Trang ${currentPage}</span>`;
+            html += `<button onclick="fetchList('${baseApiUrl}', ${currentPage + 1})">Trang Sau ➡</button>`;
+            paginationEl.innerHTML = html;
+        }
+
+        function sanitizeHTML(html = '') {
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            template.content.querySelectorAll('script, iframe, object, embed, form, style').forEach(el => el.remove());
+            template.content.querySelectorAll('*').forEach(el => {
+                if (/^on/i.test(attr.name) || ['srcdoc'].includes(attr.name.toLowerCase())) el.removeAttribute(attr.name);
+            });
+            return template.innerHTML;
+        }
+
+        async function fetchStoryDetail(slug) {
+            const titleEl = document.getElementById('detail-title');
+            const descEl = document.getElementById('detail-desc');
+            const chaptersUl = document.getElementById('detail-chapters');
+            const btnContinue = document.getElementById('btn-continue');
+
+            titleEl.innerText = "Đang tải thông tin...";
+            chaptersUl.innerHTML = '<div class="skeleton" style="height: 40px; margin-bottom:10px;"></div><div class="skeleton" style="height: 40px; margin-bottom:10px;"></div><div class="skeleton" style="height: 40px;"></div>';
+            btnContinue.style.display = 'none';
+            descEl.innerHTML = '';
+
+            try {
+                const data = await fetchWithProxy(`${BASE_API}/truyen-tranh/${slug}`);
+                const story = data.data?.item;
+
+                if(!story) throw new Error("Null");
+
+                if (!isSafeForKids(story)) {
+                    titleEl.innerText = "Nội dung đã bị ẩn";
+                    descEl.innerHTML = "<span style='color:red; font-weight:bold;'>Truyện này chứa từ khóa không phù hợp với trẻ em và đã bị chặn bởi hệ thống.</span>";
+                    chaptersUl.innerHTML = '';
+                    return;
+                }
+
+                titleEl.innerText = story.name;
+                descEl.innerHTML = sanitizeHTML(story.content || "Truyện chưa có phần giới thiệu.");
+
+                const savedChapterApi = localStorage.getItem(`history_api_${slug}`);
+                const savedChapterName = localStorage.getItem(`history_name_${slug}`);
+                if (savedChapterApi) {
+                    btnContinue.style.display = 'inline-block';
+                    btnContinue.onclick = () => window.location.hash = `#/chuong/?api=${encodeURIComponent(savedChapterApi)}&truyen=${slug}&name=${encodeURIComponent(savedChapterName || 'Đọc tiếp')}`;
+                }
+
+                const chapters = story.chapters?.[0]?.server_data || [];
+                chaptersUl.innerHTML = '';
+                if(chapters.length === 0) chaptersUl.innerHTML = '<li>Đang cập nhật chương mới...</li>';
+                
+                chapters.forEach(chap => {
+                    const chapApiUrl = chap.chapter_api_data;
+                    chaptersUl.innerHTML += `<li><a href="#/chuong/?api=${encodeURIComponent(chapApiUrl)}&truyen=${slug}&name=${encodeURIComponent(chap.filename)}">Chương ${chap.chapter_name || chap.filename}</a></li>`;
+                });
+            } catch (error) {
+                titleEl.innerText = "Lỗi tải truyện";
+                chaptersUl.innerHTML = `<li style="color:red">Không thể lấy danh sách chương: ${error.message}</li>`;
+            }
+        }
+
+        async function fetchChapterContent(apiUrl, storySlug, chapName) {
+            const titleEl = document.getElementById('reader-title');
+            const contentEl = document.getElementById('chapter-content');
+            const btnBack = document.getElementById('btn-back-detail');
+
+            titleEl.innerText = chapName ? `Chương ${chapName}` : "Đang tải...";
+            contentEl.innerHTML = '<div class="skeleton" style="height: 500px; max-width:800px; margin: 0 auto;"></div>';
+            
+            if(storySlug) {
+                btnBack.href = `#/truyen/${storySlug}`;
+                localStorage.setItem(`history_api_${storySlug}`, apiUrl);
+                if(chapName) localStorage.setItem(`history_name_${storySlug}`, chapName);
+            } else { btnBack.href = `#/`; }
+
+            try {
+                const data = await fetchWithProxy(apiUrl);
+                const chapter = data.data?.item;
+                const domainCdn = data.data?.domain_cdn;
+
+                if(!chapter) throw new Error("Null");
+                if(!chapName) titleEl.innerText = chapter.chapter_name || chapter.chapter_title || "Nội dung chương";
+
+                const images = chapter.chapter_image;
+                if (images && Array.isArray(images) && images.length > 0) {
+                    let html = '';
+                    const chapterPath = chapter.chapter_path || '';
+                    images.forEach(img => {
+                        let imgSrc = `${domainCdn}/${chapterPath}/${img.image_file}`.replace(/([^:]\/)\/+/g, "$1");
+                        html += `<img src="${imgSrc}" loading="lazy" decoding="async" alt="Truyện tranh">`;
+                    });
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = sanitizeHTML(chapter.chapter_content || '<p>Nội dung chữ đang được cập nhật...</p>');
+                }
+            } catch (error) {
+                titleEl.innerText = "Lỗi tải chương";
+                contentEl.innerHTML = `<div class="error-alert">Không thể tải nội dung ảnh: ${error.message}. <br><br>Ghi chú: Nếu hệ thống báo 504 Gateway Timeout, điều này có nghĩa là máy chủ chứa truyện gốc đang bị quá tải, bạn vui lòng quay lại sau ít phút.</div>`;
+            }
+        }
+
+        function changeFontSize(step) {
+            currentFontSize += step;
+            if(currentFontSize < 16) currentFontSize = 16;
+            if(currentFontSize > 40) currentFontSize = 40;
+            contentArea.style.fontSize = currentFontSize + 'px';
+            localStorage.setItem('pref_fontsize', currentFontSize);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('pref_theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('pref_theme', 'dark');
+            }
+        }
+
+        function initTheme() {
+            const savedSize = localStorage.getItem('pref_fontsize');
+            if(savedSize) {
+                currentFontSize = parseInt(savedSize);
+                contentArea.style.fontSize = currentFontSize + 'px';
+            }
+            if(localStorage.getItem('pref_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+        }
+    </script>
 </body>
 </html>
