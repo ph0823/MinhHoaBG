@@ -569,6 +569,32 @@
             border-color: #fb7185;
         }
 
+        .related-block {
+            margin-top: 26px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(148,163,184,.18);
+        }
+
+        .related-heading {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .related-heading strong { font-size: 1.05rem; }
+        .related-note { color: var(--muted); font-size: .84rem; }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .related-grid .movie-info { padding: 10px; }
+        .related-grid .movie-info h3 { font-size: .9rem; }
+
         .server-block,
         .episode-block {
             margin-top: 22px;
@@ -674,6 +700,9 @@
             .movie-detail-grid { grid-template-columns: 1fr; }
             .detail-poster { width: min(230px, 70%); margin: 0 auto; }
             .status-text { width: 100%; margin-left: 0; }
+            .related-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (min-width: 1500px) {
@@ -855,6 +884,14 @@
                 <strong>Danh sách tập</strong>
                 <div class="episode-list" id="episode-list"></div>
             </div>
+
+            <div class="related-block" id="related-block" hidden>
+                <div class="related-heading">
+                    <strong>✨ Có thể bạn cũng thích</strong>
+                    <span class="related-note" id="related-note"></span>
+                </div>
+                <div class="related-grid" id="related-grid"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -904,6 +941,7 @@ let stallCount = 0;
 let lastRequestedUrl = "";
 let resumeTime = 0;
 let clockTimerId = null;
+let relatedRequestId = 0;
 
 const storageCache = new Map();
 const responseCache = new Map();
@@ -948,7 +986,10 @@ const els = {
     resumePrompt: document.getElementById("resume-prompt"),
     resumeText: document.getElementById("resume-text"),
     onlineIndicator: document.getElementById("online-indicator"),
-    todayTime: document.getElementById("today-time")
+    todayTime: document.getElementById("today-time"),
+    relatedBlock: document.getElementById("related-block"),
+    relatedGrid: document.getElementById("related-grid"),
+    relatedNote: document.getElementById("related-note")
 };
 
 function loadJSON(key, fallback) {
@@ -1558,6 +1599,8 @@ async function playMovie(slug, previewMovie = {}) {
     els.detailMeta.textContent = "";
     els.serverList.innerHTML = "";
     els.episodeList.innerHTML = "";
+    els.relatedGrid.innerHTML = "";
+    els.relatedBlock.hidden = true;
     els.resumePrompt.classList.remove("show");
     setPlayerStatus("Đang tải thông tin");
 
@@ -1577,7 +1620,9 @@ async function playMovie(slug, previewMovie = {}) {
             ...previewMovie,
             ...info,
             slug: info.slug || slug,
-            full_img_url: previewMovie.full_img_url || ""
+            full_img_url: previewMovie.full_img_url || "",
+            category: info.category || info.categories || kk?.movie?.category || op?.movie?.category || previewMovie.category || [],
+            country: info.country || info.countries || kk?.movie?.country || op?.movie?.country || previewMovie.country || []
         };
 
         const servers = [];
@@ -1619,6 +1664,7 @@ async function playMovie(slug, previewMovie = {}) {
 
         currentEpisodes = servers;
         renderMovieDetails();
+        loadRelatedMovies(currentMovie);
         renderServerButtons();
         addHistory(currentMovie);
 
@@ -1670,6 +1716,89 @@ function normalizeMetaList(value) {
         .map(text => text.trim())
         .filter(Boolean)
         .join(", ");
+}
+
+function metaItems(value) {
+    const list = Array.isArray(value) ? value : (value == null || value === "" ? [] : [value]);
+    return list.map(item => {
+        if (typeof item === "string" || typeof item === "number") {
+            const text = String(item).trim();
+            return { name: text, slug: normalizeText(text).replace(/\s+/g, "-") };
+        }
+        if (item && typeof item === "object") {
+            const name = String(item.name || item.title || item.value || item.slug || "").trim();
+            const slug = String(item.slug || normalizeText(name).replace(/\s+/g, "-")).trim();
+            return { name, slug };
+        }
+        return { name: "", slug: "" };
+    }).filter(item => item.name || item.slug);
+}
+
+function extractMovieItems(data) {
+    return data?.items || data?.data?.items || data?.data?.data?.items || [];
+}
+
+function scoreRelatedMovie(movie, categoryNames, countryNames) {
+    const movieCategories = metaItems(movie.category ?? movie.categories).map(item => normalizeText(item.name));
+    const movieCountries = metaItems(movie.country ?? movie.countries).map(item => normalizeText(item.name));
+    let score = 0;
+    if (movieCategories.some(name => categoryNames.has(name))) score += 3;
+    if (movieCountries.some(name => countryNames.has(name))) score += 2;
+    if (movie.year && currentMovie?.year && String(movie.year) === String(currentMovie.year)) score += 1;
+    return score;
+}
+
+async function loadRelatedMovies(movie) {
+    const requestId = ++relatedRequestId;
+    const categories = metaItems(movie.category ?? movie.categories);
+    const countries = metaItems(movie.country ?? movie.countries);
+
+    els.relatedGrid.innerHTML = '<div class="empty-state">Đang tìm phim tương tự…</div>';
+    els.relatedBlock.hidden = false;
+    els.relatedNote.textContent = "Theo thể loại và quốc gia";
+
+    const queries = [];
+    const mainCategory = categories.find(item => item.slug);
+    const mainCountry = countries.find(item => item.slug);
+
+    if (mainCategory) {
+        queries.push(fetchJSON(`${API.source}the-loai/${encodeURIComponent(mainCategory.slug)}?page=1`, 8000).catch(() => null));
+    }
+    if (mainCountry) {
+        queries.push(fetchJSON(`${API.source}quoc-gia/${encodeURIComponent(mainCountry.slug)}?page=1`, 8000).catch(() => null));
+    }
+
+    if (!queries.length) {
+        els.relatedBlock.hidden = true;
+        return;
+    }
+
+    const results = await Promise.all(queries);
+    if (requestId !== relatedRequestId || movie.slug !== currentMovie?.slug) return;
+
+    const categoryNames = new Set(categories.map(item => normalizeText(item.name)).filter(Boolean));
+    const countryNames = new Set(countries.map(item => normalizeText(item.name)).filter(Boolean));
+    const unique = new Map();
+
+    results.flatMap(extractMovieItems).forEach(item => {
+        const slug = item?.slug || item?._id || "";
+        if (!slug || slug === movie.slug || unique.has(slug)) return;
+        unique.set(slug, item);
+    });
+
+    const related = [...unique.values()]
+        .map(item => ({ item, score: scoreRelatedMovie(item, categoryNames, countryNames) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map(entry => entry.item);
+
+    if (!related.length) {
+        els.relatedBlock.hidden = true;
+        return;
+    }
+
+    renderGrid(related, els.relatedGrid);
+    els.relatedNote.textContent = `${related.length} phim tương tự`;
 }
 
 function renderMovieDetails() {
