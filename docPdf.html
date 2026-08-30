@@ -7,7 +7,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
-  <title>Tủ sách PDF Google Drive</title>
+  <title>Tủ sách XNhi Google Drive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <style>
     :root {
@@ -266,6 +266,7 @@
   let currentFolderId = ROOT_MARKER;
   let activeFileId = '';
   let pdfDoc = null;
+  let pdfLoadingTask = null;
   let pageNum = 1;
   let scale = 1.25;
   let renderTask = null;
@@ -380,47 +381,146 @@
     loadDirectory(previous.id);
   }
 
+  function createChunkRangeTransport(file, info, token, firstChunk) {
+    const chunkCache = new Map([[0, firstChunk]]);
+    const pendingChunks = new Map();
+    const chunkSize = firstChunk.length;
+    let loadedBytes = firstChunk.length;
+
+    const transport = new pdfjsLib.PDFDataRangeTransport(
+      Number(info.size),
+      firstChunk,
+      false
+    );
+
+    function updateChunkProgress() {
+      const percent = Math.min(99, Math.round((loadedBytes / Number(info.size)) * 100));
+      setLoading(
+        true,
+        `Đang tải dữ liệu cần thiết của ${file.name}...`,
+        percent
+      );
+      transport.onDataProgress(loadedBytes, Number(info.size));
+    }
+
+    async function fetchChunk(index) {
+      if (token !== loadToken) throw new Error('Đã hủy tải tài liệu cũ.');
+      if (chunkCache.has(index)) return chunkCache.get(index);
+      if (pendingChunks.has(index)) return pendingChunks.get(index);
+
+      const request = api('getFileChunk', { fileId: file.id, index })
+        .then(chunkData => {
+          if (token !== loadToken) throw new Error('Đã hủy tải tài liệu cũ.');
+          const bytes = base64ToBytes(chunkData.base64);
+          chunkCache.set(index, bytes);
+          loadedBytes += bytes.length;
+          updateChunkProgress();
+          return bytes;
+        })
+        .finally(() => pendingChunks.delete(index));
+
+      pendingChunks.set(index, request);
+      return request;
+    }
+
+    transport.requestDataRange = async function(begin, end) {
+      try {
+        const firstIndex = Math.floor(begin / chunkSize);
+        const lastIndex = Math.floor((end - 1) / chunkSize);
+        const parts = [];
+
+        for (let index = firstIndex; index <= lastIndex; index++) {
+          parts.push(await fetchChunk(index));
+        }
+
+        if (token !== loadToken) return;
+
+        const joinedLength = parts.reduce((sum, part) => sum + part.length, 0);
+        const joined = new Uint8Array(joinedLength);
+        let offset = 0;
+        for (const part of parts) {
+          joined.set(part, offset);
+          offset += part.length;
+        }
+
+        const absoluteStart = firstIndex * chunkSize;
+        const sliceStart = Math.max(0, begin - absoluteStart);
+        const sliceEnd = Math.min(joined.length, end - absoluteStart);
+        this.onDataRange(begin, joined.slice(sliceStart, sliceEnd));
+      } catch (error) {
+        if (token === loadToken) {
+          showToast(error.message || 'Không thể tải phần dữ liệu PDF.', true);
+          console.error(error);
+        }
+      }
+    };
+
+    transport.abort = function() {
+      pendingChunks.clear();
+    };
+
+    updateChunkProgress();
+    return transport;
+  }
+
   async function openPdf(file) {
     const token = ++loadToken;
     activeFileId = file.id;
     renderFileList();
     els.sidebar.classList.remove('open');
     els.documentName.textContent = file.name;
-
-    // Trên màn hình lớn, tự ẩn tủ sách ngay khi chọn tài liệu.
-    // Trên điện thoại, chỉ đóng ngăn kéo.
     hideLibrary();
 
-    // Ẩn màn hình chào ngay khi người dùng chọn file.
-    // Không chờ tải xong PDF mới ẩn để tránh hiển thị chồng lên tài liệu.
     els.welcome.hidden = true;
     els.canvas.hidden = true;
     setViewerEnabled(false);
 
     try {
-      setLoading(true, 'Đang đọc thông tin file...', 3);
+      setLoading(true, 'Đang đọc thông tin file...', 2);
       const infoData = await api('getFileInfo', { fileId: file.id });
       if (token !== loadToken) return;
       const info = infoData.file;
-      const chunks = new Array(info.totalChunks);
 
-      for (let index = 0; index < info.totalChunks; index++) {
-        if (token !== loadToken) return;
-        const percent = Math.round((index / info.totalChunks) * 90);
-        setLoading(true, `Đang tải ${file.name} (${index + 1}/${info.totalChunks})...`, percent);
-        const chunkData = await api('getFileChunk', { fileId: file.id, index });
-        chunks[index] = base64ToBytes(chunkData.base64);
+      if (!info || !Number(info.size) || !Number(info.totalChunks)) {
+        throw new Error('Thông tin file PDF không hợp lệ.');
       }
 
+      setLoading(true, 'Đang tải phần đầu tài liệu...', 4);
+      const firstChunkData = await api('getFileChunk', { fileId: file.id, index: 0 });
       if (token !== loadToken) return;
-      setLoading(true, 'Đang ghép và xử lý PDF...', 94);
-      const pdfBytes = concatUint8Arrays(chunks, info.size);
+      const firstChunk = base64ToBytes(firstChunkData.base64);
 
+      if (!firstChunk.length) {
+        throw new Error('Không nhận được dữ liệu phần đầu của PDF.');
+      }
+
+      if (pdfLoadingTask) {
+        try { await pdfLoadingTask.destroy(); } catch (_) {}
+        pdfLoadingTask = null;
+      }
       if (pdfDoc) {
         try { await pdfDoc.destroy(); } catch (_) {}
+        pdfDoc = null;
       }
-      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-      pdfDoc = await loadingTask.promise;
+
+      const rangeTransport = createChunkRangeTransport(file, info, token, firstChunk);
+      pdfLoadingTask = pdfjsLib.getDocument({
+        range: rangeTransport,
+        length: Number(info.size),
+        disableStream: true,
+        disableAutoFetch: false,
+        rangeChunkSize: firstChunk.length
+      });
+
+      pdfLoadingTask.onProgress = progress => {
+        if (token !== loadToken || !progress?.total) return;
+        const percent = Math.min(99, Math.round((progress.loaded / progress.total) * 100));
+        setLoading(true, 'Đang chuẩn bị trang đầu...', percent);
+      };
+
+      pdfDoc = await pdfLoadingTask.promise;
+      if (token !== loadToken) return;
+
       pageNum = 1;
       els.pageCount.textContent = pdfDoc.numPages;
       els.pageInput.max = pdfDoc.numPages;
@@ -428,17 +528,15 @@
       els.canvas.hidden = false;
       setViewerEnabled(true);
 
-      // Chờ hiệu ứng thu gọn khung trái kết thúc rồi mới tính chiều rộng PDF.
       await waitForLayoutTransition();
       await fitToWidth();
 
       setLoading(false);
-      showToast(`Đã mở “${file.name}”.`);
+      showToast(`Đã mở trang đầu của “${file.name}”. Các trang khác sẽ tải khi cần.`);
     } catch (error) {
       if (token !== loadToken) return;
       setLoading(false);
 
-      // Nếu tải thất bại và chưa có PDF nào được mở, hiện lại màn hình chào.
       if (!pdfDoc) {
         els.welcome.hidden = false;
         els.canvas.hidden = true;
