@@ -158,16 +158,27 @@
     </div>
 
     <script>
-        // SỬ DỤNG CORS PROXY ĐỂ TRÁNH LỖI KHI DEPLOY LÊN VERCEL
-        const API_BASE = "https://corsproxy.io/?https://api.mangadex.org";
-        const UPLOAD_BASE = "https://uploads.mangadex.org"; // Ảnh không bị block CORS nên giữ nguyên
+        const API_BASE = "https://api.mangadex.org";
+        const UPLOAD_BASE = "https://uploads.mangadex.org";
+        
+        // BẬT/TẮT PROXY: Đổi thành 'false' nếu bạn đã cấu hình Vercel Rewrite
+        const USE_PROXY = true; 
+
+        // Hàm bọc URL để xử lý lỗi CORS an toàn với allorigins
+        function buildUrl(path) {
+            const targetUrl = API_BASE + path;
+            if (USE_PROXY) {
+                // Phải encodeURIComponent để các ký tự &, ? trong URL không bị hỏng
+                return "https://api.allorigins.win/raw?url=" + encodeURIComponent(targetUrl);
+            }
+            return targetUrl;
+        }
         
         let currentPage = 1;
         const limit = 12;
         let isSearching = false;
         let currentQuery = "";
 
-        // Tự động tải lúc mở trang
         window.onload = () => loadHomePage(1);
 
         async function loadHomePage(page = 1) {
@@ -175,11 +186,11 @@
             currentPage = page;
             const offset = (page - 1) * limit;
             
-            const url = `${API_BASE}/manga?limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en&hasAvailableChapters=true&order[latestUploadedChapter]=desc`;
+            const path = `/manga?limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en&hasAvailableChapters=true&order[latestUploadedChapter]=desc`;
             
             document.getElementById("section-title").innerText = "🔥 Truyện Mới Cập Nhật";
             document.getElementById("searchInput").value = ""; 
-            await fetchAndRenderManga(url);
+            await fetchAndRenderManga(buildUrl(path));
         }
 
         async function searchManga(page = 1) {
@@ -194,10 +205,10 @@
             currentPage = page;
             const offset = (page - 1) * limit;
             
-            const url = `${API_BASE}/manga?title=${currentQuery}&limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en`;
+            const path = `/manga?title=${encodeURIComponent(currentQuery)}&limit=${limit}&offset=${offset}&includes[]=cover_art&availableTranslatedLanguage[]=vi&availableTranslatedLanguage[]=en`;
             
             document.getElementById("section-title").innerText = `🔍 Kết quả tìm kiếm cho: "${currentQuery}"`;
-            await fetchAndRenderManga(url);
+            await fetchAndRenderManga(buildUrl(path));
         }
 
         async function fetchAndRenderManga(url) {
@@ -208,6 +219,7 @@
             
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("Mạng hoặc Proxy gặp lỗi!");
                 const data = await res.json();
                 
                 if (!data.data || data.data.length === 0) {
@@ -234,7 +246,7 @@
                 }
             } catch (err) {
                 console.error("Fetch Error:", err);
-                resultsDiv.innerHTML = "<p style='color: #ff5252;'>Lỗi tải dữ liệu. Máy chủ Proxy có thể đang quá tải, vui lòng thử lại sau.</p>";
+                resultsDiv.innerHTML = `<p style='color: #ff5252;'>Lỗi tải dữ liệu: ${err.message}. Thử lại sau.</p>`;
             }
             showLoading(false);
         }
@@ -276,7 +288,8 @@
             chapterList.innerHTML = "";
 
             try {
-                const res = await fetch(`${API_BASE}/manga/${mangaId}/feed?translatedLanguage[]=vi&translatedLanguage[]=en&order[chapter]=desc&limit=100`);
+                const path = `/manga/${mangaId}/feed?translatedLanguage[]=vi&translatedLanguage[]=en&order[chapter]=desc&limit=100`;
+                const res = await fetch(buildUrl(path));
                 const data = await res.json();
                 
                 if(!data.data || data.data.length === 0) {
@@ -309,7 +322,8 @@
             readerPages.innerHTML = "";
 
             try {
-                const res = await fetch(`${API_BASE}/at-home/server/${chapterId}`);
+                const path = `/at-home/server/${chapterId}`;
+                const res = await fetch(buildUrl(path));
                 const data = await res.json();
                 
                 const baseUrl = data.baseUrl;
