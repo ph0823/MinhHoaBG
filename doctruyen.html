@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <title>Manga Reader</title>
+  <title>Xuan Nhi Reader</title>
   <style>
     :root {
       --bg: #0b1020;
@@ -184,6 +184,60 @@
       margin-top: 26px;
     }
 
+    .suggestion-groups {
+      display: grid;
+      gap: 30px;
+      margin-bottom: 28px;
+    }
+
+    .suggestion-group {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .group-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .group-title { margin: 0; font-size: 1.18rem; }
+    .group-description { margin: 5px 0 0; color: var(--muted); font-size: .9rem; }
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .group-grid .manga-card { box-shadow: none; }
+
+    .category-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .category-chip {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .82rem;
+    }
+
+    @media (max-width: 1050px) { .group-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @media (max-width: 720px) {
+      .suggestion-group { padding: 14px; }
+      .group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    }
+
     .status-box {
       border: 1px solid var(--border);
       background: rgba(255,255,255,.04);
@@ -345,6 +399,7 @@
         </div>
         <button class="btn secondary small" id="historyButton">Lịch sử đọc</button>
       </div>
+      <div class="suggestion-groups" id="suggestionGroups" aria-live="polite"></div>
       <div class="manga-grid" id="results" aria-live="polite"></div>
       <div class="pagination" id="pagination"></div>
     </section>
@@ -405,10 +460,31 @@
     const MAX_OFFSET = 10000;
     const REQUEST_TIMEOUT = 18000;
 
+    const SUGGESTION_GROUPS = [
+      {
+        id: "primary",
+        title: "Thiếu nhi (tiểu học)",
+        description: "Ưu tiên truyện an toàn, vui nhộn, nhẹ nhàng và gần gũi với đời sống.",
+        labels: ["Kodomo", "Comedy", "Slice of Life"],
+        tags: ["Comedy", "Slice of Life"],
+        demographics: [],
+        ratings: ["safe"]
+      },
+      {
+        id: "secondary",
+        title: "THCS (11–15 tuổi)",
+        description: "Ưu tiên Shounen, Shoujo nhẹ nhàng, School Life và Sport.",
+        labels: ["Shounen", "Shoujo", "School Life", "Sports"],
+        tags: ["School Life", "Sports"],
+        demographics: ["shounen", "shoujo"],
+        ratings: ["safe", "suggestive"]
+      }
+    ];
+
     const state = {
       page: 1,
       total: 0,
-      mode: "latest",
+      mode: "suggested",
       query: "",
       manga: null,
       chapters: [],
@@ -422,6 +498,7 @@
       details: document.getElementById("details"),
       reader: document.getElementById("reader"),
       results: document.getElementById("results"),
+      suggestionGroups: document.getElementById("suggestionGroups"),
       pagination: document.getElementById("pagination"),
       sectionTitle: document.getElementById("sectionTitle"),
       sectionSubtitle: document.getElementById("sectionSubtitle"),
@@ -528,6 +605,7 @@
 
     async function loadMangaList(page = 1) {
       showScreen("home");
+      el.suggestionGroups.classList.add("hidden");
       state.page = Math.max(1, page);
       renderSkeletons();
       el.pagination.innerHTML = "";
@@ -552,13 +630,8 @@
       }
     }
 
-    function renderMangaCards(items) {
-      if (!items.length) {
-        renderStatus(el.results, "Không tìm thấy truyện phù hợp.");
-        return;
-      }
-
-      el.results.innerHTML = items.map(manga => {
+    function mangaCardsHtml(items) {
+      return items.map(manga => {
         const title = getTitle(manga.attributes);
         const year = manga.attributes?.year || "Không rõ năm";
         const status = manga.attributes?.status || "unknown";
@@ -576,19 +649,87 @@
           </article>
         `;
       }).join("");
+    }
 
-      el.results.querySelectorAll("[data-manga-id]").forEach(button => {
+    function bindMangaCards(container, items) {
+      container.querySelectorAll("[data-manga-id]").forEach(button => {
         button.addEventListener("click", () => {
           const manga = items.find(item => item.id === button.dataset.mangaId);
           if (manga) openManga(manga);
         });
       });
 
-      el.results.querySelectorAll("img").forEach(img => {
+      container.querySelectorAll("img").forEach(img => {
         img.addEventListener("error", () => {
           img.src = getCoverUrl({ id: "", relationships: [] });
         }, { once: true });
       });
+    }
+
+    async function loadSuggestionGroups() {
+      showScreen("home");
+      state.mode = "suggested";
+      state.page = 1;
+      el.sectionTitle.textContent = "Gợi ý truyện theo độ tuổi";
+      el.sectionSubtitle.textContent = "Nhóm nội dung phù hợp cho học sinh tiểu học và THCS";
+      el.results.innerHTML = "";
+      el.pagination.innerHTML = "";
+      el.suggestionGroups.classList.remove("hidden");
+      el.suggestionGroups.innerHTML = SUGGESTION_GROUPS.map(group => `
+        <section class="suggestion-group" id="group-${group.id}">
+          <div class="group-heading">
+            <div>
+              <h2 class="group-title">${escapeHtml(group.title)}</h2>
+              <p class="group-description">${escapeHtml(group.description)}</p>
+              <div class="category-chips">${group.labels.map(label => `<span class="category-chip">${escapeHtml(label)}</span>`).join("")}</div>
+            </div>
+          </div>
+          <div class="group-grid"><div class="status-box">Đang tải gợi ý...</div></div>
+        </section>
+      `).join("");
+
+      try {
+        const tagData = await fetchJson(apiUrl("/manga/tag"));
+        const tagMap = new Map((tagData.data || []).map(tag => [tag.attributes?.name?.en, tag.id]));
+
+        for (const group of SUGGESTION_GROUPS) {
+          const params = new URLSearchParams();
+          params.set("limit", "12");
+          params.append("includes[]", "cover_art");
+          params.append("availableTranslatedLanguage[]", "vi");
+          params.append("availableTranslatedLanguage[]", "en");
+          params.set("hasAvailableChapters", "true");
+          params.set("includedTagsMode", "OR");
+          params.set("order[followedCount]", "desc");
+          group.ratings.forEach(rating => params.append("contentRating[]", rating));
+          group.demographics.forEach(item => params.append("publicationDemographic[]", item));
+          group.tags.map(name => tagMap.get(name)).filter(Boolean).forEach(id => params.append("includedTags[]", id));
+
+          const data = await fetchJson(apiUrl(`/manga?${params.toString()}`));
+          const items = (data.data || []).slice(0, 12);
+          const grid = document.querySelector(`#group-${group.id} .group-grid`);
+          if (!grid) continue;
+          if (!items.length) {
+            renderStatus(grid, "Chưa tìm thấy truyện phù hợp trong nhóm này.");
+            continue;
+          }
+          grid.innerHTML = mangaCardsHtml(items);
+          bindMangaCards(grid, items);
+        }
+      } catch (error) {
+        el.suggestionGroups.querySelectorAll(".group-grid").forEach(grid => {
+          renderStatus(grid, `Không thể tải gợi ý: ${error.message}`, true);
+        });
+      }
+    }
+
+    function renderMangaCards(items) {
+      if (!items.length) {
+        renderStatus(el.results, "Không tìm thấy truyện phù hợp.");
+        return;
+      }
+      el.results.innerHTML = mangaCardsHtml(items);
+      bindMangaCards(el.results, items);
     }
 
     function renderPagination() {
@@ -773,6 +914,7 @@
     function showHistory() {
       const history = JSON.parse(localStorage.getItem("mangaHistory") || "[]");
       showScreen("home");
+      el.suggestionGroups.classList.add("hidden");
       el.sectionTitle.textContent = "Lịch sử đọc";
       el.sectionSubtitle.textContent = history.length ? `${history.length} truyện gần đây` : "Chưa có lịch sử đọc";
       el.pagination.innerHTML = "";
@@ -790,10 +932,10 @@
     }
 
     function goHome() {
-      state.mode = "latest";
+      state.mode = "suggested";
       state.query = "";
       el.searchInput.value = "";
-      loadMangaList(1);
+      loadSuggestionGroups();
     }
 
     el.searchForm.addEventListener("submit", event => {
@@ -832,7 +974,7 @@
       }
     });
 
-    loadMangaList(1);
+    loadSuggestionGroups();
   </script>
 </body>
 </html>
