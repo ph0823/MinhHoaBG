@@ -1,18 +1,11 @@
 {
-  "version": 2,
+  "$schema": "https://openapi.vercel.sh/vercel.json",
 
   "functions": {
     "api/*.js": {
-      "runtime": "nodejs20.x"
+      "maxDuration": 30
     }
   },
-
-  "rewrites": [
-    {
-      "source": "/api/truyenqq",
-      "destination": "/api/truyenqq.js"
-    }
-  ],
 
   "headers": [
     {
