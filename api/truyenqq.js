@@ -157,7 +157,10 @@ function clean(value = "") {
 }
 
 function normalizeText(value = "") {
-  return clean(value).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return clean(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 function absolute(value, base) {
@@ -227,7 +230,7 @@ function extractChapterNumber(item) {
   }
 
   if (!values.length) {
-    const fallback = text.match(/ (\d+(?:\.\d+)?) /g) || [];
+    const fallback = text.match(/\b\d+(?:\.\d+)?\b/g) || [];
     for (const value of fallback) {
       const number = Number.parseFloat(value);
       if (Number.isFinite(number)) values.push(number);
@@ -694,54 +697,146 @@ async function detailAction(rawUrl) {
 
 function normalizeImageCandidate(value, base) {
   if (!value) return "";
-  const source = String(value).trim().replace(/^['"]|['"]$/g, "").replace(/\\//g, "/").replace(/\u002F/gi, "/").replace(/&amp;/g, "&");
-  if (!source || source.startsWith("data:image")) return "";
+
+  const source = String(value)
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\\\//g, "/")
+    .replace(/\\u002F/gi, "/")
+    .replace(/&amp;/g, "&");
+
+  if (!source || source.startsWith("data:image")) {
+    return "";
+  }
+
   const url = absolute(source, base);
-  if (!url || /(?:logo|avatar|banner|loading|spinner|icon|favicon)/i.test(url)) return "";
+
+  if (
+    !url ||
+    /(?:logo|avatar|banner|loading|spinner|icon|favicon)/i.test(url)
+  ) {
+    return "";
+  }
+
   return url;
 }
 
 function pushImage(pages, value, base) {
   const url = normalizeImageCandidate(value, base);
-  if (url) pages.push(url);
+
+  if (url) {
+    pages.push(url);
+  }
 }
 
 async function chapterAction(rawUrl) {
-  if (!allowedStoryUrl(rawUrl)) throw Object.assign(new Error("Địa chỉ chương không hợp lệ"), { status: 400 });
+  if (!allowedStoryUrl(rawUrl)) {
+    throw Object.assign(
+      new Error("Địa chỉ chương không hợp lệ"),
+      { status: 400 }
+    );
+  }
 
   const { html, finalUrl } = await fetchHtml(rawUrl);
   const $ = cheerio.load(html);
   const pages = [];
 
-  const chapterRoots = [".page-chapter", ".page_chapter", ".chapter_content", ".chapter-content", "#chapter-content", ".reading-detail", ".page-reading", ".chapter-reading", ".reader-area", ".reader-content", ".reading-content", "#viewer", "#reader", "#chapter-reading", "#chapter_content"];
-  const imageSelector = chapterRoots.map((root) => `${root} img`).join(",");
-  const images = $(imageSelector).length ? $(imageSelector) : $("img");
+  const chapterRoots = [
+    ".page-chapter",
+    ".page_chapter",
+    ".chapter_content",
+    ".chapter-content",
+    "#chapter-content",
+    ".reading-detail",
+    ".page-reading",
+    ".chapter-reading",
+    ".reader-area",
+    ".reader-content",
+    ".reading-content",
+    "#viewer",
+    "#reader",
+    "#chapter-reading",
+    "#chapter_content",
+  ];
 
-  images.each((_, element) => { pushImage(pages, extractImageSource($(element)), finalUrl); });
-  const sourceSelector = chapterRoots.map((root) => `${root} source`).join(",");
+  const imageSelector = chapterRoots
+    .map((root) => `${root} img`)
+    .join(",");
+
+  const images = $(imageSelector).length
+    ? $(imageSelector)
+    : $("img");
+
+  images.each((_, element) => {
+    pushImage(
+      pages,
+      extractImageSource($(element)),
+      finalUrl
+    );
+  });
+
+  const sourceSelector = chapterRoots
+    .map((root) => `${root} source`)
+    .join(",");
+
   $(sourceSelector).each((_, element) => {
     const sourceElement = $(element);
-    const srcset = sourceElement.attr("data-srcset") || sourceElement.attr("srcset") || "";
-    const source = srcset.split(",")[0]?.trim().split(/\s+/)[0];
+
+    const srcset =
+      sourceElement.attr("data-srcset") ||
+      sourceElement.attr("srcset") ||
+      "";
+
+    const source =
+      srcset
+        .split(",")[0]
+        ?.trim()
+        .split(/\s+/)[0] || "";
+
     pushImage(pages, source, finalUrl);
   });
 
   if (!pages.length) {
-    const urlPattern = /https?:\?\/\?\/[^\s"'<>\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\]*)?/gi;
+    const urlPattern =
+      /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
+
     $("script").each((_, element) => {
       const script = $(element).html() || "";
       const matches = script.match(urlPattern) || [];
-      matches.forEach((value) => pushImage(pages, value, finalUrl));
+
+      matches.forEach((value) => {
+        pushImage(pages, value, finalUrl);
+      });
     });
   }
 
   if (!pages.length) {
-    const matches = html.match(/https?:\?\/\?\/[^\s"'<>\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\]*)?/gi) || [];
-    matches.forEach((value) => pushImage(pages, value, finalUrl));
+    const matches =
+      html.match(
+        /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi
+      ) || [];
+
+    matches.forEach((value) => {
+      pushImage(pages, value, finalUrl);
+    });
   }
 
-  return { chapter: finalUrl, title: clean($("h1").first().text() || $(".chapter-title").first().text() || $("title").text()), pages: uniqueBy(pages, (url) => url) };
+  return {
+    chapter: finalUrl,
+
+    title: clean(
+      $("h1").first().text() ||
+      $(".chapter-title").first().text() ||
+      $("title").text()
+    ),
+
+    pages: uniqueBy(
+      pages,
+      (url) => url
+    ),
+  };
 }
+
 
 /* =========================================================
  * 14. PROXY ẢNH
