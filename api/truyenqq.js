@@ -82,40 +82,142 @@ const KIDS_SECTIONS = [
   "sliceOfLife",
   "detective",
   "comic",
+  "fantasy",
+  "magic",
+  "supernatural",
+  "anime",
+  "shounen",
+  "shoujo",
 ];
 
-const KIDS_ALLOWED = new Set([...KIDS_SECTIONS]);
+const KIDS_ALLOWED = new Set(KIDS_SECTIONS);
 
 const HOME_KIDS_CATEGORIES = [
   "comedy",
   "comic",
+  "magic",
+  "fantasy",
   "adventure",
-  "schoolLife",
-  "sports"
 ];
 
 const HOME_KIDS_LIMIT = 20;
 
-const UNSAFE_GENRES = [
-  "doujinshi", "gender bender", "harem", "horror", "josei", "mafia",
-  "military", "ngôn tình", "psychological", "romance", "seinen",
-  "shoujo ai", "shounen ai", "tragedy", "cổ đại", "xuyên không",
-  "trọng sinh", "chuyển sinh", "action", "martial arts", "drama",
-  "shounen", "shoujo"
+/*
+ * Chỉ chặn tuyệt đối các thể loại có rủi ro cao hoặc chủ yếu
+ * hướng đến người trưởng thành.
+ *
+ * Không chặn máy móc Action, Drama, Martial Arts, Shounen,
+ * Shoujo, Supernatural vì nhiều truyện 13+ vẫn dùng các nhãn này.
+ */
+const HARD_UNSAFE_GENRES = [
+  "doujinshi",
+  "gender bender",
+  "harem",
+  "horror",
+  "josei",
+  "mafia",
+  "military",
+  "ngôn tình",
+  "psychological",
+  "romance",
+  "seinen",
+  "shoujo ai",
+  "shounen ai",
+  "tragedy",
 ];
 
-const UNSAFE_WORDS = [
-  "18+", "adult", "mature", "smut", "hentai", "ecchi", "gore", "yaoi", "yuri",
-  "boys love", "girls love", "đam mỹ", "bách hợp", "kinh dị", "horror",
-  "psychological", "tình dục", "nóng bỏng", "khỏa thân", "khoả thân",
-  "ngoại tình", "loạn luân", "cưỡng hiếp", "hiếp dâm", "máu me",
-  "doujinshi", "ác ma", "phản diện", "villainess", "giết", "tuyệt vọng",
-  "sát thủ", "yêu nữ", "dục vọng", "bạo chúa", "tổng tài", "quyến rũ", "hôn phu",
-  "ly hôn", "mang thai", "tiểu tam", "trà xanh", "bạo hành", "ép cưới",
-  "vợ", "chồng", "sủng", "tra nam", "cặn bã", "báo thù", "trả thù",
-  "tự sát", "tự tử", "hắc hoá", "giang hồ", "lưu manh", "bắt nạt",
-  "ma tôn", "quỷ vương", "song tu"
+/*
+ * Từ khóa bị chặn tuyệt đối.
+ * Đây là những dấu hiệu rõ ràng về nội dung người lớn,
+ * tình dục, cưỡng bức, tự hại hoặc bạo lực đồ họa.
+ */
+const HARD_UNSAFE_WORDS = [
+  "18+",
+  "adult",
+  "mature",
+  "smut",
+  "hentai",
+  "ecchi",
+  "gore",
+  "yaoi",
+  "yuri",
+  "boys love",
+  "girls love",
+  "đam mỹ",
+  "bách hợp",
+  "tình dục",
+  "nóng bỏng",
+  "khỏa thân",
+  "khoả thân",
+  "ngoại tình",
+  "loạn luân",
+  "cưỡng hiếp",
+  "hiếp dâm",
+  "máu me",
+  "dục vọng",
+  "song tu",
+  "tự sát",
+  "tự tử",
 ];
+
+/*
+ * Các từ khóa cảnh báo.
+ *
+ * Một từ xuất hiện riêng lẻ chưa đủ để loại truyện vì có thể
+ * nằm trong truyện hài, phép thuật hoặc phiêu lưu dành cho 13+.
+ */
+const CAUTION_WORDS = [
+  "ác ma",
+  "quỷ vương",
+  "ma tôn",
+  "phản diện",
+  "villainess",
+  "giết",
+  "sát thủ",
+  "bạo chúa",
+  "bạo hành",
+  "bắt nạt",
+  "giang hồ",
+  "lưu manh",
+  "báo thù",
+  "trả thù",
+  "tuyệt vọng",
+  "hắc hoá",
+  "hắc hóa",
+];
+
+/*
+ * Các thể loại tích cực thường phù hợp với học sinh và nhóm 13+.
+ */
+const POSITIVE_KIDS_GENRES = new Set([
+  "comedy",
+  "comic",
+  "school life",
+  "adventure",
+  "sports",
+  "slice of life",
+  "detective",
+  "fantasy",
+  "magic",
+  "supernatural",
+  "anime",
+  "shounen",
+  "shoujo",
+]);
+
+/*
+ * Truyện được giáo viên hoặc quản trị viên kiểm duyệt thủ công.
+ *
+ * Ngoại lệ chỉ giúp vượt qua nhóm từ khóa cảnh báo.
+ * Ngoại lệ vẫn không thể vượt qua nội dung 18+ hoặc thể loại
+ * bị chặn tuyệt đối.
+ */
+const SAFE_TITLE_OVERRIDES = new Set([
+  "con ma q-taro perfect edition",
+  "con ma q taro perfect edition",
+  "con ma q-taro",
+  "con ma q taro",
+]);
 
 /* =========================================================
  * 2. CACHE LRU
@@ -124,7 +226,7 @@ const UNSAFE_WORDS = [
 const memoryCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
 const MAX_CACHE_SIZE = 100;
-const CACHE_VERSION = "category-v10-strict-kids-11-13";
+const CACHE_VERSION = "category-v10-strict-kids-11-13plus";
 
 function cacheGet(key) {
   const entry = memoryCache.get(key);
@@ -194,19 +296,170 @@ function storyIdentity(item) {
   return normalizeText(item.url || item.title);
 }
 
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/*
+ * Kiểm tra từ hoặc cụm từ theo ranh giới từ.
+ *
+ * Cách này tránh trường hợp dùng includes() làm khớp nhầm
+ * một phần của từ khác.
+ */
+function containsNormalizedTerm(text, term) {
+  const normalizedText = normalizeText(text);
+  const normalizedTerm = normalizeText(term);
+
+  if (!normalizedText || !normalizedTerm) {
+    return false;
+  }
+
+  const escapedTerm = escapeRegExp(normalizedTerm)
+    .replace(/\s+/g, "\\s+");
+
+  const pattern = new RegExp(
+    `(^|[^a-z0-9])${escapedTerm}(?=$|[^a-z0-9])`,
+    "i"
+  );
+
+  return pattern.test(normalizedText);
+}
+
+function hasExactGenre(genres, expectedGenre) {
+  const normalizedExpected = normalizeText(expectedGenre);
+
+  return genres.some(
+    (genre) => genre === normalizedExpected
+  );
+}
+
+/*
+ * Chuẩn hóa tiêu đề để:
+ * Q-Taro, Q Taro và q-taro được xem như nhau.
+ */
+function normalizeStoryTitle(title = "") {
+  return normalizeText(title)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isSafeTitleOverride(title) {
+  const normalizedTitle = normalizeStoryTitle(title);
+
+  if (!normalizedTitle) {
+    return false;
+  }
+
+  for (const safeTitle of SAFE_TITLE_OVERRIDES) {
+    const normalizedSafeTitle = normalizeStoryTitle(safeTitle);
+
+    if (
+      normalizedTitle === normalizedSafeTitle ||
+      normalizedTitle.includes(normalizedSafeTitle)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function isSafeStory(item) {
-  const genres = (item.genres || []).map(normalizeText);
-  const hasUnsafeGenre = UNSAFE_GENRES.some((unsafeGenre) =>
-    genres.some((genre) => genre === normalizeText(unsafeGenre))
+  const genres = (item.genres || [])
+    .map(normalizeText)
+    .filter(Boolean);
+
+  const searchableText = [
+    item.title,
+    item.status,
+    item.latestChapter,
+    ...genres,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  /*
+   * Bước 1:
+   * Các dấu hiệu rõ ràng về nội dung người lớn luôn bị loại.
+   */
+  const hasHardUnsafeWord = HARD_UNSAFE_WORDS.some(
+    (word) => containsNormalizedTerm(searchableText, word)
   );
 
-  if (hasUnsafeGenre) return false;
+  if (hasHardUnsafeWord) {
+    return false;
+  }
 
-  const searchableText = normalizeText(
-    [item.title, item.status, item.latestChapter, ...genres].filter(Boolean).join(" ")
+  /*
+   * Bước 2:
+   * Các thể loại rủi ro cao luôn bị loại.
+   */
+  const hasHardUnsafeGenre = HARD_UNSAFE_GENRES.some(
+    (unsafeGenre) => hasExactGenre(genres, unsafeGenre)
   );
 
-  return !UNSAFE_WORDS.some((word) => searchableText.includes(normalizeText(word)));
+  if (hasHardUnsafeGenre) {
+    return false;
+  }
+
+  /*
+   * Bước 3:
+   * Truyện đã được kiểm duyệt thủ công được giữ lại.
+   *
+   * Con Ma Q-Taro sẽ được giữ lại tại bước này.
+   */
+  if (isSafeTitleOverride(item.title)) {
+    return true;
+  }
+
+  /*
+   * Bước 4:
+   * Tính số thể loại tích cực.
+   */
+  const positiveGenreCount = genres.filter(
+    (genre) => POSITIVE_KIDS_GENRES.has(genre)
+  ).length;
+
+  /*
+   * Bước 5:
+   * Đếm các dấu hiệu cảnh báo.
+   */
+  const cautionCount = CAUTION_WORDS.reduce(
+    (count, word) => {
+      return count +
+        (
+          containsNormalizedTerm(searchableText, word)
+            ? 1
+            : 0
+        );
+    },
+    0
+  );
+
+  /*
+   * Có từ hai dấu hiệu cảnh báo trở lên thì loại.
+   */
+  if (cautionCount >= 2) {
+    return false;
+  }
+
+  /*
+   * Có một dấu hiệu cảnh báo nhưng không có thể loại tích cực
+   * thì cũng loại.
+   */
+  if (
+    cautionCount === 1 &&
+    positiveGenreCount === 0
+  ) {
+    return false;
+  }
+
+  /*
+   * Một dấu hiệu cảnh báo đi cùng Comedy, Comic, Fantasy,
+   * Magic, Adventure, Supernatural... vẫn được chấp nhận
+   * cho nhóm tuổi 13+.
+   */
+  return true;
 }
 
 /* =========================================================
@@ -272,7 +525,21 @@ function recommendationScore(item, category = "") {
   if (item.latestChapter) score += 5;
   if (item.status) score += 3;
 
-  const categoryBonus = { comedy: 12, comic: 11, adventure: 8, schoolLife: 7, sports: 7, sliceOfLife: 7, detective: 7 };
+  const categoryBonus = {
+    comedy: 12,
+    comic: 11,
+    magic: 10,
+    fantasy: 9,
+    adventure: 8,
+    schoolLife: 7,
+    sports: 7,
+    sliceOfLife: 7,
+    detective: 7,
+    supernatural: 6,
+    anime: 5,
+    shounen: 5,
+    shoujo: 5,
+  };
   score += categoryBonus[category] || 0;
 
   const sourceCategories = item.sourceCategories || [];
