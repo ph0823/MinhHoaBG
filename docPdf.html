@@ -1,6 +1,3 @@
- <!-- const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec'; -->
-
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -71,14 +68,10 @@
       min-width: 0;
       opacity: 1;
       transform: translateX(0);
-      transition:
-        opacity .18s ease,
-        transform .24s ease,
-        border-color .18s ease,
-        box-shadow .18s ease;
+      transition: opacity .18s ease, transform .24s ease, border-color .18s ease, box-shadow .18s ease;
     }
 
-    /* Chế độ đọc: ẩn khung trái và dành toàn bộ chiều ngang cho PDF. */
+    /* Sidebar Collapsed State */
     .layout.sidebar-collapsed {
       grid-template-columns: 0 minmax(0, 1fr);
       gap: 0;
@@ -120,29 +113,10 @@
     .toolbar button:disabled { opacity: .45; cursor: not-allowed; }
     .toolbar .primary { background: var(--primary); color: white; border-color: var(--primary); }
     .toolbar .primary:hover:not(:disabled) { background: var(--primary-dark); color: white; }
-    .toolbar .fit-active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-    .toolbar .fit-active:hover:not(:disabled) {
-      background: var(--primary-dark);
-      color: white;
-    }
-    .toolbar .library-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      color: var(--primary);
-      border-color: #99f6e4;
-      background: #ecfdf5;
-    }
-    .toolbar .library-toggle:hover:not(:disabled) {
-      color: white;
-      border-color: var(--primary);
-      background: var(--primary);
-    }
+    .toolbar .fit-active { background: var(--primary); color: white; border-color: var(--primary); }
+    .toolbar .fit-active:hover:not(:disabled) { background: var(--primary-dark); color: white; }
+    .toolbar .library-toggle { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--primary); border-color: #99f6e4; background: #ecfdf5; }
+    .toolbar .library-toggle:hover:not(:disabled) { color: white; border-color: var(--primary); background: var(--primary); }
     .page-input { width: 62px; padding: 0 8px; text-align: center; }
     .divider { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
     .document-name { flex: 1 1 200px; min-width: 140px; max-width: 420px; margin-right: auto; padding: 0 8px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -161,6 +135,8 @@
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.error { background: var(--danger); }
     .mobile-menu { display: none; }
+    
+    /* Responsive Design */
     @media (max-width: 860px) {
       body { overflow: auto; }
       .app { min-height: 100%; height: auto; }
@@ -168,30 +144,13 @@
       .brand { min-width: 0; }
       .brand small, .status { display: none; }
       .mobile-menu { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 10px; background: white; }
-      .layout,
-      .layout.sidebar-collapsed {
-        grid-template-columns: 1fr;
-        gap: 14px;
-        min-height: calc(100vh - 66px);
+      .layout, .layout.sidebar-collapsed { grid-template-columns: 1fr; gap: 14px; min-height: calc(100vh - 66px); }
+      .sidebar, .layout.sidebar-collapsed .sidebar {
+        position: fixed; inset: 66px auto 0 0; z-index: 10; width: min(88vw, 350px);
+        border-radius: 0 14px 14px 0; opacity: 1; pointer-events: auto; border-color: var(--border);
+        box-shadow: var(--shadow); transform: translateX(-105%); transition: transform .22s ease;
       }
-      .sidebar,
-      .layout.sidebar-collapsed .sidebar {
-        position: fixed;
-        inset: 66px auto 0 0;
-        z-index: 10;
-        width: min(88vw, 350px);
-        border-radius: 0 14px 14px 0;
-        opacity: 1;
-        pointer-events: auto;
-        border-color: var(--border);
-        box-shadow: var(--shadow);
-        transform: translateX(-105%);
-        transition: transform .22s ease;
-      }
-      .sidebar.open,
-      .layout.sidebar-collapsed .sidebar.open {
-        transform: translateX(0);
-      }
+      .sidebar.open, .layout.sidebar-collapsed .sidebar.open { transform: translateX(0); }
       .viewer { min-height: calc(100vh - 94px); }
       .canvas-wrap { padding: 12px; }
       .document-name { flex-basis: 100%; max-width: none; text-align: center; }
@@ -248,27 +207,26 @@
 <div id="toast" class="toast" role="status"></div>
 
 <script>
+  // Cấu hình Google Apps Script Backend URL
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
   const ROOT_MARKER = '';
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 3;
-  const SCALE_STEP = 0.2;
-
-  // Tối ưu cho PDF scan: hạn chế số yêu cầu song song và kích thước bitmap.
+  
+  // Tùy chỉnh hiệu suất
+  const MIN_SCALE = 0.5, MAX_SCALE = 3, SCALE_STEP = 0.2;
   const MAX_PARALLEL_CHUNK_REQUESTS = 3;
-  const GLOBAL_CHUNK_CACHE_LIMIT = 48 * 1024 * 1024;
+  const GLOBAL_CHUNK_CACHE_LIMIT = 48 * 1024 * 1024; // Cache 48MB
   const DESKTOP_MAX_CANVAS_PIXELS = 10_000_000;
   const MOBILE_MAX_CANVAS_PIXELS = 5_000_000;
-  const DESKTOP_DPR_LIMIT = 1.5;
-  const MOBILE_DPR_LIMIT = 1.2;
+  const DESKTOP_DPR_LIMIT = 1.5, MOBILE_DPR_LIMIT = 1.2;
   const ZOOM_RENDER_DELAY = 90;
 
+  // Sử dụng Web Worker để xử lý luồng PDF độc lập (tăng tốc độ giao diện)
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+  // Khởi tạo các Element Node
   const els = {
-    mainLayout: document.getElementById('mainLayout'),
-    sidebar: document.getElementById('sidebar'), mobileMenu: document.getElementById('mobileMenu'),
-    btnLibrary: document.getElementById('btnLibrary'),
+    mainLayout: document.getElementById('mainLayout'), sidebar: document.getElementById('sidebar'),
+    mobileMenu: document.getElementById('mobileMenu'), btnLibrary: document.getElementById('btnLibrary'),
     folderTitle: document.getElementById('folderTitle'), breadcrumb: document.getElementById('breadcrumb'),
     searchInput: document.getElementById('searchInput'), fileList: document.getElementById('fileList'),
     statusBox: document.getElementById('statusBox'), statusText: document.getElementById('statusText'),
@@ -278,37 +236,21 @@
     btnNext: document.getElementById('btnNext'), btnZoomOut: document.getElementById('btnZoomOut'),
     zoomLabel: document.getElementById('zoomLabel'), btnZoomIn: document.getElementById('btnZoomIn'),
     btnFit: document.getElementById('btnFit'), btnFitHeight: document.getElementById('btnFitHeight'),
-    canvasWrap: document.getElementById('canvasWrap'),
-    canvas: document.getElementById('pdfCanvas'), welcome: document.getElementById('welcome'),
-    toast: document.getElementById('toast')
+    canvasWrap: document.getElementById('canvasWrap'), canvas: document.getElementById('pdfCanvas'),
+    welcome: document.getElementById('welcome'), toast: document.getElementById('toast')
   };
 
   const ctx = els.canvas.getContext('2d', { alpha: false });
   const globalChunkCache = new Map();
 
-  let globalChunkCacheBytes = 0;
-  let folderStack = [];
-  let currentItems = [];
-  let currentFolderId = ROOT_MARKER;
-  let activeFileId = '';
-  let pdfDoc = null;
-  let pdfLoadingTask = null;
-  let currentRangeTransport = null;
-  let currentAbortController = null;
-  let currentPageProxy = null;
-  let prefetchedPage = null;
-  let pageNum = 1;
-  let scale = 1.25;
-  let fitMode = 'width'; // width | height | manual
-  let renderTask = null;
-  let renderSerial = 0;
-  let loadToken = 0;
-  let toastTimer = null;
-  let sidebarCollapsed = false;
-  let resizeTimer = null;
-  let zoomRenderTimer = null;
-  let cleanupTimer = null;
-  let idlePrefetchHandle = null;
+  // Biến trạng thái State
+  let globalChunkCacheBytes = 0, folderStack = [], currentItems = [], currentFolderId = ROOT_MARKER;
+  let activeFileId = '', pdfDoc = null, pdfLoadingTask = null;
+  let currentRangeTransport = null, currentAbortController = null;
+  let currentPageProxy = null, prefetchedPage = null, pageNum = 1;
+  let scale = 1.25, fitMode = 'width'; // width | height | manual
+  let renderTask = null, renderSerial = 0, loadToken = 0;
+  let toastTimer = null, sidebarCollapsed = false, resizeTimer = null, zoomRenderTimer = null, cleanupTimer = null, idlePrefetchHandle = null;
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -326,9 +268,7 @@
     els.btnPrev.addEventListener('click', () => goToPage(pageNum - 1));
     els.btnNext.addEventListener('click', () => goToPage(pageNum + 1));
     els.pageInput.addEventListener('change', () => goToPage(Number(els.pageInput.value)));
-    els.pageInput.addEventListener('keydown', event => {
-      if (event.key === 'Enter') goToPage(Number(els.pageInput.value));
-    });
+    els.pageInput.addEventListener('keydown', e => { if (e.key === 'Enter') goToPage(Number(els.pageInput.value)); });
     els.btnZoomOut.addEventListener('click', () => setScale(scale - SCALE_STEP));
     els.btnZoomIn.addEventListener('click', () => setScale(scale + SCALE_STEP));
     els.btnFit.addEventListener('click', fitToWidth);
@@ -338,14 +278,9 @@
     window.addEventListener('beforeunload', abortCurrentWork);
   }
 
+  // Tiện ích Gọi API với cơ chế tự động Retries
   async function api(action, params = {}, options = {}) {
-    const {
-      signal,
-      cache = 'no-store',
-      bustCache = true,
-      retries = 0
-    } = options;
-
+    const { signal, cache = 'no-store', bustCache = true, retries = 0 } = options;
     let lastError;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
@@ -354,23 +289,12 @@
         url.searchParams.set('appType', 'pdf');
         if (bustCache) url.searchParams.set('_', Date.now().toString());
         Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            url.searchParams.set(key, String(value));
-          }
+          if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
         });
-
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          cache,
-          redirect: 'follow',
-          signal
-        });
-
-        if (!response.ok) throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+        const response = await fetch(url.toString(), { method: 'GET', cache, redirect: 'follow', signal });
+        if (!response.ok) throw new Error(`Lỗi HTTP ${response.status}.`);
         const data = await response.json();
-        if (data.ok === false || data.error) {
-          throw new Error(data.error || 'Máy chủ xử lý không thành công.');
-        }
+        if (data.ok === false || data.error) throw new Error(data.error || 'Xử lý thất bại.');
         return data;
       } catch (error) {
         if (error?.name === 'AbortError') throw error;
@@ -381,8 +305,9 @@
     throw lastError;
   }
 
+  // Quản lý hiển thị Thư Mục
   async function loadDirectory(folderId, reset = false) {
-    setLoading(true, 'Đang lấy danh sách tài liệu...', 15);
+    setLoading(true, 'Đang lấy danh sách...', 15);
     els.fileList.innerHTML = '<li class="empty">Đang tải...</li>';
     try {
       const data = await api('list', folderId ? { folderId } : {});
@@ -390,7 +315,7 @@
       currentItems = Array.isArray(data.files) ? data.files : [];
       if (reset) folderStack = [{ id: data.folder.id, name: data.folder.name }];
       els.folderTitle.textContent = data.folder.name;
-      els.breadcrumb.textContent = folderStack.map(item => item.name).join(' › ');
+      els.breadcrumb.textContent = folderStack.map(i => i.name).join(' › ');
       els.searchInput.value = '';
       renderFileList();
       setLoading(false);
@@ -409,11 +334,10 @@
     if (folderStack.length > 1) {
       fragment.appendChild(makeItem({ name: 'Quay lại thư mục trước', isFolder: true }, true));
     }
-
     if (!filtered.length) {
       const li = document.createElement('li');
       li.className = 'empty';
-      li.textContent = keyword ? 'Không tìm thấy tài liệu phù hợp.' : 'Thư mục không có file PDF.';
+      li.textContent = keyword ? 'Không tìm thấy kết quả.' : 'Thư mục trống.';
       fragment.appendChild(li);
     } else {
       filtered.forEach(item => fragment.appendChild(makeItem(item, false)));
@@ -436,98 +360,54 @@
     return li;
   }
 
-  function openFolder(item) {
-    showLibrary();
-    folderStack.push({ id: item.id, name: item.name });
-    loadDirectory(item.id);
-  }
+  function openFolder(item) { showLibrary(); folderStack.push({ id: item.id, name: item.name }); loadDirectory(item.id); }
+  function goBack() { showLibrary(); if (folderStack.length <= 1) return; folderStack.pop(); loadDirectory(folderStack[folderStack.length - 1].id); }
 
-  function goBack() {
-    showLibrary();
-    if (folderStack.length <= 1) return;
-    folderStack.pop();
-    const previous = folderStack[folderStack.length - 1];
-    loadDirectory(previous.id);
-  }
-
+  // Công cụ quản lý luồng đồng thời
   function createLimiter(maxConcurrent) {
-    let active = 0;
-    const queue = [];
-
+    let active = 0; const queue = [];
     const runNext = () => {
       while (active < maxConcurrent && queue.length) {
         const job = queue.shift();
         active++;
-        Promise.resolve()
-          .then(job.task)
-          .then(job.resolve, job.reject)
-          .finally(() => {
-            active--;
-            runNext();
-          });
+        Promise.resolve().then(job.task).then(job.resolve, job.reject).finally(() => { active--; runNext(); });
       }
     };
-
-    return task => new Promise((resolve, reject) => {
-      queue.push({ task, resolve, reject });
-      runNext();
-    });
+    return task => new Promise((resolve, reject) => { queue.push({ task, resolve, reject }); runNext(); });
   }
 
-  function makeChunkCacheKey(fileId, version, index) {
-    return `${fileId}::${version}::${index}`;
-  }
-
+  // Quản lý bộ nhớ tạm của Chunk
+  function makeChunkCacheKey(fileId, version, index) { return `${fileId}::${version}::${index}`; }
   function getGlobalChunk(key) {
     const bytes = globalChunkCache.get(key);
     if (!bytes) return null;
-    globalChunkCache.delete(key);
-    globalChunkCache.set(key, bytes);
+    globalChunkCache.delete(key); globalChunkCache.set(key, bytes);
     return bytes;
   }
-
   function putGlobalChunk(key, bytes) {
     if (!bytes?.byteLength || bytes.byteLength > GLOBAL_CHUNK_CACHE_LIMIT / 2) return;
-
     const old = globalChunkCache.get(key);
-    if (old) {
-      globalChunkCacheBytes -= old.byteLength;
-      globalChunkCache.delete(key);
-    }
-
-    globalChunkCache.set(key, bytes);
-    globalChunkCacheBytes += bytes.byteLength;
-
+    if (old) { globalChunkCacheBytes -= old.byteLength; globalChunkCache.delete(key); }
+    globalChunkCache.set(key, bytes); globalChunkCacheBytes += bytes.byteLength;
     while (globalChunkCacheBytes > GLOBAL_CHUNK_CACHE_LIMIT && globalChunkCache.size) {
       const oldestKey = globalChunkCache.keys().next().value;
-      const oldestBytes = globalChunkCache.get(oldestKey);
+      globalChunkCacheBytes -= globalChunkCache.get(oldestKey).byteLength;
       globalChunkCache.delete(oldestKey);
-      globalChunkCacheBytes -= oldestBytes.byteLength;
     }
   }
 
+  // Range Transport: Quản lý nạp từng phần PDF
   function createChunkRangeTransport(file, info, token, firstChunk, signal) {
-    // Không đưa cùng một TypedArray vào cache và transport vì PDF.js có thể chuyển quyền sở hữu buffer cho worker.
     const initialData = firstChunk.slice();
-    const chunkCache = new Map([[0, firstChunk]]);
-    const pendingChunks = new Map();
-    const loadedChunkIndexes = new Set([0]);
+    const chunkCache = new Map([[0, firstChunk]]), pendingChunks = new Map(), loadedChunkIndexes = new Set([0]);
     const requestLimit = createLimiter(MAX_PARALLEL_CHUNK_REQUESTS);
-    const fileSize = Number(info.size);
-    const totalChunks = Number(info.totalChunks);
-    const chunkSize = Number(info.chunkSize) || firstChunk.length;
+    const fileSize = Number(info.size), totalChunks = Number(info.totalChunks), chunkSize = Number(info.chunkSize) || firstChunk.length;
     const version = getFileVersion(info);
-    let loadedBytes = firstChunk.length;
-    let aborted = false;
+    let loadedBytes = firstChunk.length, aborted = false;
 
-    const transport = new pdfjsLib.PDFDataRangeTransport(
-      fileSize,
-      initialData,
-      false,
-      file.name
-    );
+    const transport = new pdfjsLib.PDFDataRangeTransport(fileSize, initialData, false, file.name);
 
-    function reportProgress(label = `Đang tải dữ liệu cần thiết của ${file.name}...`) {
+    function reportProgress(label = `Đang nạp file...`) {
       const percent = Math.min(99, Math.max(1, Math.round((loadedBytes / fileSize) * 100)));
       setLoading(true, label, percent);
       transport.onDataProgress(loadedBytes, fileSize);
@@ -546,7 +426,7 @@
 
     async function fetchChunk(index) {
       if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
-      if (index < 0 || index >= totalChunks) throw new Error(`Khối PDF ${index} không hợp lệ.`);
+      if (index < 0 || index >= totalChunks) throw new Error(`Lỗi khối ${index}`);
       if (chunkCache.has(index)) return chunkCache.get(index);
       if (pendingChunks.has(index)) return pendingChunks.get(index);
 
@@ -556,11 +436,7 @@
 
       const request = requestLimit(async () => {
         if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
-        const chunkData = await api(
-          'getFileChunk',
-          { fileId: file.id, index, v: version },
-          { signal, cache: 'default', bustCache: false, retries: 1 }
-        );
+        const chunkData = await api('getFileChunk', { fileId: file.id, index, v: version }, { signal, cache: 'default', bustCache: false, retries: 1 });
         if (aborted || token !== loadToken || signal.aborted) throw createAbortError();
         return rememberChunk(index, base64ToBytes(chunkData.base64));
       }).finally(() => pendingChunks.delete(index));
@@ -572,63 +448,38 @@
     transport.requestDataRange = async function(begin, end) {
       try {
         if (aborted || token !== loadToken || signal.aborted) return;
-
-        const safeBegin = Math.max(0, Math.floor(begin));
-        const safeEnd = Math.min(fileSize, Math.ceil(end));
+        const safeBegin = Math.max(0, Math.floor(begin)), safeEnd = Math.min(fileSize, Math.ceil(end));
         if (safeEnd <= safeBegin) return;
-
-        const firstIndex = Math.floor(safeBegin / chunkSize);
-        const lastIndex = Math.floor((safeEnd - 1) / chunkSize);
-        const indexes = [];
-        for (let index = firstIndex; index <= lastIndex; index++) indexes.push(index);
-
-        // Tải song song các khối trong cùng một vùng, nhưng giới hạn tổng số kết nối.
+        const firstIndex = Math.floor(safeBegin / chunkSize), lastIndex = Math.floor((safeEnd - 1) / chunkSize);
+        const indexes = Array.from({ length: lastIndex - firstIndex + 1 }, (_, i) => firstIndex + i);
+        
         const parts = await Promise.all(indexes.map(fetchChunk));
         if (aborted || token !== loadToken || signal.aborted) return;
 
-        // Chỉ tạo đúng số byte PDF.js yêu cầu, tránh ghép các khối đầy đủ rồi lại cắt.
         const requestedBytes = new Uint8Array(safeEnd - safeBegin);
         let destinationOffset = 0;
-
-        parts.forEach((part, partPosition) => {
-          const chunkIndex = indexes[partPosition];
-          const chunkStart = chunkIndex * chunkSize;
-          const sourceStart = Math.max(0, safeBegin - chunkStart);
-          const sourceEnd = Math.min(part.length, safeEnd - chunkStart);
-          if (sourceEnd <= sourceStart) return;
-          const slice = part.subarray(sourceStart, sourceEnd);
-          requestedBytes.set(slice, destinationOffset);
-          destinationOffset += slice.length;
+        parts.forEach((part, idx) => {
+          const chunkStart = indexes[idx] * chunkSize;
+          const sourceStart = Math.max(0, safeBegin - chunkStart), sourceEnd = Math.min(part.length, safeEnd - chunkStart);
+          if (sourceEnd > sourceStart) {
+            requestedBytes.set(part.subarray(sourceStart, sourceEnd), destinationOffset);
+            destinationOffset += sourceEnd - sourceStart;
+          }
         });
-
-        // requestedBytes là bản sao riêng, nên cache không bị detach khi chuyển sang worker.
         this.onDataRange(safeBegin, requestedBytes);
       } catch (error) {
         if (error?.name === 'AbortError' || token !== loadToken) return;
-        showToast(error.message || 'Không thể tải phần dữ liệu PDF.', true);
-        console.error(error);
+        showToast('Không tải được khối PDF', true);
       }
     };
 
-    transport.prefetchChunk = index => {
-      if (index < 0 || index >= totalChunks) return Promise.resolve(null);
-      return fetchChunk(index).catch(error => {
-        if (error?.name !== 'AbortError') console.warn('Không thể nạp trước khối PDF:', index, error);
-        return null;
-      });
-    };
-
-    transport.abort = function() {
-      aborted = true;
-      pendingChunks.clear();
-    };
-
-    transport.chunkSize = chunkSize;
-    transport.totalChunks = totalChunks;
-    reportProgress('Đang chuẩn bị cấu trúc PDF...');
+    transport.prefetchChunk = idx => (idx >= 0 && idx < totalChunks) ? fetchChunk(idx).catch(() => null) : Promise.resolve(null);
+    transport.abort = function() { aborted = true; pendingChunks.clear(); };
+    transport.chunkSize = chunkSize; transport.totalChunks = totalChunks;
     return transport;
   }
 
+  // Lõi hiển thị PDF
   async function openPdf(file) {
     const token = ++loadToken;
     abortCurrentWork();
@@ -640,501 +491,245 @@
     els.sidebar.classList.remove('open');
     els.documentName.textContent = file.name;
     hideLibrary();
-
-    els.welcome.hidden = true;
-    els.canvas.hidden = true;
+    els.welcome.hidden = els.canvas.hidden = true;
     setViewerEnabled(false);
 
     try {
-      setLoading(true, 'Đang lấy cấu trúc và phần đầu PDF...', 2);
-
-      // getFileInfo và khối đầu không phụ thuộc nhau: chạy song song để giảm một vòng chờ mạng.
+      setLoading(true, 'Chuẩn bị dữ liệu PDF...', 2);
       const listedVersion = getFileVersion(file);
-      const listedCacheKey = makeChunkCacheKey(file.id, listedVersion, 0);
-      const listedCachedChunk = getGlobalChunk(listedCacheKey);
-
-      const infoPromise = api('getFileInfo', { fileId: file.id }, { signal, retries: 1 });
-      const firstChunkPromise = listedCachedChunk
-        ? Promise.resolve({ cachedBytes: listedCachedChunk })
-        : api(
-            'getFileChunk',
-            { fileId: file.id, index: 0, v: listedVersion },
-            { signal, cache: 'default', bustCache: false, retries: 1 }
-          );
+      const cached = getGlobalChunk(makeChunkCacheKey(file.id, listedVersion, 0));
 
       const [infoData, firstChunkData] = await Promise.all([
-        infoPromise,
-        firstChunkPromise,
+        api('getFileInfo', { fileId: file.id }, { signal, retries: 1 }),
+        cached ? Promise.resolve({ cachedBytes: cached }) : api('getFileChunk', { fileId: file.id, index: 0, v: listedVersion }, { signal, cache: 'default', bustCache: false, retries: 1 }),
         disposePdfDocument()
       ]);
       if (token !== loadToken) return;
 
       const info = infoData.file;
-      if (!info || !Number(info.size) || !Number(info.totalChunks)) {
-        throw new Error('Thông tin file PDF không hợp lệ.');
-      }
-
       const firstChunk = firstChunkData.cachedBytes || base64ToBytes(firstChunkData.base64);
-      if (!firstChunk.length) throw new Error('Không nhận được dữ liệu phần đầu của PDF.');
-
-      // Lưu lại theo phiên bản chính xác do getFileInfo trả về.
       putGlobalChunk(makeChunkCacheKey(file.id, getFileVersion(info), 0), firstChunk);
 
       currentRangeTransport = createChunkRangeTransport(file, info, token, firstChunk, signal);
-
-      // Phần cuối thường chứa bảng tham chiếu; khối thứ hai thường chứa dữ liệu trang đầu.
-      // Nạp trước song song nhưng không chờ, giúp giảm vòng gọi Apps Script liên tiếp.
+      
+      // Khối cuối lấy bảng Table of Contents & Cross-references
       currentRangeTransport.prefetchChunk(Number(info.totalChunks) - 1);
       if (Number(info.totalChunks) > 2) currentRangeTransport.prefetchChunk(1);
 
       pdfLoadingTask = pdfjsLib.getDocument({
-        range: currentRangeTransport,
-        length: Number(info.size),
-        disableRange: false,
-        disableStream: true,
-        disableAutoFetch: true,
-        rangeChunkSize: currentRangeTransport.chunkSize,
-        verbosity: 0
+        range: currentRangeTransport, length: Number(info.size), disableRange: false, disableStream: true,
+        disableAutoFetch: true, rangeChunkSize: currentRangeTransport.chunkSize, verbosity: 0
       });
 
       pdfLoadingTask.onProgress = progress => {
-        if (token !== loadToken || !progress?.total) return;
-        const percent = Math.min(99, Math.max(1, Math.round((progress.loaded / progress.total) * 100)));
-        setLoading(true, 'Đang chuẩn bị trang đầu...', percent);
+        if (token === loadToken && progress?.total) setLoading(true, 'Đang chuẩn bị trang...', (progress.loaded / progress.total) * 100);
       };
 
       pdfDoc = await pdfLoadingTask.promise;
       if (token !== loadToken) return;
 
-      pageNum = 1;
-      scale = 1.25;
-      fitMode = isMobileViewport() ? 'width' : 'height';
-      els.pageCount.textContent = pdfDoc.numPages;
-      els.pageInput.max = pdfDoc.numPages;
-      els.welcome.hidden = true;
-      els.canvas.hidden = false;
+      pageNum = 1; scale = 1.25; fitMode = isMobileViewport() ? 'width' : 'height';
+      els.pageCount.textContent = pdfDoc.numPages; els.pageInput.max = pdfDoc.numPages;
+      els.welcome.hidden = true; els.canvas.hidden = false;
       setViewerEnabled(true);
 
-      // Hai frame là đủ để trình duyệt cập nhật kích thước sau khi ẩn tủ sách,
-      // không cần chờ cố định 260 ms.
       await waitForLayoutReady();
-      await renderPage({ loadingText: 'Đang hiển thị trang đầu...' });
-
+      await renderPage();
       setLoading(false);
-      showToast(`Đã mở “${file.name}”. Các trang tiếp theo chỉ tải khi cần.`);
+      showToast(`Đã mở thành công “${file.name}”.`);
     } catch (error) {
       if (token !== loadToken || error?.name === 'AbortError') return;
-      setLoading(false);
-
-      if (!pdfDoc) {
-        els.welcome.hidden = false;
-        els.canvas.hidden = true;
-        els.documentName.textContent = 'Chưa chọn tài liệu';
-        showLibrary();
-      }
-
-      showToast(error.message, true);
-      console.error(error);
+      setLoading(false); showToast(error.message, true);
+      if (!pdfDoc) { els.welcome.hidden = false; els.canvas.hidden = true; els.documentName.textContent = 'Chưa chọn tài liệu'; showLibrary(); }
     }
   }
 
   function abortCurrentWork() {
-    if (currentAbortController && !currentAbortController.signal.aborted) {
-      currentAbortController.abort();
-    }
+    if (currentAbortController && !currentAbortController.signal.aborted) currentAbortController.abort();
     currentAbortController = null;
-
-    if (currentRangeTransport) {
-      try { currentRangeTransport.abort(); } catch (_) {}
-      currentRangeTransport = null;
-    }
-
-    if (renderTask) {
-      try { renderTask.cancel(); } catch (_) {}
-      renderTask = null;
-    }
-
-    clearTimeout(zoomRenderTimer);
-    cancelIdlePrefetch();
+    if (currentRangeTransport) { try { currentRangeTransport.abort(); } catch (_) {} currentRangeTransport = null; }
+    if (renderTask) { try { renderTask.cancel(); } catch (_) {} renderTask = null; }
+    clearTimeout(zoomRenderTimer); cancelIdlePrefetch();
   }
 
   async function disposePdfDocument() {
-    renderSerial++;
-    clearTimeout(cleanupTimer);
-    prefetchedPage = null;
-    currentPageProxy = null;
-
-    const task = pdfLoadingTask;
-    const documentRef = pdfDoc;
-    pdfLoadingTask = null;
-    pdfDoc = null;
-
-    if (task) {
-      try { await task.destroy(); } catch (_) {}
-    } else if (documentRef) {
-      try { await documentRef.destroy(); } catch (_) {}
-    }
+    renderSerial++; clearTimeout(cleanupTimer); prefetchedPage = null; currentPageProxy = null;
+    const task = pdfLoadingTask, doc = pdfDoc;
+    pdfLoadingTask = null; pdfDoc = null;
+    if (task) try { await task.destroy(); } catch (_) {}
+    else if (doc) try { await doc.destroy(); } catch (_) {}
   }
 
-  function isMobileViewport() {
-    return window.matchMedia('(max-width: 860px)').matches;
-  }
-
+  function isMobileViewport() { return window.matchMedia('(max-width: 860px)').matches; }
+  
+  // UI Toggles
   function hideLibrary() {
-    if (isMobileViewport()) {
-      els.sidebar.classList.remove('open');
-      return;
-    }
-
-    sidebarCollapsed = true;
-    els.mainLayout.classList.add('sidebar-collapsed');
-    els.btnLibrary.textContent = '☰ Tủ sách';
-    els.btnLibrary.setAttribute('aria-expanded', 'false');
+    if (isMobileViewport()) { els.sidebar.classList.remove('open'); return; }
+    sidebarCollapsed = true; els.mainLayout.classList.add('sidebar-collapsed'); els.btnLibrary.textContent = '☰ Tủ sách'; els.btnLibrary.setAttribute('aria-expanded', 'false');
   }
-
   function showLibrary() {
-    if (isMobileViewport()) {
-      els.sidebar.classList.add('open');
-      return;
-    }
-
-    sidebarCollapsed = false;
-    els.mainLayout.classList.remove('sidebar-collapsed');
-    els.btnLibrary.textContent = '✕ Đóng tủ sách';
-    els.btnLibrary.setAttribute('aria-expanded', 'true');
-
-    if (pdfDoc) {
-      window.setTimeout(() => reapplyFitMode().catch(error => showToast(error.message, true)), 230);
-    }
+    if (isMobileViewport()) { els.sidebar.classList.add('open'); return; }
+    sidebarCollapsed = false; els.mainLayout.classList.remove('sidebar-collapsed'); els.btnLibrary.textContent = '✕ Đóng tủ sách'; els.btnLibrary.setAttribute('aria-expanded', 'true');
+    if (pdfDoc) window.setTimeout(() => reapplyFitMode().catch(e => showToast(e.message, true)), 230);
   }
-
-  function toggleLibrary() {
-    if (isMobileViewport()) {
-      els.sidebar.classList.toggle('open');
-      return;
-    }
-
-    if (sidebarCollapsed) {
-      showLibrary();
-    } else {
-      hideLibrary();
-      if (pdfDoc) {
-        window.setTimeout(() => reapplyFitMode().catch(error => showToast(error.message, true)), 230);
-      }
-    }
-  }
-
-  function waitForLayoutReady() {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(resolve));
-    });
-  }
-
+  function toggleLibrary() { sidebarCollapsed ? showLibrary() : hideLibrary(); }
+  function waitForLayoutReady() { return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
   function handleViewportResize() {
     clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
       if (!isMobileViewport()) els.sidebar.classList.remove('open');
-      if (pdfDoc) reapplyFitMode().catch(error => showToast(error.message, true));
+      if (pdfDoc) reapplyFitMode().catch(e => showToast(e.message, true));
     }, 180);
   }
 
+  // Render & Prefetch
   async function renderPage(options = {}) {
-    const { loadingText = `Đang hiển thị trang ${pageNum}...` } = options;
+    const { loadingText = `Hiển thị trang ${pageNum}...` } = options;
     if (!pdfDoc) return;
-
-    const documentRef = pdfDoc;
-    const targetPageNumber = pageNum;
-    const serial = ++renderSerial;
-
-    if (renderTask) {
-      try { renderTask.cancel(); } catch (_) {}
-      renderTask = null;
-    }
-
+    const docRef = pdfDoc, targetNum = pageNum, serial = ++renderSerial;
+    if (renderTask) { try { renderTask.cancel(); } catch (_) {} renderTask = null; }
     setLoading(true, loadingText, 0);
 
-    let page;
     try {
-      if (prefetchedPage && prefetchedPage.number === targetPageNumber && prefetchedPage.token === loadToken) {
-        page = prefetchedPage.page;
-        prefetchedPage = null;
-      } else {
-        page = await documentRef.getPage(targetPageNumber);
-      }
-
-      if (serial !== renderSerial || documentRef !== pdfDoc) return;
+      let page = (prefetchedPage && prefetchedPage.number === targetNum && prefetchedPage.token === loadToken) ? prefetchedPage.page : await docRef.getPage(targetNum);
+      if (serial !== renderSerial || docRef !== pdfDoc) return;
+      prefetchedPage = null;
 
       if (fitMode !== 'manual') {
-        const baseViewport = page.getViewport({ scale: 1 });
-        const mobile = isMobileViewport();
-        const horizontalPadding = mobile ? 24 : 48;
-        const verticalPadding = mobile ? 24 : 48;
-
+        const baseVP = page.getViewport({ scale: 1 });
+        const pad = isMobileViewport() ? 24 : 48;
         if (fitMode === 'height') {
-          const availableHeight = Math.max(220, els.canvasWrap.clientHeight - verticalPadding);
-          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableHeight / baseViewport.height));
+          const H = Math.max(220, els.canvasWrap.clientHeight - pad);
+          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, H / baseVP.height));
         } else {
-          const availableWidth = Math.max(260, els.canvasWrap.clientWidth - horizontalPadding);
-          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, availableWidth / baseViewport.width));
+          const W = Math.max(260, els.canvasWrap.clientWidth - pad);
+          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, W / baseVP.width));
         }
       }
 
-      const viewport = page.getViewport({ scale });
-      const outputScale = calculateOutputScale(viewport);
-      const canvasWidth = Math.max(1, Math.floor(viewport.width * outputScale));
-      const canvasHeight = Math.max(1, Math.floor(viewport.height * outputScale));
+      const vp = page.getViewport({ scale }), outScale = calculateOutputScale(vp);
+      els.canvas.width = Math.max(1, Math.floor(vp.width * outScale));
+      els.canvas.height = Math.max(1, Math.floor(vp.height * outScale));
+      els.canvas.style.width = `${Math.floor(vp.width)}px`;
+      els.canvas.style.height = `${Math.floor(vp.height)}px`;
 
-      els.canvas.width = canvasWidth;
-      els.canvas.height = canvasHeight;
-      els.canvas.style.width = `${Math.floor(viewport.width)}px`;
-      els.canvas.style.height = `${Math.floor(viewport.height)}px`;
+      const transform = outScale !== 1 ? [outScale, 0, 0, outScale, 0, 0] : null;
+      const localTask = page.render({ canvasContext: ctx, viewport: vp, transform, intent: 'display' });
+      renderTask = localTask;
+      localTask.onContinue = cb => requestAnimationFrame(cb);
 
-      const transform = outputScale !== 1
-        ? [outputScale, 0, 0, outputScale, 0, 0]
-        : null;
+      await localTask.promise;
+      if (serial !== renderSerial || docRef !== pdfDoc) return;
 
-      const localRenderTask = page.render({
-        canvasContext: ctx,
-        viewport,
-        transform,
-        intent: 'display'
-      });
-      renderTask = localRenderTask;
-
-      // Nhường luồng chính giữa các phần dựng để giao diện vẫn phản hồi tốt.
-      localRenderTask.onContinue = continueCallback => requestAnimationFrame(continueCallback);
-
-      try {
-        await localRenderTask.promise;
-      } catch (error) {
-        if (error?.name === 'RenderingCancelledException') return;
-        throw error;
-      } finally {
-        if (renderTask === localRenderTask) renderTask = null;
-      }
-
-      if (serial !== renderSerial || documentRef !== pdfDoc) return;
-
-      const previousPage = currentPageProxy;
+      const prev = currentPageProxy;
       currentPageProxy = page;
-      updateControls();
-      setLoading(false);
+      updateControls(); setLoading(false);
 
-      if (previousPage && previousPage !== page) {
+      if (prev && prev !== page) {
         clearTimeout(cleanupTimer);
-        cleanupTimer = window.setTimeout(() => {
-          try { previousPage.cleanup(); } catch (_) {}
-        }, 800);
+        cleanupTimer = window.setTimeout(() => { try { prev.cleanup(); } catch (_) {} }, 800);
       }
-
-      scheduleAdjacentPagePrefetch(targetPageNumber, documentRef, serial);
+      scheduleAdjacentPagePrefetch(targetNum, docRef, serial);
     } catch (error) {
-      if (serial !== renderSerial || error?.name === 'AbortError') return;
-      setLoading(false);
-      throw error;
+      if (serial !== renderSerial || error?.name === 'AbortError' || error?.name === 'RenderingCancelledException') return;
+      setLoading(false); throw error;
     }
   }
 
   function calculateOutputScale(viewport) {
-    const mobile = isMobileViewport();
-    const dprLimit = mobile ? MOBILE_DPR_LIMIT : DESKTOP_DPR_LIMIT;
-    const maxPixels = mobile ? MOBILE_MAX_CANVAS_PIXELS : DESKTOP_MAX_CANVAS_PIXELS;
-    const desiredScale = Math.min(window.devicePixelRatio || 1, dprLimit);
-    const viewportPixels = Math.max(1, viewport.width * viewport.height);
-    const pixelLimitedScale = Math.sqrt(maxPixels / viewportPixels);
-
-    // Cho phép xuống dưới 1 khi người dùng phóng rất lớn để tránh canvas hàng chục megapixel.
-    return Math.max(0.55, Math.min(desiredScale, pixelLimitedScale));
+    const mobile = isMobileViewport(), maxPx = mobile ? MOBILE_MAX_CANVAS_PIXELS : DESKTOP_MAX_CANVAS_PIXELS;
+    const targetScale = Math.min(window.devicePixelRatio || 1, mobile ? MOBILE_DPR_LIMIT : DESKTOP_DPR_LIMIT);
+    const vpPx = Math.max(1, viewport.width * viewport.height);
+    return Math.max(0.55, Math.min(targetScale, Math.sqrt(maxPx / vpPx)));
   }
 
-  function scheduleAdjacentPagePrefetch(renderedPageNumber, documentRef, serial) {
+  function scheduleAdjacentPagePrefetch(curr, docRef, serial) {
     cancelIdlePrefetch();
-    if (!shouldPrefetchNextPage()) return;
-
-    const nextPageNumber = renderedPageNumber + 1;
-    if (nextPageNumber > documentRef.numPages) return;
-
+    if (isMobileViewport()) return; // Tiết kiệm băng thông trên thiết bị di động
+    
     const prefetch = async () => {
       try {
-        if (serial !== renderSerial || documentRef !== pdfDoc) return;
-        const page = await documentRef.getPage(nextPageNumber);
-        if (serial !== renderSerial || documentRef !== pdfDoc) return;
-
-        // getOperatorList nạp trước dữ liệu và giải mã cấu trúc trang scan kế tiếp trong worker.
+        if (serial !== renderSerial || docRef !== pdfDoc || curr + 1 > docRef.numPages) return;
+        const page = await docRef.getPage(curr + 1);
         await page.getOperatorList();
-        if (serial !== renderSerial || documentRef !== pdfDoc) {
-          try { page.cleanup(); } catch (_) {}
-          return;
-        }
-        prefetchedPage = { number: nextPageNumber, page, token: loadToken };
-      } catch (error) {
-        if (error?.name !== 'AbortError') console.debug('Bỏ qua nạp trước trang kế tiếp:', error);
-      }
+        if (serial !== renderSerial || docRef !== pdfDoc) { try { page.cleanup(); } catch (_) {} return; }
+        prefetchedPage = { number: curr + 1, page, token: loadToken };
+      } catch (e) {}
     };
-
-    if ('requestIdleCallback' in window) {
-      idlePrefetchHandle = requestIdleCallback(prefetch, { timeout: 1800 });
-    } else {
-      idlePrefetchHandle = window.setTimeout(prefetch, 650);
-    }
+    idlePrefetchHandle = window.requestIdleCallback ? requestIdleCallback(prefetch, { timeout: 1800 }) : window.setTimeout(prefetch, 650);
   }
-
   function cancelIdlePrefetch() {
     if (idlePrefetchHandle === null) return;
-    if ('cancelIdleCallback' in window) cancelIdleCallback(idlePrefetchHandle);
-    else clearTimeout(idlePrefetchHandle);
+    window.cancelIdleCallback ? cancelIdleCallback(idlePrefetchHandle) : clearTimeout(idlePrefetchHandle);
     idlePrefetchHandle = null;
   }
 
-  function shouldPrefetchNextPage() {
-    if (isMobileViewport()) return false;
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (!connection) return true;
-    if (connection.saveData) return false;
-    return !['slow-2g', '2g'].includes(connection.effectiveType);
-  }
-
-  function goToPage(value) {
+  // Điều hướng và Controls
+  function goToPage(val) {
     if (!pdfDoc) return;
-    const target = Math.max(1, Math.min(pdfDoc.numPages, Math.round(Number(value) || pageNum)));
-    if (target === pageNum && currentPageProxy) return;
-    pageNum = target;
-    els.canvasWrap.scrollTop = 0;
-    els.canvasWrap.scrollLeft = 0;
-    renderPage().catch(error => showToast(error.message, true));
+    const tgt = Math.max(1, Math.min(pdfDoc.numPages, Math.round(Number(val) || pageNum)));
+    if (tgt === pageNum && currentPageProxy) return;
+    pageNum = tgt; els.canvasWrap.scrollTop = els.canvasWrap.scrollLeft = 0;
+    renderPage().catch(e => showToast(e.message, true));
   }
-
-  function setScale(value) {
+  function setScale(val) {
     if (!pdfDoc) return;
-    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, Number(value.toFixed(2))));
-    fitMode = 'manual';
-    updateControls();
-
-    // Gộp nhiều lần bấm phóng to/thu nhỏ liên tiếp thành một lần dựng.
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, Number(val.toFixed(2)))); fitMode = 'manual'; updateControls();
     clearTimeout(zoomRenderTimer);
-    zoomRenderTimer = window.setTimeout(() => {
-      renderPage().catch(error => showToast(error.message, true));
-    }, ZOOM_RENDER_DELAY);
+    zoomRenderTimer = window.setTimeout(() => renderPage().catch(e => showToast(e.message, true)), ZOOM_RENDER_DELAY);
   }
-
-  async function fitToWidth() {
-    if (!pdfDoc) return;
-    clearTimeout(zoomRenderTimer);
-    fitMode = 'width';
-    updateControls();
-    await renderPage();
-  }
-
-  async function fitToHeight() {
-    if (!pdfDoc) return;
-    clearTimeout(zoomRenderTimer);
-    fitMode = 'height';
-    updateControls();
-    await renderPage();
-  }
-
-  async function reapplyFitMode() {
-    if (!pdfDoc || fitMode === 'manual') return;
-    await renderPage();
-  }
+  async function fitToWidth() { if (!pdfDoc) return; clearTimeout(zoomRenderTimer); fitMode = 'width'; updateControls(); await renderPage(); }
+  async function fitToHeight() { if (!pdfDoc) return; clearTimeout(zoomRenderTimer); fitMode = 'height'; updateControls(); await renderPage(); }
+  async function reapplyFitMode() { if (pdfDoc && fitMode !== 'manual') await renderPage(); }
 
   function updateControls() {
-    const ready = Boolean(pdfDoc);
-    els.pageInput.value = pageNum;
-    els.btnPrev.disabled = !ready || pageNum <= 1;
-    els.btnNext.disabled = !ready || pageNum >= pdfDoc.numPages;
-    els.btnZoomOut.disabled = !ready || scale <= MIN_SCALE;
-    els.btnZoomIn.disabled = !ready || scale >= MAX_SCALE;
+    const ok = Boolean(pdfDoc);
+    els.pageInput.value = pageNum; els.btnPrev.disabled = !ok || pageNum <= 1; els.btnNext.disabled = !ok || pageNum >= pdfDoc.numPages;
+    els.btnZoomOut.disabled = !ok || scale <= MIN_SCALE; els.btnZoomIn.disabled = !ok || scale >= MAX_SCALE;
     els.zoomLabel.textContent = `${Math.round(scale * 100)}%`;
-    els.btnFit.classList.toggle('fit-active', ready && fitMode === 'width');
-    els.btnFitHeight.classList.toggle('fit-active', ready && fitMode === 'height');
-    els.btnFit.setAttribute('aria-pressed', String(ready && fitMode === 'width'));
-    els.btnFitHeight.setAttribute('aria-pressed', String(ready && fitMode === 'height'));
+    els.btnFit.classList.toggle('fit-active', ok && fitMode === 'width');
+    els.btnFitHeight.classList.toggle('fit-active', ok && fitMode === 'height');
   }
+  function setViewerEnabled(on) { [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit, els.btnFitHeight].forEach(el => el.disabled = !on); if (!on) els.btnPrev.disabled = els.btnNext.disabled = true; }
 
-  function setViewerEnabled(enabled) {
-    [els.pageInput, els.btnZoomOut, els.btnZoomIn, els.btnFit, els.btnFitHeight]
-      .forEach(el => el.disabled = !enabled);
-    if (!enabled) {
-      els.btnPrev.disabled = true;
-      els.btnNext.disabled = true;
-    }
+  // Giao diện khác
+  function setLoading(show, text = '', pct = 0) {
+    els.statusBox.hidden = !show; if (!show) return;
+    const safePct = Math.max(0, Math.min(100, Math.round(pct)));
+    els.statusText.textContent = text; els.statusPercent.textContent = safePct > 0 ? `${safePct}%` : '';
+    els.progressBar.style.width = safePct > 0 ? `${safePct}%` : '12%';
   }
-
-  function setLoading(show, text = '', percent = 0) {
-    els.statusBox.hidden = !show;
-    if (!show) return;
-    const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
-    els.statusText.textContent = text;
-    els.statusPercent.textContent = safePercent > 0 ? `${safePercent}%` : '';
-    els.progressBar.style.width = safePercent > 0 ? `${safePercent}%` : '12%';
-  }
-
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimer);
-    els.toast.textContent = message;
-    els.toast.className = `toast show${isError ? ' error' : ''}`;
+  function showToast(msg, isErr = false) {
+    clearTimeout(toastTimer); els.toast.textContent = msg; els.toast.className = `toast show${isErr ? ' error' : ''}`;
     toastTimer = setTimeout(() => els.toast.className = 'toast', 3500);
   }
-
-  function handleShortcuts(event) {
+  function handleShortcuts(e) {
     if (!pdfDoc || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-    if (event.key === 'ArrowLeft' || event.key === 'PageUp') goToPage(pageNum - 1);
-    if (event.key === 'ArrowRight' || event.key === 'PageDown') goToPage(pageNum + 1);
-    if (event.key === '+' || event.key === '=') setScale(scale + SCALE_STEP);
-    if (event.key === '-') setScale(scale - SCALE_STEP);
-    if (event.key === '0') fitToWidth();
-    if (event.key === '9' || event.key.toLowerCase() === 'h') fitToHeight();
-    if (event.key.toLowerCase() === 'l') toggleLibrary();
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') goToPage(pageNum - 1);
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') goToPage(pageNum + 1);
+    if (e.key === '+' || e.key === '=') setScale(scale + SCALE_STEP);
+    if (e.key === '-') setScale(scale - SCALE_STEP);
+    if (e.key === '0') fitToWidth(); if (e.key === '9' || e.key.toLowerCase() === 'h') fitToHeight();
+    if (e.key.toLowerCase() === 'l') toggleLibrary();
   }
 
-  function getFileVersion(info) {
-    return info.version || info.modifiedTime || info.md5Checksum || info.size || 'current';
-  }
-
-  function createAbortError() {
-    try {
-      return new DOMException('Đã hủy tải tài liệu cũ.', 'AbortError');
-    } catch (_) {
-      const error = new Error('Đã hủy tải tài liệu cũ.');
-      error.name = 'AbortError';
-      return error;
-    }
-  }
-
+  // Utilities
+  function getFileVersion(info) { return info.version || info.modifiedTime || info.md5Checksum || info.size || 'current'; }
+  function createAbortError() { const e = new Error('Hủy'); e.name = 'AbortError'; return e; }
   function base64ToBytes(base64) {
     if (!base64) return new Uint8Array(0);
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    const blockSize = 32 * 1024;
-    for (let start = 0; start < binary.length; start += blockSize) {
-      const end = Math.min(start + blockSize, binary.length);
-      for (let index = start; index < end; index++) bytes[index] = binary.charCodeAt(index);
-    }
+    const bin = atob(base64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return bytes;
   }
-
-  function delay(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
-  }
-
-  function normalize(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  }
-
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function normalize(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
   function formatBytes(bytes) {
     if (!bytes) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`;
+    const u = ['B', 'KB', 'MB', 'GB'], i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), 3);
+    return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${u[i]}`;
   }
-
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, char => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    }[char]));
-  }
+  function escapeHtml(str) { return String(str).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 </script>
-
 </body>
 </html>
