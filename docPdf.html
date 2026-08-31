@@ -20,6 +20,7 @@
       --border: #dbe3ea;
       --danger: #b91c1c;
       --shadow: 0 10px 28px rgba(15, 23, 42, .09);
+      --app-height: 100vh;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -172,6 +173,164 @@
     body.fit-height-mode .page-nav,
     body.fit-height-mode .page-indicator { display: grid; }
     
+
+    /* Trạng thái tải PDF hiển thị ngay giữa vùng đọc */
+    .pdf-busy {
+      position: absolute;
+      inset: 0;
+      z-index: 35;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(51, 65, 85, .38);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      transition: opacity .18s ease;
+    }
+    .pdf-busy.hidden { display: none !important; }
+    .pdf-busy-card {
+      width: min(360px, calc(100vw - 40px));
+      padding: 20px 22px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 16px;
+      background: rgba(255,255,255,.96);
+      color: var(--text);
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(15,23,42,.28);
+    }
+    .pdf-busy-spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 13px;
+      border: 4px solid #ccfbf1;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: pdf-spin .8s linear infinite;
+    }
+    .pdf-busy-title { font-weight: 800; font-size: 15px; }
+    .pdf-busy-detail { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .pdf-busy-pulse {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pdf-pulse 1.15s ease-in-out infinite;
+    }
+    @keyframes pdf-spin { to { transform: rotate(360deg); } }
+    @keyframes pdf-pulse {
+      0%, 100% { opacity: .35; transform: scale(.8); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    /*
+     * Chế độ Vừa cao đa thiết bị.
+     * Dùng --app-height do JavaScript cập nhật thay cho việc phụ thuộc hoàn toàn
+     * vào 100dvh, vốn không ổn định trên một số phiên bản Safari iPad/iPhone.
+     */
+    body.fit-height-mode {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: var(--app-height) !important;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+      background: #334155;
+    }
+    body.fit-height-mode .app {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: var(--app-height) !important;
+      min-height: 0 !important;
+      display: block !important;
+    }
+    body.fit-height-mode .layout,
+    body.fit-height-mode .layout.sidebar-collapsed {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: var(--app-height) !important;
+      min-height: 0 !important;
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    body.fit-height-mode .viewer {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: var(--app-height) !important;
+      min-height: 0 !important;
+      display: block !important;
+      overflow: hidden !important;
+    }
+    body.fit-height-mode .canvas-wrap {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: var(--app-height) !important;
+      min-height: 0 !important;
+      padding:
+        max(4px, env(safe-area-inset-top))
+        max(4px, env(safe-area-inset-right))
+        max(4px, env(safe-area-inset-bottom))
+        max(4px, env(safe-area-inset-left)) !important;
+      overflow: auto !important;
+      display: grid !important;
+      place-items: center !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
+    }
+    body.fit-height-mode .canvas-stage {
+      display: block !important;
+      margin: auto !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+    body.fit-height-mode canvas {
+      margin: auto;
+      max-width: none !important;
+      max-height: none !important;
+    }
+    body.fit-height-mode .pdf-busy {
+      position: fixed;
+      inset: 0;
+    }
+
+    @media (max-width: 860px) {
+      body.fit-height-mode {
+        overflow: hidden !important;
+        height: var(--app-height) !important;
+      }
+      body.fit-height-mode .app,
+      body.fit-height-mode .layout,
+      body.fit-height-mode .layout.sidebar-collapsed,
+      body.fit-height-mode .viewer,
+      body.fit-height-mode .canvas-wrap {
+        height: var(--app-height) !important;
+        min-height: 0 !important;
+      }
+      body.fit-height-mode .sidebar,
+      body.fit-height-mode .layout.sidebar-collapsed .sidebar {
+        transform: translateX(-110%) !important;
+        pointer-events: none !important;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 600px) {
+      body.fit-height-mode .toolbar {
+        top: max(4px, env(safe-area-inset-top));
+        padding: 4px 6px;
+      }
+      .page-nav {
+        width: 44px;
+        height: 68px;
+        font-size: 34px;
+      }
+    }
+
     /* Ebook Mobi View */
     .ebook-wrap {
       min-height: 0; overflow: auto; padding: 30px; background: #f1f5f9; 
@@ -277,6 +436,16 @@
 
       <!-- Vùng hiển thị PDF -->
       <div id="canvasWrap" class="canvas-wrap hidden">
+        <div id="pdfBusy" class="pdf-busy hidden" role="status" aria-live="polite" aria-busy="true">
+          <div class="pdf-busy-card">
+            <div class="pdf-busy-spinner" aria-hidden="true"></div>
+            <div id="pdfBusyTitle" class="pdf-busy-title">Đang mở tài liệu PDF...</div>
+            <div id="pdfBusyDetail" class="pdf-busy-detail">
+              <span class="pdf-busy-pulse" aria-hidden="true"></span>
+              Ứng dụng vẫn đang hoạt động, vui lòng giữ màn hình này.
+            </div>
+          </div>
+        </div>
         <button id="pagePrevOverlay" class="page-nav page-nav-prev" type="button" aria-label="Trang trước" title="Trang trước (←)">‹</button>
         <div class="canvas-stage"><canvas id="pdfCanvas"></canvas></div>
         <button id="pageNextOverlay" class="page-nav page-nav-next" type="button" aria-label="Trang sau" title="Trang sau (→)">›</button>
@@ -339,6 +508,9 @@
     pagePrevOverlay: document.getElementById('pagePrevOverlay'),
     pageNextOverlay: document.getElementById('pageNextOverlay'),
     pageIndicator: document.getElementById('pageIndicator'),
+    pdfBusy: document.getElementById('pdfBusy'),
+    pdfBusyTitle: document.getElementById('pdfBusyTitle'),
+    pdfBusyDetail: document.getElementById('pdfBusyDetail'),
 
     canvasWrap: document.getElementById('canvasWrap'),
     canvas: document.getElementById('pdfCanvas'),
@@ -401,6 +573,9 @@
   let loadToken = 0;
   let renderSerial = 0;
   let toastTimer = null;
+  let pdfBusyStartedAt = 0;
+  let pdfBusyTimer = null;
+  let viewportRenderTimer = null;
 
   /*
    * URL Blob MOBI hiện tại.
@@ -411,6 +586,7 @@
   window.addEventListener('beforeunload', cleanupBeforeUnload);
 
   function init() {
+    updateViewportMetrics();
     bindEvents();
     updateLibraryButton();
     loadDirectory(ROOT_MARKER, true);
@@ -498,6 +674,26 @@
           renderPage();
         }
       }, 180)
+    );
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener(
+        'resize',
+        debounce(handleViewportChange, 100)
+      );
+      window.visualViewport.addEventListener(
+        'scroll',
+        debounce(handleViewportChange, 100)
+      );
+    }
+
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        updateViewportMetrics();
+        scheduleHeightModeRender(120);
+        scheduleHeightModeRender(420);
+      }
     );
 
     document.addEventListener('keydown', event => {
@@ -1666,20 +1862,51 @@
           scale: 1
         });
 
-      const isHeightScreen = fitMode === 'height' && document.body.classList.contains('fit-height-mode');
-      const horizontalPadding = isHeightScreen ? 8 : (window.innerWidth <= 860 ? 24 : 48);
-      const verticalPadding = isHeightScreen ? 8 : (window.innerWidth <= 860 ? 24 : 48);
+      const isHeightScreen =
+        fitMode === 'height' &&
+        document.body.classList.contains(
+          'fit-height-mode'
+        );
+
+      const horizontalPadding =
+        isHeightScreen
+          ? 8
+          : (window.innerWidth <= 860 ? 24 : 48);
+
+      const verticalPadding =
+        isHeightScreen
+          ? 8
+          : (window.innerWidth <= 860 ? 24 : 48);
 
       if (fitMode === 'height') {
-        const viewportHeight = window.visualViewport?.height || els.canvasWrap.clientHeight || window.innerHeight;
+        updateViewportMetrics();
+
+        const visualHeight =
+          window.visualViewport?.height ||
+          window.innerHeight ||
+          document.documentElement.clientHeight;
+
+        const wrapRect =
+          els.canvasWrap.getBoundingClientRect();
+
+        /*
+         * Không dùng clientHeight đơn lẻ vì Safari iPad đôi khi trả 0
+         * ngay sau khi chuyển sang bố cục fixed/fullscreen.
+         */
+        const measuredHeight = Math.max(
+          visualHeight || 0,
+          wrapRect.height || 0,
+          els.canvasWrap.clientHeight || 0,
+          320
+        );
+
         const availableHeight = Math.max(
           180,
-          Math.min(els.canvasWrap.clientHeight || viewportHeight, viewportHeight) - verticalPadding
+          measuredHeight - verticalPadding
         );
 
         scale = clamp(
-          availableHeight /
-            baseViewport.height,
+          availableHeight / baseViewport.height,
           MIN_SCALE,
           MAX_SCALE
         );
@@ -1852,28 +2079,112 @@
     fitMode = 'height';
     setFitHeightScreen(true);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(renderPage);
-    });
+    /*
+     * Safari iPad có thể cập nhật viewport theo nhiều nhịp sau khi đổi bố cục.
+     * Render lại vài lần có kiểm soát để lấy đúng chiều cao cuối cùng.
+     */
+    scheduleHeightModeRender(0);
+    scheduleHeightModeRender(120);
+    scheduleHeightModeRender(360);
+  }
+
+  function updateViewportMetrics() {
+    const viewportHeight =
+      window.visualViewport?.height ||
+      window.innerHeight ||
+      document.documentElement.clientHeight ||
+      600;
+
+    document.documentElement.style.setProperty(
+      '--app-height',
+      `${Math.max(320, Math.round(viewportHeight))}px`
+    );
+  }
+
+  function handleViewportChange() {
+    updateViewportMetrics();
+
+    if (
+      fitMode === 'height' &&
+      document.body.classList.contains('fit-height-mode')
+    ) {
+      scheduleHeightModeRender(80);
+    }
+  }
+
+  function scheduleHeightModeRender(delayMs = 0) {
+    clearTimeout(viewportRenderTimer);
+
+    viewportRenderTimer = setTimeout(() => {
+      viewportRenderTimer = null;
+
+      if (
+        pdfDoc &&
+        currentMode === 'pdf' &&
+        fitMode === 'height'
+      ) {
+        renderPage();
+      }
+    }, delayMs);
   }
 
   function setFitHeightScreen(enabled) {
-    const isEnabled = document.body.classList.contains('fit-height-mode');
-    if (enabled === isEnabled) return;
+    const isEnabled =
+      document.body.classList.contains('fit-height-mode');
+
+    if (enabled === isEnabled) {
+      if (enabled) updateViewportMetrics();
+      return;
+    }
 
     if (enabled) {
-      sidebarWasCollapsedBeforeHeight = els.mainLayout.classList.contains('sidebar-collapsed');
-      els.mainLayout.classList.add('sidebar-collapsed');
+      sidebarWasCollapsedBeforeHeight =
+        els.mainLayout.classList.contains(
+          'sidebar-collapsed'
+        );
+
+      updateViewportMetrics();
+
+      els.mainLayout.classList.add(
+        'sidebar-collapsed'
+      );
+
       els.sidebar.classList.remove('open');
-      document.body.classList.add('fit-height-mode');
-      els.btnFitHeight.setAttribute('aria-pressed', 'true');
+
+      document.body.classList.add(
+        'fit-height-mode'
+      );
+
+      els.btnFitHeight.setAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      /*
+       * Ép Safari tính lại layout trước khi đo canvasWrap.
+       */
+      void els.canvasWrap.offsetHeight;
     } else {
-      document.body.classList.remove('fit-height-mode');
-      els.btnFitHeight.setAttribute('aria-pressed', 'false');
-      if (!sidebarWasCollapsedBeforeHeight && window.innerWidth > 860) {
-        els.mainLayout.classList.remove('sidebar-collapsed');
+      document.body.classList.remove(
+        'fit-height-mode'
+      );
+
+      els.btnFitHeight.setAttribute(
+        'aria-pressed',
+        'false'
+      );
+
+      if (
+        !sidebarWasCollapsedBeforeHeight &&
+        window.innerWidth > 860
+      ) {
+        els.mainLayout.classList.remove(
+          'sidebar-collapsed'
+        );
       }
+
       updateLibraryButton();
+      updateViewportMetrics();
     }
   }
 
@@ -2205,6 +2516,7 @@
       els.statusText.textContent = '';
       els.statusPercent.textContent = '';
       els.progressBar.style.width = '0%';
+      hidePdfBusy();
       return;
     }
 
@@ -2214,14 +2526,75 @@
       100
     );
 
-    els.statusText.textContent =
+    const message =
       text || 'Đang xử lý...';
 
+    els.statusText.textContent = message;
     els.statusPercent.textContent =
       `${Math.round(safePercent)}%`;
-
     els.progressBar.style.width =
       `${safePercent}%`;
+
+    /*
+     * Khi đang mở hoặc vẽ PDF, hiển thị trạng thái ngay trên vùng đọc.
+     * Nhờ vậy trên iPad/điện thoại, dù thanh trạng thái phía trên bị ẩn,
+     * người dùng vẫn biết ứng dụng chưa bị treo.
+     */
+    if (
+      currentMode === 'pdf' &&
+      !els.canvasWrap.classList.contains('hidden')
+    ) {
+      showPdfBusy(message);
+    }
+  }
+
+  function showPdfBusy(message) {
+    if (!els.pdfBusy) return;
+
+    if (els.pdfBusy.classList.contains('hidden')) {
+      pdfBusyStartedAt = Date.now();
+    }
+
+    els.pdfBusyTitle.textContent =
+      message || 'Đang xử lý tài liệu PDF...';
+
+    els.pdfBusy.classList.remove('hidden');
+
+    clearInterval(pdfBusyTimer);
+
+    const updateBusyDetail = () => {
+      const seconds = Math.max(
+        0,
+        Math.floor(
+          (Date.now() - pdfBusyStartedAt) / 1000
+        )
+      );
+
+      els.pdfBusyDetail.innerHTML =
+        '<span class="pdf-busy-pulse" aria-hidden="true"></span>' +
+        (
+          seconds < 3
+            ? 'Ứng dụng vẫn đang hoạt động, vui lòng giữ màn hình này.'
+            : `Ứng dụng vẫn đang xử lý (${seconds} giây). Một số PDF lớn có thể cần thêm thời gian.`
+        );
+    };
+
+    updateBusyDetail();
+
+    pdfBusyTimer = setInterval(
+      updateBusyDetail,
+      1000
+    );
+  }
+
+  function hidePdfBusy() {
+    clearInterval(pdfBusyTimer);
+    pdfBusyTimer = null;
+    pdfBusyStartedAt = 0;
+
+    if (els.pdfBusy) {
+      els.pdfBusy.classList.add('hidden');
+    }
   }
 
   function showToast(
