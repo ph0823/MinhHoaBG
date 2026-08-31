@@ -26,95 +26,276 @@ const HTML_HEADERS = {
 const CATEGORY_CONFIG = {
   kids: { label: "Nội dung học sinh" },
   all: { label: "Tất cả truyện" },
-  action: { label: "Action", slug: "action", id: 26 },
-  adventure: { label: "Adventure", slug: "adventure", id: 27 },
-  anime: { label: "Anime", slug: "anime", id: 62 },
-  chuyenSinh: { label: "Chuyển Sinh", slug: "chuyen-sinh", id: 91 },
-  coDai: { label: "Cổ Đại", slug: "co-dai", id: 90 },
-  comedy: { label: "Comedy", slug: "comedy", id: 28 },
-  comic: { label: "Comic", slug: "comic", id: 60 },
-  demons: { label: "Demons", slug: "demons", id: 99 },
-  detective: { label: "Detective", slug: "detective", id: 100 },
-  doujinshi: { label: "Doujinshi", slug: "doujinshi", id: 96 },
-  drama: { label: "Drama", slug: "drama", id: 29 },
-  fantasy: { label: "Fantasy", slug: "fantasy", id: 30 },
+
+  action: {
+    label: "Action",
+    slug: "action",
+    id: 26,
+  },
+
+  adventure: {
+    label: "Adventure",
+    slug: "adventure",
+    id: 27,
+  },
+
+  anime: {
+    label: "Anime",
+    slug: "anime",
+    id: 62,
+  },
+
+  chuyenSinh: {
+    label: "Chuyển Sinh",
+    slug: "chuyen-sinh",
+    id: 91,
+  },
+
+  coDai: {
+    label: "Cổ Đại",
+    slug: "co-dai",
+    id: 90,
+  },
+
+  comedy: {
+    label: "Comedy",
+    slug: "comedy",
+    id: 28,
+  },
+
+  comic: {
+    label: "Comic",
+    slug: "comic",
+    id: 60,
+  },
+
+  demons: {
+    label: "Demons",
+    slug: "demons",
+    id: 99,
+  },
+
+  detective: {
+    label: "Detective",
+    slug: "detective",
+    id: 100,
+  },
+
+  doujinshi: {
+    label: "Doujinshi",
+    slug: "doujinshi",
+    id: 96,
+  },
+
+  drama: {
+    label: "Drama",
+    slug: "drama",
+    id: 29,
+  },
+
+  fantasy: {
+    label: "Fantasy",
+    slug: "fantasy",
+    id: 30,
+  },
+
   genderBender: {
     label: "Gender Bender",
     slug: "gender-bender",
     id: 45,
   },
-  harem: { label: "Harem", slug: "harem", id: 47 },
-  historical: { label: "Historical", slug: "historical", id: 51 },
-  horror: { label: "Horror", slug: "horror", id: 44 },
+
+  harem: {
+    label: "Harem",
+    slug: "harem",
+    id: 47,
+  },
+
+  historical: {
+    label: "Historical",
+    slug: "historical",
+    id: 51,
+  },
+
+  horror: {
+    label: "Horror",
+    slug: "horror",
+    id: 44,
+  },
+
   huyenHuyen: {
     label: "Huyền Huyễn",
     slug: "huyen-huyen",
     id: 468,
   },
-  isekai: { label: "Isekai", slug: "isekai", id: 85 },
-  josei: { label: "Josei", slug: "josei", id: 54 },
-  mafia: { label: "Mafia", slug: "mafia", id: 69 },
-  magic: { label: "Magic", slug: "magic", id: 58 },
-  manga: { label: "Manga", slug: "manga" },
-  manhua: { label: "Manhua", slug: "manhua", id: 35 },
-  manhwa: { label: "Manhwa", slug: "manhwa", id: 49 },
+
+  isekai: {
+    label: "Isekai",
+    slug: "isekai",
+    id: 85,
+  },
+
+  josei: {
+    label: "Josei",
+    slug: "josei",
+    id: 54,
+  },
+
+  mafia: {
+    label: "Mafia",
+    slug: "mafia",
+    id: 69,
+  },
+
+  magic: {
+    label: "Magic",
+    slug: "magic",
+    id: 58,
+  },
+
+  manga: {
+    label: "Manga",
+    slug: "manga",
+  },
+
+  manhua: {
+    label: "Manhua",
+    slug: "manhua",
+    id: 35,
+  },
+
+  manhwa: {
+    label: "Manhwa",
+    slug: "manhwa",
+    id: 49,
+  },
+
   martialArts: {
     label: "Martial Arts",
     slug: "martial-arts",
     id: 41,
   },
-  military: { label: "Military", slug: "military", id: 101 },
-  mystery: { label: "Mystery", slug: "mystery", id: 39 },
-  ngonTinh: { label: "Ngôn Tình", slug: "ngon-tinh", id: 87 },
-  oneShot: { label: "One shot", slug: "one-shot", id: 95 },
+
+  military: {
+    label: "Military",
+    slug: "military",
+    id: 101,
+  },
+
+  mystery: {
+    label: "Mystery",
+    slug: "mystery",
+    id: 39,
+  },
+
+  ngonTinh: {
+    label: "Ngôn Tình",
+    slug: "ngon-tinh",
+    id: 87,
+  },
+
+  oneShot: {
+    label: "One shot",
+    slug: "one-shot",
+    id: 95,
+  },
+
   psychological: {
     label: "Psychological",
     slug: "psychological",
     id: 40,
   },
-  romance: { label: "Romance", slug: "romance", id: 36 },
+
+  romance: {
+    label: "Romance",
+    slug: "romance",
+    id: 36,
+  },
+
   schoolLife: {
     label: "School Life",
     slug: "school-life",
     id: 37,
   },
-  sciFi: { label: "Sci-fi", slug: "sci-fi", id: 43 },
-  seinen: { label: "Seinen", slug: "seinen", id: 42 },
-  shoujo: { label: "Shoujo", slug: "shoujo", id: 38 },
+
+  sciFi: {
+    label: "Sci-fi",
+    slug: "sci-fi",
+    id: 43,
+  },
+
+  seinen: {
+    label: "Seinen",
+    slug: "seinen",
+    id: 42,
+  },
+
+  shoujo: {
+    label: "Shoujo",
+    slug: "shoujo",
+    id: 38,
+  },
+
   shoujoAi: {
     label: "Shoujo Ai",
     slug: "shoujo-ai",
     id: 98,
   },
-  shounen: { label: "Shounen", slug: "shounen", id: 31 },
+
+  shounen: {
+    label: "Shounen",
+    slug: "shounen",
+    id: 31,
+  },
+
   shounenAi: {
     label: "Shounen Ai",
     slug: "shounen-ai",
     id: 86,
   },
+
   sliceOfLife: {
     label: "Slice of life",
     slug: "slice-of-life",
     id: 46,
   },
-  sports: { label: "Sports", slug: "sports", id: 57 },
+
+  sports: {
+    label: "Sports",
+    slug: "sports",
+    id: 57,
+  },
+
   supernatural: {
     label: "Supernatural",
     slug: "supernatural",
     id: 32,
   },
-  tragedy: { label: "Tragedy", slug: "tragedy", id: 52 },
+
+  tragedy: {
+    label: "Tragedy",
+    slug: "tragedy",
+    id: 52,
+  },
+
   trongSinh: {
     label: "Trọng Sinh",
     slug: "trong-sinh",
     id: 82,
   },
+
   truyenMau: {
     label: "Truyện Màu",
     slug: "truyen-mau",
     id: 92,
   },
-  webtoon: { label: "Webtoon", slug: "webtoon", id: 55 },
+
+  webtoon: {
+    label: "Webtoon",
+    slug: "webtoon",
+    id: 55,
+  },
+
   xuyenKhong: {
     label: "Xuyên Không",
     slug: "xuyen-khong",
@@ -143,7 +324,6 @@ const KIDS_ALLOWED = new Set([
   "supernatural",
 ]);
 
-// Nhóm thể loại dùng riêng cho phần “Gợi ý tổng hợp” ở màn hình chính.
 const HOME_KIDS_CATEGORIES = [
   "comedy",
   "comic",
@@ -224,7 +404,9 @@ const memoryCache = new Map();
 
 const CACHE_TTL = 10 * 60 * 1000;
 const MAX_CACHE_SIZE = 100;
-const CACHE_VERSION = "category-v8-kids-home-20";
+
+// Đổi phiên bản để không dùng lại cache cũ.
+const CACHE_VERSION = "category-v9-priority-all-kids-tabs";
 
 function cacheGet(key) {
   const entry = memoryCache.get(key);
@@ -238,7 +420,6 @@ function cacheGet(key) {
     return null;
   }
 
-  // Đưa mục vừa dùng xuống cuối Map để tạo cache LRU.
   memoryCache.delete(key);
   memoryCache.set(key, entry);
 
@@ -333,6 +514,10 @@ function allowedStoryUrl(rawUrl) {
   }
 }
 
+function storyIdentity(item) {
+  return normalizeText(item.url || item.title);
+}
+
 function isSafeStory(item) {
   const genres = (item.genres || []).map(normalizeText);
 
@@ -363,9 +548,9 @@ function isSafeStory(item) {
   );
 }
 
-function storyIdentity(item) {
-  return normalizeText(item.url || item.title);
-}
+/* =========================================================
+ * 4. CHẤM ĐIỂM VÀ XẾP HẠNG TRUYỆN
+ * ======================================================= */
 
 function extractChapterNumber(item) {
   const text = clean(
@@ -377,22 +562,40 @@ function extractChapterNumber(item) {
       .join(" ")
   );
 
-  const matches = [
-    ...text.matchAll(
-      /(?:chap(?:ter)?|chương|chuong)\s*[:#.-]?\s*(\d+(?:\.\d+)?)/gi
-    ),
+  const patterns = [
+    /(?:chapter|chap|chương|chuong)\s*[:#.\-]?\s*(\d+(?:\.\d+)?)/gi,
+    /(?:tập|tap)\s*[:#.\-]?\s*(\d+(?:\.\d+)?)/gi,
   ];
 
-  if (!matches.length) {
-    return 0;
+  const values = [];
+
+  for (const pattern of patterns) {
+    const matches = [...text.matchAll(pattern)];
+
+    for (const match of matches) {
+      const value = Number.parseFloat(match[1]);
+
+      if (Number.isFinite(value)) {
+        values.push(value);
+      }
+    }
   }
 
-  return Math.max(
-    ...matches.map(
-      (match) =>
-        Number.parseFloat(match[1]) || 0
-    )
-  );
+  if (!values.length) {
+    const fallback = text.match(/\b(\d+(?:\.\d+)?)\b/g) || [];
+
+    for (const value of fallback) {
+      const number = Number.parseFloat(value);
+
+      if (Number.isFinite(number)) {
+        values.push(number);
+      }
+    }
+  }
+
+  return values.length
+    ? Math.max(...values)
+    : 0;
 }
 
 function looksVietnameseTitle(title = "") {
@@ -402,17 +605,44 @@ function looksVietnameseTitle(title = "") {
     return false;
   }
 
-  const vietnameseCharacters =
-    /[ăâđêôơưĂÂĐÊÔƠƯáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/;
-
-  if (vietnameseCharacters.test(value)) {
+  // Tiêu đề có dấu tiếng Việt.
+  if (
+    /[ăâđêôơưĂÂĐÊÔƠƯáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/.test(
+      value
+    )
+  ) {
     return true;
   }
 
   const normalized = normalizeText(value);
 
-  return /\b(cua|va|toi|ban|nhung|mot|dua|the gioi|phieu luu|phep thuat|hoc vien|vuong quoc)\b/i.test(
-    normalized
+  // Một số tiêu đề tiếng Việt không dấu.
+  const vietnameseWords = [
+    "cua",
+    "toi",
+    "ban",
+    "chung ta",
+    "the gioi",
+    "vuong quoc",
+    "phieu luu",
+    "phep thuat",
+    "hoc vien",
+    "gia dinh",
+    "ngay mai",
+    "dua tre",
+    "co be",
+    "cau be",
+    "chien binh",
+    "anh hung",
+    "cuoc song",
+    "bi mat",
+    "hanh trinh",
+    "ngoi truong",
+    "thieu nien",
+  ];
+
+  return vietnameseWords.some((word) =>
+    normalized.includes(word)
   );
 }
 
@@ -426,62 +656,177 @@ function isCompletedStory(item) {
       .join(" ")
   );
 
-  return /hoan thanh|da hoan thanh|completed|complete|full|ket thuc/i.test(
-    text
+  return [
+    "hoan thanh",
+    "da hoan thanh",
+    "completed",
+    "complete",
+    "full",
+    "ket thuc",
+    "end",
+  ].some((keyword) =>
+    text.includes(keyword)
   );
 }
 
-function homeRecommendationScore(item) {
-  const sourceCategories = item.sourceCategories || [];
+function recommendationScore(item, category = "") {
   const chapterNumber = extractChapterNumber(item);
 
   let score = 0;
 
+  // Ưu tiên cao nhất: tiêu đề tiếng Việt.
   if (looksVietnameseTitle(item.title)) {
-    score += 40;
+    score += 100;
   }
 
+  // Truyện hoàn thành được ưu tiên rất cao.
   if (isCompletedStory(item)) {
-    score += 36;
+    score += 85;
   }
 
+  // Trên 10 chương.
   if (chapterNumber > 10) {
-    score +=
-      28 +
-      Math.min(
-        12,
-        Math.floor(chapterNumber / 10)
-      );
-  } else {
-    score += Math.min(10, chapterNumber);
-  }
+    score += 60;
 
-  // Ưu tiên Comedy và Comic, sau đó đến Magic,
-  // Fantasy và Adventure.
-  const categoryWeights = {
-    comedy: 15,
-    comic: 14,
-    magic: 12,
-    fantasy: 11,
-    adventure: 10,
-  };
-
-  for (const category of sourceCategories) {
-    score += categoryWeights[category] || 0;
-  }
-
-  if (sourceCategories.length > 1) {
+    // Thêm điểm nhưng giới hạn để truyện quá dài
+    // không hoàn toàn lấn át các tiêu chí khác.
     score += Math.min(
-      10,
-      (sourceCategories.length - 1) * 3
+      25,
+      Math.floor(chapterNumber / 10)
+    );
+  } else {
+    score += Math.min(
+      20,
+      chapterNumber
     );
   }
 
   if (item.cover) {
-    score += 2;
+    score += 5;
+  }
+
+  if (item.latestChapter) {
+    score += 5;
+  }
+
+  if (item.status) {
+    score += 3;
+  }
+
+  const categoryBonus = {
+    comedy: 12,
+    comic: 11,
+    magic: 10,
+    fantasy: 9,
+    adventure: 8,
+    schoolLife: 7,
+    sports: 7,
+    sliceOfLife: 7,
+    detective: 7,
+    sciFi: 6,
+    shounen: 5,
+    shoujo: 5,
+    anime: 4,
+    supernatural: 4,
+  };
+
+  score += categoryBonus[category] || 0;
+
+  const sourceCategories = item.sourceCategories || [];
+
+  if (sourceCategories.length > 1) {
+    score += Math.min(
+      15,
+      (sourceCategories.length - 1) * 4
+    );
   }
 
   return score;
+}
+
+function decorateRecommendation(item, category = "") {
+  return {
+    ...item,
+
+    chapterNumber: extractChapterNumber(item),
+
+    completed: isCompletedStory(item),
+
+    vietnameseTitle: looksVietnameseTitle(
+      item.title
+    ),
+
+    recommendationScore: recommendationScore(
+      item,
+      category
+    ),
+  };
+}
+
+function sortRecommendedStories(items, category = "") {
+  return [...items]
+    .map((item) =>
+      decorateRecommendation(item, category)
+    )
+    .sort((a, b) => {
+      // 1. Điểm ưu tiên tổng hợp.
+      const scoreDifference =
+        b.recommendationScore -
+        a.recommendationScore;
+
+      if (scoreDifference !== 0) {
+        return scoreDifference;
+      }
+
+      // 2. Tiêu đề tiếng Việt.
+      const vietnameseDifference =
+        Number(b.vietnameseTitle) -
+        Number(a.vietnameseTitle);
+
+      if (vietnameseDifference !== 0) {
+        return vietnameseDifference;
+      }
+
+      // 3. Truyện hoàn thành.
+      const completedDifference =
+        Number(b.completed) -
+        Number(a.completed);
+
+      if (completedDifference !== 0) {
+        return completedDifference;
+      }
+
+      // 4. Trên 10 chương.
+      const bOverTen =
+        b.chapterNumber > 10 ? 1 : 0;
+
+      const aOverTen =
+        a.chapterNumber > 10 ? 1 : 0;
+
+      if (bOverTen !== aOverTen) {
+        return bOverTen - aOverTen;
+      }
+
+      // 5. Số chương nhiều hơn.
+      if (
+        b.chapterNumber !==
+        a.chapterNumber
+      ) {
+        return (
+          b.chapterNumber -
+          a.chapterNumber
+        );
+      }
+
+      // 6. Sắp xếp tên tiếng Việt.
+      return clean(a.title).localeCompare(
+        clean(b.title),
+        "vi",
+        {
+          sensitivity: "base",
+        }
+      );
+    });
 }
 
 function storyListFingerprint(items, size = 8) {
@@ -530,7 +875,7 @@ function listSimilarity(
 }
 
 /* =========================================================
- * 4. TẢI HTML
+ * 5. TẢI HTML
  * ======================================================= */
 
 async function fetchHtml(url, timeout = 8000) {
@@ -600,7 +945,7 @@ async function fetchFromBases(pathBuilder) {
 }
 
 /* =========================================================
- * 5. TRÍCH XUẤT DANH SÁCH TRUYỆN
+ * 6. TRÍCH XUẤT DANH SÁCH TRUYỆN
  * ======================================================= */
 
 function extractImageSource(image) {
@@ -750,20 +1095,26 @@ function extractItems($, base) {
       items.push({
         title,
         url,
+
         cover: absolute(
           extractImageSource(image),
           base
         ),
+
         latestChapter: clean(
           chapterElement.attr("title") ||
           chapterElement.text()
         ),
+
         status: clean(
           box
-            .find(".status")
+            .find(
+              ".status, .book_status, .story-status"
+            )
             .first()
             .text()
         ),
+
         genres: extractGenres(box, $),
       });
     }
@@ -835,20 +1186,26 @@ function extractItems($, base) {
         items.push({
           title,
           url,
+
           cover: absolute(
             extractImageSource(image),
             base
           ),
+
           latestChapter: clean(
             chapterElement.attr("title") ||
             chapterElement.text()
           ),
+
           status: clean(
             parent
-              .find(".status")
+              .find(
+                ".status, .book_status, .story-status"
+              )
               .first()
               .text()
           ),
+
           genres: extractGenres(
             parent,
             $
@@ -902,9 +1259,11 @@ function getTotalPages(
     maximumPage = Math.max(
       maximumPage,
       textPage,
+
       queryMatch
         ? Number(queryMatch[1])
         : 0,
+
       pathMatch
         ? Number(pathMatch[1])
         : 0
@@ -915,7 +1274,7 @@ function getTotalPages(
 }
 
 /* =========================================================
- * 6. TẢI ĐÚNG THỂ LOẠI
+ * 7. TẢI ĐÚNG THỂ LOẠI
  * ======================================================= */
 
 function categoryCandidateUrls(
@@ -983,15 +1342,9 @@ function categoryResponseLooksValid(
       );
     }
 
-    if (
-      pathname.includes(
-        `/the-loai/${config.slug}`
-      )
-    ) {
-      return true;
-    }
-
-    return false;
+    return pathname.includes(
+      `/the-loai/${config.slug}`
+    );
   } catch {
     return false;
   }
@@ -1063,9 +1416,7 @@ async function loadCategoryByKey(
         currentPage
       );
 
-    for (
-      const candidateUrl of candidates
-    ) {
+    for (const candidateUrl of candidates) {
       try {
         const result =
           await fetchHtml(candidateUrl);
@@ -1106,11 +1457,14 @@ async function loadCategoryByKey(
 
         const value = {
           items,
+
           totalPages: getTotalPages(
             $,
             currentPage
           ),
+
           sourceUrl: result.finalUrl,
+
           fingerprint:
             storyListFingerprint(items),
         };
@@ -1134,7 +1488,7 @@ async function loadCategoryByKey(
 }
 
 /* =========================================================
- * 7. GIỚI HẠN SỐ YÊU CẦU ĐỒNG THỜI
+ * 8. GIỚI HẠN YÊU CẦU ĐỒNG THỜI
  * ======================================================= */
 
 async function mapLimit(
@@ -1157,6 +1511,7 @@ async function mapLimit(
       try {
         results[index] = {
           status: "fulfilled",
+
           value: await worker(
             values[index],
             index
@@ -1187,7 +1542,7 @@ async function mapLimit(
 }
 
 /* =========================================================
- * 8. TRANG CHỦ VÀ NHÓM TRUYỆN
+ * 9. GỢI Ý TỔNG HỢP TRANG CHỦ
  * ======================================================= */
 
 async function homeKidsAction(
@@ -1211,10 +1566,6 @@ async function homeKidsAction(
     return cached;
   }
 
-  /*
-   * Tải hai trang đầu của mỗi thể loại
-   * để có đủ truyện làm ứng viên.
-   */
   const jobs =
     HOME_KIDS_CATEGORIES.flatMap(
       (categoryKey) =>
@@ -1247,18 +1598,19 @@ async function homeKidsAction(
 
   const byStory = new Map();
 
-  for (
-    const result of loadedResults
-  ) {
+  for (const result of loadedResults) {
     if (
       result.status !== "fulfilled"
     ) {
       continue;
     }
 
-    for (
-      const rawItem of result.value.items
-    ) {
+    const {
+      categoryKey,
+      items,
+    } = result.value;
+
+    for (const rawItem of items) {
       if (!isSafeStory(rawItem)) {
         continue;
       }
@@ -1276,17 +1628,17 @@ async function homeKidsAction(
       if (existing) {
         existing.sourceCategories = [
           ...new Set([
-            ...existing.sourceCategories,
-            result.value.categoryKey,
+            ...(existing.sourceCategories || []),
+            categoryKey,
           ]),
         ];
 
         if (
-          !existing.genres?.length &&
-          rawItem.genres?.length
+          !existing.cover &&
+          rawItem.cover
         ) {
-          existing.genres =
-            rawItem.genres;
+          existing.cover =
+            rawItem.cover;
         }
 
         if (
@@ -1304,47 +1656,32 @@ async function homeKidsAction(
           existing.status =
             rawItem.status;
         }
+
+        if (
+          (!existing.genres ||
+            !existing.genres.length) &&
+          rawItem.genres?.length
+        ) {
+          existing.genres =
+            rawItem.genres;
+        }
       } else {
         byStory.set(identity, {
           ...rawItem,
+
           sourceCategories: [
-            result.value.categoryKey,
+            categoryKey,
           ],
         });
       }
     }
   }
 
-  const items = [
-    ...byStory.values(),
-  ]
-    .map((item) => ({
-      ...item,
-      chapterNumber:
-        extractChapterNumber(item),
-      completed:
-        isCompletedStory(item),
-      vietnameseTitle:
-        looksVietnameseTitle(
-          item.title
-        ),
-      recommendationScore:
-        homeRecommendationScore(item),
-    }))
-    .sort(
-      (a, b) =>
-        b.recommendationScore -
-          a.recommendationScore ||
-        Number(b.completed) -
-          Number(a.completed) ||
-        b.chapterNumber -
-          a.chapterNumber ||
-        a.title.localeCompare(
-          b.title,
-          "vi"
-        )
-    )
-    .slice(0, limit);
+  const items =
+    sortRecommendedStories(
+      [...byStory.values()],
+      "kids"
+    ).slice(0, limit);
 
   if (!items.length) {
     throw new Error(
@@ -1365,6 +1702,10 @@ async function homeKidsAction(
     categories: CATEGORY_CONFIG,
   });
 }
+
+/* =========================================================
+ * 10. DANH SÁCH THEO NHÓM
+ * ======================================================= */
 
 async function sectionsAction(
   limitText = "6"
@@ -1400,19 +1741,31 @@ async function sectionsAction(
             1
           );
 
+        const safeItems =
+          result.items.filter(
+            isSafeStory
+          );
+
         return {
           key: categoryKey,
+
           label:
             CATEGORY_CONFIG[
               categoryKey
             ].label,
-          items: result.items.filter(
-            isSafeStory
-          ),
+
+          items:
+            sortRecommendedStories(
+              safeItems,
+              categoryKey
+            ),
+
           totalPages:
             result.totalPages,
+
           sourceUrl:
             result.sourceUrl,
+
           fingerprint:
             result.fingerprint,
         };
@@ -1433,9 +1786,7 @@ async function sectionsAction(
   const usedStoryUrls = new Set();
   const sections = [];
 
-  for (
-    const section of successful
-  ) {
+  for (const section of successful) {
     const duplicatedSource =
       acceptedFingerprints.some(
         (previous) =>
@@ -1453,9 +1804,7 @@ async function sectionsAction(
 
     const distinctItems = [];
 
-    for (
-      const item of section.items
-    ) {
+    for (const item of section.items) {
       const identity =
         storyIdentity(item);
 
@@ -1485,7 +1834,9 @@ async function sectionsAction(
     acceptedFingerprints.push({
       fingerprint:
         section.fingerprint,
-      items: section.items,
+
+      items:
+        section.items,
     });
 
     sections.push({
@@ -1511,7 +1862,7 @@ async function sectionsAction(
 }
 
 /* =========================================================
- * 9. DANH SÁCH TRUYỆN
+ * 11. DANH SÁCH TRUYỆN
  * ======================================================= */
 
 async function loadLatestPage(page) {
@@ -1561,6 +1912,7 @@ async function loadLatestPage(page) {
 
   return {
     items,
+
     totalPages: getTotalPages(
       $,
       currentPage
@@ -1600,6 +1952,10 @@ async function listAction(
     category = "kids";
   }
 
+  /* ---------------------------------------------------------
+   * TÌM KIẾM
+   * ------------------------------------------------------ */
+
   if (query) {
     const result =
       await fetchFromBases(
@@ -1624,20 +1980,33 @@ async function listAction(
       );
     }
 
+    // Kết quả tìm kiếm cũng ưu tiên tiêu đề tiếng Việt,
+    // hoàn thành và trên 10 chương.
+    items = sortRecommendedStories(
+      items,
+      category
+    );
+
     return {
       items,
       page: currentPage,
+
       totalPages:
         getTotalPages(
           $,
           currentPage
         ),
+
       category,
       safeMode,
       categories:
         CATEGORY_CONFIG,
     };
   }
+
+  /* ---------------------------------------------------------
+   * TẤT CẢ TRUYỆN
+   * ------------------------------------------------------ */
 
   if (
     !safeMode &&
@@ -1650,6 +2019,13 @@ async function listAction(
 
     return {
       ...result,
+
+      items:
+        sortRecommendedStories(
+          result.items,
+          "all"
+        ),
+
       page: currentPage,
       category,
       safeMode,
@@ -1658,15 +2034,19 @@ async function listAction(
     };
   }
 
+  /* ---------------------------------------------------------
+   * GỢI Ý HỌC SINH
+   * ------------------------------------------------------ */
+
   if (category === "kids") {
-    /*
-     * Màn hình gợi ý tổng hợp:
-     * chỉ hiển thị tối đa 20 truyện.
-     */
     return homeKidsAction(
       HOME_KIDS_LIMIT
     );
   }
+
+  /* ---------------------------------------------------------
+   * CÁC THẺ THỂ LOẠI
+   * ------------------------------------------------------ */
 
   const categoryResult =
     await loadCategoryByKey(
@@ -1683,24 +2063,40 @@ async function listAction(
     );
   }
 
+  /*
+   * Quan trọng:
+   * Comedy, School Life, Adventure, Sports,
+   * Slice of life, Detective, Comic, Fantasy,
+   * Magic... đều được xếp hạng lại tại đây.
+   */
+  items = sortRecommendedStories(
+    items,
+    category
+  );
+
   return {
     items,
     page: currentPage,
+
     totalPages:
       categoryResult.totalPages,
+
     category,
+
     categoryLabel:
       CATEGORY_CONFIG[
         category
       ].label,
+
     safeMode,
+
     categories:
       CATEGORY_CONFIG,
   };
 }
 
 /* =========================================================
- * 10. CHI TIẾT TRUYỆN VÀ MỤC LỤC
+ * 12. CHI TIẾT TRUYỆN VÀ MỤC LỤC
  * ======================================================= */
 
 async function detailAction(rawUrl) {
@@ -1709,7 +2105,9 @@ async function detailAction(rawUrl) {
       new Error(
         "Địa chỉ truyện không hợp lệ"
       ),
-      { status: 400 }
+      {
+        status: 400,
+      }
     );
   }
 
@@ -1851,6 +2249,7 @@ async function detailAction(rawUrl) {
       status,
       url: finalUrl,
     },
+
     chapters: uniqueBy(
       chapters,
       (chapter) => chapter.url
@@ -1859,7 +2258,7 @@ async function detailAction(rawUrl) {
 }
 
 /* =========================================================
- * 11. NỘI DUNG CHƯƠNG
+ * 13. NỘI DUNG CHƯƠNG
  * ======================================================= */
 
 function normalizeImageCandidate(
@@ -1928,7 +2327,9 @@ async function chapterAction(rawUrl) {
       new Error(
         "Địa chỉ chương không hợp lệ"
       ),
-      { status: 400 }
+      {
+        status: 400,
+      }
     );
   }
 
@@ -2061,6 +2462,7 @@ async function chapterAction(rawUrl) {
 
   return {
     chapter: finalUrl,
+
     title: clean(
       $("h1").first().text() ||
       $(".chapter-title")
@@ -2068,6 +2470,7 @@ async function chapterAction(rawUrl) {
         .text() ||
       $("title").text()
     ),
+
     pages: uniqueBy(
       pages,
       (url) => url
@@ -2076,7 +2479,7 @@ async function chapterAction(rawUrl) {
 }
 
 /* =========================================================
- * 12. PROXY ẢNH
+ * 14. PROXY ẢNH
  * ======================================================= */
 
 function isBlockedImageHost(
@@ -2124,7 +2527,9 @@ async function imageAction(
       new Error(
         "Địa chỉ ảnh không hợp lệ"
       ),
-      { status: 400 }
+      {
+        status: 400,
+      }
     );
   }
 
@@ -2140,7 +2545,9 @@ async function imageAction(
       new Error(
         "Địa chỉ ảnh không được hỗ trợ"
       ),
-      { status: 400 }
+      {
+        status: 400,
+      }
     );
   }
 
@@ -2163,17 +2570,23 @@ async function imageAction(
           headers: {
             "user-agent":
               USER_AGENT,
+
             accept:
               "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+
             "accept-language":
               "vi-VN,vi;q=0.9,en;q=0.7",
+
             referer,
+
             origin:
               new URL(
                 referer
               ).origin,
           },
+
           redirect: "follow",
+
           signal:
             controller.signal,
         }
@@ -2205,7 +2618,9 @@ async function imageAction(
         new Error(
           `Nguồn không trả về ảnh (${contentType})`
         ),
-        { status: 502 }
+        {
+          status: 502,
+        }
       );
     }
 
@@ -2242,7 +2657,7 @@ async function imageAction(
 }
 
 /* =========================================================
- * 13. RESPONSE VÀ ROUTER VERCEL
+ * 15. RESPONSE VÀ ROUTER VERCEL
  * ======================================================= */
 
 function sendJson(
@@ -2321,7 +2736,8 @@ module.exports =
         return sendJson(
           response,
           200,
-          result
+          result,
+          "public, s-maxage=180, stale-while-revalidate=300"
         );
       }
 
@@ -2334,7 +2750,8 @@ module.exports =
         return sendJson(
           response,
           200,
-          result
+          result,
+          "public, s-maxage=300, stale-while-revalidate=600"
         );
       }
 
@@ -2347,7 +2764,8 @@ module.exports =
         return sendJson(
           response,
           200,
-          result
+          result,
+          "public, s-maxage=300, stale-while-revalidate=600"
         );
       }
 
