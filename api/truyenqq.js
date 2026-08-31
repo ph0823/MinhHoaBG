@@ -2,6 +2,7 @@
 const cheerio = require("cheerio");
 
 const BASES = [
+  "https://truyenqqko.com",
   "https://truyenqqto.com",
   "https://m.truyenqqto.com",
   "https://truyenqq.net",
@@ -48,9 +49,22 @@ function allowedUrl(raw) {
   try {
     const url = new URL(raw);
 
-    return (
-      url.protocol === "https:" &&
-      /(^|\.)truyenqq(to)?\.com$|(^|\.)truyenqq\.net$/i.test(url.hostname)
+    if (url.protocol !== "https:") {
+      return false;
+    }
+
+    const hostname = url.hostname.toLowerCase();
+
+    const allowedDomains = [
+      "truyenqqko.com",
+      "truyenqqto.com",
+      "truyenqq.net"
+    ];
+
+    return allowedDomains.some(
+      domain =>
+        hostname === domain ||
+        hostname.endsWith(`.${domain}`)
     );
   } catch {
     return false;
@@ -109,13 +123,40 @@ async function fetchFromBases(pathBuilder) {
 function extractCover(element, $, base) {
   const image = element.find("img").first();
 
-  return absolute(
+  const srcset =
+    image.attr("srcset") ||
+    image.attr("data-srcset") ||
+    "";
+
+  const firstSrcset = srcset
+    .split(",")[0]
+    ?.trim()
+    .split(/\s+/)[0];
+
+  const source =
     image.attr("data-original") ||
-      image.attr("data-src") ||
-      image.attr("data-lazy-src") ||
-      image.attr("src") ||
-      "",
-    base
+    image.attr("data-cfsrc") ||
+    image.attr("data-src") ||
+    image.attr("data-lazy-src") ||
+    firstSrcset ||
+    image.attr("src") ||
+    "";
+
+  if (
+    !source ||
+    source.startsWith("data:image") ||
+    source === "#" ||
+    source === "/"
+  ) {
+    return "";
+  }
+
+  return absolute(source, base);
+}
+
+function isChapterUrl(url) {
+  return /(?:-chap(?:ter)?-|\/chap(?:ter)?[-/]|\/chuong[-/])/i.test(
+    url
   );
 }
 
@@ -125,11 +166,12 @@ function extractItems(html, base) {
 
   const selectors = [
     ".book_avatar",
+    ".book_item",
     ".story-item",
     ".item-manga",
     ".list_grid .item",
     ".comic-item",
-    ".item",
+    ".item"
   ];
 
   $(selectors.join(",")).each((_, element) => {
@@ -137,82 +179,147 @@ function extractItems(html, base) {
 
     let linkElement = box
       .find('a[href*="/truyen-tranh/"]')
+      .filter((_, anchor) => {
+        const href = $(anchor).attr("href") || "";
+        const url = absolute(href, base);
+
+        return url && !isChapterUrl(url);
+      })
       .first();
 
     if (
       !linkElement.length &&
       box.is('a[href*="/truyen-tranh/"]')
     ) {
-      linkElement = box;
+      const ownUrl = absolute(box.attr("href"), base);
+
+      if (!isChapterUrl(ownUrl)) {
+        linkElement = box;
+      }
+    }
+
+    if (!linkElement.length) {
+      return;
     }
 
     const url = absolute(linkElement.attr("href"), base);
 
     const title = clean(
       linkElement.attr("title") ||
-        box
-          .find(".book_name,.title,.name,h3,h2")
-          .first()
-          .text() ||
-        linkElement.text()
+      box
+        .find(".book_name,.title,.name,h3,h2")
+        .first()
+        .text() ||
+      linkElement.text()
     );
 
-    if (url && title) {
+    const chapterElement = box
+      .find(
+        'a[href*="-chap-"],' +
+        'a[href*="/chap-"],' +
+        'a[href*="/chapter-"],' +
+        'a[href*="/chuong-"],' +
+        ".chapter," +
+        ".last_chapter," +
+        ".chapter-name"
+      )
+      .first();
+
+    if (
+      url &&
+      title &&
+      !isChapterUrl(url)
+    ) {
       items.push({
         title,
         url,
         cover: extractCover(box, $, base),
         latestChapter: clean(
-          box
-            .find(
-              ".chapter,.last_chapter,.chapter-name,.list_chapter a"
-            )
-            .first()
-            .text()
+          chapterElement.attr("title") ||
+          chapterElement.text()
         ),
-        status: clean(box.find(".status").first().text()),
+        status: clean(
+          box.find(".status").first().text()
+        )
       });
     }
   });
 
   /*
-   * Selector dự phòng nếu cấu trúc trang nguồn thay đổi
-   * hoặc không tìm được đủ truyện bằng selector chính.
+   * Dự phòng: lấy liên kết truyện nhưng loại bỏ
+   * liên kết chương và các liên kết điều hướng.
    */
   if (items.length < 4) {
     $('a[href*="/truyen-tranh/"]').each((_, element) => {
       const linkElement = $(element);
-      const url = absolute(linkElement.attr("href"), base);
-
-      const title = clean(
-        linkElement.attr("title") || linkElement.text()
+      const url = absolute(
+        linkElement.attr("href"),
+        base
       );
 
-      const parent = linkElement.closest("li,article,div");
-
-      if (title.length > 1) {
-        items.push({
-          title,
-          url,
-          cover: extractCover(parent, $, base),
-          latestChapter: clean(
-            parent
-              .find(
-                'a[href*="/chap-"], a[href*="/chuong-"]'
-              )
-              .first()
-              .text()
-          ),
-        });
+      if (
+        !url ||
+        isChapterUrl(url) ||
+        /(the-loai|tim-kiem|dang-nhap)/i.test(url)
+      ) {
+        return;
       }
+
+      const parent = linkElement.closest(
+        "li,article,.item,.book_item,.story-item"
+      );
+
+      const title = clean(
+        linkElement.attr("title") ||
+        parent
+          .find(".book_name,.title,.name,h3,h2")
+          .first()
+          .text() ||
+        linkElement.text()
+      );
+
+      if (
+        !title ||
+        /^chapter\s*[\d.]+$/i.test(title)
+      ) {
+        return;
+      }
+
+      const chapterElement = parent
+        .find(
+          'a[href*="-chap-"],' +
+          'a[href*="/chap-"],' +
+          'a[href*="/chapter-"],' +
+          'a[href*="/chuong-"]'
+        )
+        .first();
+
+      items.push({
+        title,
+        url,
+        cover: extractCover(parent, $, base),
+        latestChapter: clean(
+          chapterElement.attr("title") ||
+          chapterElement.text()
+        ),
+        status: clean(
+          parent.find(".status").first().text()
+        )
+      });
     });
   }
 
-  return uniqueBy(items, (item) => item.url).filter(
-    (item) =>
-      !/(the-loai|tim-kiem|dang-nhap)/i.test(item.url)
+  return uniqueBy(
+    items,
+    item => item.url
+  ).filter(
+    item =>
+      item.title &&
+      !isChapterUrl(item.url) &&
+      !/^chapter\s*[\d.]+$/i.test(item.title)
   );
 }
+
 
 function getTotalPages(html, currentPage = 1) {
   const $ = cheerio.load(html);
@@ -545,7 +652,7 @@ async function imageAction(rawUrl, response) {
       accept:
         "image/avif,image/webp,image/apng," +
         "image/*,*/*;q=0.8",
-      referer: "https://truyenqqto.com/",
+      referer
     },
     redirect: "follow",
     signal: controller.signal,
