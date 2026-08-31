@@ -18,6 +18,99 @@ const headers = {
   accept: "text/html,application/xhtml+xml",
 };
 
+const CATEGORY_CONFIG = {
+  kids: {
+    label: "Thiếu nhi chọn lọc",
+    groups: [
+      "comedy",
+      "school",
+      "adventure",
+      "sports",
+      "slice",
+    ],
+  },
+
+  comedy: {
+    label: "Hài hước",
+    aliases: [
+      "comedy",
+      "hai-huoc",
+      "hài hước",
+    ],
+  },
+
+  school: {
+    label: "Học đường",
+    aliases: [
+      "school-life",
+      "hoc-duong",
+      "học đường",
+    ],
+  },
+
+  adventure: {
+    label: "Phiêu lưu",
+    aliases: [
+      "adventure",
+      "phieu-luu",
+      "phiêu lưu",
+    ],
+  },
+
+  sports: {
+    label: "Thể thao",
+    aliases: [
+      "sports",
+      "sport",
+      "the-thao",
+      "thể thao",
+    ],
+  },
+
+  slice: {
+    label: "Đời thường",
+    aliases: [
+      "slice-of-life",
+      "doi-thuong",
+      "đời thường",
+    ],
+  },
+
+  all: {
+    label: "Tất cả truyện",
+  },
+};
+
+const UNSAFE_WORDS = [
+  "18+",
+  "adult",
+  "mature",
+  "smut",
+  "hentai",
+  "ecchi",
+  "gore",
+  "yaoi",
+  "yuri",
+  "boys love",
+  "girls love",
+  "đam mỹ",
+  "bách hợp",
+  "kinh dị",
+  "horror",
+  "psychological",
+  "tình dục",
+  "nóng bỏng",
+  "khoả thân",
+  "khỏa thân",
+  "ngoại tình",
+  "loạn luân",
+  "dâm",
+  "cưỡng hiếp",
+  "hiếp dâm",
+  "máu me",
+  "bạo lực",
+];
+
 /**
  * Chuyển URL tương đối thành URL tuyệt đối.
  */
@@ -30,10 +123,67 @@ function absolute(value, base) {
 }
 
 /**
- * Làm sạch chuỗi văn bản.
+ * Làm sạch khoảng trắng.
  */
 function clean(value = "") {
-  return String(value).replace(/\s+/g, " ").trim();
+  return String(value)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Chuẩn hóa chữ thường và bỏ dấu tiếng Việt.
+ */
+function normalizeText(value = "") {
+  return clean(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/**
+ * Kiểm tra truyện có chứa từ khóa không phù hợp hay không.
+ */
+function isSafeStory(item) {
+  const haystack = normalizeText(
+    [
+      item.title,
+      item.status,
+      item.latestChapter,
+      ...(item.genres || []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  return !UNSAFE_WORDS.some((word) =>
+    haystack.includes(normalizeText(word))
+  );
+}
+
+/**
+ * Trích xuất thể loại của một truyện.
+ */
+function extractGenres(box, $) {
+  const values = [];
+
+  box
+    .find(
+      '.list-tags a,' +
+        '.genres a,' +
+        '.genre a,' +
+        '.book_info a[href*="the-loai"],' +
+        'a[href*="/the-loai/"]'
+    )
+    .each((_, element) => {
+      const value = clean($(element).text());
+
+      if (value) {
+        values.push(value);
+      }
+    });
+
+  return [...new Set(values)];
 }
 
 /**
@@ -55,7 +205,7 @@ function uniqueBy(items, keyFn) {
 }
 
 /**
- * Chỉ cho phép các URL truyện thuộc nguồn đã khai báo.
+ * Chỉ cho phép URL truyện thuộc các tên miền nguồn.
  */
 function allowedUrl(raw) {
   try {
@@ -65,7 +215,8 @@ function allowedUrl(raw) {
       return false;
     }
 
-    const hostname = url.hostname.toLowerCase();
+    const hostname =
+      url.hostname.toLowerCase();
 
     const allowedDomains = [
       "truyenqqko.com",
@@ -84,16 +235,21 @@ function allowedUrl(raw) {
 }
 
 /**
- * Tải mã HTML từ nguồn.
+ * Tải HTML từ một URL.
  */
 async function fetchHtml(url) {
   let lastError;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (
+    let attempt = 0;
+    attempt < 2;
+    attempt += 1
+  ) {
     let timer;
 
     try {
-      const controller = new AbortController();
+      const controller =
+        new AbortController();
 
       timer = setTimeout(() => {
         controller.abort();
@@ -111,7 +267,8 @@ async function fetchHtml(url) {
         );
       }
 
-      const html = await response.text();
+      const html =
+        await response.text();
 
       return {
         html,
@@ -128,19 +285,25 @@ async function fetchHtml(url) {
 
   throw (
     lastError ||
-    new Error("Không kết nối được nguồn truyện")
+    new Error(
+      "Không kết nối được nguồn truyện"
+    )
   );
 }
 
 /**
- * Lần lượt thử các tên miền nguồn.
+ * Thử tải lần lượt từ các tên miền.
  */
-async function fetchFromBases(pathBuilder) {
+async function fetchFromBases(
+  pathBuilder
+) {
   let lastError;
 
   for (const base of BASES) {
     try {
-      return await fetchHtml(pathBuilder(base));
+      return await fetchHtml(
+        pathBuilder(base)
+      );
     } catch (error) {
       lastError = error;
     }
@@ -148,15 +311,22 @@ async function fetchFromBases(pathBuilder) {
 
   throw (
     lastError ||
-    new Error("Nguồn truyện tạm thời không phản hồi")
+    new Error(
+      "Nguồn truyện tạm thời không phản hồi"
+    )
   );
 }
 
 /**
- * Lấy ảnh bìa từ phần tử truyện.
+ * Trích xuất ảnh bìa.
  */
-function extractCover(element, $, base) {
-  const image = element.find("img").first();
+function extractCover(
+  element,
+  $,
+  base
+) {
+  const image =
+    element.find("img").first();
 
   const srcset =
     image.attr("srcset") ||
@@ -191,7 +361,7 @@ function extractCover(element, $, base) {
 }
 
 /**
- * Kiểm tra URL có phải URL chương truyện hay không.
+ * Kiểm tra URL có phải chương truyện.
  */
 function isChapterUrl(url) {
   return /(?:-chap(?:ter)?-|\/chap(?:ter)?[-/]|\/chuong[-/])/i.test(
@@ -216,128 +386,181 @@ function extractItems(html, base) {
     ".item",
   ];
 
-  $(selectors.join(",")).each((_, element) => {
-    const box = $(element);
+  $(selectors.join(",")).each(
+    (_, element) => {
+      const box = $(element);
 
-    let linkElement = box
-      .find('a[href*="/truyen-tranh/"]')
-      .filter((_, anchor) => {
-        const href = $(anchor).attr("href") || "";
-        const url = absolute(href, base);
+      let linkElement = box
+        .find(
+          'a[href*="/truyen-tranh/"]'
+        )
+        .filter((_, anchor) => {
+          const href =
+            $(anchor).attr("href") ||
+            "";
 
-        return url && !isChapterUrl(url);
-      })
-      .first();
+          const url = absolute(
+            href,
+            base
+          );
 
-    if (
-      !linkElement.length &&
-      box.is('a[href*="/truyen-tranh/"]')
-    ) {
-      const ownUrl = absolute(
-        box.attr("href"),
-        base
-      );
+          return (
+            url &&
+            !isChapterUrl(url)
+          );
+        })
+        .first();
 
-      if (!isChapterUrl(ownUrl)) {
-        linkElement = box;
-      }
-    }
-
-    if (!linkElement.length) {
-      return;
-    }
-
-    const url = absolute(
-      linkElement.attr("href"),
-      base
-    );
-
-    const title = clean(
-      linkElement.attr("title") ||
-        box
-          .find(".book_name,.title,.name,h3,h2")
-          .first()
-          .text() ||
-        linkElement.text()
-    );
-
-    const chapterElement = box
-      .find(
-        'a[href*="-chap-"],' +
-          'a[href*="/chap-"],' +
-          'a[href*="/chapter-"],' +
-          'a[href*="/chuong-"],' +
-          ".chapter," +
-          ".last_chapter," +
-          ".chapter-name"
-      )
-      .first();
-
-    if (
-      url &&
-      title &&
-      !isChapterUrl(url)
-    ) {
-      items.push({
-        title,
-        url,
-        cover: extractCover(box, $, base),
-        latestChapter: clean(
-          chapterElement.attr("title") ||
-            chapterElement.text()
-        ),
-        status: clean(
-          box.find(".status").first().text()
-        ),
-      });
-    }
-  });
-
-  /*
-   * Dự phòng: lấy tất cả liên kết truyện nếu cấu trúc
-   * trang không còn dùng các class quen thuộc.
-   */
-  if (items.length < 4) {
-    $('a[href*="/truyen-tranh/"]').each(
-      (_, element) => {
-        const linkElement = $(element);
-
-        const url = absolute(
-          linkElement.attr("href"),
+      if (
+        !linkElement.length &&
+        box.is(
+          'a[href*="/truyen-tranh/"]'
+        )
+      ) {
+        const ownUrl = absolute(
+          box.attr("href"),
           base
         );
 
-        if (
-          !url ||
-          isChapterUrl(url) ||
-          /(the-loai|tim-kiem|dang-nhap)/i.test(url)
-        ) {
-          return;
+        if (!isChapterUrl(ownUrl)) {
+          linkElement = box;
         }
+      }
 
-        const parent = linkElement.closest(
-          "li,article,.item,.book_item,.story-item"
-        );
+      if (!linkElement.length) {
+        return;
+      }
 
-        const title = clean(
-          linkElement.attr("title") ||
-            parent
-              .find(
-                ".book_name,.title,.name,h3,h2"
-              )
+      const url = absolute(
+        linkElement.attr("href"),
+        base
+      );
+
+      const title = clean(
+        linkElement.attr("title") ||
+          box
+            .find(
+              ".book_name," +
+                ".title," +
+                ".name," +
+                "h3," +
+                "h2"
+            )
+            .first()
+            .text() ||
+          linkElement.text()
+      );
+
+      const chapterElement = box
+        .find(
+          'a[href*="-chap-"],' +
+            'a[href*="/chap-"],' +
+            'a[href*="/chapter-"],' +
+            'a[href*="/chuong-"],' +
+            ".chapter," +
+            ".last_chapter," +
+            ".chapter-name"
+        )
+        .first();
+
+      if (
+        url &&
+        title &&
+        !isChapterUrl(url)
+      ) {
+        items.push({
+          title,
+          url,
+
+          cover: extractCover(
+            box,
+            $,
+            base
+          ),
+
+          latestChapter: clean(
+            chapterElement.attr(
+              "title"
+            ) ||
+              chapterElement.text()
+          ),
+
+          status: clean(
+            box
+              .find(".status")
               .first()
-              .text() ||
-            linkElement.text()
+              .text()
+          ),
+
+          genres: extractGenres(
+            box,
+            $
+          ),
+        });
+      }
+    }
+  );
+
+  /*
+   * Dự phòng nếu giao diện nguồn thay đổi.
+   */
+  if (items.length < 4) {
+    $(
+      'a[href*="/truyen-tranh/"]'
+    ).each((_, element) => {
+      const linkElement =
+        $(element);
+
+      const url = absolute(
+        linkElement.attr("href"),
+        base
+      );
+
+      if (
+        !url ||
+        isChapterUrl(url) ||
+        /(the-loai|tim-kiem|dang-nhap)/i.test(
+          url
+        )
+      ) {
+        return;
+      }
+
+      const parent =
+        linkElement.closest(
+          "li," +
+            "article," +
+            ".item," +
+            ".book_item," +
+            ".story-item"
         );
 
-        if (
-          !title ||
-          /^chapter\s*[\d.]+$/i.test(title)
-        ) {
-          return;
-        }
+      const title = clean(
+        linkElement.attr("title") ||
+          parent
+            .find(
+              ".book_name," +
+                ".title," +
+                ".name," +
+                "h3," +
+                "h2"
+            )
+            .first()
+            .text() ||
+          linkElement.text()
+      );
 
-        const chapterElement = parent
+      if (
+        !title ||
+        /^chapter\s*[\d.]+$/i.test(
+          title
+        )
+      ) {
+        return;
+      }
+
+      const chapterElement =
+        parent
           .find(
             'a[href*="-chap-"],' +
               'a[href*="/chap-"],' +
@@ -346,27 +569,36 @@ function extractItems(html, base) {
           )
           .first();
 
-        items.push({
-          title,
-          url,
-          cover: extractCover(
-            parent,
-            $,
-            base
-          ),
-          latestChapter: clean(
-            chapterElement.attr("title") ||
-              chapterElement.text()
-          ),
-          status: clean(
-            parent
-              .find(".status")
-              .first()
-              .text()
-          ),
-        });
-      }
-    );
+      items.push({
+        title,
+        url,
+
+        cover: extractCover(
+          parent,
+          $,
+          base
+        ),
+
+        latestChapter: clean(
+          chapterElement.attr(
+            "title"
+          ) ||
+            chapterElement.text()
+        ),
+
+        status: clean(
+          parent
+            .find(".status")
+            .first()
+            .text()
+        ),
+
+        genres: extractGenres(
+          parent,
+          $
+        ),
+      });
+    });
   }
 
   return uniqueBy(
@@ -376,42 +608,57 @@ function extractItems(html, base) {
     (item) =>
       item.title &&
       !isChapterUrl(item.url) &&
-      !/^chapter\s*[\d.]+$/i.test(item.title)
+      !/^chapter\s*[\d.]+$/i.test(
+        item.title
+      )
   );
 }
 
 /**
  * Xác định tổng số trang.
  */
-function getTotalPages(html, currentPage = 1) {
+function getTotalPages(
+  html,
+  currentPage = 1
+) {
   const $ = cheerio.load(html);
-  let maximumPage = currentPage;
+
+  let maximumPage =
+    currentPage;
 
   $(
-    '.pagination a, .page_redirect a, a[href*="page="]'
+    ".pagination a," +
+      ".page_redirect a," +
+      'a[href*="page="]'
   ).each((_, element) => {
-    const textPage = Number.parseInt(
-      clean($(element).text()),
-      10
-    );
+    const textPage =
+      Number.parseInt(
+        clean($(element).text()),
+        10
+      );
 
     const href =
-      $(element).attr("href") || "";
+      $(element).attr("href") ||
+      "";
 
-    const pageQueryMatch = href.match(
-      /[?&]page=(\d+)/
-    );
+    const queryMatch =
+      href.match(
+        /[?&]page=(\d+)/
+      );
 
-    const pathMatch = href.match(
-      /(?:trang-|page\/)(\d+)/i
-    );
+    const pathMatch =
+      href.match(
+        /(?:trang-|page\/)(\d+)/i
+      );
 
     maximumPage = Math.max(
       maximumPage,
       textPage || 0,
-      pageQueryMatch
-        ? Number(pageQueryMatch[1])
+
+      queryMatch
+        ? Number(queryMatch[1])
         : 0,
+
       pathMatch
         ? Number(pathMatch[1])
         : 0
@@ -422,95 +669,400 @@ function getTotalPages(html, currentPage = 1) {
 }
 
 /**
- * API lấy danh sách truyện.
+ * Tìm các đường dẫn thể loại hiện có.
  */
-async function listAction(page, queryText) {
-  const currentPage = Math.max(
-    1,
-    Number.parseInt(page, 10) || 1
-  );
-
-  const query = clean(queryText);
-
-  const result = await fetchFromBases(
-    (base) => {
-      if (query) {
-        return (
-          `${base}/tim-kiem.html` +
-          `?q=${encodeURIComponent(query)}` +
-          `&page=${currentPage}`
-        );
-      }
-
-      return (
-        `${base}/truyen-moi-cap-nhat/` +
-        `trang-${currentPage}.html`
-      );
-    }
-  );
-
-  let items = extractItems(
-    result.html,
-    result.finalUrl
-  );
-
-  /*
-   * Một số tên miền không còn sử dụng đường dẫn:
-   * /truyen-moi-cap-nhat/trang-x.html
-   */
-  if (!items.length && !query) {
-    const alternative =
-      await fetchFromBases(
-        (base) =>
-          `${base}/?page=${currentPage}`
-      );
-
-    items = extractItems(
-      alternative.html,
-      alternative.finalUrl
+async function discoverCategoryLinks() {
+  const result =
+    await fetchFromBases(
+      (base) => base
     );
 
-    return {
-      items,
-      page: currentPage,
-      totalPages: getTotalPages(
-        alternative.html,
-        currentPage
-      ),
-    };
+  const $ = cheerio.load(
+    result.html
+  );
+
+  const links = [];
+
+  $(
+    'a[href*="/the-loai/"]'
+  ).each((_, element) => {
+    const href = absolute(
+      $(element).attr("href"),
+      result.finalUrl
+    );
+
+    const text = clean(
+      $(element).text()
+    );
+
+    if (href) {
+      links.push({
+        href,
+        text,
+
+        key: normalizeText(
+          `${text} ${href}`
+        ),
+      });
+    }
+  });
+
+  return uniqueBy(
+    links,
+    (item) => item.href
+  );
+}
+
+/**
+ * Tìm URL tương ứng với nhóm thể loại.
+ */
+function findCategoryLink(
+  links,
+  categoryKey
+) {
+  const config =
+    CATEGORY_CONFIG[categoryKey];
+
+  if (!config?.aliases) {
+    return "";
   }
 
+  for (
+    const alias of config.aliases
+  ) {
+    const key =
+      normalizeText(alias);
+
+    const found = links.find(
+      (item) =>
+        item.key.includes(key)
+    );
+
+    if (found) {
+      return found.href;
+    }
+  }
+
+  return "";
+}
+
+/**
+ * Thêm tham số trang vào URL thể loại.
+ */
+function withPage(url, page) {
+  if (page <= 1) {
+    return url;
+  }
+
+  try {
+    const parsed =
+      new URL(url);
+
+    parsed.searchParams.set(
+      "page",
+      page
+    );
+
+    return parsed.href;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Tải một trang thể loại.
+ */
+async function loadCategoryPage(
+  url,
+  page
+) {
+  const result =
+    await fetchHtml(
+      withPage(url, page)
+    );
+
   return {
-    items,
-    page: currentPage,
+    items: extractItems(
+      result.html,
+      result.finalUrl
+    ),
+
     totalPages: getTotalPages(
       result.html,
-      currentPage
+      page
     ),
   };
 }
 
 /**
- * API lấy thông tin truyện và danh sách chương.
+ * Lấy danh sách truyện.
+ */
+async function listAction(
+  page,
+  queryText,
+  categoryText = "kids",
+  safeText = "1"
+) {
+  const currentPage = Math.max(
+    1,
+    Number.parseInt(page, 10) ||
+      1
+  );
+
+  const query =
+    clean(queryText);
+
+  const category =
+    CATEGORY_CONFIG[categoryText]
+      ? categoryText
+      : "kids";
+
+  const safeMode =
+    String(safeText) !== "0";
+
+  /*
+   * Tìm kiếm truyện.
+   */
+  if (query) {
+    const result =
+      await fetchFromBases(
+        (base) =>
+          `${base}/tim-kiem.html` +
+          `?q=${encodeURIComponent(
+            query
+          )}` +
+          `&page=${currentPage}`
+      );
+
+    let items = extractItems(
+      result.html,
+      result.finalUrl
+    );
+
+    if (safeMode) {
+      items =
+        items.filter(isSafeStory);
+    }
+
+    return {
+      items,
+      page: currentPage,
+
+      totalPages: getTotalPages(
+        result.html,
+        currentPage
+      ),
+
+      category,
+      safeMode,
+    };
+  }
+
+  /*
+   * Hiển thị tất cả truyện mới cập nhật.
+   */
+  if (category === "all") {
+    const result =
+      await fetchFromBases(
+        (base) =>
+          `${base}/truyen-moi-cap-nhat/` +
+          `trang-${currentPage}.html`
+      );
+
+    let items = extractItems(
+      result.html,
+      result.finalUrl
+    );
+
+    /*
+     * Dự phòng khi nguồn không dùng
+     * đường dẫn trang-x.html.
+     */
+    if (!items.length) {
+      const alternative =
+        await fetchFromBases(
+          (base) =>
+            `${base}/?page=${currentPage}`
+        );
+
+      items = extractItems(
+        alternative.html,
+        alternative.finalUrl
+      );
+
+      if (safeMode) {
+        items =
+          items.filter(isSafeStory);
+      }
+
+      return {
+        items,
+        page: currentPage,
+
+        totalPages: getTotalPages(
+          alternative.html,
+          currentPage
+        ),
+
+        category,
+        safeMode,
+      };
+    }
+
+    if (safeMode) {
+      items =
+        items.filter(isSafeStory);
+    }
+
+    return {
+      items,
+      page: currentPage,
+
+      totalPages: getTotalPages(
+        result.html,
+        currentPage
+      ),
+
+      category,
+      safeMode,
+    };
+  }
+
+  /*
+   * Tải danh sách các thể loại từ nguồn.
+   */
+  const links =
+    await discoverCategoryLinks();
+
+  const requestedGroups =
+    category === "kids"
+      ? CATEGORY_CONFIG.kids.groups
+      : [category];
+
+  const categoryUrls =
+    requestedGroups
+      .map((key) => ({
+        key,
+
+        url: findCategoryLink(
+          links,
+          key
+        ),
+      }))
+      .filter(
+        (item) => item.url
+      );
+
+  if (!categoryUrls.length) {
+    throw new Error(
+      "Không tìm thấy đường dẫn thể loại từ nguồn truyện."
+    );
+  }
+
+  /*
+   * Tải đồng thời các thể loại phù hợp.
+   */
+  const results =
+    await Promise.allSettled(
+      categoryUrls.map(
+        (item) =>
+          loadCategoryPage(
+            item.url,
+            currentPage
+          )
+      )
+    );
+
+  let items = [];
+  let totalPages =
+    currentPage;
+
+  results.forEach((result) => {
+    if (
+      result.status ===
+      "fulfilled"
+    ) {
+      items.push(
+        ...result.value.items
+      );
+
+      totalPages = Math.max(
+        totalPages,
+        result.value.totalPages ||
+          currentPage
+      );
+    }
+  });
+
+  items = uniqueBy(
+    items,
+    (item) => item.url
+  );
+
+  if (
+    safeMode ||
+    category === "kids"
+  ) {
+    items =
+      items.filter(isSafeStory);
+  }
+
+  /*
+   * Sắp xếp ổn định để tránh dồn toàn bộ
+   * truyện của một thể loại lên đầu.
+   */
+  items.sort((a, b) =>
+    normalizeText(
+      a.title
+    ).localeCompare(
+      normalizeText(b.title),
+      "vi"
+    )
+  );
+
+  return {
+    items,
+    page: currentPage,
+    totalPages,
+    category,
+
+    safeMode:
+      safeMode ||
+      category === "kids",
+
+    categoryLabel:
+      CATEGORY_CONFIG[category].label,
+  };
+}
+
+/**
+ * Lấy thông tin truyện và danh sách chương.
  */
 async function detailAction(rawUrl) {
   if (!allowedUrl(rawUrl)) {
     throw Object.assign(
-      new Error("Địa chỉ truyện không hợp lệ"),
-      { status: 400 }
+      new Error(
+        "Địa chỉ truyện không hợp lệ"
+      ),
+      {
+        status: 400,
+      }
     );
   }
 
-  const { html, finalUrl } =
-    await fetchHtml(rawUrl);
+  const {
+    html,
+    finalUrl,
+  } = await fetchHtml(rawUrl);
 
-  const $ = cheerio.load(html);
+  const $ =
+    cheerio.load(html);
 
   const title = clean(
     $("h1").first().text() ||
-      $('meta[property="og:title"]').attr(
-        "content"
-      )
+      $(
+        'meta[property="og:title"]'
+      ).attr("content")
   );
 
   const coverElement = $(
@@ -521,14 +1073,23 @@ async function detailAction(rawUrl) {
   ).first();
 
   const cover = absolute(
-    coverElement.attr("data-original") ||
-      coverElement.attr("data-cfsrc") ||
-      coverElement.attr("data-src") ||
-      coverElement.attr("data-lazy-src") ||
+    coverElement.attr(
+      "data-original"
+    ) ||
+      coverElement.attr(
+        "data-cfsrc"
+      ) ||
+      coverElement.attr(
+        "data-src"
+      ) ||
+      coverElement.attr(
+        "data-lazy-src"
+      ) ||
       coverElement.attr("src") ||
-      $('meta[property="og:image"]').attr(
-        "content"
-      ),
+      $(
+        'meta[property="og:image"]'
+      ).attr("content"),
+
     finalUrl
   );
 
@@ -542,9 +1103,9 @@ async function detailAction(rawUrl) {
     )
       .first()
       .text() ||
-      $('meta[name="description"]').attr(
-        "content"
-      )
+      $(
+        'meta[name="description"]'
+      ).attr("content")
   );
 
   const author = clean(
@@ -555,7 +1116,10 @@ async function detailAction(rawUrl) {
     )
       .first()
       .text()
-  ).replace(/^Tác giả\s*:?/i, "");
+  ).replace(
+    /^Tác giả\s*:?/i,
+    ""
+  );
 
   const status = clean(
     $(
@@ -565,7 +1129,10 @@ async function detailAction(rawUrl) {
     )
       .first()
       .text()
-  ).replace(/^Tình trạng\s*:?/i, "");
+  ).replace(
+    /^Tình trạng\s*:?/i,
+    ""
+  );
 
   const chapters = [];
 
@@ -580,23 +1147,27 @@ async function detailAction(rawUrl) {
       'a[href*="/chapter-"],' +
       'a[href*="/chuong-"]'
   ).each((_, element) => {
-    const linkElement = $(element);
+    const linkElement =
+      $(element);
 
     const url = absolute(
       linkElement.attr("href"),
       finalUrl
     );
 
-    const chapterTitle = clean(
-      linkElement.attr("title") ||
-        linkElement.text()
-    );
+    const chapterTitle =
+      clean(
+        linkElement.attr("title") ||
+          linkElement.text()
+      );
 
     const date = clean(
       linkElement
         .closest("li,div")
         .find(
-          ".chapter-time,.time,.date"
+          ".chapter-time," +
+            ".time," +
+            ".date"
         )
         .first()
         .text()
@@ -633,7 +1204,7 @@ async function detailAction(rawUrl) {
 }
 
 /**
- * Chuẩn hóa địa chỉ ảnh chương.
+ * Chuẩn hóa URL ảnh chương.
  */
 function normalizeImageCandidate(
   value,
@@ -645,19 +1216,34 @@ function normalizeImageCandidate(
 
   let source = String(value)
     .trim()
-    .replace(/^['"]|['"]$/g, "")
-    .replace(/\\\//g, "/")
-    .replace(/\\u002F/gi, "/")
-    .replace(/&amp;/g, "&");
+    .replace(
+      /^['"]|['"]$/g,
+      ""
+    )
+    .replace(
+      /\\\//g,
+      "/"
+    )
+    .replace(
+      /\\u002F/gi,
+      "/"
+    )
+    .replace(
+      /&amp;/g,
+      "&"
+    );
 
   if (
     !source ||
-    source.startsWith("data:image")
+    source.startsWith(
+      "data:image"
+    )
   ) {
     return "";
   }
 
-  const url = absolute(source, base);
+  const url =
+    absolute(source, base);
 
   if (
     !url ||
@@ -672,13 +1258,18 @@ function normalizeImageCandidate(
 }
 
 /**
- * Thêm ảnh vào danh sách nếu hợp lệ.
+ * Thêm URL ảnh nếu hợp lệ.
  */
-function pushImage(pages, value, base) {
-  const url = normalizeImageCandidate(
-    value,
-    base
-  );
+function pushImage(
+  pages,
+  value,
+  base
+) {
+  const url =
+    normalizeImageCandidate(
+      value,
+      base
+    );
 
   if (url) {
     pages.push(url);
@@ -698,15 +1289,14 @@ function extractUrlsFromArrayText(
     return pages;
   }
 
-  /*
-   * Thử chuyển mảng JavaScript thành JSON.
-   */
-  const normalized = rawArray
-    .replace(/'/g, '"')
-    .replace(/,\s*]/g, "]");
+  const normalized =
+    rawArray
+      .replace(/'/g, '"')
+      .replace(/,\s*]/g, "]");
 
   try {
-    const parsed = JSON.parse(normalized);
+    const parsed =
+      JSON.parse(normalized);
 
     if (Array.isArray(parsed)) {
       for (const item of parsed) {
@@ -718,51 +1308,68 @@ function extractUrlsFromArrayText(
               item?.image ||
               item?.link;
 
-        pushImage(pages, source, base);
+        pushImage(
+          pages,
+          source,
+          base
+        );
       }
     }
   } catch {
     /*
-     * Dữ liệu có thể không phải JSON chuẩn.
-     * Regex URL phía dưới sẽ xử lý tiếp.
+     * Mảng có thể không phải JSON chuẩn.
+     * Regex phía dưới tiếp tục xử lý.
      */
   }
 
-  /*
-   * Tìm trực tiếp các URL ảnh trong chuỗi.
-   */
   const urlPattern =
     /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
 
   const matches =
-    rawArray.match(urlPattern) || [];
+    rawArray.match(
+      urlPattern
+    ) || [];
 
   for (const match of matches) {
-    pushImage(pages, match, base);
+    pushImage(
+      pages,
+      match,
+      base
+    );
   }
 
   return pages;
 }
 
 /**
- * API lấy nội dung một chương.
+ * Lấy nội dung một chương truyện.
  */
-async function chapterAction(rawUrl) {
+async function chapterAction(
+  rawUrl
+) {
   if (!allowedUrl(rawUrl)) {
     throw Object.assign(
-      new Error("Địa chỉ chương không hợp lệ"),
-      { status: 400 }
+      new Error(
+        "Địa chỉ chương không hợp lệ"
+      ),
+      {
+        status: 400,
+      }
     );
   }
 
-  const { html, finalUrl } =
-    await fetchHtml(rawUrl);
+  const {
+    html,
+    finalUrl,
+  } = await fetchHtml(rawUrl);
 
-  const $ = cheerio.load(html);
+  const $ =
+    cheerio.load(html);
+
   const pages = [];
 
   /*
-   * Các khu vực thường chứa ảnh chương.
+   * Các vùng thường chứa ảnh chương.
    */
   const chapterRoots = [
     ".page-chapter",
@@ -782,77 +1389,121 @@ async function chapterAction(rawUrl) {
     "#chapter_content",
   ];
 
-  const imageSelector = chapterRoots
-    .map((root) => `${root} img`)
-    .join(",");
+  const imageSelector =
+    chapterRoots
+      .map(
+        (root) =>
+          `${root} img`
+      )
+      .join(",");
 
   /*
-   * Ưu tiên ảnh nằm trong vùng đọc truyện.
-   * Nếu không tìm thấy thì xét tất cả thẻ img.
+   * Ưu tiên vùng đọc truyện.
+   * Nếu không thấy thì kiểm tra mọi thẻ img.
    */
   const candidates =
     $(imageSelector).length > 0
       ? $(imageSelector)
       : $("img");
 
-  candidates.each((_, element) => {
-    const image = $(element);
+  candidates.each(
+    (_, element) => {
+      const image =
+        $(element);
 
-    const srcset =
-      image.attr("data-srcset") ||
-      image.attr("srcset") ||
-      "";
+      const srcset =
+        image.attr(
+          "data-srcset"
+        ) ||
+        image.attr("srcset") ||
+        "";
 
-    const firstSrcset =
-      srcset
-        .split(",")[0]
-        ?.trim()
-        .split(/\s+/)[0] || "";
+      const firstSrcset =
+        srcset
+          .split(",")[0]
+          ?.trim()
+          .split(/\s+/)[0] ||
+        "";
 
-    const source =
-      image.attr("data-original") ||
-      image.attr("data-cfsrc") ||
-      image.attr("data-url") ||
-      image.attr("data-image") ||
-      image.attr("data-lazy-src") ||
-      image.attr("data-src") ||
-      image.attr("data-echo") ||
-      image.attr("data-lazy") ||
-      image.attr("data-original-src") ||
-      firstSrcset ||
-      image.attr("src");
+      const source =
+        image.attr(
+          "data-original"
+        ) ||
+        image.attr(
+          "data-cfsrc"
+        ) ||
+        image.attr(
+          "data-url"
+        ) ||
+        image.attr(
+          "data-image"
+        ) ||
+        image.attr(
+          "data-lazy-src"
+        ) ||
+        image.attr(
+          "data-src"
+        ) ||
+        image.attr(
+          "data-echo"
+        ) ||
+        image.attr(
+          "data-lazy"
+        ) ||
+        image.attr(
+          "data-original-src"
+        ) ||
+        firstSrcset ||
+        image.attr("src");
 
-    pushImage(pages, source, finalUrl);
-  });
+      pushImage(
+        pages,
+        source,
+        finalUrl
+      );
+    }
+  );
 
   /*
-   * Một số phiên bản trang dùng phần tử source
-   * bên trong thẻ picture.
+   * Xử lý thẻ source nằm trong picture.
    */
   $(
     chapterRoots
-      .map((root) => `${root} source`)
+      .map(
+        (root) =>
+          `${root} source`
+      )
       .join(",")
   ).each((_, element) => {
-    const sourceElement = $(element);
+    const sourceElement =
+      $(element);
 
     const srcset =
-      sourceElement.attr("data-srcset") ||
-      sourceElement.attr("srcset") ||
+      sourceElement.attr(
+        "data-srcset"
+      ) ||
+      sourceElement.attr(
+        "srcset"
+      ) ||
       "";
 
     const source =
       srcset
         .split(",")[0]
         ?.trim()
-        .split(/\s+/)[0] || "";
+        .split(/\s+/)[0] ||
+      "";
 
-    pushImage(pages, source, finalUrl);
+    pushImage(
+      pages,
+      source,
+      finalUrl
+    );
   });
 
   /*
-   * TruyenQQ hoặc các tên miền sao chép có thể
-   * nhúng danh sách ảnh trong biến JavaScript.
+   * Một số trang nhúng danh sách ảnh
+   * trong biến JavaScript hoặc JSON.
    */
   if (!pages.length) {
     const arrayPatterns = [
@@ -863,8 +1514,11 @@ async function chapterAction(rawUrl) {
       /\b(?:listImage|chapterImages|images)\s*=\s*JSON\.parse\(\s*['"](\[[\s\S]*?\])['"]\s*\)/i,
     ];
 
-    for (const pattern of arrayPatterns) {
-      const match = html.match(pattern);
+    for (
+      const pattern of arrayPatterns
+    ) {
+      const match =
+        html.match(pattern);
 
       if (!match) {
         continue;
@@ -885,44 +1539,55 @@ async function chapterAction(rawUrl) {
   }
 
   /*
-   * Dự phòng: kiểm tra từng thẻ script.
+   * Dự phòng: tìm URL ảnh trong từng script.
    */
   if (!pages.length) {
-    $("script").each((_, element) => {
-      const script =
-        $(element).html() || "";
+    $("script").each(
+      (_, element) => {
+        const script =
+          $(element).html() ||
+          "";
 
-      if (!script) {
-        return;
+        if (!script) {
+          return;
+        }
+
+        const urlPattern =
+          /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
+
+        const matches =
+          script.match(
+            urlPattern
+          ) || [];
+
+        for (
+          const value of matches
+        ) {
+          pushImage(
+            pages,
+            value,
+            finalUrl
+          );
+        }
       }
-
-      const urlPattern =
-        /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
-
-      const matches =
-        script.match(urlPattern) || [];
-
-      for (const value of matches) {
-        pushImage(
-          pages,
-          value,
-          finalUrl
-        );
-      }
-    });
+    );
   }
 
   /*
-   * Dự phòng cuối: tìm URL ảnh trong toàn bộ HTML.
+   * Dự phòng cuối: tìm ảnh trong toàn bộ HTML.
    */
   if (!pages.length) {
     const urlPattern =
       /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
 
     const matches =
-      html.match(urlPattern) || [];
+      html.match(
+        urlPattern
+      ) || [];
 
-    for (const value of matches) {
+    for (
+      const value of matches
+    ) {
       pushImage(
         pages,
         value,
@@ -936,7 +1601,9 @@ async function chapterAction(rawUrl) {
 
     title: clean(
       $("h1").first().text() ||
-        $(".chapter-title").first().text() ||
+        $(".chapter-title")
+          .first()
+          .text() ||
         $("title").text()
     ),
 
@@ -948,15 +1615,19 @@ async function chapterAction(rawUrl) {
 }
 
 /**
- * Xác định Referer hợp lệ khi tải ảnh.
+ * Tạo Referer an toàn cho proxy ảnh.
  */
-function safeReferer(rawReferer) {
+function safeReferer(
+  rawReferer
+) {
   try {
     if (
       rawReferer &&
       allowedUrl(rawReferer)
     ) {
-      return new URL(rawReferer).href;
+      return new URL(
+        rawReferer
+      ).href;
     }
   } catch {
     // Bỏ qua URL không hợp lệ.
@@ -966,9 +1637,11 @@ function safeReferer(rawReferer) {
 }
 
 /**
- * Chặn các địa chỉ mạng nội bộ để tránh SSRF.
+ * Chặn địa chỉ mạng nội bộ để tránh SSRF.
  */
-function isBlockedImageHost(hostname) {
+function isBlockedImageHost(
+  hostname
+) {
   const host =
     hostname.toLowerCase();
 
@@ -997,11 +1670,16 @@ async function imageAction(
   let imageUrl;
 
   try {
-    imageUrl = new URL(rawUrl);
+    imageUrl =
+      new URL(rawUrl);
   } catch {
     throw Object.assign(
-      new Error("Địa chỉ ảnh không hợp lệ"),
-      { status: 400 }
+      new Error(
+        "Địa chỉ ảnh không hợp lệ"
+      ),
+      {
+        status: 400,
+      }
     );
   }
 
@@ -1017,12 +1695,16 @@ async function imageAction(
       new Error(
         "Địa chỉ ảnh không được hỗ trợ"
       ),
-      { status: 400 }
+      {
+        status: 400,
+      }
     );
   }
 
   const referer =
-    safeReferer(rawReferer);
+    safeReferer(
+      rawReferer
+    );
 
   const origin =
     new URL(referer).origin;
@@ -1030,39 +1712,46 @@ async function imageAction(
   const controller =
     new AbortController();
 
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, 20000);
+  const timer =
+    setTimeout(() => {
+      controller.abort();
+    }, 20000);
 
   try {
-    const imageResponse = await fetch(
-      imageUrl.href,
-      {
-        headers: {
-          "user-agent": UA,
+    const imageResponse =
+      await fetch(
+        imageUrl.href,
+        {
+          headers: {
+            "user-agent": UA,
 
-          accept:
-            "image/avif,image/webp," +
-            "image/apng,image/svg+xml," +
-            "image/*,*/*;q=0.8",
+            accept:
+              "image/avif," +
+              "image/webp," +
+              "image/apng," +
+              "image/svg+xml," +
+              "image/*," +
+              "*/*;q=0.8",
 
-          "accept-language":
-            "vi-VN,vi;q=0.9,en;q=0.7",
+            "accept-language":
+              "vi-VN," +
+              "vi;q=0.9," +
+              "en;q=0.7",
 
-          referer,
-          origin,
-        },
+            referer,
+            origin,
+          },
 
-        redirect: "follow",
-        signal: controller.signal,
-      }
-    );
+          redirect: "follow",
+          signal:
+            controller.signal,
+        }
+      );
 
     if (!imageResponse.ok) {
       throw Object.assign(
         new Error(
-          `Máy chủ ảnh trả về HTTP ` +
-            `${imageResponse.status}`
+          `Máy chủ ảnh trả về HTTP ${imageResponse.status}`
         ),
         {
           status:
@@ -1074,10 +1763,11 @@ async function imageAction(
     const contentType =
       imageResponse.headers.get(
         "content-type"
-      ) || "image/jpeg";
+      ) ||
+      "image/jpeg";
 
     /*
-     * Tránh trả trang HTML lỗi dưới dạng ảnh.
+     * Tránh trả HTML lỗi dưới dạng ảnh.
      */
     if (
       !contentType
@@ -1086,10 +1776,11 @@ async function imageAction(
     ) {
       throw Object.assign(
         new Error(
-          `Nguồn không trả về ảnh ` +
-            `(${contentType})`
+          `Nguồn không trả về ảnh (${contentType})`
         ),
-        { status: 502 }
+        {
+          status: 502,
+        }
       );
     }
 
@@ -1130,7 +1821,7 @@ async function imageAction(
 }
 
 /**
- * Gửi phản hồi JSON.
+ * Trả dữ liệu JSON.
  */
 function sendJson(
   response,
@@ -1155,109 +1846,134 @@ function sendJson(
 /**
  * Điểm vào chính của Vercel Serverless Function.
  */
-module.exports = async function handler(
-  request,
-  response
-) {
-  if (request.method !== "GET") {
-    response.setHeader(
-      "Allow",
-      "GET"
-    );
-
-    return sendJson(
-      response,
-      405,
-      {
-        error:
-          "Chỉ hỗ trợ phương thức GET",
-      }
-    );
-  }
-
-  const action = clean(
-    request.query?.action || "list"
-  ).toLowerCase();
-
-  try {
-    if (action === "list") {
-      const result = await listAction(
-        request.query?.page,
-        request.query?.q
+module.exports =
+  async function handler(
+    request,
+    response
+  ) {
+    if (
+      request.method !== "GET"
+    ) {
+      response.setHeader(
+        "Allow",
+        "GET"
       );
 
       return sendJson(
         response,
-        200,
-        result
+        405,
+        {
+          error:
+            "Chỉ hỗ trợ phương thức GET",
+        }
       );
     }
 
-    if (action === "detail") {
-      const result = await detailAction(
-        request.query?.url
+    const action = clean(
+      request.query?.action ||
+        "list"
+    ).toLowerCase();
+
+    try {
+      /*
+       * Danh sách và tìm kiếm truyện.
+       */
+      if (action === "list") {
+        const result =
+          await listAction(
+            request.query?.page,
+            request.query?.q,
+            request.query?.category,
+            request.query?.safe
+          );
+
+        return sendJson(
+          response,
+          200,
+          result
+        );
+      }
+
+      /*
+       * Thông tin truyện và mục lục.
+       */
+      if (action === "detail") {
+        const result =
+          await detailAction(
+            request.query?.url
+          );
+
+        return sendJson(
+          response,
+          200,
+          result
+        );
+      }
+
+      /*
+       * Nội dung một chương.
+       */
+      if (
+        action === "chapter"
+      ) {
+        const result =
+          await chapterAction(
+            request.query?.url
+          );
+
+        return sendJson(
+          response,
+          200,
+          result
+        );
+      }
+
+      /*
+       * Proxy ảnh.
+       */
+      if (action === "image") {
+        return await imageAction(
+          request.query?.url,
+          request.query?.ref,
+          response
+        );
+      }
+
+      return sendJson(
+        response,
+        400,
+        {
+          error:
+            `Action không hợp lệ: ${action}`,
+        }
+      );
+    } catch (error) {
+      const status =
+        Number(error?.status) ||
+        (
+          error?.name ===
+          "AbortError"
+            ? 504
+            : 500
+        );
+
+      console.error(
+        "[truyenqq]",
+        action,
+        error
       );
 
       return sendJson(
         response,
-        200,
-        result
+        status,
+        {
+          error:
+            error?.name ===
+            "AbortError"
+              ? "Nguồn truyện phản hồi quá lâu"
+              : error?.message ||
+                "Lỗi máy chủ không xác định",
+        }
       );
     }
-
-    if (action === "chapter") {
-      const result = await chapterAction(
-        request.query?.url
-      );
-
-      return sendJson(
-        response,
-        200,
-        result
-      );
-    }
-
-    if (action === "image") {
-      return await imageAction(
-        request.query?.url,
-        request.query?.ref,
-        response
-      );
-    }
-
-    return sendJson(
-      response,
-      400,
-      {
-        error:
-          `Action không hợp lệ: ${action}`,
-      }
-    );
-  } catch (error) {
-    const status =
-      Number(error?.status) ||
-      (
-        error?.name === "AbortError"
-          ? 504
-          : 500
-      );
-
-    console.error(
-      "[truyenqq]",
-      action,
-      error
-    );
-
-    return sendJson(
-      response,
-      status,
-      {
-        error:
-          error?.name === "AbortError"
-            ? "Nguồn truyện phản hồi quá lâu"
-            : error?.message ||
-              "Lỗi máy chủ không xác định",
-      }
-    );
-  }
-};
+  };
