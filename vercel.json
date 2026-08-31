@@ -1,4 +1,5 @@
-{
+/**
+ {
   "version": 2,
   "rewrites": [
     {
@@ -17,3 +18,17 @@
     }
   ]
 }
+**/
+
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "doctruyen.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/truyenqq.js" },
+    { "src": "/", "dest": "/doctruyen.html" }
+  ]
+}
+

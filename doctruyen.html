@@ -2,82 +2,47 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MangaDex Demo trên Vercel</title>
+  <title>Demo TRUYENQQ trên Vercel</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .manga { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; }
-    .chapter { margin-left: 20px; color: blue; cursor: pointer; }
-    .page { margin-left: 40px; margin-bottom: 10px; }
-    img { max-width: 80%; border: 1px solid #aaa; }
+    body { font-family: Arial; margin: 20px; }
+    .chapter { color: blue; cursor: pointer; margin: 5px 0; }
+    img { max-width: 80%; margin: 10px 0; }
   </style>
 </head>
 <body>
-  <h1>Danh sách Manga (MangaDex API qua Vercel)</h1>
-  <div id="manga-list"></div>
+  <h1>Danh sách chương từ TRUYENQQ</h1>
+  <div id="chapters"></div>
+  <div id="pages"></div>
 
   <script>
-    async function getMangaList() {
-      const response = await fetch("/api/manga?limit=10");
-      const data = await response.json();
-      const container = document.getElementById("manga-list");
+    async function loadChapters() {
+      const res = await fetch("/api/truyenqq?slug=doraemon"); // slug ví dụ
+      const data = await res.json();
+      const container = document.getElementById("chapters");
 
-      data.data.forEach(manga => {
+      data.chapters.forEach(ch => {
         const div = document.createElement("div");
-        div.className = "manga";
-
-        const title = manga.attributes.title.en || "Không có tên tiếng Anh";
-        const desc = manga.attributes.description?.en || "Không có mô tả";
-        const tags = manga.attributes.tags.map(tag => tag.attributes.name.en).join(", ");
-
-        div.innerHTML = `
-          <h3>${title}</h3>
-          <p><strong>Tóm tắt:</strong> ${desc}</p>
-          <p><strong>Thể loại:</strong> ${tags}</p>
-          <button onclick="getChapters('${manga.id}', this)">Xem chương</button>
-          <div class="chapters"></div>
-        `;
+        div.className = "chapter";
+        div.textContent = ch.title;
+        div.onclick = () => loadChapterDetail(ch.link);
         container.appendChild(div);
       });
     }
 
-    async function getChapters(mangaId, btn) {
-      const response = await fetch(`/api/manga/${mangaId}/feed?limit=3`);
-      const data = await response.json();
-      const chapterDiv = btn.nextElementSibling;
-      chapterDiv.innerHTML = "";
+    async function loadChapterDetail(link) {
+      const res = await fetch(`/api/truyenqq?chapter=${encodeURIComponent(link)}`);
+      const data = await res.json();
+      const container = document.getElementById("pages");
+      container.innerHTML = "";
 
-      data.data.forEach(chapter => {
-        const ch = document.createElement("div");
-        ch.className = "chapter";
-        ch.textContent = `Chương ${chapter.attributes.chapter || "?"}`;
-        ch.onclick = () => getChapterPages(chapter.id, ch);
-        chapterDiv.appendChild(ch);
-      });
-    }
-
-    async function getChapterPages(chapterId, elem) {
-      const response = await fetch(`/api/at-home/server/${chapterId}`);
-      const data = await response.json();
-      const baseUrl = data.baseUrl;
-      const hash = data.chapter.hash;
-      const files = data.chapter.data;
-
-      const pagesDiv = document.createElement("div");
-      pagesDiv.className = "pages";
-
-      files.forEach(file => {
+      data.pages.forEach(src => {
         const img = document.createElement("img");
-        img.src = `${baseUrl}/data/${hash}/${file}`;
-        const pageDiv = document.createElement("div");
-        pageDiv.className = "page";
-        pageDiv.appendChild(img);
-        pagesDiv.appendChild(pageDiv);
+        img.src = src;
+        container.appendChild(img);
       });
-
-      elem.appendChild(pagesDiv);
     }
 
-    getMangaList();
+    loadChapters();
   </script>
 </body>
 </html>
