@@ -471,7 +471,8 @@
   const MAX_SCALE = 3;
   const SCALE_STEP = 0.2;
 
-  const MAX_PARALLEL_CHUNK_REQUESTS = 4;
+  const MAX_PARALLEL_CHUNK_REQUESTS = 3;
+  const NEXT_PAGE_PREFETCH_DELAY = 450;
   const GLOBAL_CHUNK_CACHE_LIMIT = 48 * 1024 * 1024;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -558,6 +559,9 @@
   let pdfLoadingTask = null;
   let currentRangeTransport = null;
   let renderTask = null;
+  let currentPdfAccessToken = '';
+  let currentPdfInfo = null;
+  let nextPagePrefetchTimer = null;
 
   let pageNum = 1;
   let scale = 1.25;
@@ -1291,23 +1295,28 @@
       </div>
     `;
   }
-
-  async function openPdf(file) {
+async function openPdf(file) {
     const token = ++loadToken;
 
     abortCurrentWork();
 
-    currentAbortController = new AbortController();
-    const signal = currentAbortController.signal;
+    currentAbortController =
+      new AbortController();
+
+    const signal =
+      currentAbortController.signal;
 
     activeFileId = file.id;
     currentMode = 'pdf';
-    setFitHeightScreen(false);
+    currentPdfAccessToken = '';
+    currentPdfInfo = null;
 
+    setFitHeightScreen(false);
     renderFileList();
     closeMobileSidebar();
 
-    els.documentName.textContent = file.name;
+    els.documentName.textContent =
+      file.name;
 
     els.welcome.classList.add('hidden');
     els.ebookWrap.classList.add('hidden');
@@ -1316,18 +1325,27 @@
     revokeCurrentMobiUrl();
     resetPdfControls();
 
+    showPdfBusy(
+      'Đang mở nhanh tài liệu PDF...'
+    );
+
     try {
       setLoading(
         true,
-        'Đang chuẩn bị luồng PDF...',
-        5
+        'Đang lấy dữ liệu đầu và cuối PDF...',
+        8
       );
 
       const targetFolderId =
-        file.folderId || currentFolderId;
+        file.folderId ||
+        currentFolderId;
 
-      const infoData = await api(
-        'getFileInfo',
+      /*
+       * Một request thay cho ba request cũ:
+       * metadata + chunk đầu + chunk cuối.
+       */
+      const bootstrap = await api(
+        'getPdfBootstrap',
         {
           fileId: file.id,
           folderId: targetFolderId
@@ -1345,25 +1363,19 @@
         return;
       }
 
-      const info = infoData.file;
+      const info = bootstrap.file;
       const fileSize = Number(info.size);
-      const totalChunks = Number(info.totalChunks);
+      const totalChunks =
+        Number(info.totalChunks);
 
       if (
         !Number.isFinite(fileSize) ||
-        fileSize <= 0
-      ) {
-        throw new Error(
-          'Kích thước file PDF không hợp lệ.'
-        );
-      }
-
-      if (
+        fileSize <= 0 ||
         !Number.isInteger(totalChunks) ||
         totalChunks < 1
       ) {
         throw new Error(
-          'Số chunk PDF không hợp lệ.'
+          'Thông tin PDF không hợp lệ.'
         );
       }
 
@@ -1372,67 +1384,59 @@
         info.updatedAt ||
         info.size;
 
-      const firstChunk = await fetchChunkBytes({
-        fileId: file.id,
-        folderId: targetFolderId,
-        index: 0,
-        version,
-        signal
-      });
+      currentPdfAccessToken =
+        bootstrap.accessToken || '';
 
-      if (
-        token !== loadToken ||
-        signal.aborted
-      ) {
-        return;
+      currentPdfInfo = info;
+
+      const firstChunk =
+        decodeBootstrapChunk(
+          bootstrap.firstChunk,
+          file.id,
+          version
+        );
+
+      if (bootstrap.lastChunk) {
+        decodeBootstrapChunk(
+          bootstrap.lastChunk,
+          file.id,
+          version
+        );
       }
 
-      currentRangeTransport = createPdfTransport(
-        file,
-        info,
-        token,
-        firstChunk,
-        signal,
-        targetFolderId
+      setLoading(
+        true,
+        'Đang khởi tạo trang đầu...',
+        52
       );
 
-      /*
-       * Tải trước một số vùng thường chứa bảng xref.
-       * Không chờ các tác vụ này để tránh làm chậm việc mở trang đầu.
-       */
-      const prefetchIndexes = new Set([
-        totalChunks - 1,
-        totalChunks - 2,
-        1
-      ]);
+      showPdfBusy(
+        'Đang dựng trang đầu...'
+      );
 
-      prefetchIndexes.forEach(index => {
-        if (
-          index > 0 &&
-          index < totalChunks
-        ) {
-          currentRangeTransport
-            .prefetchChunk(index)
-            .catch(() => {
-              /*
-               * Prefetch chỉ là tối ưu phụ.
-               * PDF.js vẫn có thể yêu cầu lại khi cần.
-               */
-            });
-        }
-      });
+      currentRangeTransport =
+        createPdfTransport(
+          file,
+          info,
+          token,
+          firstChunk,
+          signal,
+          targetFolderId
+        );
 
-      pdfLoadingTask = pdfjsLib.getDocument({
-        range: currentRangeTransport,
-        length: fileSize,
-        disableAutoFetch: true,
-        disableStream: true,
-        rangeChunkSize:
-          currentRangeTransport.chunkSize,
-        verbosity: 0
-      });
+      pdfLoadingTask =
+        pdfjsLib.getDocument({
+          range: currentRangeTransport,
+          length: fileSize,
+          disableAutoFetch: true,
+          disableStream: true,
+          rangeChunkSize:
+            currentRangeTransport.chunkSize,
+          verbosity: 0
+        });
 
-      pdfDoc = await pdfLoadingTask.promise;
+      pdfDoc =
+        await pdfLoadingTask.promise;
 
       if (
         token !== loadToken ||
@@ -1456,6 +1460,13 @@
 
       if (token === loadToken) {
         setLoading(false);
+        hidePdfBusy();
+
+        /*
+         * Chỉ tải trước sau khi trang đầu đã hiện,
+         * không tranh băng thông với lần mở ban đầu.
+         */
+        scheduleAdjacentPagePrefetch();
       }
     } catch (error) {
       if (
@@ -1466,6 +1477,7 @@
       }
 
       setLoading(false);
+      hidePdfBusy();
 
       showToast(
         getErrorMessage(error),
@@ -1482,13 +1494,106 @@
 
       activeFileId = '';
       currentMode = '';
+      currentPdfAccessToken = '';
+      currentPdfInfo = null;
 
       renderFileList();
       resetPdfControls();
     }
   }
 
-  function createPdfTransport(
+  
+  /**
+   * Giải mã chunk của lượt khởi động và đưa ngay vào cache.
+   */
+  function decodeBootstrapChunk(
+    chunk,
+    fileId,
+    version
+  ) {
+    if (
+      !chunk ||
+      !Number.isInteger(
+        Number(chunk.index)
+      )
+    ) {
+      throw new Error(
+        'Dữ liệu khởi động PDF không hợp lệ.'
+      );
+    }
+
+    const index =
+      Number(chunk.index);
+
+    const bytes =
+      base64ToBytes(
+        chunk.base64
+      );
+
+    const expected =
+      Number(chunk.byteLength);
+
+    if (
+      Number.isFinite(expected) &&
+      bytes.byteLength !== expected
+    ) {
+      throw new Error(
+        `Chunk khởi động ${index} bị thiếu dữ liệu.`
+      );
+    }
+
+    const key =
+      `${fileId}_${version}_${index}`;
+
+    putGlobalChunk(
+      key,
+      bytes
+    );
+
+    return bytes;
+  }
+
+  /**
+   * Tải trước dữ liệu trang kế tiếp sau khi trang hiện tại đã vẽ xong.
+   */
+  function scheduleAdjacentPagePrefetch() {
+    clearTimeout(
+      nextPagePrefetchTimer
+    );
+
+    if (
+      !pdfDoc ||
+      pageNum >= pdfDoc.numPages
+    ) {
+      return;
+    }
+
+    nextPagePrefetchTimer =
+      setTimeout(async () => {
+        try {
+          const nextPage =
+            await pdfDoc.getPage(
+              pageNum + 1
+            );
+
+          /*
+           * Gọi getOperatorList để PDF.js chủ động lấy
+           * các vùng dữ liệu cần thiết mà chưa vẽ canvas.
+           */
+          await nextPage.getOperatorList();
+          nextPage.cleanup();
+        } catch (error) {
+          if (!isAbortError(error)) {
+            console.debug(
+              'Bỏ qua lỗi tải trước trang kế:',
+              error
+            );
+          }
+        }
+      }, NEXT_PAGE_PREFETCH_DELAY);
+  }
+
+function createPdfTransport(
     file,
     info,
     token,
@@ -1743,7 +1848,8 @@
           fileId,
           folderId,
           index,
-          v: version
+          v: version,
+          token: currentPdfAccessToken
         },
         {
           signal,
@@ -1995,6 +2101,7 @@
       }
 
       updatePdfControls();
+      scheduleAdjacentPagePrefetch();
 
       /*
        * Đưa vùng cuộn về đầu trang khi chuyển sang trang khác.
