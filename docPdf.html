@@ -102,9 +102,75 @@
     .document-name { flex: 1 1 200px; min-width: 140px; max-width: 420px; margin-right: auto; padding: 0 8px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     
     /* PDF Canvas View */
+    .viewer { position: relative; }
     .canvas-wrap { min-height: 0; overflow: auto; padding: 24px; text-align: center; background: #cbd5e1; }
-    .canvas-stage { display: inline-block; position: relative; min-width: 1px; min-height: 1px; }
+    .canvas-stage { display: inline-block; position: relative; min-width: 1px; min-height: 1px; line-height: 0; }
     canvas { display: block; background: white; box-shadow: 0 8px 30px rgba(15, 23, 42, .25); }
+
+    /* Điều hướng nổi khi đọc ở chế độ Vừa cao */
+    .page-nav {
+      position: fixed; top: 50%; z-index: 40; display: none; place-items: center;
+      width: 58px; height: 92px; transform: translateY(-50%);
+      border: 1px solid rgba(255,255,255,.5); border-radius: 18px;
+      background: rgba(15,23,42,.62); color: #fff;
+      font-size: 46px; font-weight: 300; line-height: 1;
+      box-shadow: 0 12px 34px rgba(15,23,42,.28);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      opacity: .68; transition: opacity .18s ease, transform .18s ease, background .18s ease;
+      user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+    .page-nav:hover:not(:disabled), .page-nav:focus-visible {
+      opacity: 1; background: rgba(15,118,110,.9); transform: translateY(-50%) scale(1.05);
+    }
+    .page-nav:disabled { opacity: .16; cursor: default; }
+    .page-nav-prev { left: max(12px, env(safe-area-inset-left)); }
+    .page-nav-next { right: max(12px, env(safe-area-inset-right)); }
+    .page-indicator {
+      position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 40;
+      display: none; transform: translateX(-50%); padding: 8px 14px;
+      border-radius: 999px; background: rgba(15,23,42,.7); color: #fff;
+      font-size: 13px; font-weight: 700; letter-spacing: .02em;
+      box-shadow: 0 6px 20px rgba(15,23,42,.2);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    /* Chế độ Vừa cao toàn màn hình */
+    body.fit-height-mode { overflow: hidden; background: #334155; }
+    body.fit-height-mode .app { height: 100dvh; grid-template-rows: 1fr; }
+    body.fit-height-mode .topbar { display: none; }
+    body.fit-height-mode .layout,
+    body.fit-height-mode .layout.sidebar-collapsed {
+      height: 100dvh; min-height: 0; padding: 0; gap: 0; grid-template-columns: 0 minmax(0,1fr);
+    }
+    body.fit-height-mode .sidebar {
+      opacity: 0; transform: translateX(-100%); pointer-events: none; border: 0; box-shadow: none;
+    }
+    body.fit-height-mode .viewer {
+      height: 100dvh; min-height: 0; border: 0; border-radius: 0; box-shadow: none;
+      grid-template-rows: 1fr; background: #334155;
+    }
+    body.fit-height-mode .toolbar {
+      position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; z-index: 45;
+      width: max-content; max-width: calc(100vw - 150px); transform: translateX(-50%);
+      padding: 7px 9px; border: 1px solid rgba(255,255,255,.55); border-radius: 14px;
+      background: rgba(255,255,255,.9); box-shadow: 0 10px 28px rgba(15,23,42,.22);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    body.fit-height-mode .toolbar .library-toggle,
+    body.fit-height-mode .toolbar .document-name,
+    body.fit-height-mode .toolbar #btnPrev,
+    body.fit-height-mode .toolbar #btnNext,
+    body.fit-height-mode .toolbar .divider { display: none; }
+    body.fit-height-mode .canvas-wrap {
+      height: 100dvh; min-height: 100dvh; padding: 4px; overflow: auto;
+      display: flex; align-items: center; justify-content: center; background: #334155;
+      scrollbar-width: thin; overscroll-behavior: contain;
+    }
+    body.fit-height-mode .canvas-stage { margin: auto; }
+    body.fit-height-mode canvas { box-shadow: 0 10px 36px rgba(0,0,0,.36); }
+    body.fit-height-mode .page-nav,
+    body.fit-height-mode .page-indicator { display: grid; }
     
     /* Ebook Mobi View */
     .ebook-wrap {
@@ -149,6 +215,14 @@
       .canvas-wrap, .ebook-wrap { padding: 12px; }
       .document-name { flex-basis: 100%; max-width: none; text-align: center; }
       .divider { display: none; }
+      .page-nav { width: 46px; height: 76px; border-radius: 15px; font-size: 38px; }
+      .page-nav-prev { left: max(6px, env(safe-area-inset-left)); }
+      .page-nav-next { right: max(6px, env(safe-area-inset-right)); }
+      body.fit-height-mode .toolbar { max-width: calc(100vw - 112px); overflow-x: auto; flex-wrap: nowrap; }
+      body.fit-height-mode .toolbar #btnZoomOut,
+      body.fit-height-mode .toolbar #btnZoomIn,
+      body.fit-height-mode .toolbar #zoomLabel,
+      body.fit-height-mode .toolbar #btnFit { display: none; }
     }
   </style>
 </head>
@@ -203,7 +277,10 @@
 
       <!-- Vùng hiển thị PDF -->
       <div id="canvasWrap" class="canvas-wrap hidden">
+        <button id="pagePrevOverlay" class="page-nav page-nav-prev" type="button" aria-label="Trang trước" title="Trang trước (←)">‹</button>
         <div class="canvas-stage"><canvas id="pdfCanvas"></canvas></div>
+        <button id="pageNextOverlay" class="page-nav page-nav-next" type="button" aria-label="Trang sau" title="Trang sau (→)">›</button>
+        <div id="pageIndicator" class="page-indicator" aria-live="polite">Trang 1 / 1</div>
       </div>
       
       <!-- Vùng hiển thị MOBI (Ebook) -->
@@ -259,6 +336,9 @@
     btnZoomIn: document.getElementById('btnZoomIn'),
     btnFit: document.getElementById('btnFit'),
     btnFitHeight: document.getElementById('btnFitHeight'),
+    pagePrevOverlay: document.getElementById('pagePrevOverlay'),
+    pageNextOverlay: document.getElementById('pageNextOverlay'),
+    pageIndicator: document.getElementById('pageIndicator'),
 
     canvasWrap: document.getElementById('canvasWrap'),
     canvas: document.getElementById('pdfCanvas'),
@@ -310,6 +390,9 @@
   let pageNum = 1;
   let scale = 1.25;
   let fitMode = 'width';
+  let sidebarWasCollapsedBeforeHeight = false;
+  let swipeStartX = null;
+  let swipeStartY = null;
 
   /*
    * Quản lý hủy và chống xung đột.
@@ -348,6 +431,30 @@
 
     els.btnNext.addEventListener('click', () => {
       goToPage(pageNum + 1);
+    });
+
+    els.pagePrevOverlay.addEventListener('click', () => {
+      goToPage(pageNum - 1);
+    });
+
+    els.pageNextOverlay.addEventListener('click', () => {
+      goToPage(pageNum + 1);
+    });
+
+    els.canvasWrap.addEventListener('pointerdown', event => {
+      if (fitMode !== 'height' || event.pointerType === 'mouse') return;
+      swipeStartX = event.clientX;
+      swipeStartY = event.clientY;
+    });
+
+    els.canvasWrap.addEventListener('pointerup', event => {
+      if (fitMode !== 'height' || swipeStartX === null || swipeStartY === null) return;
+      const dx = event.clientX - swipeStartX;
+      const dy = event.clientY - swipeStartY;
+      swipeStartX = null;
+      swipeStartY = null;
+      if (Math.abs(dx) < 55 || Math.abs(dx) <= Math.abs(dy) * 1.25) return;
+      goToPage(dx < 0 ? pageNum + 1 : pageNum - 1);
     });
 
     els.pageInput.addEventListener('change', () => {
@@ -418,6 +525,12 @@
       ) {
         event.preventDefault();
         goToPage(pageNum + 1);
+      }
+
+      if (event.key === 'Escape' && fitMode === 'height') {
+        event.preventDefault();
+        fitToWidth();
+        return;
       }
 
       if (event.key === '+' || event.key === '=') {
@@ -730,6 +843,7 @@
 
     activeFileId = file.id;
     currentMode = 'mobi';
+    setFitHeightScreen(false);
 
     renderFileList();
     closeMobileSidebar();
@@ -992,6 +1106,7 @@
 
     activeFileId = file.id;
     currentMode = 'pdf';
+    setFitHeightScreen(false);
 
     renderFileList();
     closeMobileSidebar();
@@ -1551,21 +1666,15 @@
           scale: 1
         });
 
-      const horizontalPadding =
-        window.innerWidth <= 860
-          ? 24
-          : 48;
-
-      const verticalPadding =
-        window.innerWidth <= 860
-          ? 24
-          : 48;
+      const isHeightScreen = fitMode === 'height' && document.body.classList.contains('fit-height-mode');
+      const horizontalPadding = isHeightScreen ? 8 : (window.innerWidth <= 860 ? 24 : 48);
+      const verticalPadding = isHeightScreen ? 8 : (window.innerWidth <= 860 ? 24 : 48);
 
       if (fitMode === 'height') {
+        const viewportHeight = window.visualViewport?.height || els.canvasWrap.clientHeight || window.innerHeight;
         const availableHeight = Math.max(
           180,
-          els.canvasWrap.clientHeight -
-            verticalPadding
+          Math.min(els.canvasWrap.clientHeight || viewportHeight, viewportHeight) - verticalPadding
         );
 
         scale = clamp(
@@ -1718,6 +1827,7 @@
   function setScale(nextScale) {
     if (!pdfDoc) return;
 
+    setFitHeightScreen(false);
     scale = clamp(
       Number(nextScale) || scale,
       MIN_SCALE,
@@ -1731,15 +1841,40 @@
   function fitToWidth() {
     if (!pdfDoc) return;
 
+    setFitHeightScreen(false);
     fitMode = 'width';
-    renderPage();
+    requestAnimationFrame(renderPage);
   }
 
   function fitToHeight() {
     if (!pdfDoc) return;
 
     fitMode = 'height';
-    renderPage();
+    setFitHeightScreen(true);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(renderPage);
+    });
+  }
+
+  function setFitHeightScreen(enabled) {
+    const isEnabled = document.body.classList.contains('fit-height-mode');
+    if (enabled === isEnabled) return;
+
+    if (enabled) {
+      sidebarWasCollapsedBeforeHeight = els.mainLayout.classList.contains('sidebar-collapsed');
+      els.mainLayout.classList.add('sidebar-collapsed');
+      els.sidebar.classList.remove('open');
+      document.body.classList.add('fit-height-mode');
+      els.btnFitHeight.setAttribute('aria-pressed', 'true');
+    } else {
+      document.body.classList.remove('fit-height-mode');
+      els.btnFitHeight.setAttribute('aria-pressed', 'false');
+      if (!sidebarWasCollapsedBeforeHeight && window.innerWidth > 860) {
+        els.mainLayout.classList.remove('sidebar-collapsed');
+      }
+      updateLibraryButton();
+    }
   }
 
   function updatePdfControls() {
@@ -1766,6 +1901,10 @@
 
     els.btnNext.disabled =
       pageNum >= pdfDoc.numPages;
+
+    els.pagePrevOverlay.disabled = pageNum <= 1;
+    els.pageNextOverlay.disabled = pageNum >= pdfDoc.numPages;
+    els.pageIndicator.textContent = `Trang ${pageNum} / ${pdfDoc.numPages}`;
 
     els.btnZoomOut.disabled =
       scale <= MIN_SCALE + 0.001;
@@ -1795,6 +1934,9 @@
     els.pageInput.value = '1';
     els.pageCount.textContent = '0';
     els.zoomLabel.textContent = '100%';
+    els.pagePrevOverlay.disabled = true;
+    els.pageNextOverlay.disabled = true;
+    els.pageIndicator.textContent = 'Trang 0 / 0';
 
     els.btnFit.classList.remove(
       'fit-active'
@@ -2261,6 +2403,7 @@
   }
 
   function cleanupBeforeUnload() {
+    setFitHeightScreen(false);
     abortCurrentWork();
     revokeCurrentMobiUrl();
     globalChunkCache.clear();
