@@ -628,14 +628,17 @@ async function imageAction(rawUrl, response) {
     imageUrl = new URL(rawUrl);
   } catch {
     throw Object.assign(
-      new Error("Ảnh không hợp lệ"),
+      new Error("Địa chỉ ảnh không hợp lệ"),
       { status: 400 }
     );
   }
 
-  if (imageUrl.protocol !== "https:") {
+  if (
+    imageUrl.protocol !== "https:" &&
+    imageUrl.protocol !== "http:"
+  ) {
     throw Object.assign(
-      new Error("Ảnh không hợp lệ"),
+      new Error("Giao thức ảnh không được hỗ trợ"),
       { status: 400 }
     );
   }
@@ -644,103 +647,82 @@ async function imageAction(rawUrl, response) {
 
   const timer = setTimeout(() => {
     controller.abort();
-  }, 16000);
-
-  const imageResponse = await fetch(imageUrl, {
-    headers: {
-      ...headers,
-      accept:
-        "image/avif,image/webp,image/apng," +
-        "image/*,*/*;q=0.8",
-      referer
-    },
-    redirect: "follow",
-    signal: controller.signal,
-  });
-
-  clearTimeout(timer);
-
-  if (!imageResponse.ok) {
-    throw new Error(
-      `Không tải được ảnh (${imageResponse.status})`
-    );
-  }
-
-  response.setHeader(
-    "Content-Type",
-    imageResponse.headers.get("content-type") ||
-      "image/jpeg"
-  );
-
-  response.setHeader(
-    "Cache-Control",
-    "public, max-age=86400, " +
-      "s-maxage=604800, " +
-      "stale-while-revalidate=86400"
-  );
-
-  const buffer = Buffer.from(
-    await imageResponse.arrayBuffer()
-  );
-
-  response.status(200).send(buffer);
-}
-
-module.exports = async (request, response) => {
-  response.setHeader(
-    "Access-Control-Allow-Origin",
-    "*"
-  );
-
-  response.setHeader(
-    "Cache-Control",
-    "s-maxage=300, stale-while-revalidate=600"
-  );
+  }, 20000);
 
   try {
-    const action = request.query.action || "list";
+    /*
+     * Ảnh được lưu trên CDN truyenvua.com nhưng thường
+     * kiểm tra Referer từ trang TruyenQQ.
+     */
+    const imageResponse = await fetch(imageUrl.href, {
+      headers: {
+        "user-agent": UA,
+        accept:
+          "image/avif,image/webp,image/apng," +
+          "image/svg+xml,image/*,*/*;q=0.8",
+        "accept-language": "vi-VN,vi;q=0.9,en;q=0.7",
+        referer: "https://truyenqqko.com/",
+        origin: "https://truyenqqko.com"
+      },
+      redirect: "follow",
+      signal: controller.signal
+    });
 
-    if (action === "image") {
-      return await imageAction(
-        request.query.url,
-        response
-      );
-    }
-
-    let data;
-
-    if (action === "list") {
-      data = await listAction(
-        request.query.page,
-        request.query.q
-      );
-    } else if (action === "detail") {
-      data = await detailAction(
-        request.query.url
-      );
-    } else if (action === "chapter") {
-      data = await chapterAction(
-        request.query.url
-      );
-    } else {
+    if (!imageResponse.ok) {
       throw Object.assign(
-        new Error("Tác vụ không hợp lệ"),
-        { status: 400 }
+        new Error(
+          `Máy chủ ảnh trả về HTTP ${imageResponse.status}`
+        ),
+        { status: imageResponse.status }
       );
     }
 
-    response.status(200).json(data);
-  } catch (error) {
-    console.error(error);
+    const contentType =
+      imageResponse.headers.get("content-type") ||
+      "image/jpeg";
 
-    response
-      .status(error.status || 500)
-      .json({
-        error:
-          error.name === "AbortError"
-            ? "Nguồn truyện phản hồi quá lâu"
-            : error.message ||
-              "Không lấy được dữ liệu",
-      });
+    /*
+     * Tránh trả nhầm trang HTML lỗi dưới dạng ảnh.
+     */
+    if (!contentType.toLowerCase().startsWith("image/")) {
+      throw Object.assign(
+        new Error(
+          `Nguồn không trả về ảnh (${contentType})`
+        ),
+        { status: 502 }
+      );
+    }
+
+    const arrayBuffer =
+      await imageResponse.arrayBuffer();
+
+    const buffer = Buffer.from(arrayBuffer);
+
+    response.setHeader(
+      "Content-Type",
+      contentType
+    );
+
+    response.setHeader(
+      "Content-Length",
+      buffer.length
+    );
+
+    response.setHeader(
+      "Cache-Control",
+      "public, max-age=86400, " +
+        "s-maxage=604800, " +
+        "stale-while-revalidate=86400"
+    );
+
+    response.setHeader(
+      "X-Content-Type-Options",
+      "nosniff"
+    );
+
+    return response.status(200).send(buffer);
+  } finally {
+    clearTimeout(timer);
   }
-};
+}
+
