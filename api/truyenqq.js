@@ -18,6 +18,26 @@ const headers = {
   accept: "text/html,application/xhtml+xml",
 };
 
+// Bộ nhớ đệm ngắn hạn giúp giảm số lần gọi nguồn và tăng tốc Vercel.
+const memoryCache = new Map();
+const CACHE_TTL = 10 * 60 * 1000;
+
+function cacheGet(key) {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.time > CACHE_TTL) { memoryCache.delete(key); return null; }
+  return entry.value;
+}
+
+function cacheSet(key, value) {
+  memoryCache.set(key, { time: Date.now(), value });
+  if (memoryCache.size > 80) {
+    const firstKey = memoryCache.keys().next().value;
+    memoryCache.delete(firstKey);
+  }
+  return value;
+}
+
 const CATEGORY_CONFIG = {
   kids: { label: "Nội dung học sinh", slug: "kids" },
   all: { label: "Tất cả truyện", slug: "all" },
@@ -719,6 +739,10 @@ async function loadCategoryByKey(categoryKey, page) {
     throw new Error("Thể loại không hợp lệ");
   }
 
+  const cacheKey = `category:${categoryKey}:${page}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   let lastError;
 
   for (const base of BASES) {
@@ -728,10 +752,10 @@ async function loadCategoryByKey(categoryKey, page) {
         const items = extractItems(result.html, result.finalUrl);
 
         if (items.length) {
-          return {
+          return cacheSet(cacheKey, {
             items,
             totalPages: getTotalPages(result.html, page),
-          };
+          });
         }
       } catch (error) {
         lastError = error;
@@ -740,6 +764,67 @@ async function loadCategoryByKey(categoryKey, page) {
   }
 
   throw lastError || new Error(`Không tải được thể loại ${config.label}`);
+}
+
+async function mapLimit(items, limit, worker) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function run() {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      try {
+        results[index] = { status: "fulfilled", value: await worker(items[index], index) };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+  return results;
+}
+
+/**
+ * Trang chủ học sinh: trả từng nhóm nhỏ, mỗi nhóm chỉ vài truyện.
+ * Nhờ đó tải nhanh hơn nhiều so với gộp hàng trăm truyện vào một lưới.
+ */
+async function sectionsAction(limitText = "6") {
+  const limit = Math.min(10, Math.max(4, Number.parseInt(limitText, 10) || 6));
+  const cacheKey = `sections:${limit}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const sectionKeys = [
+    "comedy", "schoolLife", "adventure", "sports",
+    "sliceOfLife", "detective", "comic", "fantasy",
+    "magic", "sciFi", "shounen", "shoujo"
+  ];
+
+  const results = await mapLimit(sectionKeys, 3, async (key) => {
+    const result = await loadCategoryByKey(key, 1);
+    const items = uniqueBy(result.items.filter(isSafeStory), (item) => item.url).slice(0, limit);
+    return {
+      key,
+      label: CATEGORY_CONFIG[key].label,
+      items,
+      totalPages: result.totalPages,
+    };
+  });
+
+  const sections = results
+    .filter((result) => result.status === "fulfilled" && result.value.items.length)
+    .map((result) => result.value);
+
+  if (!sections.length) {
+    throw new Error("Không tải được các nhóm truyện học sinh từ nguồn.");
+  }
+
+  return cacheSet(cacheKey, {
+    sections,
+    safeMode: true,
+    generatedAt: Date.now(),
+  });
 }
 
 async function loadLatestPage(page) {
@@ -818,8 +903,10 @@ async function listAction(
     ? KIDS_PRIORITY_CATEGORIES
     : [category];
 
-  const results = await Promise.allSettled(
-    requested.map((key) => loadCategoryByKey(key, currentPage))
+  const results = await mapLimit(
+    requested,
+    3,
+    (key) => loadCategoryByKey(key, currentPage)
   );
 
   let items = [];
@@ -1699,6 +1786,15 @@ module.exports =
     ).toLowerCase();
 
     try {
+      /*
+       * Các nhóm gợi ý nhỏ trên trang chủ học sinh.
+       */
+      if (action === "sections") {
+        const result = await sectionsAction(request.query?.limit);
+        response.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+        return response.status(200).json(result);
+      }
+
       /*
        * Danh sách và tìm kiếm truyện.
        */
