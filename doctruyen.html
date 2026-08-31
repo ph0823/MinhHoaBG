@@ -855,36 +855,114 @@
       el.readerProgress.textContent = "Đang tải...";
 
       try {
-        const data = await fetchJson(apiUrl(`/at-home/server/${chapter.id}?forcePort443=false`));
-        const pages = data.chapter?.data || [];
-        if (!pages.length) throw new Error("Chương không có hình ảnh.");
+        // Bắt buộc MangaDex trả máy chủ ảnh qua cổng HTTPS 443.
+        // Một số máy chủ chứa bản dịch VI dùng cổng khác khi để false,
+        // dễ bị trình duyệt, router hoặc nhà mạng chặn.
+        const getServer = () => fetchJson(
+          apiUrl(`/at-home/server/${chapter.id}?forcePort443=true`)
+        );
 
-        const baseUrl = data.baseUrl;
-        const hash = data.chapter.hash;
+        let serverData = await getServer();
+        const pages = serverData.chapter?.data || [];
+        const saverPages = serverData.chapter?.dataSaver || [];
+        if (!pages.length && !saverPages.length) {
+          throw new Error("Chương không có hình ảnh.");
+        }
+
+        const pageCount = Math.max(pages.length, saverPages.length);
+        let loadedCount = 0;
+        let failedCount = 0;
+        let refreshServerPromise = null;
+        let readingSaved = false;
+
+        const refreshServer = () => {
+          if (!refreshServerPromise) refreshServerPromise = getServer();
+          return refreshServerPromise;
+        };
+
         el.readerPages.innerHTML = "";
+        el.readerProgress.textContent = `Đang tải 0/${pageCount} trang...`;
 
-        pages.forEach((page, pageIndex) => {
+        Array.from({ length: pageCount }, (_, pageIndex) => {
+          const originalFile = pages[pageIndex];
+          const saverFile = saverPages[pageIndex];
           const img = document.createElement("img");
           img.className = "page-image";
           img.alt = `Trang ${pageIndex + 1}`;
           img.loading = pageIndex < 2 ? "eager" : "lazy";
           img.decoding = "async";
           img.referrerPolicy = "no-referrer";
-          img.src = `${baseUrl}/data/${hash}/${page}`;
-          img.addEventListener("load", () => {
-            el.readerProgress.textContent = `${pages.length} trang`;
-          }, { once: true });
-          img.addEventListener("error", () => {
-            img.replaceWith(Object.assign(document.createElement("div"), {
-              className: "status-box error",
-              textContent: `Không tải được trang ${pageIndex + 1}.`
-            }));
-          }, { once: true });
-          el.readerPages.appendChild(img);
-        });
 
-        markChapterRead(chapter.id);
-        saveHistory(chapter);
+          let attempt = 0;
+
+          const setUrl = async () => {
+            attempt += 1;
+            let current = serverData;
+
+            // Sau khi thử ảnh gốc và ảnh tiết kiệm trên máy chủ ban đầu,
+            // yêu cầu MangaDex cấp lại máy chủ rồi thử lại lần cuối.
+            if (attempt >= 3) {
+              try {
+                current = await refreshServer();
+              } catch (_) {
+                current = serverData;
+              }
+            }
+
+            const currentHash = current.chapter?.hash;
+            const currentOriginal = current.chapter?.data?.[pageIndex] || originalFile;
+            const currentSaver = current.chapter?.dataSaver?.[pageIndex] || saverFile;
+            const useSaver = attempt === 2 || attempt === 4;
+            const file = useSaver ? currentSaver : currentOriginal;
+            const folder = useSaver ? "data-saver" : "data";
+
+            if (!current.baseUrl || !currentHash || !file) {
+              handleFinalError();
+              return;
+            }
+
+            // Thêm tham số chống cache lỗi khi thử lại cùng một trang.
+            img.src = `${current.baseUrl}/${folder}/${currentHash}/${file}?retry=${attempt}`;
+          };
+
+          const handleFinalError = () => {
+            failedCount += 1;
+            const errorBox = document.createElement("div");
+            errorBox.className = "status-box error";
+            errorBox.innerHTML = `Không tải được trang ${pageIndex + 1}. <button class="btn ghost small" type="button">Thử lại</button>`;
+            errorBox.querySelector("button").addEventListener("click", () => {
+              failedCount = Math.max(0, failedCount - 1);
+              attempt = 0;
+              errorBox.replaceWith(img);
+              setUrl();
+            });
+            img.replaceWith(errorBox);
+            el.readerProgress.textContent = `Đã tải ${loadedCount}/${pageCount} trang · lỗi ${failedCount}`;
+          };
+
+          img.addEventListener("load", () => {
+            loadedCount += 1;
+            el.readerProgress.textContent = failedCount
+              ? `Đã tải ${loadedCount}/${pageCount} trang · lỗi ${failedCount}`
+              : loadedCount === pageCount
+                ? `${pageCount} trang`
+                : `Đang tải ${loadedCount}/${pageCount} trang...`;
+
+            if (!readingSaved) {
+              readingSaved = true;
+              markChapterRead(chapter.id);
+              saveHistory(chapter);
+            }
+          });
+
+          img.addEventListener("error", () => {
+            if (attempt < 4) setUrl();
+            else handleFinalError();
+          });
+
+          el.readerPages.appendChild(img);
+          setUrl();
+        });
       } catch (error) {
         renderStatus(el.readerPages, `Không thể mở chương: ${error.message}`, true);
         el.readerProgress.textContent = "Lỗi tải chương";
