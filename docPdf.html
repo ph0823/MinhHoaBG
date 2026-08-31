@@ -361,20 +361,20 @@
     if (window.innerWidth <= 860) els.sidebar.classList.remove('open');
     els.documentName.textContent = file.name;
 
-    // Reset Giao Diện
     els.welcome.classList.add('hidden');
     els.canvasWrap.classList.add('hidden');
     els.ebookWrap.classList.remove('hidden');
     els.ebookContent.innerHTML = `<div style="text-align:center; padding: 50px;">Đang thiết lập luồng tải tốc độ cao...</div>`;
     
-    // Tắt các nút của PDF
     els.pdfControls.forEach(el => el.disabled = true);
 
     try {
       setLoading(true, 'Đọc thông tin sách MOBI...', 5);
-      const infoData = await api('getFileInfo', { fileId: file.id }, { signal });
-      if (token !== loadToken) return;
       
+      const targetFolderId = file.folderId || currentFolderId;
+      const infoData = await api('getFileInfo', { fileId: file.id, folderId: targetFolderId }, { signal });
+      
+      if (token !== loadToken) return;
       const info = infoData.file;
       const totalChunks = Number(info.totalChunks);
       const version = info.version || info.size;
@@ -391,7 +391,7 @@
           let bytes = getGlobalChunk(cacheKey);
           
           if (!bytes) {
-            const chunkData = await api('getFileChunk', { fileId: file.id, index: i, v: version }, { signal, cache: 'default' });
+            const chunkData = await api('getFileChunk', { fileId: file.id, folderId: targetFolderId, index: i, v: version }, { signal, cache: 'default' });
             if (signal.aborted) throw new Error('AbortError');
             bytes = base64ToBytes(chunkData.base64);
             putGlobalChunk(cacheKey, bytes);
@@ -408,7 +408,6 @@
       
       setLoading(true, 'Đang ghép nối file...', 99);
       
-      // Gộp các Uint8Array lại thành file MOBI hoàn chỉnh
       const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
       const fullData = new Uint8Array(totalLen);
       let offset = 0;
@@ -416,7 +415,6 @@
       
       const blob = new Blob([fullData], { type: 'application/x-mobipocket-ebook' });
       
-      // Chuyển dữ liệu vào Reader Wrapper
       renderMobiContainer(blob, file.name);
       
       setLoading(false);
@@ -424,8 +422,13 @@
     } catch (e) {
       if (token !== loadToken || e.message === 'AbortError') return;
       setLoading(false);
-      els.ebookContent.innerHTML = `<h3 style="color:red">Lỗi tải MOBI: ${escapeHtml(e.message)}</h3>`;
+      
+      els.ebookContent.innerHTML = `<h3 style="color:red; text-align:center;">Lỗi tải MOBI: ${escapeHtml(e.message)}</h3>`;
       showToast(e.message, true);
+      
+      els.ebookWrap.classList.add('hidden');
+      els.welcome.classList.remove('hidden');
+      els.documentName.textContent = 'Chưa chọn tài liệu';
     }
   }
 
@@ -475,7 +478,9 @@
 
     try {
       setLoading(true, 'Đang chuẩn bị luồng PDF...', 5);
-      const infoData = await api('getFileInfo', { fileId: file.id }, { signal });
+      
+      const targetFolderId = file.folderId || currentFolderId;
+      const infoData = await api('getFileInfo', { fileId: file.id, folderId: targetFolderId }, { signal });
       const info = infoData.file;
       const version = info.version || info.size;
 
@@ -483,13 +488,17 @@
       let firstChunk = getGlobalChunk(cacheKey);
       
       if (!firstChunk) {
-        const cData = await api('getFileChunk', { fileId: file.id, index: 0, v: version }, { signal, cache: 'default' });
+        const cData = await api('getFileChunk', { fileId: file.id, folderId: targetFolderId, index: 0, v: version }, { signal, cache: 'default' });
         firstChunk = base64ToBytes(cData.base64);
         putGlobalChunk(cacheKey, firstChunk);
       }
 
-      currentRangeTransport = createPdfTransport(file, info, token, firstChunk, signal);
-      currentRangeTransport.prefetchChunk(Number(info.totalChunks) - 1); // Prefetch table reference
+      currentRangeTransport = createPdfTransport(file, info, token, firstChunk, signal, targetFolderId);
+      
+      const totalChunks = Number(info.totalChunks);
+      currentRangeTransport.prefetchChunk(totalChunks - 1); 
+      if (totalChunks > 2) currentRangeTransport.prefetchChunk(totalChunks - 2); 
+      if (totalChunks > 3) currentRangeTransport.prefetchChunk(1);
 
       pdfLoadingTask = pdfjsLib.getDocument({
         range: currentRangeTransport, length: Number(info.size), disableAutoFetch: true,
@@ -499,16 +508,24 @@
       pdfDoc = await pdfLoadingTask.promise;
       if (token !== loadToken) return;
 
-      pageNum = 1; els.pageCount.textContent = pdfDoc.numPages; els.pageInput.max = pdfDoc.numPages;
+      pageNum = 1; 
+      els.pageCount.textContent = pdfDoc.numPages; 
+      els.pageInput.max = pdfDoc.numPages;
       await renderPage();
       setLoading(false);
     } catch (e) {
       if (token !== loadToken || e.message === 'AbortError') return;
-      setLoading(false); showToast(e.message, true);
+      setLoading(false); 
+      showToast(e.message, true);
+      
+      // Khôi phục giao diện nếu tải lỗi
+      els.canvasWrap.classList.add('hidden');
+      els.welcome.classList.remove('hidden');
+      els.documentName.textContent = 'Chưa chọn tài liệu';
     }
   }
 
-  function createPdfTransport(file, info, token, firstChunk, signal) {
+  function createPdfTransport(file, info, token, firstChunk, signal, targetFolderId) {
     const transport = new pdfjsLib.PDFDataRangeTransport(Number(info.size), firstChunk.slice(), false, file.name);
     const chunkSize = Number(info.chunkSize) || firstChunk.length;
     const totalChunks = Number(info.totalChunks);
@@ -525,7 +542,7 @@
           const cKey = `${file.id}_${version}_${idx}`;
           let b = getGlobalChunk(cKey);
           if (!b) {
-            const data = await api('getFileChunk', { fileId: file.id, index: idx, v: version }, { signal, cache: 'default' });
+            const data = await api('getFileChunk', { fileId: file.id, folderId: targetFolderId, index: idx, v: version }, { signal, cache: 'default' });
             b = base64ToBytes(data.base64);
             putGlobalChunk(cKey, b);
           }
@@ -547,27 +564,43 @@
     return transport;
   }
 
+  function calculateOutputScale(viewport) {
+    // Giới hạn 4 Megapixel cho điện thoại, 8 Megapixel cho Desktop
+    const maxPixels = window.innerWidth <= 860 ? 4_000_000 : 8_000_000;
+    const targetScale = Math.min(window.devicePixelRatio || 1, 1.5);
+    const vpPixels = Math.max(1, viewport.width * viewport.height);
+    return Math.max(0.55, Math.min(targetScale, Math.sqrt(maxPixels / vpPixels)));
+  }
+
   async function renderPage() {
     if (!pdfDoc) return;
     setLoading(true, `Hiển thị trang ${pageNum}...`, 0);
-    const page = await pdfDoc.getPage(pageNum);
-    
-    const vpBase = page.getViewport({ scale: 1 });
-    if (fitMode === 'height') scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, (els.canvasWrap.clientHeight - 48) / vpBase.height));
-    else if (fitMode === 'width') scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, (els.canvasWrap.clientWidth - 48) / vpBase.width));
-    
-    const vp = page.getViewport({ scale });
-    els.canvas.width = Math.floor(vp.width * 1.5);
-    els.canvas.height = Math.floor(vp.height * 1.5);
-    els.canvas.style.width = `${Math.floor(vp.width)}px`;
-    els.canvas.style.height = `${Math.floor(vp.height)}px`;
-    
-    if (renderTask) renderTask.cancel();
-    renderTask = page.render({ canvasContext: ctx, viewport: vp, transform: [1.5, 0, 0, 1.5, 0, 0] });
-    await renderTask.promise;
-    
-    updatePdfControls();
-    setLoading(false);
+    try {
+      const page = await pdfDoc.getPage(pageNum);
+      const vpBase = page.getViewport({ scale: 1 });
+      
+      if (fitMode === 'height') scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, (els.canvasWrap.clientHeight - 48) / vpBase.height));
+      else if (fitMode === 'width') scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, (els.canvasWrap.clientWidth - 48) / vpBase.width));
+      
+      const vp = page.getViewport({ scale });
+      const safeScale = calculateOutputScale(vp); // Ép tỷ lệ an toàn
+      
+      els.canvas.width = Math.floor(vp.width * safeScale);
+      els.canvas.height = Math.floor(vp.height * safeScale);
+      els.canvas.style.width = `${Math.floor(vp.width)}px`;
+      els.canvas.style.height = `${Math.floor(vp.height)}px`;
+      
+      if (renderTask) renderTask.cancel();
+      const transform = safeScale !== 1 ? [safeScale, 0, 0, safeScale, 0, 0] : null;
+      renderTask = page.render({ canvasContext: ctx, viewport: vp, transform });
+      
+      await renderTask.promise;
+      updatePdfControls();
+    } catch (error) {
+      if (error?.name !== 'RenderingCancelledException') showToast('Lỗi vẽ trang: ' + error.message, true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // --- TIỆN ÍCH CHUNG ---
