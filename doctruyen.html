@@ -11,7 +11,7 @@
     button,input,select{font:inherit}.hidden{display:none!important}.app{max-width:1200px;margin:auto;padding:16px}.topbar{position:sticky;top:0;z-index:20;margin:-16px -16px 18px;padding:14px 16px;background:rgba(241,245,249,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .topbar-row{max-width:1200px;margin:auto;display:flex;gap:12px;align-items:center}.brand{font-size:22px;font-weight:800;white-space:nowrap}.search{display:flex;gap:8px;flex:1}.search input{width:100%;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none}.search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px #2563eb1f}
     .btn{border:0;border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:700;background:#e2e8f0;color:#0f172a}.btn:hover{filter:brightness(.97)}.btn-primary{background:var(--primary);color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}.section-head{display:flex;justify-content:space-between;gap:12px;align-items:end;margin:8px 0 14px}.section-head h1,.section-head h2{margin:0}.muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}.story{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.18s}.story:hover{transform:translateY(-3px);box-shadow:0 13px 30px rgba(15,23,42,.13)}.cover{aspect-ratio:3/4;background:#e2e8f0;overflow:hidden}.cover img{width:100%;height:100%;display:block;object-fit:cover}.story-body{padding:12px}.story-title{font-weight:800;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.story-meta{margin-top:7px;font-size:13px;color:var(--muted)}
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}.filter-btn{border:1px solid var(--line);background:#fff;color:#334155;border-radius:999px;padding:8px 13px;font-weight:700;cursor:pointer}.filter-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}.safe-note{margin:-6px 0 16px;padding:10px 12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;color:#1e3a8a;font-size:13px}.genre-line{margin-top:6px;font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}.story{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.18s}.story:hover{transform:translateY(-3px);box-shadow:0 13px 30px rgba(15,23,42,.13)}.cover{aspect-ratio:3/4;background:#e2e8f0;overflow:hidden}.cover img{width:100%;height:100%;display:block;object-fit:cover}.story-body{padding:12px}.story-title{font-weight:800;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.story-meta{margin-top:7px;font-size:13px;color:var(--muted)}
     .pager{display:flex;justify-content:center;align-items:center;gap:9px;margin:24px 0}.pager-info{min-width:110px;text-align:center;font-weight:700}.status{padding:24px;text-align:center;color:var(--muted)}.error{color:var(--danger);background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px;margin:12px 0}.skeleton{height:290px;border-radius:16px;background:linear-gradient(90deg,#e2e8f0 25%,#f8fafc 37%,#e2e8f0 63%);background-size:400% 100%;animation:shine 1.3s infinite}@keyframes shine{to{background-position:-100% 0}}
     .detail{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}.detail-top{display:grid;grid-template-columns:190px 1fr;gap:20px}.detail-cover{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;background:#e2e8f0}.detail h1{margin:0 0 8px}.detail-desc{white-space:pre-line;color:#334155;max-height:170px;overflow:auto}.toolbar{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.chapter-tools{display:flex;gap:9px;margin:18px 0 10px}.chapter-tools input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:11px}.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;max-height:520px;overflow:auto;padding-right:4px}.chapter{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:#f8fafc;border-radius:11px;padding:10px 12px;cursor:pointer}.chapter:hover{border-color:#93c5fd;background:#eff6ff}.chapter small{color:var(--muted);white-space:nowrap}
     .reader-head{position:sticky;top:76px;z-index:10;background:rgba(241,245,249,.96);backdrop-filter:blur(10px);padding:10px 0;border-bottom:1px solid var(--line)}.reader-title{text-align:center;font-weight:800;margin:8px}.reader-nav{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}.reader-nav select{max-width:min(500px,70vw);padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}.pages{max-width:920px;margin:16px auto}.page-img{display:block;width:100%;height:auto;margin:0 auto 8px;background:#e2e8f0;min-height:180px}.reader-status{padding:40px;text-align:center;color:var(--muted)}.page-img.image-failed{min-height:120px;border:1px dashed #fca5a5;background:#fef2f2;color:#991b1b}
@@ -32,7 +32,16 @@
 
   <main class="app">
     <section id="listView">
-      <div class="section-head"><div><h1 id="listTitle">Truyện gợi ý</h1><div id="listSubtitle" class="muted">Danh sách truyện mới cập nhật</div></div></div>
+      <div class="section-head"><div><h1 id="listTitle">Truyện gợi ý cho thiếu nhi</h1><div id="listSubtitle" class="muted">Được chọn lọc theo thể loại và từ khóa an toàn</div></div></div>
+      <div id="categoryFilters" class="filters" aria-label="Chọn thể loại">
+        <button class="filter-btn active" data-category="kids" type="button">🌟 Thiếu nhi chọn lọc</button>
+        <button class="filter-btn" data-category="comedy" type="button">😄 Hài hước</button>
+        <button class="filter-btn" data-category="school" type="button">🏫 Học đường</button>
+        <button class="filter-btn" data-category="adventure" type="button">🧭 Phiêu lưu</button>
+        <button class="filter-btn" data-category="sports" type="button">⚽ Thể thao</button>
+        <button class="filter-btn" data-category="slice" type="button">🌿 Đời thường</button>
+      </div>
+      <div class="safe-note">Bộ lọc mặc định loại các thể loại và từ khóa nhạy cảm. Nội dung lấy từ nguồn bên ngoài nên giáo viên hoặc phụ huynh vẫn cần kiểm tra trước khi cho học sinh đọc.</div>
       <div id="listError" class="error hidden"></div>
       <div id="storyGrid" class="grid"></div>
       <div id="listStatus" class="status hidden"></div>
@@ -71,7 +80,7 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { page: 1, totalPages: 1, query: '', stories: [], story: null, chapters: [], currentChapter: -1, listScroll: 0 };
+  const state = { page: 1, totalPages: 1, query: '', category: 'kids', stories: [], story: null, chapters: [], currentChapter: -1, listScroll: 0 };
   const views = ['listView','detailView','readerView'];
   const showView = name => { views.forEach(v => $(v).classList.toggle('hidden', v !== name)); window.scrollTo({top:0}); };
   const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -84,17 +93,17 @@
   const imageUrl = (src, ref='') => src ? `/api/truyenqq?action=image&url=${encodeURIComponent(src)}${ref?`&ref=${encodeURIComponent(ref)}`:''}` : '';
   const placeholders = count => { $('storyGrid').innerHTML = Array.from({length:count},()=>'<div class="skeleton"></div>').join(''); };
 
-  async function loadStories(page=1, query=state.query){
-    showView('listView'); state.page=Math.max(1,Number(page)||1); state.query=query.trim(); $('listError').classList.add('hidden'); $('listStatus').classList.add('hidden'); $('pagination').classList.add('hidden');
-    $('listTitle').textContent = state.query ? `Kết quả: “${state.query}”` : 'Truyện gợi ý'; $('listSubtitle').textContent = state.query ? 'Kết quả được lấy từ nguồn truyện' : 'Danh sách truyện mới cập nhật'; placeholders(innerWidth<700?6:10);
+  async function loadStories(page=1, query=state.query, category=state.category){
+    showView('listView'); state.page=Math.max(1,Number(page)||1); state.query=query.trim(); state.category=category; $('listError').classList.add('hidden'); $('listStatus').classList.add('hidden'); $('pagination').classList.add('hidden');
+    const labels={kids:'Truyện gợi ý cho thiếu nhi',comedy:'Truyện hài hước',school:'Truyện học đường',adventure:'Truyện phiêu lưu',sports:'Truyện thể thao',slice:'Truyện đời thường'}; $('listTitle').textContent = state.query ? `Kết quả an toàn: “${state.query}”` : (labels[state.category]||'Truyện gợi ý'); $('listSubtitle').textContent = state.query ? 'Kết quả đã áp dụng bộ lọc nội dung nhạy cảm' : 'Danh sách được chọn lọc theo thể loại phù hợp'; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.category===state.category)); placeholders(innerWidth<700?6:10);
     try {
-      const data = await api({action:'list',page:state.page,q:state.query}); state.stories=data.items||[]; state.totalPages=Math.max(1,Number(data.totalPages)||state.page);
-      renderStories(); updatePager(); history.replaceState(null,'',`#list?page=${state.page}${state.query?`&q=${encodeURIComponent(state.query)}`:''}`);
+      const data = await api({action:'list',page:state.page,q:state.query,category:state.category,safe:1}); state.stories=data.items||[]; state.totalPages=Math.max(1,Number(data.totalPages)||state.page);
+      renderStories(); updatePager(); history.replaceState(null,'',`#list?page=${state.page}&category=${encodeURIComponent(state.category)}${state.query?`&q=${encodeURIComponent(state.query)}`:''}`);
     } catch(e){ $('storyGrid').innerHTML=''; $('listError').textContent=e.message; $('listError').classList.remove('hidden'); $('listStatus').textContent='Không thể tải danh sách truyện.'; $('listStatus').classList.remove('hidden'); }
   }
   function renderStories(){
     if(!state.stories.length){ $('storyGrid').innerHTML=''; $('listStatus').textContent='Không tìm thấy truyện phù hợp.'; $('listStatus').classList.remove('hidden'); return; }
-    $('storyGrid').innerHTML=state.stories.map((s,i)=>`<article class="story" data-i="${i}" tabindex="0"><div class="cover"><img loading="lazy" src="${escapeHtml(imageUrl(s.cover, s.url))}" alt="${escapeHtml(s.title)}" onerror="this.style.visibility='hidden'"></div><div class="story-body"><div class="story-title">${escapeHtml(s.title)}</div><div class="story-meta">${escapeHtml(s.latestChapter||s.status||'Xem mục lục')}</div></div></article>`).join('');
+    $('storyGrid').innerHTML=state.stories.map((s,i)=>`<article class="story" data-i="${i}" tabindex="0"><div class="cover"><img loading="lazy" src="${escapeHtml(imageUrl(s.cover, s.url))}" alt="${escapeHtml(s.title)}" onerror="this.style.visibility='hidden'"></div><div class="story-body"><div class="story-title">${escapeHtml(s.title)}</div><div class="story-meta">${escapeHtml(s.latestChapter||s.status||'Xem mục lục')}</div>${s.genres?.length?`<div class="genre-line">${escapeHtml(s.genres.slice(0,3).join(' • '))}</div>`:''}</div></article>`).join('');
     document.querySelectorAll('.story').forEach(el=>{ const open=()=>openStory(state.stories[Number(el.dataset.i)]); el.onclick=open; el.onkeydown=e=>{if(e.key==='Enter')open()}; });
   }
   function updatePager(){ $('pagination').classList.remove('hidden'); $('pageInfo').textContent=`Trang ${state.page}${state.totalPages?` / ${state.totalPages}`:''}`; $('prevPage').disabled=state.page<=1; $('nextPage').disabled=state.page>=state.totalPages; }
@@ -124,7 +133,7 @@
     const hasPrev=state.currentChapter<state.chapters.length-1, hasNext=state.currentChapter>0; ['prevChapter','prevChapterBottom'].forEach(id=>$(id).disabled=!hasPrev); ['nextChapter','nextChapterBottom'].forEach(id=>$(id).disabled=!hasNext);
   }
   const previousChapter=()=>openChapter(state.currentChapter+1); const nextChapter=()=>openChapter(state.currentChapter-1);
-  $('searchForm').onsubmit=e=>{e.preventDefault();loadStories(1,$('searchInput').value)}; $('homeBtn').onclick=()=>{$('searchInput').value='';loadStories(1,'')}; $('prevPage').onclick=()=>loadStories(state.page-1); $('nextPage').onclick=()=>loadStories(state.page+1);
+  $('searchForm').onsubmit=e=>{e.preventDefault();loadStories(1,$('searchInput').value,state.category)}; $('homeBtn').onclick=()=>{$('searchInput').value='';loadStories(1,'','kids')}; document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{$('searchInput').value='';loadStories(1,'',b.dataset.category)}); $('prevPage').onclick=()=>loadStories(state.page-1); $('nextPage').onclick=()=>loadStories(state.page+1);
   $('backToList').onclick=()=>{showView('listView');setTimeout(()=>scrollTo(0,state.listScroll),0)}; $('backToDetail').onclick=()=>showView('detailView'); $('chapterFilter').oninput=renderChapters;
   $('readFirstBtn').onclick=()=>openChapter(state.chapters.length-1); $('readLatestBtn').onclick=()=>openChapter(0); $('chapterSelect').onchange=e=>openChapter(Number(e.target.value));
   $('prevChapter').onclick=$('prevChapterBottom').onclick=previousChapter; $('nextChapter').onclick=$('nextChapterBottom').onclick=nextChapter; $('toTop').onclick=()=>scrollTo({top:0,behavior:'smooth'});
