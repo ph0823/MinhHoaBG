@@ -18,6 +18,9 @@ const headers = {
   accept: "text/html,application/xhtml+xml",
 };
 
+/**
+ * Chuyển URL tương đối thành URL tuyệt đối.
+ */
 function absolute(value, base) {
   try {
     return new URL(value, base).href;
@@ -26,10 +29,16 @@ function absolute(value, base) {
   }
 }
 
+/**
+ * Làm sạch chuỗi văn bản.
+ */
 function clean(value = "") {
   return String(value).replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Loại bỏ phần tử trùng lặp.
+ */
 function uniqueBy(items, keyFn) {
   const seen = new Set();
 
@@ -45,6 +54,9 @@ function uniqueBy(items, keyFn) {
   });
 }
 
+/**
+ * Chỉ cho phép các URL truyện thuộc nguồn đã khai báo.
+ */
 function allowedUrl(raw) {
   try {
     const url = new URL(raw);
@@ -58,11 +70,11 @@ function allowedUrl(raw) {
     const allowedDomains = [
       "truyenqqko.com",
       "truyenqqto.com",
-      "truyenqq.net"
+      "truyenqq.net",
     ];
 
     return allowedDomains.some(
-      domain =>
+      (domain) =>
         hostname === domain ||
         hostname.endsWith(`.${domain}`)
     );
@@ -71,14 +83,19 @@ function allowedUrl(raw) {
   }
 }
 
+/**
+ * Tải mã HTML từ nguồn.
+ */
 async function fetchHtml(url) {
   let lastError;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    let timer;
+
     try {
       const controller = new AbortController();
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         controller.abort();
       }, 14000);
 
@@ -88,24 +105,36 @@ async function fetchHtml(url) {
         signal: controller.signal,
       });
 
-      clearTimeout(timer);
-
       if (!response.ok) {
-        throw new Error(`Nguồn trả về HTTP ${response.status}`);
+        throw new Error(
+          `Nguồn trả về HTTP ${response.status}`
+        );
       }
 
+      const html = await response.text();
+
       return {
-        html: await response.text(),
+        html,
         finalUrl: response.url,
       };
     } catch (error) {
       lastError = error;
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
     }
   }
 
-  throw lastError || new Error("Không kết nối được nguồn truyện");
+  throw (
+    lastError ||
+    new Error("Không kết nối được nguồn truyện")
+  );
 }
 
+/**
+ * Lần lượt thử các tên miền nguồn.
+ */
 async function fetchFromBases(pathBuilder) {
   let lastError;
 
@@ -117,9 +146,15 @@ async function fetchFromBases(pathBuilder) {
     }
   }
 
-  throw lastError || new Error("Nguồn truyện tạm thời không phản hồi");
+  throw (
+    lastError ||
+    new Error("Nguồn truyện tạm thời không phản hồi")
+  );
 }
 
+/**
+ * Lấy ảnh bìa từ phần tử truyện.
+ */
 function extractCover(element, $, base) {
   const image = element.find("img").first();
 
@@ -128,10 +163,11 @@ function extractCover(element, $, base) {
     image.attr("data-srcset") ||
     "";
 
-  const firstSrcset = srcset
-    .split(",")[0]
-    ?.trim()
-    .split(/\s+/)[0];
+  const firstSrcset =
+    srcset
+      .split(",")[0]
+      ?.trim()
+      .split(/\s+/)[0] || "";
 
   const source =
     image.attr("data-original") ||
@@ -154,12 +190,18 @@ function extractCover(element, $, base) {
   return absolute(source, base);
 }
 
+/**
+ * Kiểm tra URL có phải URL chương truyện hay không.
+ */
 function isChapterUrl(url) {
   return /(?:-chap(?:ter)?-|\/chap(?:ter)?[-/]|\/chuong[-/])/i.test(
     url
   );
 }
 
+/**
+ * Trích xuất danh sách truyện từ HTML.
+ */
 function extractItems(html, base) {
   const $ = cheerio.load(html);
   const items = [];
@@ -171,7 +213,7 @@ function extractItems(html, base) {
     ".item-manga",
     ".list_grid .item",
     ".comic-item",
-    ".item"
+    ".item",
   ];
 
   $(selectors.join(",")).each((_, element) => {
@@ -191,7 +233,10 @@ function extractItems(html, base) {
       !linkElement.length &&
       box.is('a[href*="/truyen-tranh/"]')
     ) {
-      const ownUrl = absolute(box.attr("href"), base);
+      const ownUrl = absolute(
+        box.attr("href"),
+        base
+      );
 
       if (!isChapterUrl(ownUrl)) {
         linkElement = box;
@@ -202,26 +247,29 @@ function extractItems(html, base) {
       return;
     }
 
-    const url = absolute(linkElement.attr("href"), base);
+    const url = absolute(
+      linkElement.attr("href"),
+      base
+    );
 
     const title = clean(
       linkElement.attr("title") ||
-      box
-        .find(".book_name,.title,.name,h3,h2")
-        .first()
-        .text() ||
-      linkElement.text()
+        box
+          .find(".book_name,.title,.name,h3,h2")
+          .first()
+          .text() ||
+        linkElement.text()
     );
 
     const chapterElement = box
       .find(
         'a[href*="-chap-"],' +
-        'a[href*="/chap-"],' +
-        'a[href*="/chapter-"],' +
-        'a[href*="/chuong-"],' +
-        ".chapter," +
-        ".last_chapter," +
-        ".chapter-name"
+          'a[href*="/chap-"],' +
+          'a[href*="/chapter-"],' +
+          'a[href*="/chuong-"],' +
+          ".chapter," +
+          ".last_chapter," +
+          ".chapter-name"
       )
       .first();
 
@@ -236,91 +284,105 @@ function extractItems(html, base) {
         cover: extractCover(box, $, base),
         latestChapter: clean(
           chapterElement.attr("title") ||
-          chapterElement.text()
+            chapterElement.text()
         ),
         status: clean(
           box.find(".status").first().text()
-        )
+        ),
       });
     }
   });
 
   /*
-   * Dự phòng: lấy liên kết truyện nhưng loại bỏ
-   * liên kết chương và các liên kết điều hướng.
+   * Dự phòng: lấy tất cả liên kết truyện nếu cấu trúc
+   * trang không còn dùng các class quen thuộc.
    */
   if (items.length < 4) {
-    $('a[href*="/truyen-tranh/"]').each((_, element) => {
-      const linkElement = $(element);
-      const url = absolute(
-        linkElement.attr("href"),
-        base
-      );
+    $('a[href*="/truyen-tranh/"]').each(
+      (_, element) => {
+        const linkElement = $(element);
 
-      if (
-        !url ||
-        isChapterUrl(url) ||
-        /(the-loai|tim-kiem|dang-nhap)/i.test(url)
-      ) {
-        return;
+        const url = absolute(
+          linkElement.attr("href"),
+          base
+        );
+
+        if (
+          !url ||
+          isChapterUrl(url) ||
+          /(the-loai|tim-kiem|dang-nhap)/i.test(url)
+        ) {
+          return;
+        }
+
+        const parent = linkElement.closest(
+          "li,article,.item,.book_item,.story-item"
+        );
+
+        const title = clean(
+          linkElement.attr("title") ||
+            parent
+              .find(
+                ".book_name,.title,.name,h3,h2"
+              )
+              .first()
+              .text() ||
+            linkElement.text()
+        );
+
+        if (
+          !title ||
+          /^chapter\s*[\d.]+$/i.test(title)
+        ) {
+          return;
+        }
+
+        const chapterElement = parent
+          .find(
+            'a[href*="-chap-"],' +
+              'a[href*="/chap-"],' +
+              'a[href*="/chapter-"],' +
+              'a[href*="/chuong-"]'
+          )
+          .first();
+
+        items.push({
+          title,
+          url,
+          cover: extractCover(
+            parent,
+            $,
+            base
+          ),
+          latestChapter: clean(
+            chapterElement.attr("title") ||
+              chapterElement.text()
+          ),
+          status: clean(
+            parent
+              .find(".status")
+              .first()
+              .text()
+          ),
+        });
       }
-
-      const parent = linkElement.closest(
-        "li,article,.item,.book_item,.story-item"
-      );
-
-      const title = clean(
-        linkElement.attr("title") ||
-        parent
-          .find(".book_name,.title,.name,h3,h2")
-          .first()
-          .text() ||
-        linkElement.text()
-      );
-
-      if (
-        !title ||
-        /^chapter\s*[\d.]+$/i.test(title)
-      ) {
-        return;
-      }
-
-      const chapterElement = parent
-        .find(
-          'a[href*="-chap-"],' +
-          'a[href*="/chap-"],' +
-          'a[href*="/chapter-"],' +
-          'a[href*="/chuong-"]'
-        )
-        .first();
-
-      items.push({
-        title,
-        url,
-        cover: extractCover(parent, $, base),
-        latestChapter: clean(
-          chapterElement.attr("title") ||
-          chapterElement.text()
-        ),
-        status: clean(
-          parent.find(".status").first().text()
-        )
-      });
-    });
+    );
   }
 
   return uniqueBy(
     items,
-    item => item.url
+    (item) => item.url
   ).filter(
-    item =>
+    (item) =>
       item.title &&
       !isChapterUrl(item.url) &&
       !/^chapter\s*[\d.]+$/i.test(item.title)
   );
 }
 
-
+/**
+ * Xác định tổng số trang.
+ */
 function getTotalPages(html, currentPage = 1) {
   const $ = cheerio.load(html);
   let maximumPage = currentPage;
@@ -333,19 +395,35 @@ function getTotalPages(html, currentPage = 1) {
       10
     );
 
-    const href = $(element).attr("href") || "";
-    const match = href.match(/[?&]page=(\d+)/);
+    const href =
+      $(element).attr("href") || "";
+
+    const pageQueryMatch = href.match(
+      /[?&]page=(\d+)/
+    );
+
+    const pathMatch = href.match(
+      /(?:trang-|page\/)(\d+)/i
+    );
 
     maximumPage = Math.max(
       maximumPage,
       textPage || 0,
-      match ? Number(match[1]) : 0
+      pageQueryMatch
+        ? Number(pageQueryMatch[1])
+        : 0,
+      pathMatch
+        ? Number(pathMatch[1])
+        : 0
     );
   });
 
   return maximumPage;
 }
 
+/**
+ * API lấy danh sách truyện.
+ */
 async function listAction(page, queryText) {
   const currentPage = Math.max(
     1,
@@ -354,20 +432,22 @@ async function listAction(page, queryText) {
 
   const query = clean(queryText);
 
-  const result = await fetchFromBases((base) => {
-    if (query) {
+  const result = await fetchFromBases(
+    (base) => {
+      if (query) {
+        return (
+          `${base}/tim-kiem.html` +
+          `?q=${encodeURIComponent(query)}` +
+          `&page=${currentPage}`
+        );
+      }
+
       return (
-        `${base}/tim-kiem.html` +
-        `?q=${encodeURIComponent(query)}` +
-        `&page=${currentPage}`
+        `${base}/truyen-moi-cap-nhat/` +
+        `trang-${currentPage}.html`
       );
     }
-
-    return (
-      `${base}/truyen-moi-cap-nhat/` +
-      `trang-${currentPage}.html`
-    );
-  });
+  );
 
   let items = extractItems(
     result.html,
@@ -375,14 +455,15 @@ async function listAction(page, queryText) {
   );
 
   /*
-   * Một số tên miền không còn đường dẫn
-   * /truyen-moi-cap-nhat/trang-x.html.
-   * Khi đó thử đường dẫn trang chủ có tham số page.
+   * Một số tên miền không còn sử dụng đường dẫn:
+   * /truyen-moi-cap-nhat/trang-x.html
    */
   if (!items.length && !query) {
-    const alternative = await fetchFromBases(
-      (base) => `${base}/?page=${currentPage}`
-    );
+    const alternative =
+      await fetchFromBases(
+        (base) =>
+          `${base}/?page=${currentPage}`
+      );
 
     items = extractItems(
       alternative.html,
@@ -409,6 +490,9 @@ async function listAction(page, queryText) {
   };
 }
 
+/**
+ * API lấy thông tin truyện và danh sách chương.
+ */
 async function detailAction(rawUrl) {
   if (!allowedUrl(rawUrl)) {
     throw Object.assign(
@@ -417,12 +501,16 @@ async function detailAction(rawUrl) {
     );
   }
 
-  const { html, finalUrl } = await fetchHtml(rawUrl);
+  const { html, finalUrl } =
+    await fetchHtml(rawUrl);
+
   const $ = cheerio.load(html);
 
   const title = clean(
     $("h1").first().text() ||
-      $('meta[property="og:title"]').attr("content")
+      $('meta[property="og:title"]').attr(
+        "content"
+      )
   );
 
   const coverElement = $(
@@ -434,9 +522,13 @@ async function detailAction(rawUrl) {
 
   const cover = absolute(
     coverElement.attr("data-original") ||
+      coverElement.attr("data-cfsrc") ||
       coverElement.attr("data-src") ||
+      coverElement.attr("data-lazy-src") ||
       coverElement.attr("src") ||
-      $('meta[property="og:image"]').attr("content"),
+      $('meta[property="og:image"]').attr(
+        "content"
+      ),
     finalUrl
   );
 
@@ -450,7 +542,9 @@ async function detailAction(rawUrl) {
     )
       .first()
       .text() ||
-      $('meta[name="description"]').attr("content")
+      $('meta[name="description"]').attr(
+        "content"
+      )
   );
 
   const author = clean(
@@ -481,7 +575,9 @@ async function detailAction(rawUrl) {
       ".works-chapter-list a," +
       ".chapter-list a," +
       ".story-detail-list a," +
+      'a[href*="-chap-"],' +
       'a[href*="/chap-"],' +
+      'a[href*="/chapter-"],' +
       'a[href*="/chuong-"]'
   ).each((_, element) => {
     const linkElement = $(element);
@@ -499,12 +595,18 @@ async function detailAction(rawUrl) {
     const date = clean(
       linkElement
         .closest("li,div")
-        .find(".chapter-time,.time,.date")
+        .find(
+          ".chapter-time,.time,.date"
+        )
         .first()
         .text()
     );
 
-    if (url && chapterTitle) {
+    if (
+      url &&
+      chapterTitle &&
+      isChapterUrl(url)
+    ) {
       chapters.push({
         title: chapterTitle,
         url,
@@ -522,6 +624,7 @@ async function detailAction(rawUrl) {
       status,
       url: finalUrl,
     },
+
     chapters: uniqueBy(
       chapters,
       (chapter) => chapter.url
@@ -529,6 +632,121 @@ async function detailAction(rawUrl) {
   };
 }
 
+/**
+ * Chuẩn hóa địa chỉ ảnh chương.
+ */
+function normalizeImageCandidate(
+  value,
+  base
+) {
+  if (!value) {
+    return "";
+  }
+
+  let source = String(value)
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\\\//g, "/")
+    .replace(/\\u002F/gi, "/")
+    .replace(/&amp;/g, "&");
+
+  if (
+    !source ||
+    source.startsWith("data:image")
+  ) {
+    return "";
+  }
+
+  const url = absolute(source, base);
+
+  if (
+    !url ||
+    /(?:logo|avatar|banner|loading|spinner|icon|favicon)/i.test(
+      url
+    )
+  ) {
+    return "";
+  }
+
+  return url;
+}
+
+/**
+ * Thêm ảnh vào danh sách nếu hợp lệ.
+ */
+function pushImage(pages, value, base) {
+  const url = normalizeImageCandidate(
+    value,
+    base
+  );
+
+  if (url) {
+    pages.push(url);
+  }
+}
+
+/**
+ * Tìm URL ảnh trong một mảng JavaScript.
+ */
+function extractUrlsFromArrayText(
+  rawArray,
+  base
+) {
+  const pages = [];
+
+  if (!rawArray) {
+    return pages;
+  }
+
+  /*
+   * Thử chuyển mảng JavaScript thành JSON.
+   */
+  const normalized = rawArray
+    .replace(/'/g, '"')
+    .replace(/,\s*]/g, "]");
+
+  try {
+    const parsed = JSON.parse(normalized);
+
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        const source =
+          typeof item === "string"
+            ? item
+            : item?.src ||
+              item?.url ||
+              item?.image ||
+              item?.link;
+
+        pushImage(pages, source, base);
+      }
+    }
+  } catch {
+    /*
+     * Dữ liệu có thể không phải JSON chuẩn.
+     * Regex URL phía dưới sẽ xử lý tiếp.
+     */
+  }
+
+  /*
+   * Tìm trực tiếp các URL ảnh trong chuỗi.
+   */
+  const urlPattern =
+    /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
+
+  const matches =
+    rawArray.match(urlPattern) || [];
+
+  for (const match of matches) {
+    pushImage(pages, match, base);
+  }
+
+  return pages;
+}
+
+/**
+ * API lấy nội dung một chương.
+ */
 async function chapterAction(rawUrl) {
   if (!allowedUrl(rawUrl)) {
     throw Object.assign(
@@ -537,73 +755,128 @@ async function chapterAction(rawUrl) {
     );
   }
 
-  const { html, finalUrl } = await fetchHtml(rawUrl);
-  const $ = cheerio.load(html);
+  const { html, finalUrl } =
+    await fetchHtml(rawUrl);
 
+  const $ = cheerio.load(html);
   const pages = [];
 
-  $(
-    ".page-chapter img," +
-      ".page_chapter img," +
-      ".chapter_content img," +
-      ".chapter-content img," +
-      "#chapter-content img," +
-      ".reading-detail img," +
-      ".page-reading img"
-  ).each((_, element) => {
+  /*
+   * Các khu vực thường chứa ảnh chương.
+   */
+  const chapterRoots = [
+    ".page-chapter",
+    ".page_chapter",
+    ".chapter_content",
+    ".chapter-content",
+    "#chapter-content",
+    ".reading-detail",
+    ".page-reading",
+    ".chapter-reading",
+    ".reader-area",
+    ".reader-content",
+    ".reading-content",
+    "#viewer",
+    "#reader",
+    "#chapter-reading",
+    "#chapter_content",
+  ];
+
+  const imageSelector = chapterRoots
+    .map((root) => `${root} img`)
+    .join(",");
+
+  /*
+   * Ưu tiên ảnh nằm trong vùng đọc truyện.
+   * Nếu không tìm thấy thì xét tất cả thẻ img.
+   */
+  const candidates =
+    $(imageSelector).length > 0
+      ? $(imageSelector)
+      : $("img");
+
+  candidates.each((_, element) => {
     const image = $(element);
+
+    const srcset =
+      image.attr("data-srcset") ||
+      image.attr("srcset") ||
+      "";
+
+    const firstSrcset =
+      srcset
+        .split(",")[0]
+        ?.trim()
+        .split(/\s+/)[0] || "";
 
     const source =
       image.attr("data-original") ||
-      image.attr("data-src") ||
+      image.attr("data-cfsrc") ||
+      image.attr("data-url") ||
+      image.attr("data-image") ||
       image.attr("data-lazy-src") ||
+      image.attr("data-src") ||
+      image.attr("data-echo") ||
+      image.attr("data-lazy") ||
+      image.attr("data-original-src") ||
+      firstSrcset ||
       image.attr("src");
 
-    const url = absolute(source, finalUrl);
-
-    if (
-      url &&
-      !/logo|avatar|banner|loading/i.test(url)
-    ) {
-      pages.push(url);
-    }
+    pushImage(pages, source, finalUrl);
   });
 
   /*
-   * Một số trang nhúng danh sách ảnh trong JavaScript
-   * thay vì đưa trực tiếp vào thẻ img.
+   * Một số phiên bản trang dùng phần tử source
+   * bên trong thẻ picture.
+   */
+  $(
+    chapterRoots
+      .map((root) => `${root} source`)
+      .join(",")
+  ).each((_, element) => {
+    const sourceElement = $(element);
+
+    const srcset =
+      sourceElement.attr("data-srcset") ||
+      sourceElement.attr("srcset") ||
+      "";
+
+    const source =
+      srcset
+        .split(",")[0]
+        ?.trim()
+        .split(/\s+/)[0] || "";
+
+    pushImage(pages, source, finalUrl);
+  });
+
+  /*
+   * TruyenQQ hoặc các tên miền sao chép có thể
+   * nhúng danh sách ảnh trong biến JavaScript.
    */
   if (!pages.length) {
-    const patterns = [
-      /\b(?:listImage|chapterImages|images)\s*=\s*(\[[\s\S]*?\]);/i,
-      /"images"\s*:\s*(\[[\s\S]*?\])/i,
+    const arrayPatterns = [
+      /\b(?:listImage|listImages|chapterImages|chapter_images|images|imageList|pages)\s*[=:]\s*(\[[\s\S]*?\])\s*[;,<]/i,
+
+      /["'](?:images|chapter_images|chapterImages|pages|listImage|listImages)["']\s*:\s*(\[[\s\S]*?\])/i,
+
+      /\b(?:listImage|chapterImages|images)\s*=\s*JSON\.parse\(\s*['"](\[[\s\S]*?\])['"]\s*\)/i,
     ];
 
-    for (const pattern of patterns) {
+    for (const pattern of arrayPatterns) {
       const match = html.match(pattern);
 
       if (!match) {
         continue;
       }
 
-      try {
-        const parsedImages = JSON.parse(match[1]);
+      const found =
+        extractUrlsFromArrayText(
+          match[1],
+          finalUrl
+        );
 
-        parsedImages.forEach((item) => {
-          const source =
-            typeof item === "string"
-              ? item
-              : item.src;
-
-          const url = absolute(source, finalUrl);
-
-          if (url) {
-            pages.push(url);
-          }
-        });
-      } catch {
-        // Bỏ qua nếu dữ liệu JavaScript không phải JSON hợp lệ.
-      }
+      pages.push(...found);
 
       if (pages.length) {
         break;
@@ -611,17 +884,116 @@ async function chapterAction(rawUrl) {
     }
   }
 
+  /*
+   * Dự phòng: kiểm tra từng thẻ script.
+   */
+  if (!pages.length) {
+    $("script").each((_, element) => {
+      const script =
+        $(element).html() || "";
+
+      if (!script) {
+        return;
+      }
+
+      const urlPattern =
+        /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
+
+      const matches =
+        script.match(urlPattern) || [];
+
+      for (const value of matches) {
+        pushImage(
+          pages,
+          value,
+          finalUrl
+        );
+      }
+    });
+  }
+
+  /*
+   * Dự phòng cuối: tìm URL ảnh trong toàn bộ HTML.
+   */
+  if (!pages.length) {
+    const urlPattern =
+      /https?:\\?\/\\?\/[^\s"'<>\\]+?\.(?:avif|webp|jpe?g|png)(?:\?[^\s"'<>\\]*)?/gi;
+
+    const matches =
+      html.match(urlPattern) || [];
+
+    for (const value of matches) {
+      pushImage(
+        pages,
+        value,
+        finalUrl
+      );
+    }
+  }
+
   return {
     chapter: finalUrl,
+
     title: clean(
       $("h1").first().text() ||
+        $(".chapter-title").first().text() ||
         $("title").text()
     ),
-    pages: uniqueBy(pages, (url) => url),
+
+    pages: uniqueBy(
+      pages,
+      (url) => url
+    ),
   };
 }
 
-async function imageAction(rawUrl, response) {
+/**
+ * Xác định Referer hợp lệ khi tải ảnh.
+ */
+function safeReferer(rawReferer) {
+  try {
+    if (
+      rawReferer &&
+      allowedUrl(rawReferer)
+    ) {
+      return new URL(rawReferer).href;
+    }
+  } catch {
+    // Bỏ qua URL không hợp lệ.
+  }
+
+  return "https://truyenqqko.com/";
+}
+
+/**
+ * Chặn các địa chỉ mạng nội bộ để tránh SSRF.
+ */
+function isBlockedImageHost(hostname) {
+  const host =
+    hostname.toLowerCase();
+
+  return (
+    host === "localhost" ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    /^127\./.test(host) ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(
+      host
+    )
+  );
+}
+
+/**
+ * Proxy ảnh để tránh lỗi CORS và hotlink.
+ */
+async function imageAction(
+  rawUrl,
+  rawReferer,
+  response
+) {
   let imageUrl;
 
   try {
@@ -634,60 +1006,88 @@ async function imageAction(rawUrl, response) {
   }
 
   if (
-    imageUrl.protocol !== "https:" &&
-    imageUrl.protocol !== "http:"
+    !["https:", "http:"].includes(
+      imageUrl.protocol
+    ) ||
+    isBlockedImageHost(
+      imageUrl.hostname
+    )
   ) {
     throw Object.assign(
-      new Error("Giao thức ảnh không được hỗ trợ"),
+      new Error(
+        "Địa chỉ ảnh không được hỗ trợ"
+      ),
       { status: 400 }
     );
   }
 
-  const controller = new AbortController();
+  const referer =
+    safeReferer(rawReferer);
+
+  const origin =
+    new URL(referer).origin;
+
+  const controller =
+    new AbortController();
 
   const timer = setTimeout(() => {
     controller.abort();
   }, 20000);
 
   try {
-    /*
-     * Ảnh được lưu trên CDN truyenvua.com nhưng thường
-     * kiểm tra Referer từ trang TruyenQQ.
-     */
-    const imageResponse = await fetch(imageUrl.href, {
-      headers: {
-        "user-agent": UA,
-        accept:
-          "image/avif,image/webp,image/apng," +
-          "image/svg+xml,image/*,*/*;q=0.8",
-        "accept-language": "vi-VN,vi;q=0.9,en;q=0.7",
-        referer: "https://truyenqqko.com/",
-        origin: "https://truyenqqko.com"
-      },
-      redirect: "follow",
-      signal: controller.signal
-    });
+    const imageResponse = await fetch(
+      imageUrl.href,
+      {
+        headers: {
+          "user-agent": UA,
+
+          accept:
+            "image/avif,image/webp," +
+            "image/apng,image/svg+xml," +
+            "image/*,*/*;q=0.8",
+
+          "accept-language":
+            "vi-VN,vi;q=0.9,en;q=0.7",
+
+          referer,
+          origin,
+        },
+
+        redirect: "follow",
+        signal: controller.signal,
+      }
+    );
 
     if (!imageResponse.ok) {
       throw Object.assign(
         new Error(
-          `Máy chủ ảnh trả về HTTP ${imageResponse.status}`
+          `Máy chủ ảnh trả về HTTP ` +
+            `${imageResponse.status}`
         ),
-        { status: imageResponse.status }
+        {
+          status:
+            imageResponse.status,
+        }
       );
     }
 
     const contentType =
-      imageResponse.headers.get("content-type") ||
-      "image/jpeg";
+      imageResponse.headers.get(
+        "content-type"
+      ) || "image/jpeg";
 
     /*
-     * Tránh trả nhầm trang HTML lỗi dưới dạng ảnh.
+     * Tránh trả trang HTML lỗi dưới dạng ảnh.
      */
-    if (!contentType.toLowerCase().startsWith("image/")) {
+    if (
+      !contentType
+        .toLowerCase()
+        .startsWith("image/")
+    ) {
       throw Object.assign(
         new Error(
-          `Nguồn không trả về ảnh (${contentType})`
+          `Nguồn không trả về ảnh ` +
+            `(${contentType})`
         ),
         { status: 502 }
       );
@@ -696,7 +1096,8 @@ async function imageAction(rawUrl, response) {
     const arrayBuffer =
       await imageResponse.arrayBuffer();
 
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer =
+      Buffer.from(arrayBuffer);
 
     response.setHeader(
       "Content-Type",
@@ -720,9 +1121,143 @@ async function imageAction(rawUrl, response) {
       "nosniff"
     );
 
-    return response.status(200).send(buffer);
+    return response
+      .status(200)
+      .send(buffer);
   } finally {
     clearTimeout(timer);
   }
 }
 
+/**
+ * Gửi phản hồi JSON.
+ */
+function sendJson(
+  response,
+  status,
+  payload
+) {
+  response.setHeader(
+    "Content-Type",
+    "application/json; charset=utf-8"
+  );
+
+  response.setHeader(
+    "Cache-Control",
+    "no-store"
+  );
+
+  return response
+    .status(status)
+    .json(payload);
+}
+
+/**
+ * Điểm vào chính của Vercel Serverless Function.
+ */
+module.exports = async function handler(
+  request,
+  response
+) {
+  if (request.method !== "GET") {
+    response.setHeader(
+      "Allow",
+      "GET"
+    );
+
+    return sendJson(
+      response,
+      405,
+      {
+        error:
+          "Chỉ hỗ trợ phương thức GET",
+      }
+    );
+  }
+
+  const action = clean(
+    request.query?.action || "list"
+  ).toLowerCase();
+
+  try {
+    if (action === "list") {
+      const result = await listAction(
+        request.query?.page,
+        request.query?.q
+      );
+
+      return sendJson(
+        response,
+        200,
+        result
+      );
+    }
+
+    if (action === "detail") {
+      const result = await detailAction(
+        request.query?.url
+      );
+
+      return sendJson(
+        response,
+        200,
+        result
+      );
+    }
+
+    if (action === "chapter") {
+      const result = await chapterAction(
+        request.query?.url
+      );
+
+      return sendJson(
+        response,
+        200,
+        result
+      );
+    }
+
+    if (action === "image") {
+      return await imageAction(
+        request.query?.url,
+        request.query?.ref,
+        response
+      );
+    }
+
+    return sendJson(
+      response,
+      400,
+      {
+        error:
+          `Action không hợp lệ: ${action}`,
+      }
+    );
+  } catch (error) {
+    const status =
+      Number(error?.status) ||
+      (
+        error?.name === "AbortError"
+          ? 504
+          : 500
+      );
+
+    console.error(
+      "[truyenqq]",
+      action,
+      error
+    );
+
+    return sendJson(
+      response,
+      status,
+      {
+        error:
+          error?.name === "AbortError"
+            ? "Nguồn truyện phản hồi quá lâu"
+            : error?.message ||
+              "Lỗi máy chủ không xác định",
+      }
+    );
+  }
+};
