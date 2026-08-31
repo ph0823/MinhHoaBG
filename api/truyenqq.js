@@ -19,67 +19,91 @@ const headers = {
 };
 
 const CATEGORY_CONFIG = {
-  kids: {
-    label: "Thiếu nhi chọn lọc",
-    groups: [
-      "comedy",
-      "school",
-      "adventure",
-      "sports",
-      "slice",
-    ],
-  },
-
-  comedy: {
-    label: "Hài hước",
-    aliases: [
-      "comedy",
-      "hai-huoc",
-      "hài hước",
-    ],
-  },
-
-  school: {
-    label: "Học đường",
-    aliases: [
-      "school-life",
-      "hoc-duong",
-      "học đường",
-    ],
-  },
-
-  adventure: {
-    label: "Phiêu lưu",
-    aliases: [
-      "adventure",
-      "phieu-luu",
-      "phiêu lưu",
-    ],
-  },
-
-  sports: {
-    label: "Thể thao",
-    aliases: [
-      "sports",
-      "sport",
-      "the-thao",
-      "thể thao",
-    ],
-  },
-
-  slice: {
-    label: "Đời thường",
-    aliases: [
-      "slice-of-life",
-      "doi-thuong",
-      "đời thường",
-    ],
-  },
-
-  all: {
-    label: "Tất cả truyện",
-  },
+  kids: { label: "Nội dung học sinh", slug: "kids" },
+  all: { label: "Tất cả truyện", slug: "all" },
+  action: { label: "Action", slug: "action" },
+  adventure: { label: "Adventure", slug: "adventure" },
+  anime: { label: "Anime", slug: "anime" },
+  chuyenSinh: { label: "Chuyển Sinh", slug: "chuyen-sinh" },
+  coDai: { label: "Cổ Đại", slug: "co-dai" },
+  comedy: { label: "Comedy", slug: "comedy" },
+  comic: { label: "Comic", slug: "comic" },
+  demons: { label: "Demons", slug: "demons" },
+  detective: { label: "Detective", slug: "detective" },
+  doujinshi: { label: "Doujinshi", slug: "doujinshi" },
+  drama: { label: "Drama", slug: "drama" },
+  fantasy: { label: "Fantasy", slug: "fantasy" },
+  genderBender: { label: "Gender Bender", slug: "gender-bender" },
+  harem: { label: "Harem", slug: "harem" },
+  historical: { label: "Historical", slug: "historical" },
+  horror: { label: "Horror", slug: "horror" },
+  huyenHuyen: { label: "Huyền Huyễn", slug: "huyen-huyen" },
+  isekai: { label: "Isekai", slug: "isekai" },
+  josei: { label: "Josei", slug: "josei" },
+  mafia: { label: "Mafia", slug: "mafia" },
+  magic: { label: "Magic", slug: "magic" },
+  manga: { label: "Manga", slug: "manga" },
+  manhua: { label: "Manhua", slug: "manhua" },
+  manhwa: { label: "Manhwa", slug: "manhwa" },
+  martialArts: { label: "Martial Arts", slug: "martial-arts" },
+  military: { label: "Military", slug: "military" },
+  mystery: { label: "Mystery", slug: "mystery" },
+  ngonTinh: { label: "Ngôn Tình", slug: "ngon-tinh" },
+  oneShot: { label: "One shot", slug: "one-shot" },
+  psychological: { label: "Psychological", slug: "psychological" },
+  romance: { label: "Romance", slug: "romance" },
+  schoolLife: { label: "School Life", slug: "school-life" },
+  sciFi: { label: "Sci-fi", slug: "sci-fi" },
+  seinen: { label: "Seinen", slug: "seinen" },
+  shoujo: { label: "Shoujo", slug: "shoujo" },
+  shoujoAi: { label: "Shoujo Ai", slug: "shoujo-ai" },
+  shounen: { label: "Shounen", slug: "shounen" },
+  shounenAi: { label: "Shounen Ai", slug: "shounen-ai" },
+  sliceOfLife: { label: "Slice of life", slug: "slice-of-life" },
+  sports: { label: "Sports", slug: "sports" },
+  supernatural: { label: "Supernatural", slug: "supernatural" },
+  tragedy: { label: "Tragedy", slug: "tragedy" },
+  trongSinh: { label: "Trọng Sinh", slug: "trong-sinh" },
+  truyenMau: { label: "Truyện Màu", slug: "truyen-mau" },
+  webtoon: { label: "Webtoon", slug: "webtoon" },
+  xuyenKhong: { label: "Xuyên Không", slug: "xuyen-khong" },
 };
+
+// Các thể loại ưu tiên khi bật "Nội dung học sinh".
+const KIDS_PRIORITY_CATEGORIES = [
+  "comedy",
+  "schoolLife",
+  "adventure",
+  "sports",
+  "sliceOfLife",
+  "detective",
+  "comic",
+  "anime",
+  "fantasy",
+  "magic",
+  "sciFi",
+  "shounen",
+  "shoujo",
+  "supernatural",
+];
+
+// Các nhãn thể loại bị loại bỏ hoàn toàn trong chế độ học sinh.
+const UNSAFE_GENRES = [
+  "doujinshi",
+  "gender bender",
+  "harem",
+  "horror",
+  "josei",
+  "mafia",
+  "military",
+  "ngôn tình",
+  "psychological",
+  "romance",
+  "seinen",
+  "shoujo ai",
+  "shounen ai",
+  "tragedy",
+];
 
 const UNSAFE_WORDS = [
   "18+",
@@ -145,16 +169,18 @@ function normalizeText(value = "") {
  * Kiểm tra truyện có chứa từ khóa không phù hợp hay không.
  */
 function isSafeStory(item) {
+  const genres = (item.genres || []).map(normalizeText);
   const haystack = normalizeText(
-    [
-      item.title,
-      item.status,
-      item.latestChapter,
-      ...(item.genres || []),
-    ]
+    [item.title, item.status, item.latestChapter, ...genres]
       .filter(Boolean)
       .join(" ")
   );
+
+  if (UNSAFE_GENRES.some((genre) =>
+    genres.some((value) => value === normalizeText(genre))
+  )) {
+    return false;
+  }
 
   return !UNSAFE_WORDS.some((word) =>
     haystack.includes(normalizeText(word))
@@ -669,133 +695,75 @@ function getTotalPages(
 }
 
 /**
- * Tìm các đường dẫn thể loại hiện có.
+ * Tạo các biến thể URL phân trang của một thể loại.
+ * TruyenQQ từng dùng cả query page và đường dẫn trang-x.html.
  */
-async function discoverCategoryLinks() {
-  const result =
-    await fetchFromBases(
-      (base) => base
-    );
+function categoryCandidates(base, slug, page) {
+  const root = `${base}/the-loai/${slug}`;
 
-  const $ = cheerio.load(
-    result.html
-  );
-
-  const links = [];
-
-  $(
-    'a[href*="/the-loai/"]'
-  ).each((_, element) => {
-    const href = absolute(
-      $(element).attr("href"),
-      result.finalUrl
-    );
-
-    const text = clean(
-      $(element).text()
-    );
-
-    if (href) {
-      links.push({
-        href,
-        text,
-
-        key: normalizeText(
-          `${text} ${href}`
-        ),
-      });
-    }
-  });
-
-  return uniqueBy(
-    links,
-    (item) => item.href
-  );
-}
-
-/**
- * Tìm URL tương ứng với nhóm thể loại.
- */
-function findCategoryLink(
-  links,
-  categoryKey
-) {
-  const config =
-    CATEGORY_CONFIG[categoryKey];
-
-  if (!config?.aliases) {
-    return "";
-  }
-
-  for (
-    const alias of config.aliases
-  ) {
-    const key =
-      normalizeText(alias);
-
-    const found = links.find(
-      (item) =>
-        item.key.includes(key)
-    );
-
-    if (found) {
-      return found.href;
-    }
-  }
-
-  return "";
-}
-
-/**
- * Thêm tham số trang vào URL thể loại.
- */
-function withPage(url, page) {
   if (page <= 1) {
-    return url;
+    return [root, `${root}.html`];
   }
 
-  try {
-    const parsed =
-      new URL(url);
-
-    parsed.searchParams.set(
-      "page",
-      page
-    );
-
-    return parsed.href;
-  } catch {
-    return url;
-  }
+  return [
+    `${root}/trang-${page}.html`,
+    `${root}.html?page=${page}`,
+    `${root}?page=${page}`,
+  ];
 }
 
-/**
- * Tải một trang thể loại.
- */
-async function loadCategoryPage(
-  url,
-  page
-) {
-  const result =
-    await fetchHtml(
-      withPage(url, page)
-    );
+async function loadCategoryByKey(categoryKey, page) {
+  const config = CATEGORY_CONFIG[categoryKey];
+
+  if (!config || !config.slug || ["kids", "all"].includes(config.slug)) {
+    throw new Error("Thể loại không hợp lệ");
+  }
+
+  let lastError;
+
+  for (const base of BASES) {
+    for (const url of categoryCandidates(base, config.slug, page)) {
+      try {
+        const result = await fetchHtml(url);
+        const items = extractItems(result.html, result.finalUrl);
+
+        if (items.length) {
+          return {
+            items,
+            totalPages: getTotalPages(result.html, page),
+          };
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+  }
+
+  throw lastError || new Error(`Không tải được thể loại ${config.label}`);
+}
+
+async function loadLatestPage(page) {
+  let result = await fetchFromBases(
+    (base) => `${base}/truyen-moi-cap-nhat/trang-${page}.html`
+  );
+
+  let items = extractItems(result.html, result.finalUrl);
+
+  if (!items.length) {
+    result = await fetchFromBases((base) => `${base}/?page=${page}`);
+    items = extractItems(result.html, result.finalUrl);
+  }
 
   return {
-    items: extractItems(
-      result.html,
-      result.finalUrl
-    ),
-
-    totalPages: getTotalPages(
-      result.html,
-      page
-    ),
+    items,
+    totalPages: getTotalPages(result.html, page),
   };
 }
 
 /**
  * Lấy danh sách truyện.
+ * safe=1: chỉ ưu tiên các nhóm phù hợp học sinh và lọc nhãn nhạy cảm.
+ * safe=0: cho phép người dùng duyệt toàn bộ thể loại TruyenQQ cung cấp.
  */
 async function listAction(
   page,
@@ -803,235 +771,91 @@ async function listAction(
   categoryText = "kids",
   safeText = "1"
 ) {
-  const currentPage = Math.max(
-    1,
-    Number.parseInt(page, 10) ||
-      1
-  );
+  const currentPage = Math.max(1, Number.parseInt(page, 10) || 1);
+  const query = clean(queryText);
+  const safeMode = String(safeText) !== "0";
+  let category = CATEGORY_CONFIG[categoryText] ? categoryText : "kids";
 
-  const query =
-    clean(queryText);
+  // Khi bật chế độ học sinh, không cho truy cập trực tiếp nhóm nhạy cảm.
+  if (safeMode && !["kids", ...KIDS_PRIORITY_CATEGORIES].includes(category)) {
+    category = "kids";
+  }
 
-  const category =
-    CATEGORY_CONFIG[categoryText]
-      ? categoryText
-      : "kids";
-
-  const safeMode =
-    String(safeText) !== "0";
-
-  /*
-   * Tìm kiếm truyện.
-   */
   if (query) {
-    const result =
-      await fetchFromBases(
-        (base) =>
-          `${base}/tim-kiem.html` +
-          `?q=${encodeURIComponent(
-            query
-          )}` +
-          `&page=${currentPage}`
-      );
-
-    let items = extractItems(
-      result.html,
-      result.finalUrl
+    const result = await fetchFromBases(
+      (base) =>
+        `${base}/tim-kiem.html?q=${encodeURIComponent(query)}` +
+        `&page=${currentPage}`
     );
 
-    if (safeMode) {
-      items =
-        items.filter(isSafeStory);
-    }
+    let items = extractItems(result.html, result.finalUrl);
+    if (safeMode) items = items.filter(isSafeStory);
 
     return {
       items,
       page: currentPage,
-
-      totalPages: getTotalPages(
-        result.html,
-        currentPage
-      ),
-
+      totalPages: getTotalPages(result.html, currentPage),
       category,
       safeMode,
+      categories: CATEGORY_CONFIG,
+      allowedCategories: safeMode ? KIDS_PRIORITY_CATEGORIES : Object.keys(CATEGORY_CONFIG),
     };
   }
 
-  /*
-   * Hiển thị tất cả truyện mới cập nhật.
-   */
-  if (category === "all") {
-    const result =
-      await fetchFromBases(
-        (base) =>
-          `${base}/truyen-moi-cap-nhat/` +
-          `trang-${currentPage}.html`
-      );
-
-    let items = extractItems(
-      result.html,
-      result.finalUrl
-    );
-
-    /*
-     * Dự phòng khi nguồn không dùng
-     * đường dẫn trang-x.html.
-     */
-    if (!items.length) {
-      const alternative =
-        await fetchFromBases(
-          (base) =>
-            `${base}/?page=${currentPage}`
-        );
-
-      items = extractItems(
-        alternative.html,
-        alternative.finalUrl
-      );
-
-      if (safeMode) {
-        items =
-          items.filter(isSafeStory);
-      }
-
-      return {
-        items,
-        page: currentPage,
-
-        totalPages: getTotalPages(
-          alternative.html,
-          currentPage
-        ),
-
-        category,
-        safeMode,
-      };
-    }
-
-    if (safeMode) {
-      items =
-        items.filter(isSafeStory);
-    }
-
+  if (!safeMode && category === "all") {
+    const result = await loadLatestPage(currentPage);
     return {
-      items,
+      ...result,
       page: currentPage,
-
-      totalPages: getTotalPages(
-        result.html,
-        currentPage
-      ),
-
       category,
       safeMode,
+      categories: CATEGORY_CONFIG,
+      allowedCategories: Object.keys(CATEGORY_CONFIG),
     };
   }
 
-  /*
-   * Tải danh sách các thể loại từ nguồn.
-   */
-  const links =
-    await discoverCategoryLinks();
+  const requested = category === "kids"
+    ? KIDS_PRIORITY_CATEGORIES
+    : [category];
 
-  const requestedGroups =
-    category === "kids"
-      ? CATEGORY_CONFIG.kids.groups
-      : [category];
-
-  const categoryUrls =
-    requestedGroups
-      .map((key) => ({
-        key,
-
-        url: findCategoryLink(
-          links,
-          key
-        ),
-      }))
-      .filter(
-        (item) => item.url
-      );
-
-  if (!categoryUrls.length) {
-    throw new Error(
-      "Không tìm thấy đường dẫn thể loại từ nguồn truyện."
-    );
-  }
-
-  /*
-   * Tải đồng thời các thể loại phù hợp.
-   */
-  const results =
-    await Promise.allSettled(
-      categoryUrls.map(
-        (item) =>
-          loadCategoryPage(
-            item.url,
-            currentPage
-          )
-      )
-    );
+  const results = await Promise.allSettled(
+    requested.map((key) => loadCategoryByKey(key, currentPage))
+  );
 
   let items = [];
-  let totalPages =
-    currentPage;
+  let totalPages = currentPage;
 
-  results.forEach((result) => {
-    if (
-      result.status ===
-      "fulfilled"
-    ) {
-      items.push(
-        ...result.value.items
-      );
-
-      totalPages = Math.max(
-        totalPages,
-        result.value.totalPages ||
-          currentPage
-      );
-    }
-  });
-
-  items = uniqueBy(
-    items,
-    (item) => item.url
-  );
-
-  if (
-    safeMode ||
-    category === "kids"
-  ) {
-    items =
-      items.filter(isSafeStory);
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    items.push(...result.value.items);
+    totalPages = Math.max(totalPages, result.value.totalPages || currentPage);
   }
 
-  /*
-   * Sắp xếp ổn định để tránh dồn toàn bộ
-   * truyện của một thể loại lên đầu.
-   */
+  items = uniqueBy(items, (item) => item.url);
+  if (safeMode) items = items.filter(isSafeStory);
+
+  // Trộn đều kết quả theo tên để không dồn một thể loại lên đầu.
   items.sort((a, b) =>
-    normalizeText(
-      a.title
-    ).localeCompare(
-      normalizeText(b.title),
-      "vi"
-    )
+    normalizeText(a.title).localeCompare(normalizeText(b.title), "vi")
   );
+
+  if (!items.length) {
+    throw new Error(
+      safeMode
+        ? "Không tải được nhóm truyện học sinh từ nguồn."
+        : "Không tìm thấy truyện trong thể loại đã chọn."
+    );
+  }
 
   return {
     items,
     page: currentPage,
     totalPages,
     category,
-
-    safeMode:
-      safeMode ||
-      category === "kids",
-
-    categoryLabel:
-      CATEGORY_CONFIG[category].label,
+    categoryLabel: CATEGORY_CONFIG[category]?.label || "Truyện",
+    safeMode,
+    categories: CATEGORY_CONFIG,
+    allowedCategories: safeMode ? KIDS_PRIORITY_CATEGORIES : Object.keys(CATEGORY_CONFIG),
   };
 }
 
