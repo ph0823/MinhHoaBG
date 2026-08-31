@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <title>Xuan Nhi Reader</title>
+  <title>Manga Reader</title>
   <style>
     :root {
       --bg: #0b1020;
@@ -692,9 +692,16 @@
         const tagData = await fetchJson(apiUrl("/manga/tag"));
         const tagMap = new Map((tagData.data || []).map(tag => [tag.attributes?.name?.en, tag.id]));
 
+        // Mỗi truyện chỉ được xuất hiện ở một nhóm.
+        // Nhóm đứng trước trong SUGGESTION_GROUPS có mức ưu tiên cao hơn.
+        const usedMangaIds = new Set();
+
         for (const group of SUGGESTION_GROUPS) {
           const params = new URLSearchParams();
-          params.set("limit", "12");
+
+          // Lấy nhiều ứng viên hơn số cần hiển thị để còn truyện thay thế
+          // sau khi loại các truyện đã xuất hiện ở nhóm trước.
+          params.set("limit", "48");
           params.append("includes[]", "cover_art");
           params.append("availableTranslatedLanguage[]", "vi");
           params.append("availableTranslatedLanguage[]", "en");
@@ -706,11 +713,19 @@
           group.tags.map(name => tagMap.get(name)).filter(Boolean).forEach(id => params.append("includedTags[]", id));
 
           const data = await fetchJson(apiUrl(`/manga?${params.toString()}`));
-          const items = (data.data || []).slice(0, 12);
+          const items = [];
+
+          for (const manga of data.data || []) {
+            if (!manga?.id || usedMangaIds.has(manga.id)) continue;
+            items.push(manga);
+            usedMangaIds.add(manga.id);
+            if (items.length === 12) break;
+          }
+
           const grid = document.querySelector(`#group-${group.id} .group-grid`);
           if (!grid) continue;
           if (!items.length) {
-            renderStatus(grid, "Chưa tìm thấy truyện phù hợp trong nhóm này.");
+            renderStatus(grid, "Chưa tìm thấy truyện riêng biệt phù hợp trong nhóm này.");
             continue;
           }
           grid.innerHTML = mangaCardsHtml(items);
