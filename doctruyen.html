@@ -46,8 +46,6 @@
         <button class="filter-btn" data-category="sliceOfLife" type="button">🌿 Slice of life</button>
         <button class="filter-btn" data-category="detective" type="button">🔎 Detective</button>
         <button class="filter-btn" data-category="comic" type="button">📖 Comic</button>
-        <button class="filter-btn" data-category="fantasy" type="button">✨ Fantasy</button>
-        <button class="filter-btn" data-category="magic" type="button">🪄 Magic</button>
       </div>
       <div id="safeNote" class="safe-note">Đang bật “Nội dung học sinh”</div>
       <div id="listError" class="error hidden"></div>
@@ -115,13 +113,13 @@
 
   async function loadStories(page=1, query=state.query, category=state.category){
     showView('listView'); state.page=Math.max(1,Number(page)||1); state.query=query.trim(); state.category=category;
-    if(state.safeMode && !['kids','comedy','schoolLife','adventure','sports','sliceOfLife','detective','comic','anime','fantasy','magic','sciFi','shounen','shoujo','supernatural'].includes(state.category)) state.category='kids';
+    if(state.safeMode && !['kids','comedy','schoolLife','adventure','sports','sliceOfLife','detective','comic'].includes(state.category)) state.category='kids';
     $('listError').classList.add('hidden'); $('listStatus').classList.add('hidden'); $('pagination').classList.add('hidden'); syncFilterUi();
     const isHome=!state.query&&state.category==='kids'&&state.safeMode;
     const label=isHome?'20 truyện gợi ý cho thiếu nhi':(state.category==='kids'?'Truyện gợi ý cho học sinh':(allCategories[state.category]||'Truyện gợi ý'));
     $('listTitle').textContent=state.query?`${state.safeMode?'Kết quả an toàn':'Kết quả'}: “${state.query}”`:label;
     $('listSubtitle').textContent=isHome
-      ? 'Tập trung Comedy, Comic, Magic, Fantasy, Adventure; ưu tiên tên tiếng Việt và truyện đã hoàn thành hoặc trên 10 chương'
+      ? 'Tập trung Comedy, Comic, Adventure, School Life, Sports; ưu tiên tên tiếng Việt và truyện đã hoàn thành hoặc trên 10 chương'
       : (state.safeMode?'Danh sách ưu tiên nội dung phù hợp học sinh':'Đang hiển thị theo toàn bộ thể loại nguồn cung cấp');
     placeholders(innerWidth<700?6:10);
     try{
