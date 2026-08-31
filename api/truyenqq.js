@@ -85,7 +85,8 @@ const KIDS_ALLOWED = new Set([...KIDS_SECTIONS, "anime", "supernatural"]);
 const UNSAFE_GENRES = [
   "doujinshi", "gender bender", "harem", "horror", "josei", "mafia",
   "military", "ngôn tình", "psychological", "romance", "seinen",
-  "shoujo ai", "shounen ai", "tragedy",
+  "shoujo ai", "shounen ai", "tragedy", 
+  "cổ đại", "xuyên không", "trọng sinh", "chuyển sinh" // Bổ sung
 ];
 
 const UNSAFE_WORDS = [
@@ -93,6 +94,9 @@ const UNSAFE_WORDS = [
   "boys love", "girls love", "đam mỹ", "bách hợp", "kinh dị", "horror",
   "psychological", "tình dục", "nóng bỏng", "khỏa thân", "khoả thân",
   "ngoại tình", "loạn luân", "cưỡng hiếp", "hiếp dâm", "máu me",
+  // Bổ sung các từ khóa từ thực tế bỏ lọt
+  "doujinshi", "ác ma", "phản diện", "villainess", "giết", "tuyệt vọng",
+  "sát thủ", "yêu nữ", "dục vọng", "bạo chúa", "tổng tài", "quyến rũ", "hôn phu"
 ];
 
 /* =========================================================
