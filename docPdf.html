@@ -10,7 +10,7 @@
 
   <meta name="theme-color" content="#0f766e">
 
-  <title>Tủ Sách & Nhạc</title>
+  <title>Tủ Sách & Nhạc 2026</title>
 
   <!-- Google Identity Services -->
   <script
@@ -1819,23 +1819,11 @@
 
           const params = new URLSearchParams({
             q: query,
-
-            fields:
-              "nextPageToken,files(" +
-              "id,name,mimeType,size,modifiedTime" +
-              ")",
-
-            orderBy:
-              "folder,name_natural",
-
-            pageSize:
-              String(CONFIG.MAX_FILES_PER_PAGE),
-
-            supportsAllDrives:
-              "true",
-
-            includeItemsFromAllDrives:
-              "true"
+            fields: "nextPageToken,files(id,name,mimeType,size,modifiedTime)",
+            orderBy: "folder,name_natural", // <-- Lỗi ở đây
+            pageSize: String(CONFIG.MAX_FILES_PER_PAGE),
+            supportsAllDrives: "true",
+            includeItemsFromAllDrives: "true"
           });
 
           if (pageToken) {
