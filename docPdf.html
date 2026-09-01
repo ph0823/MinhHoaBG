@@ -991,6 +991,144 @@
         animation: none !important;
       }
     }
+
+
+    /* =====================================================
+       CHẾ ĐỘ ĐỌC TẬP TRUNG - VỪA CHIỀU CAO
+       ===================================================== */
+
+    .focus-controls-button {
+      position: absolute;
+      top: calc(8px + var(--safe-top));
+      left: calc(8px + var(--safe-left));
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      border-radius: 13px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.24);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 45;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      body.height-focus-mode .app-header {
+        display: none;
+      }
+
+      body.height-focus-mode .sidebar {
+        top: 0;
+      }
+
+      body.height-focus-mode .viewer {
+        height: 100dvh;
+      }
+
+      body.height-focus-mode .pdf-toolbar {
+        position: absolute;
+        top: calc(6px + var(--safe-top));
+        left: calc(58px + var(--safe-left));
+        right: calc(6px + var(--safe-right));
+        min-height: 46px;
+        max-height: 52px;
+        padding: 4px 6px;
+        gap: 5px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        justify-content: flex-start;
+        border: 1px solid rgba(203, 213, 225, 0.72);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.93);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        transition: transform .2s ease, opacity .2s ease, visibility .2s ease;
+        z-index: 40;
+        scrollbar-width: none;
+      }
+
+      body.height-focus-mode .pdf-toolbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      body.height-focus-mode .pdf-toolbar.controls-hidden {
+        transform: translateY(calc(-100% - 18px));
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      body.height-focus-mode .pdf-toolbar .toolbar-group {
+        gap: 4px;
+      }
+
+      body.height-focus-mode .pdf-toolbar .button,
+      body.height-focus-mode .pdf-toolbar .fit-select {
+        min-height: 38px;
+        height: 38px;
+      }
+
+      body.height-focus-mode .pdf-toolbar .icon-button {
+        width: 38px;
+        height: 38px;
+      }
+
+      body.height-focus-mode .pdf-toolbar .page-status {
+        min-width: 72px;
+        font-size: .8rem;
+      }
+
+      body.height-focus-mode .pdf-toolbar .zoom-status {
+        min-width: 50px;
+        font-size: .76rem;
+      }
+
+      body.height-focus-mode .pdf-toolbar .fit-select {
+        max-width: 142px;
+        padding: 4px 7px;
+        font-size: .82rem;
+      }
+
+      body.height-focus-mode .pdf-toolbar #page-effect,
+      body.height-focus-mode .pdf-toolbar #btn-download-original,
+      body.height-focus-mode .pdf-toolbar #btn-zoom-out,
+      body.height-focus-mode .pdf-toolbar #btn-zoom-in,
+      body.height-focus-mode .pdf-toolbar #zoom-status {
+        display: none;
+      }
+
+      body.height-focus-mode .focus-controls-button {
+        display: inline-flex;
+      }
+
+      body.height-focus-mode .pdf-container {
+        padding:
+          calc(2px + var(--safe-top))
+          calc(2px + var(--safe-right))
+          calc(2px + var(--safe-bottom))
+          calc(2px + var(--safe-left));
+        background: #111827;
+      }
+
+      body.height-focus-mode #pdf-canvas {
+        box-shadow: none;
+      }
+
+      body.height-focus-mode .toast-region {
+        top: calc(58px + var(--safe-top));
+      }
+    }
+
   </style>
 </head>
 
@@ -1243,6 +1381,17 @@
           </div>
         </div>
 
+
+        <button
+          id="btn-focus-controls"
+          class="focus-controls-button"
+          type="button"
+          aria-label="Hiện hoặc ẩn thanh điều khiển"
+          title="Điều khiển đọc"
+        >
+          ☰
+        </button>
+
         <!-- PDF VIEWER -->
         <section
           id="pdf-container"
@@ -1398,7 +1547,8 @@
       touchStartTime: 0,
       touchTracking: false,
 
-      resizeTimer: null
+      resizeTimer: null,
+      focusControlsTimer: null
     };
 
     /* =====================================================
@@ -1441,6 +1591,9 @@
 
       pdfContainer:
         document.getElementById("pdf-container"),
+
+      btnFocusControls:
+        document.getElementById("btn-focus-controls"),
 
       pdfCanvas:
         document.getElementById("pdf-canvas"),
@@ -1669,6 +1822,18 @@
       dom.pageEffect.addEventListener(
         "change",
         handlePageEffectChange
+      );
+
+
+      dom.btnFocusControls.addEventListener(
+        "click",
+        toggleFocusControls
+      );
+
+      dom.pdfToolbar.addEventListener(
+        "pointerdown",
+        keepFocusControlsVisible,
+        { passive: true }
       );
 
       dom.pdfContainer.addEventListener(
@@ -2839,6 +3004,8 @@
       dom.pdfContainer.style.display =
         "block";
 
+      updateHeightFocusMode(true);
+
       dom.pageNum.textContent = "0";
       dom.pageCount.textContent = "0";
 
@@ -3530,6 +3697,19 @@
       const relativeX =
         event.clientX - rect.left;
 
+      const relativeY =
+        event.clientY - rect.top;
+
+      if (
+        isHeightFocusMode() &&
+        (relativeY <= 90 ||
+          (relativeX > rect.width * 0.25 &&
+           relativeX < rect.width * 0.75))
+      ) {
+        showFocusControls();
+        return;
+      }
+
       const edgeZone =
         rect.width * 0.18;
 
@@ -3603,6 +3783,7 @@
         dom.fitMode.value;
 
       state.customZoom = 1;
+      updateHeightFocusMode(true);
 
       if (state.pdfDoc) {
         renderPage(
@@ -3612,6 +3793,90 @@
           }
         );
       }
+    }
+
+
+    function isHeightFocusMode() {
+      return (
+        state.fitMode === "height" &&
+        Boolean(state.pdfDoc) &&
+        window.innerWidth <= 900
+      );
+    }
+
+    function updateHeightFocusMode(showControls = false) {
+      const enabled = isHeightFocusMode();
+
+      document.body.classList.toggle(
+        "height-focus-mode",
+        enabled
+      );
+
+      if (!enabled) {
+        clearTimeout(state.focusControlsTimer);
+        dom.pdfToolbar.classList.remove("controls-hidden");
+        return;
+      }
+
+      if (showControls) {
+        showFocusControls();
+      } else {
+        scheduleFocusControlsHide();
+      }
+    }
+
+    function showFocusControls() {
+      if (!isHeightFocusMode()) {
+        return;
+      }
+
+      dom.pdfToolbar.classList.remove("controls-hidden");
+      dom.btnFocusControls.textContent = "✕";
+      dom.btnFocusControls.setAttribute("aria-expanded", "true");
+      scheduleFocusControlsHide();
+    }
+
+    function hideFocusControls() {
+      if (!isHeightFocusMode()) {
+        return;
+      }
+
+      dom.pdfToolbar.classList.add("controls-hidden");
+      dom.btnFocusControls.textContent = "☰";
+      dom.btnFocusControls.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleFocusControls(event) {
+      event.stopPropagation();
+
+      if (!isHeightFocusMode()) {
+        return;
+      }
+
+      if (dom.pdfToolbar.classList.contains("controls-hidden")) {
+        showFocusControls();
+      } else {
+        hideFocusControls();
+      }
+    }
+
+    function keepFocusControlsVisible() {
+      if (isHeightFocusMode()) {
+        scheduleFocusControlsHide();
+      }
+    }
+
+    function scheduleFocusControlsHide() {
+      clearTimeout(state.focusControlsTimer);
+
+      if (!isHeightFocusMode()) {
+        return;
+      }
+
+      state.focusControlsTimer = window.setTimeout(
+        hideFocusControls,
+        2600
+      );
     }
 
     function updatePageButtons() {
@@ -3804,6 +4069,8 @@
             closeSidebar();
           }
 
+          updateHeightFocusMode(false);
+
           if (
             state.pdfDoc &&
             (
@@ -3968,6 +4235,10 @@
 
       dom.pdfContainer.style.display =
         "none";
+
+      clearTimeout(state.focusControlsTimer);
+      document.body.classList.remove("height-focus-mode");
+      dom.pdfToolbar.classList.remove("controls-hidden");
     }
 
     async function cleanupPdfDocument() {
