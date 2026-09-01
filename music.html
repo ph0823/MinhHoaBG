@@ -766,7 +766,7 @@ const API_RETRIES = 3, RETRY_BASE_MS = 650, RETRY_MAX_MS = 15000, REQUEST_TIMEOU
 const RECOVERY_PROBE_BASE_MS = 1200, RECOVERY_PROBE_MAX_MS = 12000, RECOVERY_PROBE_TIMEOUT_MS = 8000;
 const STREAM_WATCHDOG_INTERVAL_MS = 1500, STREAM_STALL_THRESHOLD_MS = 12000, STREAM_LOW_BUFFER_SECONDS = 18;
 const INITIAL_CHUNKS_BEFORE_PLAY = 2, PREFETCH_SECONDS = 45;
-const CACHE_DB_NAME = 'gdrive-music-chunks-v5', CACHE_STORE_NAME = 'chunks', CACHE_DB_VERSION = 1;
+const CACHE_DB_NAME = 'gdrive-music-chunks-v6', CACHE_STORE_NAME = 'chunks', CACHE_DB_VERSION = 1;
 const MAX_CACHE_ENTRIES = 320, PLAYBACK_UI_INTERVAL_MS = 250, RECOVERY_BUFFER_TARGET_SECONDS = 300;
 
 const IS_TV_DEVICE = /web0s|webos|netcast|smarttv|tizen|hbbtv|aftb|aftm|aftt/i.test(navigator.userAgent || '');
@@ -1191,9 +1191,16 @@ function waitForPlaybackStart(
 }
 
 function init() {
-  bindEvents(); restorePreferences(); configurePlayers();
-  bindNetworkEvents(); startConnectionDiagnostics(); startVisualizer();
-  startStreamWatchdog(); openChunkDb().then(() => pruneChunkCache()).catch(() => {});
+  bindEvents();
+  restorePreferences();
+  configurePlayers();
+  bindNetworkEvents();
+  initializeMediaSession();
+  startConnectionDiagnostics();
+  startVisualizer();
+  startStreamWatchdog();
+  openChunkDb().then(() => pruneChunkCache()).catch(() => {});
+  pruneSavedPositions();
   initializeGoogleDriveAuth();
 }
 
@@ -1899,98 +1906,111 @@ function drawLedVisualizer(canvas, context) {
 // ========================
 
 // (CÁC HÀM CÒN LẠI ĐƯỢC GIỮ NGUYÊN ĐỂ HOẠT ĐỘNG LOGIC, đã ẩn bớt độ dài để hiển thị code gọn gàng)
+
+function debounce(callback, wait = 180) {
+  let timer = 0;
+  return function debounced(...args) {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => callback.apply(this, args), wait);
+  };
+}
+function isTypingElement(element) {
+  if (!element) return false;
+  const tag = String(element.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || element.isContentEditable;
+}
+function closeMobileSidebar() {
+  if (window.matchMedia('(max-width: 820px)').matches) els.sidebar.classList.remove('open');
+}
+function seekRelative(seconds) {
+  const player = activeAudio();
+  if (!player || !player.src || !Number.isFinite(player.currentTime)) return;
+  const duration = getEffectiveDuration(player);
+  const target = Math.max(0, duration > 0 ? Math.min(duration, player.currentTime + seconds) : player.currentTime + seconds);
+  const session = playerStreamSessions[activePlayerIndex];
+  if (session && !session.completed && player.buffered && player.buffered.length) {
+    let start = 0, end = 0;
+    try { start = player.buffered.start(0); end = player.buffered.end(player.buffered.length - 1); } catch (_) {}
+    if (target < start - .2 || target > end + .5) {
+      showToast(`Chỉ có thể tua trong vùng đã tải: ${formatTime(start)} – ${formatTime(end)}.`);
+      return;
+    }
+  }
+  try { player.currentTime = target; syncPlaybackUi(); } catch (_) {}
+}
+function handleGlobalKeyboard(event) {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || isTypingElement(event.target)) return;
+  switch (event.code) {
+    case 'Space': event.preventDefault(); ensureAudioEffects().catch(() => {}).finally(togglePlay); break;
+    case 'ArrowLeft': event.preventDefault(); seekRelative(-10); break;
+    case 'ArrowRight': event.preventDefault(); seekRelative(10); break;
+    case 'ArrowUp': event.preventDefault(); els.volume.value = String(Math.min(1, getUserVolume() + .05)); els.volume.dispatchEvent(new Event('input')); break;
+    case 'ArrowDown': event.preventDefault(); els.volume.value = String(Math.max(0, getUserVolume() - .05)); els.volume.dispatchEvent(new Event('input')); break;
+    case 'KeyN': event.preventDefault(); playRelative(1); break;
+    case 'KeyP': event.preventDefault(); playRelative(-1); break;
+    case 'Escape': closeMobileSidebar(); break;
+  }
+}
+function handleDocumentVisibility() {
+  if (document.hidden) { stopVisualizer(); return; }
+  startVisualizer();
+  if (!activeAudio().paused && activeAudio().src) startPlaybackUiTicker();
+  syncPlaybackUi();
+}
+
 function bindEvents() {
+  const debouncedRenderList = debounce(renderList, 160);
   els.driveLogin.addEventListener('click', requestGoogleDriveAccess);
   els.driveLogout.addEventListener('click', disconnectGoogleDrive);
   els.menu.addEventListener('click', () => els.sidebar.classList.toggle('open'));
-  els.search.addEventListener('input', renderList);
-  els.playFolder.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); playAllCurrentFolder(); });
-  els.play.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); togglePlay(); });
-  els.prev.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); playRelative(-1); });
-  els.next.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); playRelative(1); });
+  els.search.addEventListener('input', debouncedRenderList);
+  els.search.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { els.search.value = ''; renderList(); els.search.blur(); }
+  });
+  els.playFolder.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); playAllCurrentFolder(); closeMobileSidebar(); });
+  els.play.addEventListener('click', async () => { await ensureAudioEffects().catch(() => {}); togglePlay(); });
+  els.prev.addEventListener('click', async () => { await ensureAudioEffects().catch(() => {}); playRelative(-1); });
+  els.next.addEventListener('click', async () => { await ensureAudioEffects().catch(() => {}); playRelative(1); });
   els.visualModeWave.addEventListener('click', () => setVisualizerMode('wave', { announce: true }));
   els.visualModeLed.addEventListener('click', () => setVisualizerMode('led', { announce: true }));
-  els.effectPreset.addEventListener('change', () => { ensureAudioEffects().catch(() => {}); applyEffectPreset(els.effectPreset.value, true); });
-  els.bassBoost.addEventListener('input', () => { ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.bass = Number(els.bassBoost.value); effectState.treble = 0; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
-  els.echoLevel.addEventListener('input', () => { ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.echo = Number(els.echoLevel.value) / 100; effectState.feedback = Math.min(0.32, effectState.echo * 0.82); effectState.delay = 0.2; effectState.compressorRatio = 3; effectState.master = 0.92; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
+  els.effectPreset.addEventListener('change', async () => { await ensureAudioEffects().catch(() => {}); applyEffectPreset(els.effectPreset.value, true); });
+  els.bassBoost.addEventListener('input', async () => { await ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.bass = Number(els.bassBoost.value); effectState.treble = 0; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
+  els.echoLevel.addEventListener('input', async () => { await ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.echo = Number(els.echoLevel.value) / 100; effectState.feedback = Math.min(.32, effectState.echo * .82); effectState.delay = .2; effectState.compressorRatio = 3; effectState.master = .92; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
   els.volume.addEventListener('input', () => {
     const volume = getUserVolume();
-
-    if (!transitionInProgress) {
-      setPlayerOutputLevel(
-        activePlayerIndex,
-        volume
-      );
-
-      /*
-       * Player không hoạt động phải luôn im lặng. Bản cũ đặt cùng âm lượng
-       * cho standby nên một luồng phát sót có thể làm lộ tiếng bài cũ.
-       */
-      setPlayerOutputLevel(
-        1 - activePlayerIndex,
-        0
-      );
-    }
-
-    localStorage.setItem(
-      'audio_volume',
-      els.volume.value
-    );
+    if (!transitionInProgress) { setPlayerOutputLevel(activePlayerIndex, volume); setPlayerOutputLevel(1 - activePlayerIndex, 0); }
+    try { localStorage.setItem('audio_volume', String(volume)); } catch (_) {}
   });
-  els.speed.addEventListener('change', () => { players.forEach(player => player.playbackRate = Number(els.speed.value)); localStorage.setItem('audio_speed', els.speed.value); });
+  els.speed.addEventListener('change', () => {
+    const speed = Number(els.speed.value);
+    players.forEach(player => player.playbackRate = speed);
+    try { localStorage.setItem('audio_speed', String(speed)); } catch (_) {}
+    updateMediaSessionPosition();
+  });
   els.autoNext.addEventListener('change', () => {
-    localStorage.setItem(
-      'audio_auto_next',
-      els.autoNext.checked ? '1' : '0'
-    );
-
-    if (els.autoNext.checked) {
-      scheduleNextPreload();
-    } else {
-      clearStandby();
-    }
+    try { localStorage.setItem('audio_auto_next', els.autoNext.checked ? '1' : '0'); } catch (_) {}
+    if (els.autoNext.checked) scheduleNextPreload(); else clearStandby();
   });
   els.seek.addEventListener('input', () => {
     const player = activeAudio();
     const target = Number(els.seek.value);
-
-    const session =
-      playerStreamSessions[
-        activePlayerIndex
-      ];
-
-    if (
-      session &&
-      !session.completed &&
-      player.buffered &&
-      player.buffered.length
-    ) {
-      let bufferedEnd = 0;
-
-      try {
-        bufferedEnd =
-          player.buffered.end(
-            player.buffered.length - 1
-          );
-      } catch (_) {}
-
-      if (target > bufferedEnd + 0.5) {
-        showToast(
-          `Vị trí này chưa được tải. Hiện đã tải đến ${formatTime(bufferedEnd)}.`,
-          false
-        );
-
-        els.seek.value =
-          player.currentTime || 0;
-
+    const session = playerStreamSessions[activePlayerIndex];
+    if (session && !session.completed && player.buffered && player.buffered.length) {
+      let start = 0, end = 0;
+      try { start = player.buffered.start(0); end = player.buffered.end(player.buffered.length - 1); } catch (_) {}
+      if (target < start - .2 || target > end + .5) {
+        showToast(`Vị trí này chưa được tải. Dữ liệu hiện có từ ${formatTime(start)} đến ${formatTime(end)}.`);
+        els.seek.value = String(player.currentTime || 0);
+        updateSeekProgressVisual(player);
         return;
       }
     }
-
-    player.currentTime = target;
-    updateSeekProgressVisual(player);
+    try { player.currentTime = target; syncPlaybackUi(); } catch (_) {}
   });
-  window.addEventListener('beforeunload', cleanupEverything);
+  document.addEventListener('keydown', handleGlobalKeyboard);
+  document.addEventListener('visibilitychange', handleDocumentVisibility);
+  window.addEventListener('pagehide', cleanupEverything, { once: true });
+  window.addEventListener('beforeunload', cleanupEverything, { once: true });
 }
 
 function disableUnsupportedAudioEffects(message) {
@@ -2459,114 +2479,87 @@ function requireGoogleDriveToken() {
   );
 }
 
-async function driveFetch(
-  url,
-  options = {},
-  externalSignal
-) {
-  requireGoogleDriveToken();
 
-  const controller =
-    new AbortController();
-
-  let timedOut = false;
-
-  const abortFromOutside = () => {
-    controller.abort();
+async function readDriveErrorResponse(response) {
+  let data = null;
+  let text = '';
+  try { data = await response.clone().json(); }
+  catch (_) { try { text = await response.clone().text(); } catch (_) {} }
+  const errorObject = data && data.error ? data.error : null;
+  const reasons = [];
+  if (errorObject && Array.isArray(errorObject.errors)) {
+    errorObject.errors.forEach(item => { if (item && item.reason) reasons.push(String(item.reason)); });
+  }
+  return {
+    status: response.status,
+    message: String(errorObject && errorObject.message || text || `Google Drive trả lỗi ${response.status}.`),
+    reasons
   };
+}
+
+function isDriveAuthenticationError(status, reasons = []) {
+  if (status === 401) return true;
+  const authReasons = new Set(['authError', 'invalidCredentials', 'required', 'loginRequired']);
+  return reasons.some(reason => authReasons.has(reason));
+}
+
+async function driveFetch(url, options = {}, externalSignal) {
+  requireGoogleDriveToken();
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromOutside = () => controller.abort();
 
   if (externalSignal) {
-    if (externalSignal.aborted) {
-      controller.abort();
-    } else {
-      externalSignal.addEventListener(
-        'abort',
-        abortFromOutside,
-        { once: true }
-      );
-    }
+    if (externalSignal.aborted) throw createAbortError();
+    externalSignal.addEventListener('abort', abortFromOutside, { once: true });
   }
 
-  const timer = window.setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, REQUEST_TIMEOUT_MS);
-
-  const headers =
-    new Headers(options.headers || {});
-
-  headers.set(
-    'Authorization',
-    `Bearer ${googleAccessToken}`
-  );
+  const timeoutMs = Math.max(3000, Number(options.timeoutMs || REQUEST_TIMEOUT_MS));
+  const timer = window.setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  const headers = new Headers(options.headers || {});
+  headers.set('Authorization', `Bearer ${googleAccessToken}`);
 
   try {
-    const response = await fetch(
-      url,
-      {
-        ...options,
-        headers,
-        signal: controller.signal,
-        cache: 'no-store'
-      }
-    );
-
-    if (
-      response.status === 401 ||
-      response.status === 403
-    ) {
-      googleAccessToken = '';
-      googleTokenExpiresAt = 0;
-      updateGoogleAuthUi(false);
-
-      throw new Error(
-        'Phiên Google Drive đã hết hạn. Hãy kết nối lại.'
-      );
-    }
+    const fetchOptions = { ...options, headers, signal: controller.signal, cache: 'no-store' };
+    delete fetchOptions.timeoutMs;
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
-      let message = '';
-
-      try {
-        const data = await response.json();
-        message =
-          data &&
-          data.error &&
-          data.error.message || '';
-      } catch (_) {
-        try {
-          message = await response.text();
-        } catch (_) {}
+      const details = await readDriveErrorResponse(response);
+      if (isDriveAuthenticationError(details.status, details.reasons)) {
+        googleAccessToken = '';
+        googleTokenExpiresAt = 0;
+        updateGoogleAuthUi(false);
+        throw new Error('Phiên Google Drive đã hết hạn. Hãy kết nối lại.');
       }
-
-      throw new Error(
-        message ||
-        `Google Drive trả về HTTP ${response.status}.`
-      );
+      if (details.status === 403) {
+        const limited = details.reasons.some(reason => ['rateLimitExceeded', 'userRateLimitExceeded'].includes(reason));
+        if (limited) throw new RetryableRequestError('Google Drive đang giới hạn số yêu cầu. Ứng dụng sẽ thử lại.', 403);
+        throw new Error(details.message || 'Không có quyền truy cập file hoặc thư mục Google Drive này.');
+      }
+      if (details.status === 408 || details.status === 429 || details.status >= 500) {
+        throw new RetryableRequestError(details.message, details.status);
+      }
+      throw new Error(details.message || `Google Drive trả về HTTP ${details.status}.`);
     }
 
+    networkState.lastSuccessAt = Date.now();
+    networkState.failures = Math.max(0, networkState.failures - 1);
     return response;
   } catch (error) {
-    if (
-      timedOut &&
-      error &&
-      error.name === 'AbortError'
-    ) {
-      throw new Error(
-        'Yêu cầu Google Drive đã quá thời gian chờ.'
-      );
+    if (externalSignal && externalSignal.aborted) throw createAbortError();
+    if (error && error.name === 'AbortError') {
+      if (timedOut) throw new RetryableRequestError('Google Drive phản hồi quá chậm.', 408);
+      throw createAbortError();
     }
-
+    if (error instanceof RetryableRequestError) throw error;
+    if (error instanceof TypeError) {
+      throw new RetryableRequestError(navigator.onLine ? 'Không thể kết nối Google Drive.' : 'Thiết bị đang mất kết nối mạng.', 0);
+    }
     throw error;
   } finally {
     clearTimeout(timer);
-
-    if (externalSignal) {
-      externalSignal.removeEventListener(
-        'abort',
-        abortFromOutside
-      );
-    }
+    if (externalSignal) externalSignal.removeEventListener('abort', abortFromOutside);
   }
 }
 
@@ -2914,37 +2907,83 @@ function openChunkDb() {
   });
 }
 
+
+function createChunkCacheKey(file, info, index) {
+  const fileId = String(file && file.id || info && info.id || '');
+  const modifiedTime = String(info && info.modifiedTime || file && file.modifiedTime || 'unknown');
+  const fileSize = Number(info && info.size || file && file.size || 0);
+  const chunkSize = Number(info && info.chunkSize || DRIVE_CHUNK_SIZE);
+  return [fileId, modifiedTime, fileSize, chunkSize, Number(index)].join('|');
+}
+
 async function pruneChunkCache() {
-  if (!db) return;
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+  const database = db || await openChunkDb();
+  const records = await new Promise((resolve, reject) => {
+    const tx = database.transaction(CACHE_STORE_NAME, 'readonly');
+    const request = tx.objectStore(CACHE_STORE_NAME).getAll();
+    request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+    request.onerror = () => reject(request.error || new Error('Không thể kiểm tra bộ đệm.'));
+  });
+  if (!records.length) return;
+  const now = Date.now();
+  const maximumAge = 30 * 24 * 60 * 60 * 1000;
+  const expired = records.filter(record => !Number(record.timestamp || 0) || now - Number(record.timestamp || 0) > maximumAge);
+  const expiredIds = new Set(expired.map(record => record.id));
+  const remaining = records.filter(record => !expiredIds.has(record.id)).sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+  const idsToDelete = [...new Set([...expiredIds, ...remaining.slice(MAX_CACHE_ENTRIES).map(record => record.id)])];
+  if (!idsToDelete.length) return;
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(CACHE_STORE_NAME, 'readwrite');
     const store = tx.objectStore(CACHE_STORE_NAME);
-    const countReq = store.count();
-    countReq.onsuccess = () => {
-      if (countReq.result > MAX_CACHE_ENTRIES) {
-        store.clear(); // Giải phóng cache nếu vượt quá giới hạn
-      }
-      resolve();
-    };
-    countReq.onerror = () => reject();
+    idsToDelete.forEach(id => store.delete(id));
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error || new Error('Không thể dọn bộ đệm.'));
+    tx.onabort = () => reject(tx.error || new Error('Dọn bộ đệm bị hủy.'));
   });
 }
 
 // Hàm bổ sung để lưu và lấy chunk từ DB
-async function saveChunkToCache(fileId, index, bytes) {
-  if (!db) return;
-  const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
-  tx.objectStore(CACHE_STORE_NAME).put({ id: `${fileId}_${index}`, data: bytes, timestamp: Date.now() });
+async function saveChunkToCache(file, info, index, bytes) {
+  if (!file || !file.id || !bytes || !bytes.byteLength) return;
+  const database = db || await openChunkDb();
+  const record = {
+    id: createChunkCacheKey(file, info, index),
+    fileId: String(file.id),
+    modifiedTime: String(info && info.modifiedTime || ''),
+    fileSize: Number(info && info.size || 0),
+    chunkIndex: Number(index),
+    byteLength: Number(bytes.byteLength),
+    data: bytes,
+    timestamp: Date.now()
+  };
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(CACHE_STORE_NAME, 'readwrite');
+    tx.objectStore(CACHE_STORE_NAME).put(record);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error || new Error('Không thể lưu bộ đệm.'));
+    tx.onabort = () => reject(tx.error || new Error('Thao tác lưu bộ đệm bị hủy.'));
+  });
+  cacheWriteCount++;
+  if (cacheWriteCount % 20 === 0) pruneChunkCache().catch(() => {});
 }
 
-async function getChunkFromCache(fileId, index) {
-  if (!db) return null;
-  return new Promise((resolve) => {
-    const tx = db.transaction(CACHE_STORE_NAME, 'readonly');
-    const request = tx.objectStore(CACHE_STORE_NAME).get(`${fileId}_${index}`);
-    request.onsuccess = () => resolve(request.result ? request.result.data : null);
-    request.onerror = () => resolve(null);
-  });
+async function getChunkFromCache(file, info, index) {
+  if (!file || !file.id) return null;
+  try {
+    const database = db || await openChunkDb();
+    const id = createChunkCacheKey(file, info, index);
+    const record = await new Promise((resolve, reject) => {
+      const tx = database.transaction(CACHE_STORE_NAME, 'readonly');
+      const request = tx.objectStore(CACHE_STORE_NAME).get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error('Không thể đọc bộ đệm.'));
+    });
+    if (!record || !record.data || !record.data.byteLength) return null;
+    if (record.data instanceof Uint8Array) return record.data;
+    if (record.data instanceof ArrayBuffer) return new Uint8Array(record.data);
+    if (ArrayBuffer.isView(record.data)) return new Uint8Array(record.data.buffer, record.data.byteOffset, record.data.byteLength);
+    return null;
+  } catch (_) { return null; }
 }
 
 // Kết thúc nhóm hàm tính năng lưu offline
@@ -3083,66 +3122,24 @@ function renderList() {
 }
 
 function createListItem(item, isBack) {
-  const li =
-    document.createElement('li');
-
-  const button =
-    document.createElement('button');
-
+  const li = document.createElement('li');
+  const button = document.createElement('button');
   button.type = 'button';
-
-  button.className =
-    'item' +
-    (
-      !isBack &&
-      item.id === activeFileId
-        ? ' active'
-        : ''
-    );
-
+  button.className = 'item' + (!isBack && item.id === activeFileId ? ' active' : '');
   if (!isBack && item.id) {
     button.dataset.fileId = item.id;
-    button.setAttribute(
-      'aria-current',
-      item.id === activeFileId
-        ? 'true'
-        : 'false'
-    );
+    button.setAttribute('aria-current', item.id === activeFileId ? 'true' : 'false');
   }
-
-  const icon =
-    isBack
-      ? '←'
-      : item.isFolder
-        ? '📁'
-        : '♪';
-
-  button.innerHTML =
-    `<span class="icon">${icon}</span>` +
-    `<span>` +
-      `<div class="name">${escapeHtml(item.name)}</div>` +
-      (
-        !isBack && !item.isFolder
-          ? `<div class="meta">${formatBytes(item.size || 0)}</div>`
-          : ''
-      ) +
-    `</span>`;
-
-  button.addEventListener('click', () => {
-    if (isBack) {
-      goBack();
-      return;
-    }
-
-    if (item.isFolder) {
-      openFolder(item);
-      return;
-    }
-
-    ensureAudioEffects().catch(() => {});
-    openAudio(item);
+  const icon = isBack ? '←' : item.isFolder ? '📁' : '♪';
+  button.innerHTML = `<span class="icon" aria-hidden="true">${icon}</span><span><div class="name">${escapeHtml(item.name)}</div>${!isBack && !item.isFolder ? `<div class="meta">${formatBytes(item.size || 0)}</div>` : ''}</span>`;
+  button.setAttribute('aria-label', isBack ? 'Quay lại thư mục trước' : item.isFolder ? `Mở thư mục ${item.name}` : `Phát bài ${item.name}`);
+  button.addEventListener('click', async () => {
+    if (isBack) { await goBack(); return; }
+    if (item.isFolder) { await openFolder(item); return; }
+    closeMobileSidebar();
+    await ensureAudioEffects().catch(() => {});
+    await openAudio(item);
   });
-
   li.appendChild(button);
   return li;
 }
@@ -3223,68 +3220,28 @@ async function getFileInfoCached(
   }
 }
 
-async function fetchTrackChunk(
-  file,
-  info,
-  index,
-  signal
-) {
-  const cachedBytes =
-    await getChunkFromCache(
-      file.id,
-      index
-    );
+async function fetchTrackChunk(file, info, index, signal) {
+  throwIfAborted(signal);
+  const cachedBytes = await getChunkFromCache(file, info, index);
+  if (cachedBytes) return cachedBytes;
 
-  if (cachedBytes) {
-    return cachedBytes;
+  const chunkSize = Number(info.chunkSize) || DRIVE_CHUNK_SIZE;
+  const fileSize = Number(info.size || 0);
+  const startByte = Number(index) * chunkSize;
+  const endByte = Math.min(fileSize - 1, startByte + chunkSize - 1);
+  if (!file.id || !Number.isFinite(startByte) || !Number.isFinite(endByte) || startByte < 0 || endByte < startByte) {
+    throw new Error('Phạm vi tải âm thanh không hợp lệ.');
   }
-
-  const chunkSize =
-    Number(info.chunkSize) ||
-    DRIVE_CHUNK_SIZE;
-
-  const startByte =
-    index * chunkSize;
-
-  const endByte =
-    Math.min(
-      Number(info.size || 0) - 1,
-      startByte + chunkSize - 1
-    );
-
-  if (
-    startByte < 0 ||
-    endByte < startByte
-  ) {
-    throw new Error(
-      'Phạm vi tải âm thanh không hợp lệ.'
-    );
-  }
-
-  const response =
-    await driveFetch(
-      `${DRIVE_API_BASE}/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`,
-      {
-        headers: {
-          Range:
-            `bytes=${startByte}-${endByte}`
-        }
-      },
-      signal
-    );
-
-  const buffer =
-    await response.arrayBuffer();
-
-  const bytes =
-    new Uint8Array(buffer);
-
-  saveChunkToCache(
-    file.id,
-    index,
-    bytes
-  ).catch(() => {});
-
+  const response = await driveFetch(
+    `${DRIVE_API_BASE}/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`,
+    { method: 'GET', headers: { Range: `bytes=${startByte}-${endByte}` } },
+    signal
+  );
+  if (response.status !== 200 && response.status !== 206) throw new Error(`Máy chủ trả trạng thái ${response.status}.`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  throwIfAborted(signal);
+  if (!bytes.byteLength) throw new Error(`Phần dữ liệu ${index + 1} rỗng.`);
+  saveChunkToCache(file, info, index, bytes).catch(() => {});
   return bytes;
 }
 async function downloadTrackBlob(
@@ -6376,133 +6333,106 @@ function restorePreferences() {
   } else {
     updateEffectUi();
   }
+
+  updateMediaSessionMetadata(file, info || {});
+}
+
+
+function initializeMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  const set = (action, handler) => { try { navigator.mediaSession.setActionHandler(action, handler); } catch (_) {} };
+  set('play', async () => { await ensureAudioEffects().catch(() => {}); shouldBePlaying = true; await activeAudio().play().catch(() => {}); });
+  set('pause', () => { shouldBePlaying = false; activeAudio().pause(); });
+  set('previoustrack', () => playRelative(-1));
+  set('nexttrack', () => playRelative(1));
+  set('seekbackward', details => seekRelative(-Number(details && details.seekOffset || 10)));
+  set('seekforward', details => seekRelative(Number(details && details.seekOffset || 10)));
+  set('seekto', details => { if (!details || !Number.isFinite(details.seekTime)) return; try { activeAudio().currentTime = details.seekTime; syncPlaybackUi(); } catch (_) {} });
+  set('stop', () => { shouldBePlaying = false; activeAudio().pause(); try { activeAudio().currentTime = 0; } catch (_) {} syncPlaybackUi(); });
+}
+function updateMediaSessionMetadata(track, info = {}) {
+  if (!('mediaSession' in navigator) || !window.MediaMetadata || !track) return;
+  const title = String(track.name || info.name || 'Bài hát').replace(/\.[^.]+$/, '');
+  try { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: 'Thư viện nhạc Nguyên Nhi', album: currentFolderName || driveRootName || 'Google Drive' }); } catch (_) {}
+}
+function updateMediaSessionPosition() {
+  if (!('mediaSession' in navigator) || typeof navigator.mediaSession.setPositionState !== 'function') return;
+  const player = activeAudio();
+  const duration = getEffectiveDuration(player);
+  const position = Number(player.currentTime || 0);
+  const playbackRate = Number(player.playbackRate || 1);
+  if (!(duration > 0) || !Number.isFinite(position) || position < 0 || position > duration) return;
+  try { navigator.mediaSession.setPositionState({ duration, playbackRate: playbackRate > 0 ? playbackRate : 1, position: Math.min(position, Math.max(0, duration - .001)) }); } catch (_) {}
+}
+function updateMediaSessionPlaybackState() {
+  if (!('mediaSession' in navigator)) return;
+  try { navigator.mediaSession.playbackState = activeAudio().paused ? 'paused' : 'playing'; } catch (_) {}
 }
 
 function configurePlayers() {
   players.forEach((player, index) => {
     player.preload = 'auto';
-
-    player.addEventListener(
-      'loadedmetadata',
-      () => {
-        if (index === activePlayerIndex) {
-          updateMetadata();
-        }
-      }
-    );
-
-    player.addEventListener(
-      'durationchange',
-      () => {
-        if (index === activePlayerIndex) {
-          updateMetadata();
-        }
-      }
-    );
-
-    player.addEventListener(
-      'timeupdate',
-      () => {
-        if (index === activePlayerIndex) {
-          syncPlaybackUi();
-        }
-      }
-    );
-
-    player.addEventListener(
-      'play',
-      () => {
-        if (index === activePlayerIndex) {
-          shouldBePlaying = true;
-          els.play.textContent = '⏸';
-          els.visualizerWrap.classList.add('playing');
-          startPlaybackUiTicker();
-        }
-      }
-    );
-
-    player.addEventListener(
-      'pause',
-      () => {
-        if (
-          index === activePlayerIndex &&
-          !transitionInProgress
-        ) {
-          els.play.textContent = '▶';
-          els.visualizerWrap.classList.remove('playing');
-        }
-      }
-    );
-
-    player.addEventListener(
-      'ended',
-      () => {
-        if (
-          index !== activePlayerIndex ||
-          transitionInProgress
-        ) {
-          return;
-        }
-
-        if (els.autoNext.checked) {
-          startSeamlessNext();
-        } else {
-          shouldBePlaying = false;
-          els.play.textContent = '▶';
-          els.visualizerWrap.classList.remove('playing');
-        }
-      }
-    );
-
-    player.addEventListener(
-      'error',
-      () => {
-        if (
-          index === activePlayerIndex &&
-          player.error
-        ) {
-          showToast(
-            'Không thể giải mã file âm thanh.',
-            true
-          );
-        }
-      }
-    );
+    player.playsInline = true;
+    player.addEventListener('loadedmetadata', () => { if (index === activePlayerIndex) { updateMetadata(); updateMediaSessionPosition(); } });
+    player.addEventListener('durationchange', () => { if (index === activePlayerIndex) { updateMetadata(); updateMediaSessionPosition(); } });
+    player.addEventListener('timeupdate', () => { if (index === activePlayerIndex) syncPlaybackUi(); });
+    player.addEventListener('play', () => {
+      if (index !== activePlayerIndex) return;
+      shouldBePlaying = true;
+      els.play.textContent = '⏸';
+      els.visualizerWrap.classList.add('playing');
+      startPlaybackUiTicker();
+      updateMediaSessionPlaybackState();
+      updateMediaSessionPosition();
+    });
+    player.addEventListener('playing', () => {
+      if (index !== activePlayerIndex) return;
+      els.loading.hidden = true;
+      updateMediaSessionPlaybackState();
+      updateNetworkDiagnostics();
+    });
+    player.addEventListener('pause', () => {
+      if (index !== activePlayerIndex || transitionInProgress) return;
+      els.play.textContent = '▶';
+      els.visualizerWrap.classList.remove('playing');
+      updateMediaSessionPlaybackState();
+      updateMediaSessionPosition();
+    });
+    player.addEventListener('ratechange', () => { if (index === activePlayerIndex) updateMediaSessionPosition(); });
+    player.addEventListener('ended', () => {
+      if (index !== activePlayerIndex || transitionInProgress) return;
+      clearSavedTrackPosition(activeFileId);
+      if (els.autoNext.checked) startSeamlessNext();
+      else { shouldBePlaying = false; els.play.textContent = '▶'; els.visualizerWrap.classList.remove('playing'); updateMediaSessionPlaybackState(); }
+    });
+    player.addEventListener('waiting', () => {
+      if (index === activePlayerIndex && shouldBePlaying) { els.loading.hidden = false; els.loading.textContent = 'Đang nạp thêm dữ liệu âm thanh...'; }
+    });
+    player.addEventListener('canplay', () => { if (index === activePlayerIndex) els.loading.hidden = true; });
+    player.addEventListener('error', () => {
+      if (index !== activePlayerIndex || !player.error) return;
+      const messages = { 1: 'Quá trình tải âm thanh đã bị hủy.', 2: 'Lỗi mạng khi tải âm thanh.', 3: 'Trình duyệt không giải mã được file âm thanh.', 4: 'Định dạng âm thanh không được hỗ trợ.' };
+      showToast(messages[player.error.code] || 'Không thể phát file âm thanh.', true);
+    });
   });
 }
 
 function syncPlaybackUi() {
   const player = activeAudio();
-
   if (!player) return;
-
-  const current =
-    Number(player.currentTime || 0);
-
-  const duration =
-    getEffectiveDuration(player);
-
-  els.current.textContent =
-    formatTime(current);
-
+  const current = Number(player.currentTime || 0);
+  const duration = getEffectiveDuration(player);
+  els.current.textContent = formatTime(current);
   if (duration > 0) {
-    els.duration.textContent =
-      formatTime(duration);
-
-    els.seek.max = duration;
-    els.seek.value = Math.min(
-      current,
-      duration
-    );
-
+    els.duration.textContent = formatTime(duration);
+    els.seek.max = String(duration);
+    els.seek.value = String(Math.min(current, duration));
     updateSeekProgressVisual(player);
-
     monitorSeamlessTransition();
-  } else {
-    updateSeekProgressVisual(player);
-  }
-
+  } else updateSeekProgressVisual(player);
   savePosition();
+  if (Math.floor(current) % 2 === 0) updateMediaSessionPosition();
+  transitionMonitorTimer = 0;
 }
 
 function updateMetadata() {
@@ -6621,32 +6551,40 @@ function stopPlaybackUiTicker() {
   playbackUiTimer = null;
 }
 
+
+function clearSavedTrackPosition(fileId) {
+  if (!fileId) return;
+  try { localStorage.removeItem(`audio_position_${fileId}`); localStorage.removeItem(`audio_position_time_${fileId}`); } catch (_) {}
+}
+function pruneSavedPositions() {
+  const prefix = 'audio_position_';
+  const timestampPrefix = 'audio_position_time_';
+  const maximumAge = 90 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  try {
+    const keys = [];
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index);
+      if (key && key.startsWith(prefix) && !key.startsWith(timestampPrefix)) keys.push(key);
+    }
+    keys.forEach(key => {
+      const fileId = key.slice(prefix.length);
+      const timestampKey = `${timestampPrefix}${fileId}`;
+      const timestamp = Number(localStorage.getItem(timestampKey) || 0);
+      if (!timestamp || now - timestamp > maximumAge) { localStorage.removeItem(key); localStorage.removeItem(timestampKey); }
+    });
+  } catch (_) {}
+}
+
 function savePosition() {
-  if (
-    !activeFileId ||
-    !activeAudio().src
-  ) {
-    return;
-  }
-
-  const second =
-    Math.floor(
-      activeAudio().currentTime || 0
-    );
-
-  if (
-    second === lastSavedSecond ||
-    second % 5 !== 0
-  ) {
-    return;
-  }
-
+  if (!activeFileId || !activeAudio().src) return;
+  const second = Math.floor(activeAudio().currentTime || 0);
+  if (second < 1 || second === lastSavedSecond || second % 5 !== 0) return;
   lastSavedSecond = second;
-
-  localStorage.setItem(
-    `audio_position_${activeFileId}`,
-    String(second)
-  );
+  try {
+    localStorage.setItem(`audio_position_${activeFileId}`, String(second));
+    localStorage.setItem(`audio_position_time_${activeFileId}`, String(Date.now()));
+  } catch (_) {}
 }
 
 function restoreTrackPosition(
@@ -6764,6 +6702,8 @@ function updateButtons() {
 
 function cleanupEverything() {
   savePosition();
+  document.removeEventListener('keydown', handleGlobalKeyboard);
+  document.removeEventListener('visibilitychange', handleDocumentVisibility);
   stopPlaybackUiTicker();
   stopStreamWatchdog();
   stopConnectionDiagnostics();
@@ -6771,12 +6711,11 @@ function cleanupEverything() {
   stopVisualizer();
   clearStandby();
   cancelActiveSession();
-
-  if (audioContext) {
-    try {
-      audioContext.close();
-    } catch (_) {}
+  players.forEach((player, index) => { try { setPlayerOutputLevel(index, 0); player.pause(); } catch (_) {} });
+  if ('mediaSession' in navigator) {
+    try { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; } catch (_) {}
   }
+  if (audioContext) { try { audioContext.close(); } catch (_) {} audioContext = null; }
 }
 
 </script>
