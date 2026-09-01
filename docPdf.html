@@ -1809,6 +1809,7 @@
           const query = [
             `'${folderId}' in parents`,
             "trashed = false",
+            "and", // Thêm toán tử and vào đây
             "(",
             "mimeType = 'application/vnd.google-apps.folder'",
             "or mimeType = 'application/pdf'",
