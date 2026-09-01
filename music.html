@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v2.8 High Energy LED</title>
+<title>Trình nhạc - v3.0 Google Drive</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   --p:#1db954;--pd:#1aa34a;--bg:#121212;--text:#ffffff;
@@ -576,6 +577,34 @@ body{
 }
 @media(prefers-reduced-motion:reduce){.visualizer-live-dot{animation:none!important}}
 
+
+/* ===== GOOGLE DRIVE DIRECT AUTH ===== */
+.auth-area{
+  margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto
+}
+.drive-status{
+  display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;
+  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);
+  color:#a7a7a7;font-size:11px;font-weight:750;white-space:nowrap
+}
+.drive-status.connected{color:#baffcb;border-color:rgba(85,255,126,.2);background:rgba(30,215,96,.08)}
+.drive-dot{width:8px;height:8px;border-radius:50%;background:#69726c}
+.drive-status.connected .drive-dot{background:#55ff7e;box-shadow:0 0 12px rgba(85,255,126,.8)}
+.auth-button{
+  min-height:36px;padding:0 13px;border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;background:linear-gradient(135deg,#69ff91,#1ed760);
+  color:#031007;font-weight:850;font-size:12px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(30,215,96,.18)
+}
+.auth-button.secondary{background:rgba(255,255,255,.07);color:#fff;box-shadow:none}
+.auth-button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:820px){
+  .auth-area{margin-left:auto}
+  .drive-status span:last-child{display:none}
+  .auth-button{padding:0 10px}
+  .auth-button .auth-text{display:none}
+}
+
 </style>
 </head>
 <body>
@@ -591,6 +620,18 @@ body{
         <span id="statusPct">0%</span>
       </div>
       <div class="bar"><div id="progress"></div></div>
+    </div>
+    <div class="auth-area">
+      <div id="driveStatus" class="drive-status">
+        <span class="drive-dot" aria-hidden="true"></span>
+        <span>Chưa kết nối Drive</span>
+      </div>
+      <button id="driveLogin" class="auth-button" type="button">
+        🔐 <span class="auth-text">Kết nối Drive</span>
+      </button>
+      <button id="driveLogout" class="auth-button secondary" type="button" hidden>
+        ⏏ <span class="auth-text">Ngắt kết nối</span>
+      </button>
     </div>
   </header>
 
@@ -713,9 +754,13 @@ body{
 </footer>
 <div id="toast" class="toast"></div>
 
-<!-- Bản v2.7: giao diện tối ưu, LED động theo bass–mid–treble và nhịp nhạc -->
+<!-- Bản v3.0: Google Drive OAuth trực tiếp + byte-range streaming -->
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz9Fd3kzo7TCoGvKO4AhHl_iv0LiCB3Y2L4bqkvrpjMwWYHtDscRm5JhPMthQaSw8lZ5A/exec';
+const GOOGLE_CLIENT_ID = '660983736125-gvdcpfho9dd6vb2an5i8bb8epoto7i12.apps.googleusercontent.com';
+const GOOGLE_ROOT_FOLDER_ID = '1tWWXnMQr3RlaSfDkGzZDiwUM-ctrdwWc';
+const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
+const DRIVE_CHUNK_SIZE = 1024 * 1024;
 const APP_TYPE = 'audio';
 const API_RETRIES = 3, RETRY_BASE_MS = 650, RETRY_MAX_MS = 15000, REQUEST_TIMEOUT_MS = 25000;
 const RECOVERY_PROBE_BASE_MS = 1200, RECOVERY_PROBE_MAX_MS = 12000, RECOVERY_PROBE_TIMEOUT_MS = 8000;
@@ -803,7 +848,8 @@ const els = {
   effectPreset:$('effectPreset'), bassBoost:$('bassBoost'), bassValue:$('bassValue'),
   echoLevel:$('echoLevel'), echoValue:$('echoValue'), effectBadge:$('effectBadge'),
   loading:$('loading'), mode:$('mode'), networkDiagnostics:$('networkDiagnostics'),
-  diagnosticText:$('diagnosticText'), diagnosticDot:$('diagnosticDot'), toast:$('toast')
+  diagnosticText:$('diagnosticText'), diagnosticDot:$('diagnosticDot'), toast:$('toast'),
+  driveStatus:$('driveStatus'), driveLogin:$('driveLogin'), driveLogout:$('driveLogout')
 };
 
 const players = [$('audioA'), $('audioB')];
@@ -814,12 +860,27 @@ let cacheDbPromise = null, playbackUiTimer = null, streamWatchdogTimer = null;
 let lastEffectiveDuration = 0, lastSavedSecond = -1, shouldBePlaying = false;
 let recoveryProbePromise = null, lastRecoveryToastAt = 0;
 
+let googleTokenClient = null;
+let googleAccessToken = '';
+let googleTokenExpiresAt = 0;
+let googleAuthReady = false;
+let driveRootName = 'Thư viện nhạc';
+
+
 let audioContext = null, analyserNode = null, bassFilterNode = null, trebleFilterNode = null;
 let compressorNode = null, dryGainNode = null, delayNode = null, feedbackGainNode = null;
 let wetGainNode = null, masterGainNode = null, mediaSourceNodes = [];
 let visualizerFrame = 0, frequencyData = null, audioEffectsAvailable = true;
 let visualizerMode = 'wave';
 let ledLevels = [], ledVelocities = [], ledPeaks = [], ledPeakHoldUntil = [], ledPreviousTargets = [];
+const canvasGradientCache = {
+  width: 0,
+  height: 0,
+  waveBar: null,
+  waveLineActive: null,
+  waveLineIdle: null
+};
+
 let ledGridPattern = null, ledGridPatternDpr = 0;
 let ledBassAverage = 0.08, ledBeatPulse = 0, ledEnergyTrail = 0;
 
@@ -1133,7 +1194,7 @@ function init() {
   bindEvents(); restorePreferences(); configurePlayers();
   bindNetworkEvents(); startConnectionDiagnostics(); startVisualizer();
   startStreamWatchdog(); openChunkDb().then(() => pruneChunkCache()).catch(() => {});
-  loadDirectory('', true);
+  initializeGoogleDriveAuth();
 }
 
 // ========================
@@ -1277,15 +1338,47 @@ function drawVisualizerScene(canvas, context) {
   drawWaveVisualizer(canvas, context);
 }
 
+
+let cachedWaveGradient = null;
+let cachedWaveAura = null;
+let lastCanvasWidth = 0;
+let lastCanvasHeight = 0;
+
 function drawWaveVisualizer(canvas, context) {
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const width = Math.max(1, Math.floor(rect.width * dpr));
   const height = Math.max(1, Math.floor(rect.height * dpr));
 
-  if (canvas.width !== width || canvas.height !== height) {
+  const sidePadding = 18 * dpr;
+  const centerY = height * 0.5;
+  const maxHalfHeight = height * 0.42;
+
+  if (canvas.width !== width || canvas.height !== height || canvasGradientCache.width !== width) {
     canvas.width = width;
     canvas.height = height;
+    canvasGradientCache.width = width;
+    canvasGradientCache.height = height;
+
+    const barGrad = context.createLinearGradient(0, centerY - maxHalfHeight, 0, centerY + maxHalfHeight);
+    barGrad.addColorStop(0, '#00e5ff');
+    barGrad.addColorStop(0.44, '#1ed760');
+    barGrad.addColorStop(0.5, '#f4fff7');
+    barGrad.addColorStop(0.56, '#1ed760');
+    barGrad.addColorStop(1, '#00b8d4');
+    canvasGradientCache.waveBar = barGrad;
+
+    const lineGradActive = context.createLinearGradient(sidePadding, 0, width - sidePadding, 0);
+    lineGradActive.addColorStop(0, 'rgba(30,215,96,0)');
+    lineGradActive.addColorStop(0.5, 'rgba(255,255,255,.42)');
+    lineGradActive.addColorStop(1, 'rgba(0,229,255,0)');
+    canvasGradientCache.waveLineActive = lineGradActive;
+
+    const lineGradIdle = context.createLinearGradient(sidePadding, 0, width - sidePadding, 0);
+    lineGradIdle.addColorStop(0, 'rgba(30,215,96,0)');
+    lineGradIdle.addColorStop(0.5, 'rgba(255,255,255,.16)');
+    lineGradIdle.addColorStop(1, 'rgba(0,229,255,0)');
+    canvasGradientCache.waveLineIdle = lineGradIdle;
   }
 
   context.clearRect(0, 0, width, height);
@@ -1300,11 +1393,8 @@ function drawWaveVisualizer(canvas, context) {
 
   const barCount = IS_MOBILE_DEVICE ? 46 : (width > 1600 ? 86 : 68);
   const gap = (IS_MOBILE_DEVICE ? 2.4 : 3.2) * dpr;
-  const sidePadding = 18 * dpr;
   const usableWidth = Math.max(1, width - sidePadding * 2);
   const barWidth = Math.max(2 * dpr, (usableWidth - gap * (barCount - 1)) / barCount);
-  const centerY = height * 0.5;
-  const maxHalfHeight = height * 0.42;
 
   let energy = 0;
   if (playing && frequencyData) {
@@ -1315,14 +1405,7 @@ function drawWaveVisualizer(canvas, context) {
     energy /= Math.max(1, energyBins);
   }
 
-  const aura = context.createRadialGradient(
-    width * 0.5,
-    centerY,
-    0,
-    width * 0.5,
-    centerY,
-    Math.max(width, height) * 0.52
-  );
+  const aura = context.createRadialGradient(width * 0.5, centerY, 0, width * 0.5, centerY, Math.max(width, height) * 0.52);
   aura.addColorStop(0, `rgba(30,215,96,${playing ? 0.08 + energy * 0.13 : 0.035})`);
   aura.addColorStop(0.46, `rgba(0,229,255,${playing ? 0.025 + energy * 0.07 : 0.012})`);
   aura.addColorStop(1, 'rgba(0,0,0,0)');
@@ -1332,27 +1415,23 @@ function drawWaveVisualizer(canvas, context) {
   context.save();
   context.strokeStyle = 'rgba(255,255,255,.055)';
   context.lineWidth = Math.max(1, dpr * 0.65);
+  context.beginPath(); 
   for (let row = 1; row < 4; row++) {
     const y = height * row / 4;
-    context.beginPath();
     context.moveTo(sidePadding, y);
     context.lineTo(width - sidePadding, y);
-    context.stroke();
   }
+  context.stroke();
   context.restore();
 
-  const gradient = context.createLinearGradient(0, centerY - maxHalfHeight, 0, centerY + maxHalfHeight);
-  gradient.addColorStop(0, '#00e5ff');
-  gradient.addColorStop(0.44, '#1ed760');
-  gradient.addColorStop(0.5, '#f4fff7');
-  gradient.addColorStop(0.56, '#1ed760');
-  gradient.addColorStop(1, '#00b8d4');
-
   context.save();
-  context.fillStyle = gradient;
+  context.fillStyle = canvasGradientCache.waveBar;
   context.shadowColor = playing ? 'rgba(30,215,96,.46)' : 'rgba(30,215,96,.12)';
   context.shadowBlur = (playing ? 11 + energy * 18 : 5) * dpr;
   context.beginPath();
+
+  const roundedRadius = Math.min(barWidth / 2, 4 * dpr);
+  const hasRoundRect = typeof context.roundRect === 'function';
 
   for (let index = 0; index < barCount; index++) {
     const normalized = index / Math.max(1, barCount - 1);
@@ -1361,14 +1440,10 @@ function drawWaveVisualizer(canvas, context) {
     if (playing && frequencyData) {
       const mirrored = 1 - Math.abs(normalized * 2 - 1);
       const curved = Math.pow(normalized, 1.42);
-      const sourceIndex = Math.min(
-        frequencyData.length - 1,
-        Math.floor(curved * frequencyData.length * 0.72)
-      );
+      const sourceIndex = Math.min(frequencyData.length - 1, Math.floor(curved * frequencyData.length * 0.72));
       const nearbyIndex = Math.min(frequencyData.length - 1, sourceIndex + 2);
       const sample = Math.max(frequencyData[sourceIndex] || 0, (frequencyData[nearbyIndex] || 0) * 0.88);
-      level = Math.pow(sample / 255, 1.08);
-      level *= 0.76 + mirrored * 0.24;
+      level = Math.pow(sample / 255, 1.08) * (0.76 + mirrored * 0.24);
     } else {
       level = 0.035 + (Math.sin(now * 1.25 + index * 0.37) + 1) * 0.012;
     }
@@ -1377,10 +1452,9 @@ function drawWaveVisualizer(canvas, context) {
     const x = sidePadding + index * (barWidth + gap);
     const y = centerY - halfHeight;
     const fullHeight = halfHeight * 2;
-    const radius = Math.min(barWidth / 2, 4 * dpr);
 
-    if (typeof context.roundRect === 'function') {
-      context.roundRect(x, y, barWidth, fullHeight, radius);
+    if (hasRoundRect) {
+      context.roundRect(x, y, barWidth, fullHeight, roundedRadius);
     } else {
       context.rect(x, y, barWidth, fullHeight);
     }
@@ -1390,18 +1464,13 @@ function drawWaveVisualizer(canvas, context) {
   context.restore();
 
   context.save();
-  const lineGradient = context.createLinearGradient(sidePadding, 0, width - sidePadding, 0);
-  lineGradient.addColorStop(0, 'rgba(30,215,96,0)');
-  lineGradient.addColorStop(0.5, playing ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.16)');
-  lineGradient.addColorStop(1, 'rgba(0,229,255,0)');
-  context.strokeStyle = lineGradient;
+  context.strokeStyle = playing ? canvasGradientCache.waveLineActive : canvasGradientCache.waveLineIdle;
   context.lineWidth = dpr;
   context.beginPath();
   context.moveTo(sidePadding, centerY);
   context.lineTo(width - sidePadding, centerY);
   context.stroke();
   context.restore();
-
 }
 
 function createLedGridPattern(context, dpr) {
@@ -1831,6 +1900,8 @@ function drawLedVisualizer(canvas, context) {
 
 // (CÁC HÀM CÒN LẠI ĐƯỢC GIỮ NGUYÊN ĐỂ HOẠT ĐỘNG LOGIC, đã ẩn bớt độ dài để hiển thị code gọn gàng)
 function bindEvents() {
+  els.driveLogin.addEventListener('click', requestGoogleDriveAccess);
+  els.driveLogout.addEventListener('click', disconnectGoogleDrive);
   els.menu.addEventListener('click', () => els.sidebar.classList.toggle('open'));
   els.search.addEventListener('input', renderList);
   els.playFolder.addEventListener('click', () => { ensureAudioEffects().catch(() => {}); playAllCurrentFolder(); });
@@ -2144,26 +2215,263 @@ async function api(
 }
 
 async function apiOnce(action, params, externalSignal) {
-  const url = new URL(WEB_APP_URL);
+  requireGoogleDriveToken();
 
-  url.searchParams.set('action', action);
-  url.searchParams.set('appType', APP_TYPE);
-  url.searchParams.set('_', Date.now().toString());
+  if (action === 'list') {
+    return driveListFolder(
+      params.folderId || GOOGLE_ROOT_FOLDER_ID,
+      externalSignal
+    );
+  }
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (
-      value !== '' &&
-      value !== null &&
-      value !== undefined
-    ) {
-      url.searchParams.set(key, String(value));
-    }
+  if (action === 'playlist') {
+    const folderId =
+      params.folderId || GOOGLE_ROOT_FOLDER_ID;
+
+    const listing =
+      await driveListFolder(
+        folderId,
+        externalSignal
+      );
+
+    return {
+      ok: true,
+      tracks: listing.files.filter(
+        item => !item.isFolder
+      )
+    };
+  }
+
+  if (action === 'getFileInfo') {
+    return {
+      ok: true,
+      file: await driveGetFileInfo(
+        params.fileId,
+        params.folderId || '',
+        externalSignal
+      )
+    };
+  }
+
+  throw new Error(
+    `Tác vụ Drive không được hỗ trợ: ${action}`
+  );
+}
+
+function waitForGoogleIdentityServices(timeout = 12000) {
+  return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+
+    const timer = window.setInterval(() => {
+      if (
+        window.google &&
+        google.accounts &&
+        google.accounts.oauth2
+      ) {
+        clearInterval(timer);
+        resolve();
+        return;
+      }
+
+      if (Date.now() - startedAt > timeout) {
+        clearInterval(timer);
+        reject(
+          new Error(
+            'Không tải được dịch vụ đăng nhập Google.'
+          )
+        );
+      }
+    }, 100);
   });
+}
 
-  const controller = new AbortController();
+async function initializeGoogleDriveAuth() {
+  els.folderTitle.textContent =
+    'Chưa kết nối Google Drive';
+
+  els.fileList.innerHTML =
+    '<li class="empty">Nhấn “Kết nối Drive” để tải thư viện trực tiếp.</li>';
+
+  try {
+    await waitForGoogleIdentityServices();
+
+    googleTokenClient =
+      google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_DRIVE_SCOPE,
+        callback: handleGoogleTokenResponse,
+        error_callback: error => {
+          console.error(
+            'Google OAuth error:',
+            error
+          );
+
+          els.driveLogin.disabled = false;
+
+          showToast(
+            'Đăng nhập Google không thành công hoặc đã bị hủy.',
+            true
+          );
+        }
+      });
+
+    googleAuthReady = true;
+  } catch (error) {
+    googleAuthReady = false;
+    els.driveLogin.disabled = true;
+
+    showToast(error.message, true);
+  }
+}
+
+function requestGoogleDriveAccess() {
+  if (!googleAuthReady || !googleTokenClient) {
+    showToast(
+      'Dịch vụ đăng nhập Google chưa sẵn sàng.',
+      true
+    );
+    return;
+  }
+
+  els.driveLogin.disabled = true;
+
+  googleTokenClient.requestAccessToken({
+    prompt: googleAccessToken ? '' : 'consent'
+  });
+}
+
+async function handleGoogleTokenResponse(response) {
+  els.driveLogin.disabled = false;
+
+  if (!response || !response.access_token) {
+    showToast(
+      'Google không trả về mã truy cập hợp lệ.',
+      true
+    );
+    return;
+  }
+
+  googleAccessToken = response.access_token;
+
+  googleTokenExpiresAt =
+    Date.now() +
+    (Number(response.expires_in) || 3600) *
+      1000;
+
+  updateGoogleAuthUi(true);
+
+  folderStack = [{
+    id: GOOGLE_ROOT_FOLDER_ID,
+    name: driveRootName
+  }];
+
+  fileInfoCache.clear();
+
+  showToast(
+    'Đã kết nối Google Drive trực tiếp.'
+  );
+
+  await loadDirectory(
+    GOOGLE_ROOT_FOLDER_ID,
+    true
+  );
+}
+
+function updateGoogleAuthUi(connected) {
+  els.driveStatus.classList.toggle(
+    'connected',
+    connected
+  );
+
+  els.driveStatus.lastElementChild.textContent =
+    connected
+      ? 'Drive trực tiếp'
+      : 'Chưa kết nối Drive';
+
+  els.driveLogin.hidden = connected;
+  els.driveLogout.hidden = !connected;
+}
+
+function disconnectGoogleDrive() {
+  if (
+    googleAccessToken &&
+    window.google &&
+    google.accounts &&
+    google.accounts.oauth2
+  ) {
+    try {
+      google.accounts.oauth2.revoke(
+        googleAccessToken,
+        () => {}
+      );
+    } catch (_) {}
+  }
+
+  googleAccessToken = '';
+  googleTokenExpiresAt = 0;
+  fileInfoCache.clear();
+
+  currentItems = [];
+  audioItems = [];
+  folderStack = [];
+  currentFolderId = '';
+  currentFolderName = '';
+
+  updateGoogleAuthUi(false);
+
+  els.folderTitle.textContent =
+    'Chưa kết nối Google Drive';
+
+  els.breadcrumb.textContent =
+    'Thư mục gốc';
+
+  els.fileList.innerHTML =
+    '<li class="empty">Nhấn “Kết nối Drive” để tải thư viện trực tiếp.</li>';
+
+  els.playFolder.disabled = true;
+  els.playFolder.textContent =
+    'Phát tất cả';
+
+  showToast(
+    'Đã ngắt kết nối Google Drive.'
+  );
+}
+
+function hasValidGoogleDriveToken() {
+  return Boolean(
+    googleAccessToken &&
+    Date.now() <
+      googleTokenExpiresAt - 30000
+  );
+}
+
+function requireGoogleDriveToken() {
+  if (hasValidGoogleDriveToken()) {
+    return;
+  }
+
+  googleAccessToken = '';
+  googleTokenExpiresAt = 0;
+  updateGoogleAuthUi(false);
+
+  throw new Error(
+    'Phiên Google Drive đã hết hạn. Hãy kết nối lại.'
+  );
+}
+
+async function driveFetch(
+  url,
+  options = {},
+  externalSignal
+) {
+  requireGoogleDriveToken();
+
+  const controller =
+    new AbortController();
+
   let timedOut = false;
 
-  const onExternalAbort = () => {
+  const abortFromOutside = () => {
     controller.abort();
   };
 
@@ -2173,7 +2481,7 @@ async function apiOnce(action, params, externalSignal) {
     } else {
       externalSignal.addEventListener(
         'abort',
-        onExternalAbort,
+        abortFromOutside,
         { once: true }
       );
     }
@@ -2184,29 +2492,60 @@ async function apiOnce(action, params, externalSignal) {
     controller.abort();
   }, REQUEST_TIMEOUT_MS);
 
+  const headers =
+    new Headers(options.headers || {});
+
+  headers.set(
+    'Authorization',
+    `Bearer ${googleAccessToken}`
+  );
+
   try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      cache: 'no-store',
-      redirect: 'follow',
-      signal: controller.signal
-    });
+    const response = await fetch(
+      url,
+      {
+        ...options,
+        headers,
+        signal: controller.signal,
+        cache: 'no-store'
+      }
+    );
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      googleAccessToken = '';
+      googleTokenExpiresAt = 0;
+      updateGoogleAuthUi(false);
+
+      throw new Error(
+        'Phiên Google Drive đã hết hạn. Hãy kết nối lại.'
+      );
+    }
 
     if (!response.ok) {
+      let message = '';
+
+      try {
+        const data = await response.json();
+        message =
+          data &&
+          data.error &&
+          data.error.message || '';
+      } catch (_) {
+        try {
+          message = await response.text();
+        } catch (_) {}
+      }
+
       throw new Error(
-        `Máy chủ trả về HTTP ${response.status}.`
+        message ||
+        `Google Drive trả về HTTP ${response.status}.`
       );
     }
 
-    const data = await response.json();
-
-    if (data.ok === false || data.error) {
-      throw new Error(
-        data.error || 'Máy chủ xử lý thất bại.'
-      );
-    }
-
-    return data;
+    return response;
   } catch (error) {
     if (
       timedOut &&
@@ -2214,7 +2553,7 @@ async function apiOnce(action, params, externalSignal) {
       error.name === 'AbortError'
     ) {
       throw new Error(
-        'Yêu cầu tải dữ liệu đã quá thời gian chờ.'
+        'Yêu cầu Google Drive đã quá thời gian chờ.'
       );
     }
 
@@ -2225,12 +2564,222 @@ async function apiOnce(action, params, externalSignal) {
     if (externalSignal) {
       externalSignal.removeEventListener(
         'abort',
-        onExternalAbort
+        abortFromOutside
       );
     }
   }
 }
 
+async function driveListFolder(
+  folderId,
+  signal
+) {
+  const allFiles = [];
+  let pageToken = '';
+
+  do {
+    const query = [
+      `'${folderId}' in parents`,
+      'and trashed = false',
+      'and (',
+      "mimeType = 'application/vnd.google-apps.folder'",
+      "or mimeType contains 'audio/'",
+      ')'
+    ].join(' ');
+
+    const params =
+      new URLSearchParams();
+
+    params.set('q', query);
+    params.set(
+      'fields',
+      'nextPageToken,files(id,name,mimeType,size,modifiedTime,parents)'
+    );
+    params.set('pageSize', '1000');
+    params.set('orderBy', 'name_natural');
+    params.set(
+      'supportsAllDrives',
+      'true'
+    );
+    params.set(
+      'includeItemsFromAllDrives',
+      'true'
+    );
+
+    if (pageToken) {
+      params.set(
+        'pageToken',
+        pageToken
+      );
+    }
+
+    const response =
+      await driveFetch(
+        `${DRIVE_API_BASE}/files?${params.toString()}`,
+        {},
+        signal
+      );
+
+    const data =
+      await response.json();
+
+    if (Array.isArray(data.files)) {
+      allFiles.push(...data.files);
+    }
+
+    pageToken =
+      data.nextPageToken || '';
+  } while (pageToken);
+
+  const folderMime =
+    'application/vnd.google-apps.folder';
+
+  const files =
+    allFiles.map(file => ({
+      id: file.id,
+      name: file.name,
+      mimeType: file.mimeType,
+      size: Number(file.size || 0),
+      isFolder:
+        file.mimeType === folderMime,
+      folderId
+    }));
+
+  files.sort((a, b) => {
+    if (a.isFolder !== b.isFolder) {
+      return a.isFolder ? -1 : 1;
+    }
+
+    return String(a.name).localeCompare(
+      String(b.name),
+      'vi',
+      {
+        numeric: true,
+        sensitivity: 'base'
+      }
+    );
+  });
+
+  let folderName =
+    folderId === GOOGLE_ROOT_FOLDER_ID
+      ? driveRootName
+      : '';
+
+  if (!folderName) {
+    const folderResponse =
+      await driveFetch(
+        `${DRIVE_API_BASE}/files/${encodeURIComponent(folderId)}?fields=id,name,parents&supportsAllDrives=true`,
+        {},
+        signal
+      );
+
+    const folderData =
+      await folderResponse.json();
+
+    folderName =
+      folderData.name || 'Thư mục';
+  }
+
+  if (
+    folderId === GOOGLE_ROOT_FOLDER_ID
+  ) {
+    driveRootName = folderName;
+  }
+
+  const existingIndex =
+    folderStack.findIndex(
+      item => item.id === folderId
+    );
+
+  if (existingIndex >= 0) {
+    folderStack =
+      folderStack.slice(
+        0,
+        existingIndex + 1
+      );
+
+    folderStack[
+      folderStack.length - 1
+    ].name = folderName;
+  } else {
+    folderStack.push({
+      id: folderId,
+      name: folderName
+    });
+  }
+
+  return {
+    ok: true,
+    folder: {
+      id: folderId,
+      name: folderName
+    },
+    breadcrumbs:
+      folderStack.map(item => ({
+        id: item.id,
+        name: item.name
+      })),
+    files
+  };
+}
+
+async function driveGetFileInfo(
+  fileId,
+  folderId,
+  signal
+) {
+  const response =
+    await driveFetch(
+      `${DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size,modifiedTime,parents&supportsAllDrives=true`,
+      {},
+      signal
+    );
+
+  const file =
+    await response.json();
+
+  const size =
+    Number(file.size || 0);
+
+  const name =
+    String(file.name || '');
+
+  const extension =
+    (
+      name.includes('.')
+        ? name.split('.').pop()
+        : ''
+    ).toLowerCase();
+
+  const totalChunks =
+    Math.max(
+      1,
+      Math.ceil(
+        size / DRIVE_CHUNK_SIZE
+      )
+    );
+
+  return {
+    id: file.id,
+    name,
+    mimeType:
+      file.mimeType ||
+      guessMime(extension),
+    size,
+    extension,
+    folderId:
+      folderId ||
+      (
+        Array.isArray(file.parents)
+          ? file.parents[0] || ''
+          : ''
+      ),
+    chunkSize: DRIVE_CHUNK_SIZE,
+    totalChunks,
+    modifiedTime:
+      file.modifiedTime || ''
+  };
+}
 function showRecoveryStatus(message) {
   els.status.hidden = false;
   els.statusText.textContent = message;
@@ -2344,17 +2893,76 @@ function updateNetworkDiagnostics() {
 function startStreamWatchdog() {}
 function stopStreamWatchdog() {}
 function cancelDiagnosticCandidate() {}
+
+// tính năng lưu trữ offline
+let db = null;
+
 function openChunkDb() {
-  return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      let database = e.target.result;
+      if (!database.objectStoreNames.contains(CACHE_STORE_NAME)) {
+        database.createObjectStore(CACHE_STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      resolve(db);
+    };
+    request.onerror = (e) => reject(e.target.error);
+  });
 }
-function pruneChunkCache() {
-  return Promise.resolve();
+
+async function pruneChunkCache() {
+  if (!db) return;
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(CACHE_STORE_NAME);
+    const countReq = store.count();
+    countReq.onsuccess = () => {
+      if (countReq.result > MAX_CACHE_ENTRIES) {
+        store.clear(); // Giải phóng cache nếu vượt quá giới hạn
+      }
+      resolve();
+    };
+    countReq.onerror = () => reject();
+  });
 }
+
+// Hàm bổ sung để lưu và lấy chunk từ DB
+async function saveChunkToCache(fileId, index, bytes) {
+  if (!db) return;
+  const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+  tx.objectStore(CACHE_STORE_NAME).put({ id: `${fileId}_${index}`, data: bytes, timestamp: Date.now() });
+}
+
+async function getChunkFromCache(fileId, index) {
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(CACHE_STORE_NAME, 'readonly');
+    const request = tx.objectStore(CACHE_STORE_NAME).get(`${fileId}_${index}`);
+    request.onsuccess = () => resolve(request.result ? request.result.data : null);
+    request.onerror = () => resolve(null);
+  });
+}
+
+// Kết thúc nhóm hàm tính năng lưu offline
 
 async function loadDirectory(
   folderId,
   reset = false
 ) {
+  if (!hasValidGoogleDriveToken()) {
+    els.fileList.innerHTML =
+      '<li class="empty">Hãy kết nối Google Drive trước.</li>';
+    return;
+  }
+
+  folderId =
+    folderId ||
+    GOOGLE_ROOT_FOLDER_ID;
+
   setLoading(
     true,
     'Đang tải thư viện...',
@@ -2562,17 +3170,10 @@ async function playAllCurrentFolder() {
     'Đang tạo danh sách...';
 
   try {
-    const data = await api(
-      'playlist',
-      {
-        folderId: currentFolderId
-      }
-    );
-
     audioItems =
-      Array.isArray(data.tracks)
-        ? data.tracks
-        : [];
+      currentItems.filter(
+        item => !item.isFolder
+      );
 
     if (!audioItems.length) {
       throw new Error(
@@ -2592,7 +3193,6 @@ async function playAllCurrentFolder() {
     els.playFolder.disabled = false;
   }
 }
-
 async function getFileInfoCached(
   file,
   signal
@@ -2629,24 +3229,64 @@ async function fetchTrackChunk(
   index,
   signal
 ) {
-  const data = await api(
-    'getFileChunk',
-    {
-      fileId: file.id,
-      folderId:
-        file.folderId ||
-        info.folderId ||
-        currentFolderId ||
-        '',
+  const cachedBytes =
+    await getChunkFromCache(
+      file.id,
       index
-    },
-    signal,
-    { retries: 4 }
-  );
+    );
 
-  return base64ToBytes(data.base64);
+  if (cachedBytes) {
+    return cachedBytes;
+  }
+
+  const chunkSize =
+    Number(info.chunkSize) ||
+    DRIVE_CHUNK_SIZE;
+
+  const startByte =
+    index * chunkSize;
+
+  const endByte =
+    Math.min(
+      Number(info.size || 0) - 1,
+      startByte + chunkSize - 1
+    );
+
+  if (
+    startByte < 0 ||
+    endByte < startByte
+  ) {
+    throw new Error(
+      'Phạm vi tải âm thanh không hợp lệ.'
+    );
+  }
+
+  const response =
+    await driveFetch(
+      `${DRIVE_API_BASE}/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`,
+      {
+        headers: {
+          Range:
+            `bytes=${startByte}-${endByte}`
+        }
+      },
+      signal
+    );
+
+  const buffer =
+    await response.arrayBuffer();
+
+  const bytes =
+    new Uint8Array(buffer);
+
+  saveChunkToCache(
+    file.id,
+    index,
+    bytes
+  ).catch(() => {});
+
+  return bytes;
 }
-
 async function downloadTrackBlob(
   file,
   signal,
