@@ -22,6 +22,10 @@
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
+  <!-- EPUB.js + JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+
   <style>
     :root {
       --primary: #0f766e;
@@ -698,6 +702,59 @@
       to {
         opacity: 1;
         transform: translateX(0) scale(1);
+      }
+    }
+
+
+    /* =====================================================
+       EPUB READER
+       ===================================================== */
+
+    .epub-container {
+      flex: 1;
+      min-height: 0;
+      display: none;
+      position: relative;
+      overflow: hidden;
+      padding: 12px;
+      background: var(--viewer-background);
+    }
+
+    .epub-stage {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+    }
+
+    .epub-stage iframe {
+      border: 0 !important;
+      background: #ffffff;
+    }
+
+    .pdf-toolbar.epub-mode #fit-mode,
+    .pdf-toolbar.epub-mode #page-effect {
+      display: none;
+    }
+
+    .pdf-toolbar.epub-mode .page-status {
+      min-width: 122px;
+    }
+
+    @media (max-width: 620px) {
+      .epub-container {
+        padding:
+          2px
+          calc(2px + var(--safe-right))
+          calc(6px + var(--safe-bottom))
+          calc(2px + var(--safe-left));
+      }
+
+      .epub-stage {
+        border-radius: 0;
+        box-shadow: none;
       }
     }
 
@@ -1552,7 +1609,7 @@
           <h2>Chưa chọn tài liệu</h2>
 
           <p>
-            Kết nối Google Drive, sau đó chọn một file PDF để mở.
+            Kết nối Google Drive, sau đó chọn một file PDF hoặc EPUB để mở.
           </p>
         </section>
 
@@ -1576,7 +1633,7 @@
             </button>
 
             <div class="page-status">
-              Trang
+              <span id="page-label">Trang</span>
               <span id="page-num">0</span>
               /
               <span id="page-count">0</span>
@@ -1702,6 +1759,15 @@
           <div class="swipe-hint">Vuốt ngang để chuyển trang</div>
         </section>
 
+        <!-- EPUB VIEWER -->
+        <section
+          id="epub-container"
+          class="epub-container"
+          aria-label="Nội dung EPUB"
+        >
+          <div id="epub-stage" class="epub-stage"></div>
+        </section>
+
 
         <!-- LOADING -->
         <div
@@ -1801,10 +1867,19 @@
       activeFileId: null,
       activeFileName: "",
       activeMimeType: "",
+      viewerType: "",
 
       pdfDoc: null,
       pdfLoadingTask: null,
       pdfRenderTask: null,
+
+      epubBook: null,
+      epubRendition: null,
+      epubLocationsReady: false,
+      epubAtStart: true,
+      epubAtEnd: false,
+      epubFontScale: 1,
+      epubCurrentCfi: "",
 
       pageNum: 1,
       pageRendering: false,
@@ -1865,6 +1940,12 @@
       pdfContainer:
         document.getElementById("pdf-container"),
 
+      epubContainer:
+        document.getElementById("epub-container"),
+
+      epubStage:
+        document.getElementById("epub-stage"),
+
       btnFocusControls:
         document.getElementById("btn-focus-controls"),
 
@@ -1876,6 +1957,9 @@
 
       pageFlipLayer:
         document.getElementById("page-flip-layer"),
+
+      pageLabel:
+        document.getElementById("page-label"),
 
       pageNum:
         document.getElementById("page-num"),
@@ -2585,6 +2669,8 @@
             "and (",
             "mimeType = 'application/vnd.google-apps.folder'",
             "or mimeType = 'application/pdf'",
+            "or mimeType = 'application/epub+zip'",
+            "or name contains '.epub'",
             ")"
           ].join(" ");
 
@@ -2729,7 +2815,7 @@
         showListMessage(
           state.files.length
             ? "Không tìm thấy file phù hợp."
-            : "Thư mục này không có file PDF."
+            : "Thư mục này không có file PDF hoặc EPUB."
         );
 
         updateFileCount(files.length);
@@ -2770,7 +2856,7 @@
 
       icon.className = "file-item-icon";
       icon.textContent =
-        getFileIcon(file.mimeType);
+        getFileIcon(file.mimeType, file.name);
 
       const content =
         document.createElement("div");
@@ -2824,7 +2910,7 @@
       return item;
     }
 
-    function getFileIcon(mimeType) {
+    function getFileIcon(mimeType, fileName = "") {
       if (
         mimeType ===
         "application/vnd.google-apps.folder"
@@ -2836,6 +2922,13 @@
         mimeType === "application/pdf"
       ) {
         return "📄";
+      }
+
+      if (
+        mimeType === "application/epub+zip" ||
+        /\.epub$/i.test(String(fileName || ""))
+      ) {
+        return "📘";
       }
 
       return "📎";
@@ -2854,6 +2947,13 @@
       ) {
         return formatFileTypeAndSize(
           "Tài liệu PDF",
+          file.size
+        );
+      }
+
+      if (isEpubFile(file)) {
+        return formatFileTypeAndSize(
+          "Sách EPUB",
           file.size
         );
       }
@@ -3076,6 +3176,16 @@
        9. MỞ FILE
        ===================================================== */
 
+    function isEpubFile(file) {
+      return Boolean(
+        file &&
+        (
+          file.mimeType === "application/epub+zip" ||
+          /\.epub$/i.test(String(file.name || ""))
+        )
+      );
+    }
+
     async function openFile(file) {
       if (!file?.id) {
         return;
@@ -3112,6 +3222,11 @@
         return;
       }
 
+      if (isEpubFile(file)) {
+        await openEpub(file);
+        return;
+      }
+
       showToast(
         "Định dạng file này chưa được hỗ trợ.",
         "warning"
@@ -3128,8 +3243,16 @@
         return;
       }
 
+      await cleanupEpub();
+      state.viewerType = "pdf";
+
       dom.placeholder.style.display =
         "none";
+
+      dom.pdfToolbar.classList.remove("epub-mode");
+      dom.pageLabel.textContent = "Trang";
+      dom.fitMode.disabled = false;
+      dom.pageEffect.disabled = false;
 
       dom.pdfToolbar.style.display =
         "flex";
@@ -3258,6 +3381,311 @@
           "⚠️"
         );
       }
+    }
+
+    async function openEpub(file) {
+      if (!requireValidToken()) {
+        return;
+      }
+
+      if (typeof ePub !== "function") {
+        showToast(
+          "Không thể tải thư viện đọc EPUB.",
+          "error",
+          6500
+        );
+        return;
+      }
+
+      await cleanupPdfDocument();
+      cleanupPdfOnly();
+      await cleanupEpub();
+
+      state.viewerType = "epub";
+      state.epubFontScale = Number(
+        localStorage.getItem("docEpubFontScale")
+      ) || 1;
+      state.epubAtStart = true;
+      state.epubAtEnd = false;
+      state.epubLocationsReady = false;
+
+      dom.placeholder.style.display = "none";
+      dom.pdfToolbar.style.display = "flex";
+      dom.pdfToolbar.classList.add("epub-mode");
+      dom.pdfContainer.style.display = "none";
+      dom.epubContainer.style.display = "block";
+      dom.pageLabel.textContent = "Tiến độ";
+      dom.pageNum.textContent = "0";
+      dom.pageCount.textContent = "100%";
+      dom.zoomStatus.textContent =
+        `${Math.round(state.epubFontScale * 100)}%`;
+
+      dom.btnEdgePrev.classList.add("pdf-visible");
+      dom.btnEdgeNext.classList.add("pdf-visible");
+      updateHeightFocusMode(false);
+      updatePageButtons();
+
+      showLoading(
+        "Đang mở sách EPUB...",
+        "Ứng dụng đang tải và phân tích cấu trúc sách."
+      );
+
+      try {
+        const mediaUrl =
+          `${CONFIG.DRIVE_API_BASE}/files/` +
+          `${encodeURIComponent(file.id)}` +
+          "?alt=media";
+
+        const response = await driveFetch(mediaUrl);
+        const arrayBuffer = await response.arrayBuffer();
+
+        state.epubBook = ePub(arrayBuffer);
+        await state.epubBook.ready;
+
+        state.epubRendition = state.epubBook.renderTo(
+          dom.epubStage,
+          {
+            width: "100%",
+            height: "100%",
+            spread: "none",
+            flow: "paginated",
+            manager: "default",
+            allowScriptedContent: false
+          }
+        );
+
+        applyEpubTheme();
+
+        state.epubRendition.on(
+          "relocated",
+          handleEpubRelocated
+        );
+
+        state.epubRendition.on(
+          "keyup",
+          event => {
+            if (event.key === "ArrowLeft") {
+              changePage(-1);
+            } else if (event.key === "ArrowRight") {
+              changePage(1);
+            }
+          }
+        );
+
+        state.epubRendition.on(
+          "touchstart",
+          handlePdfTouchStart
+        );
+
+        state.epubRendition.on(
+          "touchmove",
+          handlePdfTouchMove
+        );
+
+        state.epubRendition.on(
+          "touchend",
+          handlePdfTouchEnd
+        );
+
+        const savedCfi = localStorage.getItem(
+          `docEpubPosition:${file.id}`
+        );
+
+        await state.epubRendition.display(
+          savedCfi || undefined
+        );
+
+        hideLoading();
+        showToast(
+          `Đã mở “${file.name}”.`,
+          "success",
+          3000
+        );
+
+        state.epubBook.locations.generate(1200)
+          .then(() => {
+            state.epubLocationsReady = true;
+            updateEpubLocationDisplay(
+              state.epubCurrentCfi
+            );
+          })
+          .catch(error => {
+            console.warn(
+              "Không thể tạo vị trí EPUB:",
+              error
+            );
+          });
+      } catch (error) {
+        hideLoading();
+        console.error("Lỗi mở EPUB:", error);
+
+        showToast(
+          "Không thể mở EPUB. File có thể bị lỗi, được bảo vệ DRM hoặc không đúng chuẩn EPUB.",
+          "error",
+          7500
+        );
+
+        showPlaceholder(
+          "Không thể mở sách EPUB",
+          "Hãy thử một file EPUB khác hoặc kiểm tra quyền truy cập Google Drive.",
+          "⚠️"
+        );
+      }
+    }
+
+    function applyEpubTheme() {
+      if (!state.epubRendition) {
+        return;
+      }
+
+      state.epubRendition.themes.default({
+        "body": {
+          "font-family": "system-ui, -apple-system, Segoe UI, sans-serif !important",
+          "font-size": `${Math.round(state.epubFontScale * 100)}% !important`,
+          "line-height": "1.65 !important",
+          "padding": "0 5% !important",
+          "color": "#1e293b !important",
+          "background": "#ffffff !important"
+        },
+        "img, svg": {
+          "max-width": "100% !important",
+          "height": "auto !important"
+        },
+        "p": {
+          "text-align": "justify"
+        }
+      });
+    }
+
+    function handleEpubRelocated(location) {
+      if (!location) {
+        return;
+      }
+
+      state.epubCurrentCfi =
+        location.start?.cfi || "";
+      state.epubAtStart =
+        Boolean(location.atStart);
+      state.epubAtEnd =
+        Boolean(location.atEnd);
+
+      if (
+        state.activeFileId &&
+        state.epubCurrentCfi
+      ) {
+        localStorage.setItem(
+          `docEpubPosition:${state.activeFileId}`,
+          state.epubCurrentCfi
+        );
+      }
+
+      updateEpubLocationDisplay(
+        state.epubCurrentCfi
+      );
+      updatePageButtons();
+    }
+
+    function updateEpubLocationDisplay(cfi) {
+      if (
+        state.epubLocationsReady &&
+        cfi &&
+        state.epubBook?.locations
+      ) {
+        const percentage =
+          state.epubBook.locations.percentageFromCfi(cfi);
+
+        if (Number.isFinite(percentage)) {
+          dom.pageNum.textContent =
+            `${Math.round(percentage * 100)}%`;
+          dom.pageCount.textContent = "100%";
+          return;
+        }
+      }
+
+      dom.pageNum.textContent =
+        state.epubAtStart ? "Đầu" : "…";
+      dom.pageCount.textContent =
+        state.epubAtEnd ? "Cuối" : "100%";
+    }
+
+    async function changeEpubPage(offset) {
+      if (
+        !state.epubRendition ||
+        state.pageTransitioning
+      ) {
+        return;
+      }
+
+      if (
+        (offset < 0 && state.epubAtStart) ||
+        (offset > 0 && state.epubAtEnd)
+      ) {
+        return;
+      }
+
+      state.pageTransitioning = true;
+
+      try {
+        if (offset > 0) {
+          await state.epubRendition.next();
+        } else {
+          await state.epubRendition.prev();
+        }
+      } catch (error) {
+        console.error("Lỗi chuyển trang EPUB:", error);
+      } finally {
+        state.pageTransitioning = false;
+      }
+    }
+
+    function changeEpubFont(delta) {
+      if (!state.epubRendition) {
+        return;
+      }
+
+      state.epubFontScale = clamp(
+        state.epubFontScale + delta,
+        0.7,
+        1.8
+      );
+
+      localStorage.setItem(
+        "docEpubFontScale",
+        String(state.epubFontScale)
+      );
+
+      applyEpubTheme();
+      dom.zoomStatus.textContent =
+        `${Math.round(state.epubFontScale * 100)}%`;
+    }
+
+    async function cleanupEpub() {
+      if (state.epubRendition) {
+        try {
+          state.epubRendition.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      if (state.epubBook) {
+        try {
+          state.epubBook.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      state.epubRendition = null;
+      state.epubBook = null;
+      state.epubLocationsReady = false;
+      state.epubAtStart = true;
+      state.epubAtEnd = false;
+      state.epubCurrentCfi = "";
+
+      dom.epubStage.replaceChildren();
+      dom.epubContainer.style.display = "none";
+      dom.pdfToolbar.classList.remove("epub-mode");
     }
 
     function handlePdfProgress(progress) {
@@ -3564,6 +3992,11 @@
     }
 
     async function changePage(offset) {
+      if (state.viewerType === "epub") {
+        await changeEpubPage(offset);
+        return;
+      }
+
       if (!state.pdfDoc || state.pageTransitioning) {
         return;
       }
@@ -3718,7 +4151,7 @@
 
     function handlePdfTouchStart(event) {
       if (
-        !state.pdfDoc ||
+        (!state.pdfDoc && !state.epubRendition) ||
         event.touches.length !== 1
       ) {
         state.touchTracking = false;
@@ -3768,7 +4201,7 @@
     function handlePdfTouchEnd(event) {
       if (
         !state.touchTracking ||
-        !state.pdfDoc
+        (!state.pdfDoc && !state.epubRendition)
       ) {
         return;
       }
@@ -3826,7 +4259,7 @@
     function handlePdfTapNavigation(event) {
       if (
         event.pointerType === "mouse" ||
-        !state.pdfDoc ||
+        (!state.pdfDoc && !state.epubRendition) ||
         state.pageTransitioning
       ) {
         return;
@@ -3889,6 +4322,11 @@
     }
 
     function changeZoom(delta) {
+      if (state.viewerType === "epub") {
+        changeEpubFont(delta);
+        return;
+      }
+
       if (!state.pdfDoc) {
         return;
       }
@@ -3940,6 +4378,7 @@
     function isHeightFocusMode() {
       return (
         state.fitMode === "height" &&
+        state.viewerType === "pdf" &&
         Boolean(state.pdfDoc) &&
         window.innerWidth <= 900
       );
@@ -4021,29 +4460,26 @@
     }
 
     function updatePageButtons() {
-      const hasPdf =
-        Boolean(state.pdfDoc);
+      const hasPdf = Boolean(state.pdfDoc);
+      const hasEpub = Boolean(state.epubRendition);
 
-      const previousDisabled =
-        !hasPdf ||
-        state.pageNum <= 1;
+      let previousDisabled = true;
+      let nextDisabled = true;
 
-      const nextDisabled =
-        !hasPdf ||
-        state.pageNum >=
+      if (hasEpub && state.viewerType === "epub") {
+        previousDisabled = state.epubAtStart;
+        nextDisabled = state.epubAtEnd;
+      } else if (hasPdf) {
+        previousDisabled = state.pageNum <= 1;
+        nextDisabled =
+          state.pageNum >=
           (state.pdfDoc?.numPages || 0);
+      }
 
-      dom.btnPrev.disabled =
-        previousDisabled;
-
-      dom.btnNext.disabled =
-        nextDisabled;
-
-      dom.btnEdgePrev.disabled =
-        previousDisabled;
-
-      dom.btnEdgeNext.disabled =
-        nextDisabled;
+      dom.btnPrev.disabled = previousDisabled;
+      dom.btnNext.disabled = nextDisabled;
+      dom.btnEdgePrev.disabled = previousDisabled;
+      dom.btnEdgeNext.disabled = nextDisabled;
     }
 
     function updateZoomStatus() {
@@ -4167,7 +4603,7 @@
         return;
       }
 
-      if (!state.pdfDoc) {
+      if (!state.pdfDoc && !state.epubRendition) {
         return;
       }
 
@@ -4223,6 +4659,13 @@
           }
 
           updateHeightFocusMode(false);
+
+          if (
+            state.epubRendition &&
+            state.viewerType === "epub"
+          ) {
+            state.epubRendition.resize();
+          }
 
           if (
             state.pdfDoc &&
@@ -4370,8 +4813,9 @@
 
       finishPageTransition();
 
-      dom.pdfToolbar.style.display =
-        "none";
+      if (state.viewerType !== "epub") {
+        dom.pdfToolbar.style.display = "none";
+      }
 
       dom.pdfContainer.style.display =
         "none";
@@ -4437,14 +4881,16 @@
       cleanupPdfOnly();
 
       cleanupPdfDocument().catch(() => {});
+      cleanupEpub().catch(() => {});
 
       state.activeFileId = null;
       state.activeFileName = "";
       state.activeMimeType = "";
+      state.viewerType = "";
 
       showPlaceholder(
         "Chưa chọn tài liệu",
-        "Kết nối Google Drive, sau đó chọn một file PDF để mở.",
+        "Kết nối Google Drive, sau đó chọn một file PDF hoặc EPUB để mở.",
         "📖"
       );
 
@@ -4475,6 +4921,22 @@
           // Bỏ qua.
         }
       }
+
+      if (state.epubRendition) {
+        try {
+          state.epubRendition.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      if (state.epubBook) {
+        try {
+          state.epubBook.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
     }
 
     /* =====================================================
@@ -4487,6 +4949,8 @@
       icon = "📖"
     ) {
       cleanupPdfOnly();
+      cleanupEpub().catch(() => {});
+      state.viewerType = "";
 
       dom.placeholder.replaceChildren();
 
