@@ -1778,23 +1778,18 @@
       );
     }
 
-    async function loadDriveFiles(
-      folderId,
-      folderName
-    ) {
+    async function loadDriveFiles(folderId, folderName) {
       if (!requireValidToken()) {
         return;
       }
 
-      closeSidebarOnSmallScreen();
-
       dom.fileSearch.value = "";
 
       dom.currentFolderTitle.textContent =
-        folderName;
+        folderName || "Thư mục";
 
       dom.currentFolderTitle.title =
-        folderName;
+        folderName || "Thư mục";
 
       updateBreadcrumb();
 
@@ -1806,78 +1801,155 @@
         let pageToken = "";
 
         do {
+          /*
+           * Cú pháp Drive API đúng:
+           *
+           * 'folderId' in parents
+           * and trashed = false
+           * and (
+           *   mimeType = folder
+           *   or mimeType = pdf
+           *   or mimeType contains audio
+           * )
+           */
           const query = [
             `'${folderId}' in parents`,
-            "trashed = false",
-            "and", // Thêm toán tử and vào đây
-            "(",
+            "and trashed = false",
+            "and (",
             "mimeType = 'application/vnd.google-apps.folder'",
             "or mimeType = 'application/pdf'",
             "or mimeType contains 'audio/'",
             ")"
           ].join(" ");
 
-          const params = new URLSearchParams({
-            q: query,
-            fields: "nextPageToken,files(id,name,mimeType,size,modifiedTime)",
-            orderBy: "folder,name_natural", // <-- Lỗi ở đây
-            pageSize: String(CONFIG.MAX_FILES_PER_PAGE),
-            supportsAllDrives: "true",
-            includeItemsFromAllDrives: "true"
-          });
+          const params = new URLSearchParams();
+
+          params.set("q", query);
+
+          params.set(
+            "fields",
+            "nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink)"
+          );
+
+          /*
+           * Dùng name_natural để sắp xếp:
+           * file 2 đứng trước file 10.
+           *
+           * Không dùng "folder,name_natural" vì một số trường hợp
+           * Drive API có thể trả về Invalid Value.
+           */
+          params.set("orderBy", "name_natural");
+
+          params.set(
+            "pageSize",
+            String(CONFIG.MAX_FILES_PER_PAGE || 1000)
+          );
+
+          params.set("supportsAllDrives", "true");
+          params.set("includeItemsFromAllDrives", "true");
 
           if (pageToken) {
-            params.set(
-              "pageToken",
-              pageToken
-            );
+            params.set("pageToken", pageToken);
           }
 
           const url =
-            `${CONFIG.DRIVE_API_BASE}/files?` +
-            params.toString();
+            `${CONFIG.DRIVE_API_BASE}/files?${params.toString()}`;
 
-          const response =
-            await driveFetch(url);
+          console.log("Đang tải thư mục:", folderName);
+          console.log("Drive query:", query);
 
-          const data =
-            await response.json();
+          const response = await driveFetch(url);
+          const data = await response.json();
 
           if (Array.isArray(data.files)) {
             allFiles.push(...data.files);
           }
 
-          pageToken =
-            data.nextPageToken || "";
+          pageToken = data.nextPageToken || "";
         } while (pageToken);
 
-        state.files = allFiles;
-        state.filteredFiles = allFiles;
+        /*
+         * Google Drive không đảm bảo thư mục luôn đứng trước file
+         * khi chỉ orderBy name_natural.
+         * Vì vậy sắp xếp lại trên trình duyệt.
+         */
+        allFiles.sort(compareDriveFiles);
 
-        renderFileList(allFiles);
+        state.files = allFiles;
+        state.filteredFiles = [...allFiles];
+
+        renderFileList(state.filteredFiles);
       } catch (error) {
         console.error(
           "Lỗi tải danh sách Drive:",
           error
         );
 
-        if (
-          error.message === "TOKEN_EXPIRED"
-        ) {
+        state.files = [];
+        state.filteredFiles = [];
+
+        if (error.message === "TOKEN_EXPIRED") {
           showListMessage(
             "Phiên đăng nhập đã hết hạn. Hãy kết nối lại Google Drive.",
             true
+          );
+
+          showToast(
+            "Phiên Google Drive đã hết hạn. Hãy kết nối lại.",
+            "warning",
+            6000
           );
         } else {
           showListMessage(
             `Không thể tải thư mục: ${error.message}`,
             true
           );
+
+          showToast(
+            `Không thể tải danh sách Google Drive: ${error.message}`,
+            "error",
+            7000
+          );
         }
 
         dom.fileCount.textContent =
           "Không tải được dữ liệu";
       }
+    }
+
+    /**
+     * Sắp xếp thư mục đứng trước, sau đó sắp tên tự nhiên.
+     * Ví dụ:
+     *   Chương 2
+     *   Chương 9
+     *   Chương 10
+     */
+    function compareDriveFiles(fileA, fileB) {
+      const folderMimeType =
+        "application/vnd.google-apps.folder";
+
+      const aIsFolder =
+        fileA.mimeType === folderMimeType;
+
+      const bIsFolder =
+        fileB.mimeType === folderMimeType;
+
+      if (aIsFolder && !bIsFolder) {
+        return -1;
+      }
+
+      if (!aIsFolder && bIsFolder) {
+        return 1;
+      }
+
+      return String(fileA.name || "").localeCompare(
+        String(fileB.name || ""),
+        "vi",
+        {
+          numeric: true,
+          sensitivity: "base"
+        }
+      );
     }
 
     /* =====================================================
