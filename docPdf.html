@@ -706,6 +706,95 @@
     }
 
 
+
+    /* =====================================================
+       ĐI NHANH TỚI TRANG / VỊ TRÍ
+       ===================================================== */
+
+    .page-jump-form {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 0 0 auto;
+    }
+
+    .page-jump-label {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .page-jump-input {
+      width: 68px;
+      height: 40px;
+      padding: 5px 7px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      text-align: center;
+      font-weight: 700;
+      appearance: textfield;
+    }
+
+    .page-jump-input::-webkit-inner-spin-button,
+    .page-jump-input::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+
+    .page-jump-button {
+      min-width: 42px;
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .page-jump-input:disabled,
+    .page-jump-button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .page-jump-input.invalid {
+      border-color: var(--danger);
+      background: #fef2f2;
+    }
+
+    @media (max-width: 900px) {
+      .page-jump-label {
+        display: none;
+      }
+
+      .page-jump-input {
+        width: 58px;
+        height: 36px;
+        padding: 4px 5px;
+        font-size: 0.8rem;
+      }
+
+      .page-jump-button {
+        min-width: 36px;
+        min-height: 36px;
+        height: 36px;
+        padding: 4px 7px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page-jump-input {
+        width: 52px;
+        height: 34px;
+      }
+
+      .page-jump-button {
+        min-width: 34px;
+        min-height: 34px;
+        height: 34px;
+      }
+    }
+
     /* =====================================================
        EPUB READER
        ===================================================== */
@@ -1651,6 +1740,44 @@
             </button>
           </div>
 
+          <form
+            id="page-jump-form"
+            class="page-jump-form"
+            autocomplete="off"
+            aria-label="Đi nhanh tới trang hoặc vị trí"
+          >
+            <label
+              id="page-jump-label"
+              class="page-jump-label"
+              for="page-jump-input"
+            >
+              Đi tới
+            </label>
+
+            <input
+              id="page-jump-input"
+              class="page-jump-input"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              step="1"
+              placeholder="Số"
+              aria-label="Nhập số trang"
+              disabled
+            >
+
+            <button
+              id="btn-page-jump"
+              class="button button-secondary page-jump-button"
+              type="submit"
+              title="Đi tới"
+              aria-label="Đi tới trang đã nhập"
+              disabled
+            >
+              ↵
+            </button>
+          </form>
+
           <div class="toolbar-group">
             <button
               id="btn-zoom-out"
@@ -1972,6 +2099,18 @@
       pageCount:
         document.getElementById("page-count"),
 
+      pageJumpForm:
+        document.getElementById("page-jump-form"),
+
+      pageJumpLabel:
+        document.getElementById("page-jump-label"),
+
+      pageJumpInput:
+        document.getElementById("page-jump-input"),
+
+      btnPageJump:
+        document.getElementById("btn-page-jump"),
+
       btnPrev:
         document.getElementById("btn-prev"),
 
@@ -2161,6 +2300,26 @@
       dom.btnNext.addEventListener(
         "click",
         () => changePage(1)
+      );
+
+      dom.pageJumpForm.addEventListener(
+        "submit",
+        handlePageJumpSubmit
+      );
+
+      dom.pageJumpInput.addEventListener(
+        "input",
+        () => {
+          dom.pageJumpInput.classList.remove("invalid");
+        }
+      );
+
+      dom.pageJumpInput.addEventListener(
+        "focus",
+        event => {
+          event.target.select();
+          keepFocusControlsVisible();
+        }
       );
 
       dom.btnEdgePrev.addEventListener(
@@ -3277,6 +3436,12 @@
 
       dom.pageNum.textContent = "0";
       dom.pageCount.textContent = "0";
+      configurePageJump({
+        enabled: false,
+        label: "Trang",
+        max: null,
+        value: ""
+      });
 
       state.pageNum = 1;
       state.pendingPageNum = null;
@@ -3325,6 +3490,13 @@
 
         dom.pageCount.textContent =
           String(state.pdfDoc.numPages);
+
+        configurePageJump({
+          enabled: true,
+          label: "Trang",
+          max: state.pdfDoc.numPages,
+          value: 1
+        });
 
         state.pageNum = 1;
 
@@ -3673,6 +3845,17 @@
             }
 
             state.epubLocationsReady = true;
+
+            const totalLocations =
+              getEpubTotalLocations();
+
+            configurePageJump({
+              enabled: totalLocations > 0,
+              label: "Vị trí",
+              max: totalLocations || null,
+              value: getEpubCurrentLocationNumber()
+            });
+
             updateEpubLocationDisplay(
               state.epubCurrentCfi
             );
@@ -3725,9 +3908,15 @@
       dom.pdfToolbar.classList.add("epub-mode");
       dom.pdfContainer.style.display = "none";
       dom.epubContainer.style.display = "block";
-      dom.pageLabel.textContent = "Tiến độ";
-      dom.pageNum.textContent = "0";
-      dom.pageCount.textContent = "100%";
+      dom.pageLabel.textContent = "Vị trí";
+      dom.pageNum.textContent = "…";
+      dom.pageCount.textContent = "…";
+      configurePageJump({
+        enabled: false,
+        label: "Vị trí",
+        max: null,
+        value: ""
+      });
       dom.zoomStatus.textContent =
         `${Math.round(state.epubFontScale * 100)}%`;
 
@@ -3882,19 +4071,69 @@
       updatePageButtons();
     }
 
-    function updateEpubLocationDisplay(cfi) {
+    function getEpubTotalLocations() {
       if (
-        state.epubLocationsReady &&
+        !state.epubLocationsReady ||
+        !state.epubBook?.locations
+      ) {
+        return 0;
+      }
+
+      const total =
+        Number(state.epubBook.locations.length?.()) ||
+        Number(state.epubBook.locations.total) ||
+        0;
+
+      return Math.max(0, Math.floor(total));
+    }
+
+    function getEpubCurrentLocationNumber() {
+      if (
+        !state.epubLocationsReady ||
+        !state.epubCurrentCfi ||
+        !state.epubBook?.locations
+      ) {
+        return "";
+      }
+
+      const index =
+        state.epubBook.locations.locationFromCfi(
+          state.epubCurrentCfi
+        );
+
+      if (!Number.isFinite(index) || index < 0) {
+        return "";
+      }
+
+      return Math.floor(index) + 1;
+    }
+
+    function updateEpubLocationDisplay(cfi) {
+      const totalLocations =
+        getEpubTotalLocations();
+
+      if (
+        totalLocations > 0 &&
         cfi &&
         state.epubBook?.locations
       ) {
-        const percentage =
-          state.epubBook.locations.percentageFromCfi(cfi);
+        const currentLocation =
+          getEpubCurrentLocationNumber();
 
-        if (Number.isFinite(percentage)) {
+        if (currentLocation) {
           dom.pageNum.textContent =
-            `${Math.round(percentage * 100)}%`;
-          dom.pageCount.textContent = "100%";
+            String(currentLocation);
+          dom.pageCount.textContent =
+            String(totalLocations);
+
+          if (
+            document.activeElement !==
+            dom.pageJumpInput
+          ) {
+            dom.pageJumpInput.value =
+              String(currentLocation);
+          }
+
           return;
         }
       }
@@ -3902,7 +4141,207 @@
       dom.pageNum.textContent =
         state.epubAtStart ? "Đầu" : "…";
       dom.pageCount.textContent =
-        state.epubAtEnd ? "Cuối" : "100%";
+        state.epubAtEnd ? "Cuối" : "…";
+    }
+
+    function configurePageJump({
+      enabled,
+      label,
+      max,
+      value
+    }) {
+      dom.pageJumpLabel.textContent =
+        label || "Đi tới";
+
+      dom.pageJumpInput.disabled = !enabled;
+      dom.btnPageJump.disabled = !enabled;
+
+      dom.pageJumpInput.min = "1";
+
+      if (
+        Number.isFinite(Number(max)) &&
+        Number(max) >= 1
+      ) {
+        dom.pageJumpInput.max =
+          String(Math.floor(Number(max)));
+        dom.pageJumpInput.placeholder =
+          `1-${Math.floor(Number(max))}`;
+      } else {
+        dom.pageJumpInput.removeAttribute("max");
+        dom.pageJumpInput.placeholder = "Số";
+      }
+
+      dom.pageJumpInput.value =
+        value === "" ||
+        value === null ||
+        value === undefined
+          ? ""
+          : String(value);
+
+      dom.pageJumpInput.classList.remove("invalid");
+    }
+
+    async function handlePageJumpSubmit(event) {
+      event.preventDefault();
+
+      const rawValue =
+        String(dom.pageJumpInput.value || "").trim();
+
+      const targetNumber =
+        Number(rawValue);
+
+      if (
+        !rawValue ||
+        !Number.isInteger(targetNumber)
+      ) {
+        markPageJumpInvalid(
+          "Hãy nhập một số nguyên hợp lệ."
+        );
+        return;
+      }
+
+      if (state.viewerType === "pdf") {
+        await jumpToPdfPage(targetNumber);
+        return;
+      }
+
+      if (state.viewerType === "epub") {
+        await jumpToEpubLocation(targetNumber);
+      }
+    }
+
+    function markPageJumpInvalid(message) {
+      dom.pageJumpInput.classList.add("invalid");
+      dom.pageJumpInput.focus();
+      dom.pageJumpInput.select();
+
+      showToast(
+        message,
+        "warning",
+        3500
+      );
+    }
+
+    async function jumpToPdfPage(pageNumber) {
+      const totalPages =
+        state.pdfDoc?.numPages || 0;
+
+      if (
+        !totalPages ||
+        pageNumber < 1 ||
+        pageNumber > totalPages
+      ) {
+        markPageJumpInvalid(
+          `Số trang phải từ 1 đến ${totalPages || 1}.`
+        );
+        return;
+      }
+
+      if (
+        pageNumber === state.pageNum ||
+        state.pageTransitioning
+      ) {
+        dom.pageJumpInput.blur();
+        return;
+      }
+
+      const direction =
+        pageNumber > state.pageNum
+          ? "next"
+          : "prev";
+
+      state.pageTransitioning = true;
+
+      try {
+        preparePageFlipSnapshot(direction);
+
+        await renderPage(
+          pageNumber,
+          {
+            resetScroll: true,
+            transitionDirection: direction,
+            suppressLoading:
+              state.pageEffect !== "none"
+          }
+        );
+
+        animateNewPage(direction);
+        dom.pageJumpInput.value =
+          String(pageNumber);
+        dom.pageJumpInput.blur();
+      } finally {
+        window.setTimeout(() => {
+          finishPageTransition();
+        }, state.pageEffect === "none" ? 0 : 300);
+      }
+    }
+
+    async function jumpToEpubLocation(locationNumber) {
+      const totalLocations =
+        getEpubTotalLocations();
+
+      if (!state.epubLocationsReady || !totalLocations) {
+        showToast(
+          "Ứng dụng đang tạo danh sách vị trí EPUB. Hãy thử lại sau ít giây.",
+          "warning",
+          4500
+        );
+        return;
+      }
+
+      if (
+        locationNumber < 1 ||
+        locationNumber > totalLocations
+      ) {
+        markPageJumpInvalid(
+          `Vị trí phải từ 1 đến ${totalLocations}.`
+        );
+        return;
+      }
+
+      if (
+        !state.epubRendition ||
+        state.pageTransitioning
+      ) {
+        return;
+      }
+
+      const targetCfi =
+        state.epubBook.locations.cfiFromLocation(
+          locationNumber - 1
+        );
+
+      if (!targetCfi) {
+        markPageJumpInvalid(
+          "Không xác định được vị trí EPUB này."
+        );
+        return;
+      }
+
+      state.pageTransitioning = true;
+
+      try {
+        await state.epubRendition.display(
+          targetCfi
+        );
+
+        dom.pageJumpInput.value =
+          String(locationNumber);
+        dom.pageJumpInput.blur();
+      } catch (error) {
+        console.error(
+          "Lỗi đi tới vị trí EPUB:",
+          error
+        );
+
+        showToast(
+          "Không thể đi tới vị trí EPUB đã chọn.",
+          "error",
+          4500
+        );
+      } finally {
+        state.pageTransitioning = false;
+      }
     }
 
     async function changeEpubPage(offset) {
@@ -3983,6 +4422,15 @@
       dom.epubStage.replaceChildren();
       dom.epubContainer.style.display = "none";
       dom.pdfToolbar.classList.remove("epub-mode");
+
+      if (state.viewerType !== "pdf") {
+        configurePageJump({
+          enabled: false,
+          label: "Đi tới",
+          max: null,
+          value: ""
+        });
+      }
     }
 
     function handlePdfProgress(progress) {
@@ -4147,6 +4595,14 @@
 
         dom.pageNum.textContent =
           String(pageNumber);
+
+        if (
+          document.activeElement !==
+          dom.pageJumpInput
+        ) {
+          dom.pageJumpInput.value =
+            String(pageNumber);
+        }
 
         updatePageButtons();
         updateZoomStatus();
@@ -5112,6 +5568,13 @@
 
       if (state.viewerType !== "epub") {
         dom.pdfToolbar.style.display = "none";
+
+        configurePageJump({
+          enabled: false,
+          label: "Đi tới",
+          max: null,
+          value: ""
+        });
       }
 
       dom.pdfContainer.style.display =
