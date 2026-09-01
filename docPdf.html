@@ -1836,6 +1836,11 @@
 
       RESIZE_DELAY: 180,
 
+      EPUB_CACHE_DB: "thuVienNhiEpubCache",
+      EPUB_CACHE_STORE: "books",
+      EPUB_CACHE_VERSION: 1,
+      EPUB_CACHE_MAX_AGE: 30 * 24 * 60 * 60 * 1000,
+
       AUTH_TOKEN_KEY:
         "docPdfGoogleAccessToken",
 
@@ -3383,6 +3388,312 @@
       }
     }
 
+    /* =====================================================
+       CACHE EPUB BẰNG INDEXEDDB
+       - Lần đầu tải từ Google Drive
+       - Các lần sau đọc trực tiếp từ bộ nhớ thiết bị
+       - Tự làm mới khi modifiedTime của file thay đổi
+       ===================================================== */
+
+    function openEpubCacheDatabase() {
+      return new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) {
+          resolve(null);
+          return;
+        }
+
+        const request = indexedDB.open(
+          CONFIG.EPUB_CACHE_DB,
+          CONFIG.EPUB_CACHE_VERSION
+        );
+
+        request.onupgradeneeded = () => {
+          const database = request.result;
+
+          if (!database.objectStoreNames.contains(
+            CONFIG.EPUB_CACHE_STORE
+          )) {
+            const store = database.createObjectStore(
+              CONFIG.EPUB_CACHE_STORE,
+              { keyPath: "id" }
+            );
+
+            store.createIndex(
+              "cachedAt",
+              "cachedAt",
+              { unique: false }
+            );
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+        request.onblocked = () => reject(
+          new Error("Cơ sở dữ liệu EPUB đang bị khóa.")
+        );
+      });
+    }
+
+    async function readEpubFromCache(file) {
+      const database = await openEpubCacheDatabase();
+
+      if (!database) {
+        return null;
+      }
+
+      try {
+        const record = await new Promise((resolve, reject) => {
+          const transaction = database.transaction(
+            CONFIG.EPUB_CACHE_STORE,
+            "readonly"
+          );
+
+          const request = transaction
+            .objectStore(CONFIG.EPUB_CACHE_STORE)
+            .get(file.id);
+
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+
+        if (!record?.buffer) {
+          return null;
+        }
+
+        const sameVersion =
+          String(record.modifiedTime || "") ===
+          String(file.modifiedTime || "");
+
+        const freshEnough =
+          Date.now() - Number(record.cachedAt || 0) <
+          CONFIG.EPUB_CACHE_MAX_AGE;
+
+        if (!sameVersion || !freshEnough) {
+          deleteEpubCacheEntry(file.id).catch(() => {});
+          return null;
+        }
+
+        return record.buffer;
+      } finally {
+        database.close();
+      }
+    }
+
+    async function writeEpubToCache(file, buffer) {
+      const database = await openEpubCacheDatabase();
+
+      if (!database) {
+        return false;
+      }
+
+      try {
+        await new Promise((resolve, reject) => {
+          const transaction = database.transaction(
+            CONFIG.EPUB_CACHE_STORE,
+            "readwrite"
+          );
+
+          transaction.objectStore(
+            CONFIG.EPUB_CACHE_STORE
+          ).put({
+            id: file.id,
+            name: file.name || "",
+            modifiedTime: file.modifiedTime || "",
+            cachedAt: Date.now(),
+            size: buffer.byteLength,
+            buffer
+          });
+
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error);
+        });
+
+        return true;
+      } finally {
+        database.close();
+      }
+    }
+
+    async function deleteEpubCacheEntry(fileId) {
+      const database = await openEpubCacheDatabase();
+
+      if (!database) {
+        return;
+      }
+
+      try {
+        await new Promise((resolve, reject) => {
+          const transaction = database.transaction(
+            CONFIG.EPUB_CACHE_STORE,
+            "readwrite"
+          );
+
+          transaction.objectStore(
+            CONFIG.EPUB_CACHE_STORE
+          ).delete(fileId);
+
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        });
+      } finally {
+        database.close();
+      }
+    }
+
+    async function cleanupExpiredEpubCache() {
+      const database = await openEpubCacheDatabase();
+
+      if (!database) {
+        return;
+      }
+
+      try {
+        await new Promise((resolve, reject) => {
+          const transaction = database.transaction(
+            CONFIG.EPUB_CACHE_STORE,
+            "readwrite"
+          );
+
+          const store = transaction.objectStore(
+            CONFIG.EPUB_CACHE_STORE
+          );
+
+          const request = store.openCursor();
+          const now = Date.now();
+
+          request.onsuccess = () => {
+            const cursor = request.result;
+
+            if (!cursor) {
+              return;
+            }
+
+            const cachedAt = Number(
+              cursor.value?.cachedAt || 0
+            );
+
+            if (
+              !cachedAt ||
+              now - cachedAt > CONFIG.EPUB_CACHE_MAX_AGE
+            ) {
+              cursor.delete();
+            }
+
+            cursor.continue();
+          };
+
+          request.onerror = () => reject(request.error);
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        });
+      } finally {
+        database.close();
+      }
+    }
+
+    async function getEpubArrayBuffer(file) {
+      try {
+        const cachedBuffer = await readEpubFromCache(file);
+
+        if (cachedBuffer) {
+          showLoading(
+            "Đang mở EPUB từ bộ nhớ...",
+            "Không cần tải lại file từ Google Drive."
+          );
+
+          return {
+            buffer: cachedBuffer,
+            fromCache: true
+          };
+        }
+      } catch (error) {
+        console.warn("Không thể đọc cache EPUB:", error);
+      }
+
+      showLoading(
+        "Đang tải EPUB lần đầu...",
+        "File sẽ được lưu trên thiết bị để những lần mở sau nhanh hơn."
+      );
+
+      const mediaUrl =
+        `${CONFIG.DRIVE_API_BASE}/files/` +
+        `${encodeURIComponent(file.id)}` +
+        "?alt=media";
+
+      const response = await driveFetch(mediaUrl);
+      const buffer = await response.arrayBuffer();
+
+      /*
+       * Không chờ ghi cache để tránh làm chậm lần hiển thị đầu tiên.
+       * ArrayBuffer.slice tạo bản sao độc lập cho IndexedDB.
+       */
+      const cacheBuffer = buffer.slice(0);
+
+      writeEpubToCache(file, cacheBuffer)
+        .catch(async error => {
+          console.warn("Không thể lưu cache EPUB:", error);
+
+          if (
+            error?.name === "QuotaExceededError" ||
+            error?.name === "UnknownError"
+          ) {
+            try {
+              await cleanupExpiredEpubCache();
+              await writeEpubToCache(file, cacheBuffer);
+            } catch (retryError) {
+              console.warn(
+                "Không thể lưu EPUB sau khi dọn cache:",
+                retryError
+              );
+            }
+          }
+        });
+
+      return {
+        buffer,
+        fromCache: false
+      };
+    }
+
+    function scheduleEpubLocationGeneration() {
+      const generate = () => {
+        if (
+          state.viewerType !== "epub" ||
+          !state.epubBook ||
+          state.epubLocationsReady
+        ) {
+          return;
+        }
+
+        state.epubBook.locations.generate(1200)
+          .then(() => {
+            if (state.viewerType !== "epub") {
+              return;
+            }
+
+            state.epubLocationsReady = true;
+            updateEpubLocationDisplay(
+              state.epubCurrentCfi
+            );
+          })
+          .catch(error => {
+            console.warn(
+              "Không thể tạo vị trí EPUB:",
+              error
+            );
+          });
+      };
+
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(generate, {
+          timeout: 1800
+        });
+      } else {
+        window.setTimeout(generate, 700);
+      }
+    }
+
     async function openEpub(file) {
       if (!requireValidToken()) {
         return;
@@ -3431,13 +3742,8 @@
       );
 
       try {
-        const mediaUrl =
-          `${CONFIG.DRIVE_API_BASE}/files/` +
-          `${encodeURIComponent(file.id)}` +
-          "?alt=media";
-
-        const response = await driveFetch(mediaUrl);
-        const arrayBuffer = await response.arrayBuffer();
+        const epubSource = await getEpubArrayBuffer(file);
+        const arrayBuffer = epubSource.buffer;
 
         state.epubBook = ePub(arrayBuffer);
         await state.epubBook.ready;
@@ -3497,24 +3803,15 @@
 
         hideLoading();
         showToast(
-          `Đã mở “${file.name}”.`,
+          epubSource.fromCache
+            ? `Đã mở nhanh “${file.name}” từ bộ nhớ thiết bị.`
+            : `Đã mở “${file.name}”.`,
           "success",
           3000
         );
 
-        state.epubBook.locations.generate(1200)
-          .then(() => {
-            state.epubLocationsReady = true;
-            updateEpubLocationDisplay(
-              state.epubCurrentCfi
-            );
-          })
-          .catch(error => {
-            console.warn(
-              "Không thể tạo vị trí EPUB:",
-              error
-            );
-          });
+        scheduleEpubLocationGeneration();
+
       } catch (error) {
         hideLoading();
         console.error("Lỗi mở EPUB:", error);
