@@ -1294,6 +1294,116 @@
       }
     }
 
+
+    /* =====================================================
+       NÚT CHUYỂN TRANG Ở HAI MÉP KHUNG ĐỌC - MÁY TÍNH
+       ===================================================== */
+
+    .edge-page-button {
+      position: absolute;
+      top: calc(50% + 28px);
+      width: 52px;
+      height: 84px;
+      padding: 0;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      border: 1px solid rgba(148, 163, 184, 0.62);
+      border-radius: 14px;
+
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text);
+
+      box-shadow:
+        0 8px 24px rgba(15, 23, 42, 0.16);
+
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1;
+
+      cursor: pointer;
+      user-select: none;
+      z-index: 25;
+
+      transform: translateY(-50%);
+      transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        transform 0.15s ease,
+        opacity 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    .edge-page-button:hover:not(:disabled) {
+      background: rgba(15, 118, 110, 0.94);
+      color: #ffffff;
+      transform: translateY(-50%) scale(1.04);
+      box-shadow:
+        0 10px 28px rgba(15, 23, 42, 0.24);
+    }
+
+    .edge-page-button:active:not(:disabled) {
+      transform: translateY(-50%) scale(0.96);
+    }
+
+    .edge-page-button:disabled {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .edge-page-button.previous {
+      left: 14px;
+    }
+
+    .edge-page-button.next {
+      right: 14px;
+    }
+
+    .edge-page-button .edge-arrow {
+      transform: translateY(-1px);
+    }
+
+    @media (min-width: 901px) {
+      /*
+       * Trên máy tính, chỉ giữ số trang ở thanh trên.
+       * Hai nút chuyển trang được đưa xuống hai mép khung đọc.
+       */
+      #btn-prev,
+      #btn-next {
+        display: none;
+      }
+
+      .edge-page-button.pdf-visible {
+        display: inline-flex;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .edge-page-button {
+        display: none !important;
+      }
+    }
+
+    @media (min-width: 901px) and (max-width: 1180px) {
+      .edge-page-button {
+        width: 46px;
+        height: 72px;
+      }
+
+      .edge-page-button.previous {
+        left: 8px;
+      }
+
+      .edge-page-button.next {
+        right: 8px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1556,6 +1666,29 @@
           ☰
         </button>
 
+        <!-- NÚT CHUYỂN TRANG Ở HAI MÉP KHUNG ĐỌC - DESKTOP -->
+        <button
+          id="btn-edge-prev"
+          class="edge-page-button previous"
+          type="button"
+          title="Trang trước"
+          aria-label="Trang trước"
+          disabled
+        >
+          <span class="edge-arrow" aria-hidden="true">‹</span>
+        </button>
+
+        <button
+          id="btn-edge-next"
+          class="edge-page-button next"
+          type="button"
+          title="Trang tiếp theo"
+          aria-label="Trang tiếp theo"
+          disabled
+        >
+          <span class="edge-arrow" aria-hidden="true">›</span>
+        </button>
+
         <!-- PDF VIEWER -->
         <section
           id="pdf-container"
@@ -1756,6 +1889,12 @@
       btnNext:
         document.getElementById("btn-next"),
 
+      btnEdgePrev:
+        document.getElementById("btn-edge-prev"),
+
+      btnEdgeNext:
+        document.getElementById("btn-edge-next"),
+
       btnZoomOut:
         document.getElementById("btn-zoom-out"),
 
@@ -1933,6 +2072,36 @@
       dom.btnNext.addEventListener(
         "click",
         () => changePage(1)
+      );
+
+      dom.btnEdgePrev.addEventListener(
+        "click",
+        event => {
+          event.stopPropagation();
+          changePage(-1);
+        }
+      );
+
+      dom.btnEdgeNext.addEventListener(
+        "click",
+        event => {
+          event.stopPropagation();
+          changePage(1);
+        }
+      );
+
+      /*
+       * Ngăn sự kiện pointerup nổi lên vùng PDF,
+       * tránh bị xử lý thêm một lần bởi điều hướng chạm.
+       */
+      dom.btnEdgePrev.addEventListener(
+        "pointerup",
+        event => event.stopPropagation()
+      );
+
+      dom.btnEdgeNext.addEventListener(
+        "pointerup",
+        event => event.stopPropagation()
       );
 
       dom.btnZoomOut.addEventListener(
@@ -2968,6 +3137,14 @@
       dom.pdfContainer.style.display =
         "block";
 
+      dom.btnEdgePrev.classList.add(
+        "pdf-visible"
+      );
+
+      dom.btnEdgeNext.classList.add(
+        "pdf-visible"
+      );
+
       updateHeightFocusMode(true);
 
       dom.pageNum.textContent = "0";
@@ -3847,14 +4024,26 @@
       const hasPdf =
         Boolean(state.pdfDoc);
 
-      dom.btnPrev.disabled =
+      const previousDisabled =
         !hasPdf ||
         state.pageNum <= 1;
 
-      dom.btnNext.disabled =
+      const nextDisabled =
         !hasPdf ||
         state.pageNum >=
           (state.pdfDoc?.numPages || 0);
+
+      dom.btnPrev.disabled =
+        previousDisabled;
+
+      dom.btnNext.disabled =
+        nextDisabled;
+
+      dom.btnEdgePrev.disabled =
+        previousDisabled;
+
+      dom.btnEdgeNext.disabled =
+        nextDisabled;
     }
 
     function updateZoomStatus() {
@@ -4186,6 +4375,17 @@
 
       dom.pdfContainer.style.display =
         "none";
+
+      dom.btnEdgePrev.classList.remove(
+        "pdf-visible"
+      );
+
+      dom.btnEdgeNext.classList.remove(
+        "pdf-visible"
+      );
+
+      dom.btnEdgePrev.disabled = true;
+      dom.btnEdgeNext.disabled = true;
 
       clearTimeout(state.focusControlsTimer);
       document.body.classList.remove("height-focus-mode");
