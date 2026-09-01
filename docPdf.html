@@ -701,6 +701,162 @@
       }
     }
 
+
+    /* =====================================================
+       CHẾ ĐỘ VỪA CHIỀU CAO TOÀN MÀN HÌNH
+       ===================================================== */
+
+    body.height-fit-active .pdf-container {
+      overflow: hidden;
+      padding:
+        2px
+        max(2px, var(--safe-right))
+        max(2px, var(--safe-bottom))
+        max(2px, var(--safe-left));
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.height-fit-active .canvas-wrapper {
+      margin: auto;
+      line-height: 0;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    body.height-fit-active #pdf-canvas {
+      margin: 0 auto;
+    }
+
+    body.height-fit-active .swipe-hint {
+      bottom: max(4px, var(--safe-bottom));
+    }
+
+    @media (max-width: 1024px) {
+      body.height-fit-active {
+        --header-height: 46px;
+      }
+
+      body.height-fit-active .app-header {
+        min-height: calc(46px + var(--safe-top));
+        padding:
+          calc(4px + var(--safe-top))
+          calc(7px + var(--safe-right))
+          4px
+          calc(7px + var(--safe-left));
+      }
+
+      body.height-fit-active .app-title {
+        max-width: 118px;
+        font-size: 0.96rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      body.height-fit-active .pdf-toolbar {
+        min-height: 42px;
+        padding: 3px 5px;
+        gap: 5px;
+        scrollbar-width: none;
+      }
+
+      body.height-fit-active .pdf-toolbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      body.height-fit-active .pdf-toolbar .button {
+        min-height: 34px;
+      }
+
+      body.height-fit-active .pdf-toolbar .icon-button {
+        width: 36px;
+        height: 36px;
+      }
+
+      body.height-fit-active .pdf-toolbar .fit-select {
+        height: 36px;
+        padding: 4px 7px;
+      }
+
+      body.height-fit-active .pdf-toolbar .page-status {
+        min-width: 76px;
+        font-size: 0.8rem;
+      }
+
+      body.height-fit-active .pdf-toolbar .zoom-status {
+        min-width: 48px;
+        font-size: 0.76rem;
+      }
+
+      body.height-fit-active .pdf-container {
+        padding:
+          1px
+          max(1px, var(--safe-right))
+          max(1px, var(--safe-bottom))
+          max(1px, var(--safe-left));
+      }
+    }
+
+    @media (max-width: 620px) {
+      body.height-fit-active {
+        --header-height: 42px;
+      }
+
+      body.height-fit-active .app-header {
+        min-height: calc(42px + var(--safe-top));
+        padding:
+          calc(2px + var(--safe-top))
+          calc(5px + var(--safe-right))
+          2px
+          calc(5px + var(--safe-left));
+      }
+
+      body.height-fit-active .app-title {
+        max-width: 92px;
+        font-size: 0.88rem;
+      }
+
+      body.height-fit-active .pdf-toolbar {
+        min-height: 38px;
+        padding: 2px 4px;
+      }
+
+      body.height-fit-active .pdf-toolbar .button {
+        min-height: 32px;
+        padding: 4px 8px;
+      }
+
+      body.height-fit-active .pdf-toolbar .icon-button {
+        width: 33px;
+        height: 33px;
+      }
+
+      body.height-fit-active .pdf-toolbar .fit-select {
+        height: 33px;
+        max-width: 132px;
+        padding: 3px 5px;
+        font-size: 0.78rem;
+      }
+
+      body.height-fit-active .pdf-toolbar .page-status {
+        min-width: 70px;
+        font-size: 0.76rem;
+      }
+
+      body.height-fit-active .pdf-toolbar .zoom-status {
+        display: none;
+      }
+
+      body.height-fit-active .pdf-container {
+        padding:
+          0
+          max(0px, var(--safe-right))
+          max(0px, var(--safe-bottom))
+          max(0px, var(--safe-left));
+      }
+    }
+
     /* =====================================================
        AUDIO PLAYER
        ===================================================== */
@@ -2714,6 +2870,7 @@
       state.pendingPageNum = null;
       state.customZoom = 1;
 
+      applyFitModeLayout();
       updateZoomStatus();
       updatePageButtons();
 
@@ -3051,15 +3208,24 @@
           scale: 1
         });
 
+      /*
+       * Ở chế độ vừa chiều cao, vùng PDF đã được CSS thu gọn
+       * gần như không còn khoảng đệm. Vì vậy chỉ trừ một phần
+       * dự phòng rất nhỏ để tránh canvas chạm mép hoặc bị cắt
+       * bởi sai số làm tròn trên Safari/iPadOS.
+       */
+      const isHeightFit =
+        state.fitMode === "height";
+
       const horizontalPadding =
-        window.innerWidth <= 620
-          ? 20
-          : 40;
+        isHeightFit
+          ? (window.innerWidth <= 620 ? 2 : 4)
+          : (window.innerWidth <= 620 ? 20 : 40);
 
       const verticalPadding =
-        window.innerWidth <= 620
-          ? 20
-          : 40;
+        isHeightFit
+          ? (window.innerWidth <= 620 ? 2 : 4)
+          : (window.innerWidth <= 620 ? 20 : 40);
 
       const availableWidth =
         Math.max(
@@ -3075,27 +3241,30 @@
           verticalPadding
         );
 
-      if (
-        state.fitMode === "height"
-      ) {
+      if (isHeightFit) {
         const heightScale =
           availableHeight /
           baseViewport.height;
 
-        /*
-         * Đồng thời giới hạn theo chiều rộng.
-         * Cách này tránh lỗi iPad: canvas có chiều rộng
-         * vượt quá vùng hiển thị làm người dùng tưởng trang trống.
-         */
         const widthScale =
           availableWidth /
           baseViewport.width;
 
-        return clamp(
+        /*
+         * Ưu tiên dùng tối đa chiều cao. Chỉ giảm tỷ lệ khi
+         * chiều rộng trang vượt quá vùng đọc. Nhờ đó:
+         * - Trang dọc trên điện thoại dùng gần hết chiều cao.
+         * - Trang ngang vẫn không bị cắt hai bên.
+         * - iPad xoay ngang/dọc đều hiển thị ổn định.
+         */
+        const scale =
           Math.min(
             heightScale,
             widthScale
-          ),
+          );
+
+        return clamp(
+          scale,
           CONFIG.MIN_ZOOM,
           CONFIG.MAX_ZOOM
         );
@@ -3450,6 +3619,7 @@
         state.fitMode = "actual";
         state.customZoom = 1;
         dom.fitMode.value = "actual";
+        applyFitModeLayout();
       }
 
       state.customZoom = clamp(
@@ -3472,13 +3642,47 @@
 
       state.customZoom = 1;
 
+      applyFitModeLayout();
+
       if (state.pdfDoc) {
-        renderPage(
-          state.pageNum,
-          {
-            resetScroll: true
-          }
-        );
+        /*
+         * Chờ trình duyệt áp dụng chiều cao mới của header,
+         * toolbar và vùng PDF trước khi tính lại tỷ lệ.
+         */
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            renderPage(
+              state.pageNum,
+              {
+                resetScroll: true
+              }
+            );
+          });
+        });
+      }
+    }
+
+    function applyFitModeLayout() {
+      const isHeightFit =
+        state.fitMode === "height";
+
+      document.body.classList.toggle(
+        "height-fit-active",
+        isHeightFit
+      );
+
+      dom.pdfContainer.classList.toggle(
+        "height-fit",
+        isHeightFit
+      );
+
+      /*
+       * Ở chế độ vừa chiều cao, đưa vùng cuộn về đầu để tránh
+       * vị trí cuộn cũ làm canvas lệch khỏi chính giữa.
+       */
+      if (isHeightFit) {
+        dom.pdfContainer.scrollTop = 0;
+        dom.pdfContainer.scrollLeft = 0;
       }
     }
 
@@ -3888,6 +4092,14 @@
       state.activeFileId = null;
       state.activeFileName = "";
       state.activeMimeType = "";
+
+      document.body.classList.remove(
+        "height-fit-active"
+      );
+
+      dom.pdfContainer.classList.remove(
+        "height-fit"
+      );
 
       showPlaceholder(
         "Chưa chọn tài liệu",
