@@ -10,7 +10,7 @@
 
   <meta name="theme-color" content="#0f766e">
 
-  <title>Tủ Sách & Nhạc 2026</title>
+  <title>Tủ Sách 2026</title>
 
   <!-- Google Identity Services -->
   <script
@@ -585,6 +585,122 @@
       box-shadow: var(--shadow);
     }
 
+    .canvas-wrapper {
+      position: relative;
+      perspective: 1400px;
+      transform-style: preserve-3d;
+      touch-action: pan-y pinch-zoom;
+      user-select: none;
+    }
+
+    .page-flip-layer {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      transform-origin: center left;
+      will-change: transform, opacity, filter;
+      z-index: 4;
+    }
+
+    .page-flip-layer.visible {
+      display: block;
+    }
+
+    .page-flip-layer.flip-next {
+      transform-origin: left center;
+      animation: page-flip-next 280ms cubic-bezier(.22,.72,.28,1) forwards;
+    }
+
+    .page-flip-layer.flip-prev {
+      transform-origin: right center;
+      animation: page-flip-prev 280ms cubic-bezier(.22,.72,.28,1) forwards;
+    }
+
+    .page-enter-next {
+      animation: page-enter-next 260ms cubic-bezier(.22,.72,.28,1);
+    }
+
+    .page-enter-prev {
+      animation: page-enter-prev 260ms cubic-bezier(.22,.72,.28,1);
+    }
+
+    .swipe-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.68);
+      color: #fff;
+      font-size: 0.74rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 6;
+    }
+
+    .pdf-container.show-swipe-hint .swipe-hint {
+      opacity: 1;
+    }
+
+    @keyframes page-flip-next {
+      0% {
+        transform: rotateY(0deg) translateX(0);
+        opacity: 1;
+        filter: brightness(1);
+      }
+      65% {
+        opacity: .96;
+      }
+      100% {
+        transform: rotateY(-88deg) translateX(-2%);
+        opacity: 0;
+        filter: brightness(.82);
+      }
+    }
+
+    @keyframes page-flip-prev {
+      0% {
+        transform: rotateY(0deg) translateX(0);
+        opacity: 1;
+        filter: brightness(1);
+      }
+      65% {
+        opacity: .96;
+      }
+      100% {
+        transform: rotateY(88deg) translateX(2%);
+        opacity: 0;
+        filter: brightness(.82);
+      }
+    }
+
+    @keyframes page-enter-next {
+      from {
+        opacity: .25;
+        transform: translateX(16px) scale(.992);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes page-enter-prev {
+      from {
+        opacity: .25;
+        transform: translateX(-16px) scale(.992);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
     /* =====================================================
        AUDIO PLAYER
        ===================================================== */
@@ -869,6 +985,11 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+
+      .page-flip-layer,
+      #pdf-canvas {
+        animation: none !important;
+      }
     }
   </style>
 </head>
@@ -1099,6 +1220,17 @@
               <option value="actual">Kích thước thực</option>
             </select>
 
+            <select
+              id="page-effect"
+              class="fit-select"
+              aria-label="Hiệu ứng chuyển trang"
+              title="Hiệu ứng chuyển trang"
+            >
+              <option value="flip">Lật sách</option>
+              <option value="slide">Trượt nhẹ</option>
+              <option value="none">Không hiệu ứng</option>
+            </select>
+
             <button
               id="btn-download-original"
               class="button button-secondary"
@@ -1117,9 +1249,11 @@
           class="pdf-container"
           aria-label="Nội dung PDF"
         >
-          <div class="canvas-wrapper">
+          <div id="canvas-wrapper" class="canvas-wrapper">
             <canvas id="pdf-canvas"></canvas>
+            <canvas id="page-flip-layer" class="page-flip-layer"></canvas>
           </div>
+          <div class="swipe-hint">Vuốt ngang để chuyển trang</div>
         </section>
 
         <!-- AUDIO PLAYER -->
@@ -1250,6 +1384,13 @@
 
       fitMode: "width",
       customZoom: 1,
+      pageEffect: "flip",
+      pageTransitioning: false,
+
+      touchStartX: 0,
+      touchStartY: 0,
+      touchStartTime: 0,
+      touchTracking: false,
 
       resizeTimer: null
     };
@@ -1298,6 +1439,12 @@
       pdfCanvas:
         document.getElementById("pdf-canvas"),
 
+      canvasWrapper:
+        document.getElementById("canvas-wrapper"),
+
+      pageFlipLayer:
+        document.getElementById("page-flip-layer"),
+
       pageNum:
         document.getElementById("page-num"),
 
@@ -1321,6 +1468,9 @@
 
       fitMode:
         document.getElementById("fit-mode"),
+
+      pageEffect:
+        document.getElementById("page-effect"),
 
       btnDownloadOriginal:
         document.getElementById("btn-download-original"),
@@ -1362,6 +1512,23 @@
 
     async function initializeApp() {
       bindEvents();
+
+      const savedPageEffect =
+        localStorage.getItem(
+          "docPdfPageEffect"
+        );
+
+      if (
+        ["flip", "slide", "none"].includes(
+          savedPageEffect
+        )
+      ) {
+        state.pageEffect =
+          savedPageEffect;
+
+        dom.pageEffect.value =
+          savedPageEffect;
+      }
 
       showListMessage(
         "Vui lòng kết nối Google Drive để tải danh sách."
@@ -1451,6 +1618,34 @@
       dom.fitMode.addEventListener(
         "change",
         handleFitModeChange
+      );
+
+      dom.pageEffect.addEventListener(
+        "change",
+        handlePageEffectChange
+      );
+
+      dom.pdfContainer.addEventListener(
+        "touchstart",
+        handlePdfTouchStart,
+        { passive: true }
+      );
+
+      dom.pdfContainer.addEventListener(
+        "touchmove",
+        handlePdfTouchMove,
+        { passive: true }
+      );
+
+      dom.pdfContainer.addEventListener(
+        "touchend",
+        handlePdfTouchEnd,
+        { passive: true }
+      );
+
+      dom.pdfContainer.addEventListener(
+        "pointerup",
+        handlePdfTapNavigation
       );
 
       dom.btnDownloadOriginal.addEventListener(
@@ -2577,6 +2772,14 @@
           "success",
           3000
         );
+
+        if (
+          window.matchMedia(
+            "(pointer: coarse)"
+          ).matches
+        ) {
+          showSwipeHintOnce();
+        }
       } catch (error) {
         hideLoading();
 
@@ -2662,10 +2865,12 @@
 
       state.pageRendering = true;
 
-      showLoading(
-        `Đang hiển thị trang ${pageNumber}...`,
-        "Ứng dụng đang vẽ nội dung trang PDF."
-      );
+      if (!options.suppressLoading) {
+        showLoading(
+          `Đang hiển thị trang ${pageNumber}...`,
+          "Ứng dụng đang vẽ nội dung trang PDF."
+        );
+      }
 
       try {
         if (state.pdfRenderTask) {
@@ -2788,6 +2993,21 @@
             behavior: "auto"
           });
         }
+
+        if (options.transitionDirection) {
+          dom.pdfCanvas.classList.remove(
+            "page-enter-next",
+            "page-enter-prev"
+          );
+
+          void dom.pdfCanvas.offsetWidth;
+
+          dom.pdfCanvas.classList.add(
+            options.transitionDirection === "next"
+              ? "page-enter-next"
+              : "page-enter-prev"
+          );
+        }
       } catch (error) {
         if (
           error?.name !==
@@ -2903,8 +3123,8 @@
       );
     }
 
-    function changePage(offset) {
-      if (!state.pdfDoc) {
+    async function changePage(offset) {
+      if (!state.pdfDoc || state.pageTransitioning) {
         return;
       }
 
@@ -2918,12 +3138,301 @@
         return;
       }
 
-      renderPage(
-        nextPage,
-        {
-          resetScroll: true
-        }
+      const direction =
+        offset > 0 ? "next" : "prev";
+
+      state.pageTransitioning = true;
+
+      try {
+        preparePageFlipSnapshot(direction);
+
+        await renderPage(
+          nextPage,
+          {
+            resetScroll: true,
+            transitionDirection: direction,
+            suppressLoading:
+              state.pageEffect !== "none"
+          }
+        );
+
+        animateNewPage(direction);
+      } finally {
+        window.setTimeout(() => {
+          finishPageTransition();
+        }, state.pageEffect === "none" ? 0 : 300);
+      }
+    }
+
+
+    function handlePageEffectChange() {
+      state.pageEffect =
+        dom.pageEffect.value;
+
+      localStorage.setItem(
+        "docPdfPageEffect",
+        state.pageEffect
       );
+    }
+
+    function preparePageFlipSnapshot(direction) {
+      if (
+        state.pageEffect !== "flip" ||
+        !dom.pdfCanvas.width ||
+        !dom.pdfCanvas.height
+      ) {
+        return;
+      }
+
+      const source =
+        dom.pdfCanvas;
+
+      const overlay =
+        dom.pageFlipLayer;
+
+      overlay.width =
+        source.width;
+
+      overlay.height =
+        source.height;
+
+      overlay.style.width =
+        source.style.width;
+
+      overlay.style.height =
+        source.style.height;
+
+      const overlayContext =
+        overlay.getContext("2d", {
+          alpha: false
+        });
+
+      overlayContext.setTransform(
+        1, 0, 0, 1, 0, 0
+      );
+
+      overlayContext.clearRect(
+        0,
+        0,
+        overlay.width,
+        overlay.height
+      );
+
+      overlayContext.drawImage(
+        source,
+        0,
+        0
+      );
+
+      overlay.classList.remove(
+        "flip-next",
+        "flip-prev",
+        "visible"
+      );
+
+      void overlay.offsetWidth;
+
+      overlay.classList.add(
+        "visible",
+        direction === "next"
+          ? "flip-next"
+          : "flip-prev"
+      );
+    }
+
+    function animateNewPage(direction) {
+      if (state.pageEffect === "none") {
+        return;
+      }
+
+      if (state.pageEffect === "slide") {
+        dom.pdfCanvas.classList.remove(
+          "page-enter-next",
+          "page-enter-prev"
+        );
+
+        void dom.pdfCanvas.offsetWidth;
+
+        dom.pdfCanvas.classList.add(
+          direction === "next"
+            ? "page-enter-next"
+            : "page-enter-prev"
+        );
+      }
+    }
+
+    function finishPageTransition() {
+      state.pageTransitioning = false;
+
+      dom.pageFlipLayer.classList.remove(
+        "visible",
+        "flip-next",
+        "flip-prev"
+      );
+
+      dom.pdfCanvas.classList.remove(
+        "page-enter-next",
+        "page-enter-prev"
+      );
+    }
+
+    function handlePdfTouchStart(event) {
+      if (
+        !state.pdfDoc ||
+        event.touches.length !== 1
+      ) {
+        state.touchTracking = false;
+        return;
+      }
+
+      const touch =
+        event.touches[0];
+
+      state.touchStartX =
+        touch.clientX;
+
+      state.touchStartY =
+        touch.clientY;
+
+      state.touchStartTime =
+        performance.now();
+
+      state.touchTracking = true;
+    }
+
+    function handlePdfTouchMove(event) {
+      if (
+        !state.touchTracking ||
+        event.touches.length !== 1
+      ) {
+        return;
+      }
+
+      const touch =
+        event.touches[0];
+
+      const deltaX =
+        touch.clientX - state.touchStartX;
+
+      const deltaY =
+        touch.clientY - state.touchStartY;
+
+      if (
+        Math.abs(deltaY) >
+        Math.abs(deltaX) * 1.25
+      ) {
+        state.touchTracking = false;
+      }
+    }
+
+    function handlePdfTouchEnd(event) {
+      if (
+        !state.touchTracking ||
+        !state.pdfDoc
+      ) {
+        return;
+      }
+
+      state.touchTracking = false;
+
+      const touch =
+        event.changedTouches?.[0];
+
+      if (!touch) {
+        return;
+      }
+
+      const deltaX =
+        touch.clientX - state.touchStartX;
+
+      const deltaY =
+        touch.clientY - state.touchStartY;
+
+      const elapsed =
+        performance.now() -
+        state.touchStartTime;
+
+      const minimumDistance =
+        Math.min(
+          90,
+          Math.max(
+            48,
+            dom.pdfContainer.clientWidth * 0.12
+          )
+        );
+
+      const isHorizontal =
+        Math.abs(deltaX) >
+        Math.abs(deltaY) * 1.35;
+
+      const isFastEnough =
+        elapsed < 700;
+
+      if (
+        !isHorizontal ||
+        !isFastEnough ||
+        Math.abs(deltaX) < minimumDistance
+      ) {
+        return;
+      }
+
+      if (deltaX < 0) {
+        changePage(1);
+      } else {
+        changePage(-1);
+      }
+    }
+
+    function handlePdfTapNavigation(event) {
+      if (
+        event.pointerType === "mouse" ||
+        !state.pdfDoc ||
+        state.pageTransitioning
+      ) {
+        return;
+      }
+
+      const rect =
+        dom.pdfContainer.getBoundingClientRect();
+
+      const relativeX =
+        event.clientX - rect.left;
+
+      const edgeZone =
+        rect.width * 0.18;
+
+      if (relativeX <= edgeZone) {
+        changePage(-1);
+      } else if (
+        relativeX >= rect.width - edgeZone
+      ) {
+        changePage(1);
+      }
+    }
+
+    function showSwipeHintOnce() {
+      if (
+        localStorage.getItem(
+          "docPdfSwipeHintShown"
+        )
+      ) {
+        return;
+      }
+
+      dom.pdfContainer.classList.add(
+        "show-swipe-hint"
+      );
+
+      window.setTimeout(() => {
+        dom.pdfContainer.classList.remove(
+          "show-swipe-hint"
+        );
+
+        localStorage.setItem(
+          "docPdfSwipeHintShown",
+          "1"
+        );
+      }, 2600);
     }
 
     function changeZoom(delta) {
@@ -3318,6 +3827,9 @@
       state.pdfRenderTask = null;
       state.pageRendering = false;
       state.pendingPageNum = null;
+      state.pageTransitioning = false;
+
+      finishPageTransition();
 
       dom.pdfToolbar.style.display =
         "none";
