@@ -701,48 +701,6 @@
       }
     }
 
-    /* =====================================================
-       AUDIO PLAYER
-       ===================================================== */
-
-    .audio-container {
-      display: none;
-      margin: auto;
-      width: min(720px, calc(100% - 32px));
-      padding: 26px;
-
-      border-radius: 16px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-
-      text-align: center;
-    }
-
-    .audio-icon {
-      margin-bottom: 10px;
-      font-size: 3.6rem;
-    }
-
-    .audio-title {
-      margin: 0 0 6px;
-
-      color: var(--primary);
-      font-size: 1.15rem;
-      font-weight: 800;
-
-      overflow-wrap: anywhere;
-    }
-
-    .audio-subtitle {
-      margin: 0 0 18px;
-      color: var(--text-secondary);
-      font-size: 0.86rem;
-    }
-
-    #audio-player {
-      width: 100%;
-      outline: none;
-    }
 
     /* =====================================================
        LOADING OVERLAY
@@ -970,10 +928,6 @@
       .page-status {
         min-width: 82px;
       }
-
-      .audio-container {
-        padding: 20px 16px;
-      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1129,6 +1083,217 @@
       }
     }
 
+  
+    /* =====================================================
+       TỐI ƯU KHÔNG GIAN ĐỌC TRÊN ĐIỆN THOẠI
+       - Giảm chiều cao đầu trang và thanh công cụ
+       - Thu gọn nút/icon
+       - Dùng dynamic viewport để không bị trình duyệt cắt chiều cao
+       ===================================================== */
+
+    html,
+    body,
+    .app {
+      height: 100%;
+      height: 100dvh;
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      html,
+      body,
+      .app {
+        min-height: -webkit-fill-available;
+      }
+    }
+
+    @media (max-width: 900px) {
+      :root {
+        --header-height: 50px;
+      }
+
+      .app-header {
+        min-height: calc(var(--header-height) + var(--safe-top));
+        padding:
+          calc(4px + var(--safe-top))
+          calc(8px + var(--safe-right))
+          4px
+          calc(8px + var(--safe-left));
+        gap: 6px;
+      }
+
+      .header-left,
+      .header-actions {
+        gap: 6px;
+      }
+
+      .app-title {
+        font-size: 1rem;
+        line-height: 1.1;
+      }
+
+      .app-header .button {
+        min-height: 38px;
+        height: 38px;
+        padding: 4px 10px;
+        border-radius: 10px;
+      }
+
+      .app-header .icon-button {
+        width: 38px;
+        height: 38px;
+        font-size: 1.05rem;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .pdf-toolbar {
+        min-height: 44px;
+        padding: 4px 6px;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+      }
+
+      .pdf-toolbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .toolbar-group {
+        gap: 4px;
+      }
+
+      .pdf-toolbar .button,
+      .pdf-toolbar .fit-select {
+        min-height: 36px;
+        height: 36px;
+      }
+
+      .pdf-toolbar .button {
+        padding: 4px 8px;
+        border-radius: 8px;
+      }
+
+      .pdf-toolbar .icon-button {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+      }
+
+      .page-status {
+        min-width: 76px;
+        font-size: 0.8rem;
+      }
+
+      .zoom-status {
+        min-width: 44px;
+        font-size: 0.76rem;
+      }
+
+      .fit-select {
+        padding: 4px 7px;
+        max-width: 132px;
+        font-size: 0.78rem;
+      }
+
+      .pdf-container {
+        padding:
+          4px
+          calc(4px + var(--safe-right))
+          calc(8px + var(--safe-bottom))
+          calc(4px + var(--safe-left));
+      }
+    }
+
+    @media (max-width: 620px) {
+      :root {
+        --header-height: 48px;
+      }
+
+      .app-title {
+        max-width: none;
+        font-size: 0.98rem;
+      }
+
+      .app-header .button,
+      .app-header .icon-button {
+        min-height: 36px;
+        height: 36px;
+      }
+
+      .app-header .icon-button {
+        width: 36px;
+      }
+
+      .pdf-toolbar {
+        min-height: 42px;
+        padding: 3px 5px;
+      }
+
+      .pdf-toolbar .button,
+      .pdf-toolbar .fit-select {
+        min-height: 34px;
+        height: 34px;
+      }
+
+      .pdf-toolbar .icon-button {
+        width: 34px;
+        height: 34px;
+      }
+
+      .page-status {
+        min-width: 70px;
+        font-size: 0.76rem;
+      }
+
+      .zoom-status {
+        display: none;
+      }
+
+      .fit-select {
+        max-width: 118px;
+        padding: 3px 6px;
+        font-size: 0.75rem;
+      }
+
+      /* Hai mục ít dùng được ẩn trên màn hình hẹp để thanh công cụ
+         luôn gọn trong một hàng và dành chiều cao cho trang PDF. */
+      #page-effect,
+      #btn-download-original {
+        display: none;
+      }
+
+      .pdf-container {
+        padding:
+          2px
+          calc(2px + var(--safe-right))
+          calc(6px + var(--safe-bottom))
+          calc(2px + var(--safe-left));
+      }
+    }
+
+    @media (max-width: 390px) {
+      .app-title {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #btn-zoom-out,
+      #btn-zoom-in {
+        width: 32px;
+        height: 32px;
+        min-height: 32px;
+      }
+
+      .fit-select {
+        max-width: 108px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1277,8 +1442,7 @@
           <h2>Chưa chọn tài liệu</h2>
 
           <p>
-            Kết nối Google Drive, sau đó chọn một file PDF
-            hoặc file âm thanh để mở.
+            Kết nối Google Drive, sau đó chọn một file PDF để mở.
           </p>
         </section>
 
@@ -1405,30 +1569,6 @@
           <div class="swipe-hint">Vuốt ngang để chuyển trang</div>
         </section>
 
-        <!-- AUDIO PLAYER -->
-        <section
-          id="audio-container"
-          class="audio-container"
-        >
-          <div class="audio-icon">🎵</div>
-
-          <h2
-            id="audio-title"
-            class="audio-title"
-          >
-            Đang tải nhạc...
-          </h2>
-
-          <p class="audio-subtitle">
-            File âm thanh từ Google Drive
-          </p>
-
-          <audio
-            id="audio-player"
-            controls
-            preload="metadata"
-          ></audio>
-        </section>
 
         <!-- LOADING -->
         <div
@@ -1633,15 +1773,6 @@
 
       btnDownloadOriginal:
         document.getElementById("btn-download-original"),
-
-      audioContainer:
-        document.getElementById("audio-container"),
-
-      audioTitle:
-        document.getElementById("audio-title"),
-
-      audioPlayer:
-        document.getElementById("audio-player"),
 
       loadingOverlay:
         document.getElementById("loading-overlay"),
@@ -1864,30 +1995,6 @@
         openOriginalFile
       );
 
-      dom.audioPlayer.addEventListener(
-        "error",
-        handleAudioError
-      );
-
-      dom.audioPlayer.addEventListener(
-        "waiting",
-        () => {
-          showLoading(
-            "Đang tải âm thanh...",
-            "Tốc độ phụ thuộc vào kích thước file và đường truyền."
-          );
-        }
-      );
-
-      dom.audioPlayer.addEventListener(
-        "canplay",
-        hideLoading
-      );
-
-      dom.audioPlayer.addEventListener(
-        "playing",
-        hideLoading
-      );
 
       window.addEventListener(
         "resize",
@@ -2301,7 +2408,6 @@
            * and (
            *   mimeType = folder
            *   or mimeType = pdf
-           *   or mimeType contains audio
            * )
            */
           const query = [
@@ -2310,7 +2416,6 @@
             "and (",
             "mimeType = 'application/vnd.google-apps.folder'",
             "or mimeType = 'application/pdf'",
-            "or mimeType contains 'audio/'",
             ")"
           ].join(" ");
 
@@ -2455,7 +2560,7 @@
         showListMessage(
           state.files.length
             ? "Không tìm thấy file phù hợp."
-            : "Thư mục này không có PDF hoặc file âm thanh."
+            : "Thư mục này không có file PDF."
         );
 
         updateFileCount(files.length);
@@ -2564,12 +2669,6 @@
         return "📄";
       }
 
-      if (
-        mimeType?.startsWith("audio/")
-      ) {
-        return "🎵";
-      }
-
       return "📎";
     }
 
@@ -2586,15 +2685,6 @@
       ) {
         return formatFileTypeAndSize(
           "Tài liệu PDF",
-          file.size
-        );
-      }
-
-      if (
-        file.mimeType?.startsWith("audio/")
-      ) {
-        return formatFileTypeAndSize(
-          "Âm thanh",
           file.size
         );
       }
@@ -2846,13 +2936,6 @@
       closeSidebarOnSmallScreen();
 
       if (
-        file.mimeType?.startsWith("audio/")
-      ) {
-        playAudio(file);
-        return;
-      }
-
-      if (
         file.mimeType ===
         "application/pdf"
       ) {
@@ -2866,123 +2949,9 @@
       );
     }
 
-    /* =====================================================
-       10. AUDIO
-       ===================================================== */
-
-    function playAudio(file) {
-      if (!requireValidToken()) {
-        return;
-      }
-
-      cleanupPdfOnly();
-
-      dom.placeholder.style.display =
-        "none";
-
-      dom.pdfToolbar.style.display =
-        "none";
-
-      dom.pdfContainer.style.display =
-        "none";
-
-      dom.audioContainer.style.display =
-        "block";
-
-      dom.audioTitle.textContent =
-        file.name;
-
-      showLoading(
-        "Đang chuẩn bị âm thanh...",
-        "Ứng dụng đang kết nối trực tiếp tới Google Drive."
-      );
-
-      dom.audioPlayer.pause();
-
-      dom.audioPlayer.removeAttribute(
-        "src"
-      );
-
-      dom.audioPlayer.load();
-
-      /*
-       * Thẻ audio không hỗ trợ tùy ý thêm header Authorization.
-       * Vì vậy token được gắn vào URL media để có thể phát trực tuyến.
-       * Không ghi URL này ra console.
-       */
-      const mediaUrl =
-        `${CONFIG.DRIVE_API_BASE}/files/` +
-        `${encodeURIComponent(file.id)}` +
-        `?alt=media&access_token=` +
-        encodeURIComponent(
-          state.accessToken
-        );
-
-      dom.audioPlayer.src = mediaUrl;
-      dom.audioPlayer.load();
-
-      const playPromise =
-        dom.audioPlayer.play();
-
-      if (
-        playPromise &&
-        typeof playPromise.catch ===
-          "function"
-      ) {
-        playPromise.catch(() => {
-          hideLoading();
-
-          showToast(
-            "Trình duyệt đã chặn phát tự động. Hãy nhấn nút Play.",
-            "warning",
-            5000
-          );
-        });
-      }
-    }
-
-    function handleAudioError() {
-      hideLoading();
-
-      const mediaError =
-        dom.audioPlayer.error;
-
-      let message =
-        "Không thể phát file âm thanh.";
-
-      if (mediaError) {
-        switch (mediaError.code) {
-          case MediaError.MEDIA_ERR_ABORTED:
-            message =
-              "Quá trình phát âm thanh đã bị hủy.";
-            break;
-
-          case MediaError.MEDIA_ERR_NETWORK:
-            message =
-              "Lỗi mạng khi tải âm thanh.";
-            break;
-
-          case MediaError.MEDIA_ERR_DECODE:
-            message =
-              "Trình duyệt không giải mã được file âm thanh.";
-            break;
-
-          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            message =
-              "Định dạng âm thanh không được trình duyệt hỗ trợ hoặc phiên đăng nhập đã hết hạn.";
-            break;
-        }
-      }
-
-      showToast(
-        message,
-        "error",
-        6500
-      );
-    }
 
     /* =====================================================
-       11. PDF
+       10. PDF
        ===================================================== */
 
     async function openPdf(file) {
@@ -2990,12 +2959,7 @@
         return;
       }
 
-      cleanupAudioOnly();
-
       dom.placeholder.style.display =
-        "none";
-
-      dom.audioContainer.style.display =
         "none";
 
       dom.pdfToolbar.style.display =
@@ -4198,21 +4162,8 @@
     }
 
     /* =====================================================
-       18. DỌN DẸP TÀI NGUYÊN
+       17. DỌN DẸP TÀI NGUYÊN
        ===================================================== */
-
-    function cleanupAudioOnly() {
-      dom.audioPlayer.pause();
-
-      dom.audioPlayer.removeAttribute(
-        "src"
-      );
-
-      dom.audioPlayer.load();
-
-      dom.audioContainer.style.display =
-        "none";
-    }
 
     function cleanupPdfOnly() {
       if (state.pdfRenderTask) {
@@ -4283,7 +4234,6 @@
     }
 
     function cleanupViewer() {
-      cleanupAudioOnly();
       cleanupPdfOnly();
 
       cleanupPdfDocument().catch(() => {});
@@ -4294,7 +4244,7 @@
 
       showPlaceholder(
         "Chưa chọn tài liệu",
-        "Kết nối Google Drive, sau đó chọn một file PDF hoặc file âm thanh để mở.",
+        "Kết nối Google Drive, sau đó chọn một file PDF để mở.",
         "📖"
       );
 
@@ -4302,8 +4252,6 @@
     }
 
     function cleanupResources() {
-      cleanupAudioOnly();
-
       if (state.pdfRenderTask) {
         try {
           state.pdfRenderTask.cancel();
@@ -4330,7 +4278,7 @@
     }
 
     /* =====================================================
-       19. PLACEHOLDER
+       18. PLACEHOLDER
        ===================================================== */
 
     function showPlaceholder(
@@ -4338,7 +4286,6 @@
       message,
       icon = "📖"
     ) {
-      cleanupAudioOnly();
       cleanupPdfOnly();
 
       dom.placeholder.replaceChildren();
