@@ -1,293 +1,3414 @@
-
-/* O Authcode */
-/* 660983736125-gvdcpfho9dd6vb2an5i8bb8epoto7i12.apps.googleusercontent.com */
-
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#0f766e">
+
   <title>Tủ Sách & Nhạc</title>
-  
-  <!-- Thư viện Google Identity Services & PDF.js -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Google Identity Services -->
+  <script
+    src="https://accounts.google.com/gsi/client"
+    async
+    defer
+  ></script>
+
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
-    :root { --p: #0f766e; --bg: #f8fafc; --text: #1e293b; --border: #cbd5e1; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    
-    header { background: white; padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    header h1 { font-size: 1.2rem; color: var(--p); }
-    button { padding: 8px 16px; background: var(--p); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    button:hover { opacity: 0.9; }
-    button:disabled { background: var(--border); cursor: not-allowed; }
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --primary-light: #ccfbf1;
 
-    .layout { display: flex; flex: 1; min-height: 0; }
-    
-    /* Sidebar List */
-    .sidebar { width: 320px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-    .file-list { flex: 1; overflow-y: auto; list-style: none; padding: 8px; }
-    .file-item { display: flex; align-items: center; padding: 12px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
-    .file-item:hover { background: #f1f5f9; }
-    .file-item .icon { font-size: 20px; margin-right: 12px; }
-    .file-item .name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
-    /* Main Viewer */
-    .viewer { flex: 1; display: flex; flex-direction: column; background: #e2e8f0; position: relative; }
-    .viewer-placeholder { margin: auto; color: #64748b; font-size: 1.1rem; }
-    
-    /* PDF Viewer */
-    #pdf-container { flex: 1; overflow: auto; text-align: center; padding: 20px; display: none; }
-    #pdf-canvas { max-width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: white; margin-bottom: 20px;}
-    .pdf-controls { background: white; padding: 12px; display: flex; justify-content: center; gap: 16px; align-items: center; border-bottom: 1px solid var(--border); display: none;}
-    
-    /* Audio Player */
-    #audio-container { position: absolute; bottom: 0; left: 0; right: 0; background: white; padding: 20px; border-top: 1px solid var(--border); box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: none; text-align: center; }
-    #audio-player { width: 100%; max-width: 600px; outline: none; margin-top: 12px;}
-    #audio-title { font-weight: bold; font-size: 1.2rem; color: var(--p); }
-  </style>
-</head>
-<body>
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --viewer-background: #dbe4ea;
 
-  <header>
-    <h1>📚 Thư Viện Nhi</h1>
-    <div id="auth-section">
-      <button id="btn-login" onclick="handleAuthClick()">Kết nối Google Drive</button>
-      <span id="user-status" style="margin-left: 10px; font-weight: bold; color: #16a34a; display: none;">Đã kết nối</span>
-    </div>
-  </header>
+      --text: #1e293b;
+      --text-secondary: #64748b;
 
-  <div class="layout">
-    <aside class="sidebar">
-      <ul class="file-list" id="file-list">
-        <li style="padding: 20px; text-align: center; color: #64748b;">Vui lòng kết nối Drive để tải danh sách.</li>
-      </ul>
-    </aside>
+      --border: #cbd5e1;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #d97706;
 
-    <main class="viewer">
-      <div id="placeholder" class="viewer-placeholder">Chọn một file PDF hoặc MP3 để mở</div>
+      --header-height: 64px;
+      --sidebar-width: 330px;
 
-      <!-- PDF UI -->
-      <div id="pdf-controls" class="pdf-controls">
-        <button id="btn-prev" onclick="changePage(-1)">Thụt lui</button>
-        <span>Trang <span id="page-num">0</span> / <span id="page-count">0</span></span>
-        <button id="btn-next" onclick="changePage(1)">Tiếp theo</button>
-      </div>
-      <div id="pdf-container">
-        <canvas id="pdf-canvas"></canvas>
-      </div>
+      --shadow:
+        0 8px 24px rgba(15, 23, 42, 0.12);
 
-      <!-- Audio UI -->
-      <div id="audio-container">
-        <div id="audio-title">Đang tải nhạc...</div>
-        <audio id="audio-player" controls preload="auto"></audio>
-      </div>
-    </main>
-  </div>
-
-  <script>
-    // ==========================================
-    // CẤU HÌNH HỆ THỐNG (ĐIỀN THÔNG TIN CỦA BẠN)
-    // ==========================================
-    const CLIENT_ID = '660983736125-gvdcpfho9dd6vb2an5i8bb8epoto7i12.apps.googleusercontent.com'; 
-    const ROOT_FOLDER_ID = '1zxPsOQeaZF4GOa7ZXiWsKr03LATCOFP6'; // ID thư mục gốc Google Drive
-
-    const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
-    let tokenClient;
-    let accessToken = null;
-    
-    // PDF.js State
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
-    const canvas = document.getElementById('pdf-canvas'), ctx = canvas.getContext('2d');
-
-    // ==========================================
-    // 1. KHỞI TẠO OAUTH 2.0 GOOGLE IDENTITY SERVICES
-    // ==========================================
-    window.onload = function () {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            accessToken = tokenResponse.access_token;
-            document.getElementById('btn-login').style.display = 'none';
-            document.getElementById('user-status').style.display = 'inline';
-            loadDriveFiles(ROOT_FOLDER_ID); // Load thư mục gốc
-          }
-        },
-      });
-    };
-
-    function handleAuthClick() {
-      tokenClient.requestAccessToken();
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
     }
 
-    // ==========================================
-    // 2. LẤY DANH SÁCH FILE TRỰC TIẾP TỪ DRIVE API
-    // ==========================================
-    async function loadDriveFiles(folderId) {
-      const listEl = document.getElementById('file-list');
-      listEl.innerHTML = '<li style="padding: 12px; text-align:center;">Đang tải...</li>';
+    * {
+      box-sizing: border-box;
+    }
 
-      try {
-        // Query chỉ lấy thư mục, pdf, mp3, m4a không bị xóa
-        const query = `'${folderId}' in parents and trashed = false and (mimeType = 'application/vnd.google-apps.folder' or mimeType = 'application/pdf' or mimeType contains 'audio/')`;
-        const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType)&orderBy=folder,name&access_token=${accessToken}`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-        if (!data.files || data.files.length === 0) {
-          listEl.innerHTML = '<li style="padding: 12px; text-align:center;">Thư mục trống.</li>';
-          return;
-        }
+    body {
+      overflow: hidden;
+      background: var(--background);
+      color: var(--text);
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
 
-        listEl.innerHTML = '';
-        if (folderId !== ROOT_FOLDER_ID) {
-           listEl.innerHTML += `<li class="file-item" onclick="loadDriveFiles('${ROOT_FOLDER_ID}')"><span class="icon">🔙</span><span class="name">Quay lại thư mục gốc</span></li>`;
-        }
+    button,
+    input,
+    select {
+      font: inherit;
+    }
 
-        data.files.forEach(file => {
-          const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-          const isAudio = file.mimeType.includes('audio/');
-          const icon = isFolder ? '📁' : (isAudio ? '🎵' : '📄');
-          
-          listEl.innerHTML += `
-            <li class="file-item" onclick="openFile('${file.id}', '${file.name}', '${file.mimeType}')">
-              <span class="icon">${icon}</span>
-              <span class="name">${file.name}</span>
-            </li>
-          `;
-        });
-      } catch (err) {
-        listEl.innerHTML = `<li style="padding: 12px; color: red;">Lỗi tải dữ liệu</li>`;
-        console.error(err);
+    button {
+      border: none;
+    }
+
+    button,
+    .file-item {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    .file-item:focus-visible {
+      outline: 3px solid rgba(13, 148, 136, 0.3);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
+
+    .app-header {
+      min-height: calc(var(--header-height) + var(--safe-top));
+      padding:
+        calc(10px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        10px
+        calc(16px + var(--safe-left));
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 30;
+    }
+
+    .header-left {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-title {
+      margin: 0;
+      color: var(--primary);
+      font-size: 1.15rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .status-connected {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      color: var(--success);
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    /* =====================================================
+       BUTTONS
+       ===================================================== */
+
+    .button {
+      min-height: 40px;
+      padding: 8px 14px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+
+      border-radius: 9px;
+      background: var(--primary);
+      color: #ffffff;
+
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+
+      transition:
+        background 0.18s ease,
+        transform 0.12s ease,
+        opacity 0.18s ease;
+    }
+
+    .button:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .button:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.46;
+    }
+
+    .button-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+
+    .button-danger {
+      background: var(--danger);
+    }
+
+    .button-danger:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .mobile-only {
+      display: none;
+    }
+
+    /* =====================================================
+       MAIN LAYOUT
+       ===================================================== */
+
+    .layout {
+      position: relative;
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* =====================================================
+       SIDEBAR
+       ===================================================== */
+
+    .sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
+
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-title-row {
+      margin-bottom: 10px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sidebar-title {
+      margin: 0;
+      min-width: 0;
+
+      font-size: 0.98rem;
+      font-weight: 800;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      height: 42px;
+      padding: 8px 38px 8px 12px;
+
+      border: 1px solid var(--border);
+      border-radius: 9px;
+
+      background: #f8fafc;
+      color: var(--text);
+    }
+
+    .search-box input:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .search-clear {
+      position: absolute;
+      top: 50%;
+      right: 5px;
+
+      width: 32px;
+      height: 32px;
+      padding: 0;
+
+      transform: translateY(-50%);
+      border-radius: 7px;
+
+      background: transparent;
+      color: var(--text-secondary);
+
+      cursor: pointer;
+    }
+
+    .breadcrumb {
+      min-height: 36px;
+      padding: 8px 12px;
+
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+
+    .breadcrumb-button {
+      padding: 4px 7px;
+      border-radius: 6px;
+
+      background: transparent;
+      color: var(--primary);
+
+      font-size: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .breadcrumb-button:hover {
+      background: var(--primary-light);
+    }
+
+    .file-list {
+      flex: 1;
+      min-height: 0;
+
+      margin: 0;
+      padding: 8px;
+
+      overflow-y: auto;
+      overscroll-behavior: contain;
+
+      list-style: none;
+    }
+
+    .file-item {
+      width: 100%;
+      min-height: 52px;
+      margin-bottom: 4px;
+      padding: 9px 10px;
+
+      display: flex;
+      align-items: center;
+      gap: 11px;
+
+      border-radius: 9px;
+      cursor: pointer;
+
+      transition: background 0.15s ease;
+    }
+
+    .file-item:hover {
+      background: #f1f5f9;
+    }
+
+    .file-item.active {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .file-item-icon {
+      width: 30px;
+      flex: 0 0 30px;
+
+      text-align: center;
+      font-size: 1.35rem;
+    }
+
+    .file-item-content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .file-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+
+    .file-item-type {
+      margin-top: 3px;
+
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+    }
+
+    .list-message {
+      padding: 24px 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .list-message.error {
+      color: var(--danger);
+    }
+
+    .sidebar-footer {
+      padding: 8px 12px calc(8px + var(--safe-bottom));
+      border-top: 1px solid var(--border);
+
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      text-align: center;
+    }
+
+    /* =====================================================
+       VIEWER
+       ===================================================== */
+
+    .viewer {
+      position: relative;
+
+      min-width: 0;
+      flex: 1;
+
+      display: flex;
+      flex-direction: column;
+
+      overflow: hidden;
+      background: var(--viewer-background);
+    }
+
+    .viewer-placeholder {
+      margin: auto;
+      padding: 30px;
+
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .placeholder-icon {
+      margin-bottom: 12px;
+      font-size: 3.2rem;
+    }
+
+    .viewer-placeholder h2 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 1.2rem;
+    }
+
+    .viewer-placeholder p {
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* =====================================================
+       PDF TOOLBAR
+       ===================================================== */
+
+    .pdf-toolbar {
+      display: none;
+      min-height: 56px;
+      padding: 8px 12px;
+
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+
+      z-index: 10;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .page-status {
+      min-width: 102px;
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .zoom-status {
+      min-width: 58px;
+      text-align: center;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .fit-select {
+      height: 40px;
+      padding: 6px 9px;
+
+      border: 1px solid var(--border);
+      border-radius: 8px;
+
+      background: #ffffff;
+      color: var(--text);
+
+      cursor: pointer;
+    }
+
+    /* =====================================================
+       PDF AREA
+       ===================================================== */
+
+    .pdf-container {
+      flex: 1;
+      min-height: 0;
+
+      display: none;
+      overflow: auto;
+      overscroll-behavior: contain;
+
+      padding:
+        20px
+        calc(20px + var(--safe-right))
+        calc(32px + var(--safe-bottom))
+        calc(20px + var(--safe-left));
+
+      text-align: center;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .canvas-wrapper {
+      display: inline-block;
+      min-width: 1px;
+      min-height: 1px;
+    }
+
+    #pdf-canvas {
+      display: block;
+      max-width: none;
+      margin: 0 auto;
+
+      background: #ffffff;
+      box-shadow: var(--shadow);
+    }
+
+    /* =====================================================
+       AUDIO PLAYER
+       ===================================================== */
+
+    .audio-container {
+      display: none;
+      margin: auto;
+      width: min(720px, calc(100% - 32px));
+      padding: 26px;
+
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+
+      text-align: center;
+    }
+
+    .audio-icon {
+      margin-bottom: 10px;
+      font-size: 3.6rem;
+    }
+
+    .audio-title {
+      margin: 0 0 6px;
+
+      color: var(--primary);
+      font-size: 1.15rem;
+      font-weight: 800;
+
+      overflow-wrap: anywhere;
+    }
+
+    .audio-subtitle {
+      margin: 0 0 18px;
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+    }
+
+    #audio-player {
+      width: 100%;
+      outline: none;
+    }
+
+    /* =====================================================
+       LOADING OVERLAY
+       ===================================================== */
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+      background: rgba(241, 245, 249, 0.88);
+      backdrop-filter: blur(2px);
+
+      z-index: 50;
+    }
+
+    .loading-overlay.visible {
+      display: flex;
+    }
+
+    .loading-card {
+      width: min(340px, calc(100% - 30px));
+      padding: 22px;
+
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+
+      text-align: center;
+    }
+
+    .spinner {
+      width: 46px;
+      height: 46px;
+      margin: 0 auto 14px;
+
+      border: 5px solid #dbeafe;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+
+      animation: spin 0.85s linear infinite;
+    }
+
+    .loading-title {
+      margin-bottom: 7px;
+      font-weight: 800;
+    }
+
+    .loading-message {
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
       }
     }
 
-    // ==========================================
-    // 3. XỬ LÝ MỞ FILE (ĐIỀU HƯỚNG SANG PDF HOẶC AUDIO)
-    // ==========================================
-    function openFile(fileId, fileName, mimeType) {
-      if (mimeType === 'application/vnd.google-apps.folder') {
-        loadDriveFiles(fileId);
+    /* =====================================================
+       TOAST
+       ===================================================== */
+
+    .toast-region {
+      position: fixed;
+      top: calc(var(--header-height) + var(--safe-top) + 12px);
+      right: calc(14px + var(--safe-right));
+
+      width: min(390px, calc(100% - 28px));
+      z-index: 100;
+    }
+
+    .toast {
+      margin-bottom: 9px;
+      padding: 12px 14px;
+
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+
+      border-radius: 10px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--primary);
+
+      animation: toast-in 0.2s ease;
+    }
+
+    .toast.success {
+      border-left-color: var(--success);
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warning);
+    }
+
+    .toast-message {
+      flex: 1;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .toast-close {
+      padding: 0;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* =====================================================
+       MOBILE BACKDROP
+       ===================================================== */
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+      background: rgba(15, 23, 42, 0.44);
+
+      z-index: 15;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+
+    @media (max-width: 900px) {
+      :root {
+        --header-height: 58px;
+      }
+
+      .mobile-only {
+        display: inline-flex;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: calc(var(--header-height) + var(--safe-top));
+        bottom: 0;
+        left: 0;
+
+        width: min(88vw, 360px);
+        min-width: 0;
+        height: auto;
+
+        transform: translateX(-105%);
+        box-shadow: var(--shadow);
+
+        transition: transform 0.22s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-backdrop.visible {
+        display: block;
+      }
+
+      .pdf-toolbar {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+
+      .toolbar-group {
+        flex: 0 0 auto;
+      }
+
+      .header-actions .status-connected span:last-child {
+        display: none;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app-header {
+        padding-left: calc(8px + var(--safe-left));
+        padding-right: calc(8px + var(--safe-right));
+      }
+
+      .app-title {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .button-label-optional {
+        display: none;
+      }
+
+      .pdf-toolbar {
+        min-height: 52px;
+        padding: 6px 8px;
+      }
+
+      .pdf-container {
+        padding:
+          10px
+          calc(10px + var(--safe-right))
+          calc(20px + var(--safe-bottom))
+          calc(10px + var(--safe-left));
+      }
+
+      .page-status {
+        min-width: 82px;
+      }
+
+      .audio-container {
+        padding: 20px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ===================================================
+         HEADER
+         =================================================== -->
+    <header class="app-header">
+      <div class="header-left">
+        <button
+          id="btn-open-sidebar"
+          class="button button-secondary icon-button mobile-only"
+          type="button"
+          aria-label="Mở danh sách file"
+          title="Mở danh sách file"
+        >
+          ☰
+        </button>
+
+        <h1 class="app-title">📚 Thư Viện Nhi</h1>
+      </div>
+
+      <div class="header-actions">
+        <div
+          id="user-status"
+          class="status-connected"
+          aria-live="polite"
+        >
+          <span class="status-dot"></span>
+          <span>Đã kết nối</span>
+        </div>
+
+        <button
+          id="btn-login"
+          class="button"
+          type="button"
+        >
+          <span>🔐</span>
+          <span class="button-label-optional">Kết nối Google Drive</span>
+        </button>
+
+        <button
+          id="btn-logout"
+          class="button button-danger"
+          type="button"
+          style="display: none;"
+        >
+          <span>⏏</span>
+          <span class="button-label-optional">Ngắt kết nối</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================
+         MAIN LAYOUT
+         =================================================== -->
+    <div class="layout">
+
+      <div
+        id="sidebar-backdrop"
+        class="sidebar-backdrop"
+        aria-hidden="true"
+      ></div>
+
+      <!-- SIDEBAR -->
+      <aside
+        id="sidebar"
+        class="sidebar"
+        aria-label="Danh sách file Google Drive"
+      >
+        <div class="sidebar-header">
+          <div class="sidebar-title-row">
+            <h2
+              id="current-folder-title"
+              class="sidebar-title"
+              title="Thư mục gốc"
+            >
+              Thư mục gốc
+            </h2>
+
+            <button
+              id="btn-close-sidebar"
+              class="button button-secondary icon-button mobile-only"
+              type="button"
+              aria-label="Đóng danh sách file"
+              title="Đóng"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="search-box">
+            <input
+              id="file-search"
+              type="search"
+              placeholder="Tìm trong thư mục hiện tại..."
+              autocomplete="off"
+              aria-label="Tìm file"
+            >
+
+            <button
+              id="btn-clear-search"
+              class="search-clear"
+              type="button"
+              aria-label="Xóa nội dung tìm kiếm"
+              title="Xóa tìm kiếm"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <nav
+          id="breadcrumb"
+          class="breadcrumb"
+          aria-label="Đường dẫn thư mục"
+        ></nav>
+
+        <ul
+          id="file-list"
+          class="file-list"
+          aria-live="polite"
+        >
+          <li class="list-message">
+            Vui lòng kết nối Google Drive để tải danh sách.
+          </li>
+        </ul>
+
+        <div id="file-count" class="sidebar-footer">
+          Chưa có dữ liệu
+        </div>
+      </aside>
+
+      <!-- VIEWER -->
+      <main id="viewer" class="viewer">
+
+        <!-- PLACEHOLDER -->
+        <section
+          id="placeholder"
+          class="viewer-placeholder"
+        >
+          <div class="placeholder-icon">📖</div>
+
+          <h2>Chưa chọn tài liệu</h2>
+
+          <p>
+            Kết nối Google Drive, sau đó chọn một file PDF
+            hoặc file âm thanh để mở.
+          </p>
+        </section>
+
+        <!-- PDF TOOLBAR -->
+        <div
+          id="pdf-toolbar"
+          class="pdf-toolbar"
+          role="toolbar"
+          aria-label="Điều khiển PDF"
+        >
+          <div class="toolbar-group">
+            <button
+              id="btn-prev"
+              class="button button-secondary icon-button"
+              type="button"
+              title="Trang trước"
+              aria-label="Trang trước"
+              disabled
+            >
+              ←
+            </button>
+
+            <div class="page-status">
+              Trang
+              <span id="page-num">0</span>
+              /
+              <span id="page-count">0</span>
+            </div>
+
+            <button
+              id="btn-next"
+              class="button button-secondary icon-button"
+              type="button"
+              title="Trang tiếp theo"
+              aria-label="Trang tiếp theo"
+              disabled
+            >
+              →
+            </button>
+          </div>
+
+          <div class="toolbar-group">
+            <button
+              id="btn-zoom-out"
+              class="button button-secondary icon-button"
+              type="button"
+              title="Thu nhỏ"
+              aria-label="Thu nhỏ"
+            >
+              −
+            </button>
+
+            <div id="zoom-status" class="zoom-status">
+              100%
+            </div>
+
+            <button
+              id="btn-zoom-in"
+              class="button button-secondary icon-button"
+              type="button"
+              title="Phóng to"
+              aria-label="Phóng to"
+            >
+              +
+            </button>
+          </div>
+
+          <div class="toolbar-group">
+            <select
+              id="fit-mode"
+              class="fit-select"
+              aria-label="Chế độ hiển thị PDF"
+              title="Chế độ hiển thị"
+            >
+              <option value="width">Vừa chiều rộng</option>
+              <option value="height">Vừa chiều cao</option>
+              <option value="actual">Kích thước thực</option>
+            </select>
+
+            <button
+              id="btn-download-original"
+              class="button button-secondary"
+              type="button"
+              title="Mở file gốc trong thẻ mới"
+            >
+              ↗
+              <span class="button-label-optional">Mở file gốc</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PDF VIEWER -->
+        <section
+          id="pdf-container"
+          class="pdf-container"
+          aria-label="Nội dung PDF"
+        >
+          <div class="canvas-wrapper">
+            <canvas id="pdf-canvas"></canvas>
+          </div>
+        </section>
+
+        <!-- AUDIO PLAYER -->
+        <section
+          id="audio-container"
+          class="audio-container"
+        >
+          <div class="audio-icon">🎵</div>
+
+          <h2
+            id="audio-title"
+            class="audio-title"
+          >
+            Đang tải nhạc...
+          </h2>
+
+          <p class="audio-subtitle">
+            File âm thanh từ Google Drive
+          </p>
+
+          <audio
+            id="audio-player"
+            controls
+            preload="metadata"
+          ></audio>
+        </section>
+
+        <!-- LOADING -->
+        <div
+          id="loading-overlay"
+          class="loading-overlay"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="loading-card">
+            <div class="spinner" aria-hidden="true"></div>
+
+            <div
+              id="loading-title"
+              class="loading-title"
+            >
+              Đang xử lý...
+            </div>
+
+            <div
+              id="loading-message"
+              class="loading-message"
+            >
+              Vui lòng chờ trong giây lát.
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div
+    id="toast-region"
+    class="toast-region"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+  <script>
+    "use strict";
+
+    /* =====================================================
+       1. CẤU HÌNH
+       ===================================================== */
+
+    const CONFIG = Object.freeze({
+      CLIENT_ID:
+        "660983736125-gvdcpfho9dd6vb2an5i8bb8epoto7i12.apps.googleusercontent.com",
+
+      ROOT_FOLDER_ID:
+        "1zxPsOQeaZF4GOa7ZXiWsKr03LATCOFP6",
+
+      SCOPES:
+        "https://www.googleapis.com/auth/drive.readonly",
+
+      DRIVE_API_BASE:
+        "https://www.googleapis.com/drive/v3",
+
+      PDF_WORKER:
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+
+      MAX_FILES_PER_PAGE: 1000,
+
+      MIN_ZOOM: 0.4,
+      MAX_ZOOM: 3,
+      ZOOM_STEP: 0.15,
+
+      RESIZE_DELAY: 180
+    });
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
+
+    /* =====================================================
+       2. TRẠNG THÁI ỨNG DỤNG
+       ===================================================== */
+
+    const state = {
+      tokenClient: null,
+      accessToken: null,
+      tokenExpiresAt: 0,
+
+      files: [],
+      filteredFiles: [],
+
+      folderStack: [
+        {
+          id: CONFIG.ROOT_FOLDER_ID,
+          name: "Thư mục gốc"
+        }
+      ],
+
+      activeFileId: null,
+      activeFileName: "",
+      activeMimeType: "",
+
+      pdfDoc: null,
+      pdfLoadingTask: null,
+      pdfRenderTask: null,
+
+      pageNum: 1,
+      pageRendering: false,
+      pendingPageNum: null,
+
+      fitMode: "width",
+      customZoom: 1,
+
+      resizeTimer: null
+    };
+
+    /* =====================================================
+       3. THAM CHIẾU DOM
+       ===================================================== */
+
+    const dom = {
+      btnLogin: document.getElementById("btn-login"),
+      btnLogout: document.getElementById("btn-logout"),
+      userStatus: document.getElementById("user-status"),
+
+      btnOpenSidebar: document.getElementById("btn-open-sidebar"),
+      btnCloseSidebar: document.getElementById("btn-close-sidebar"),
+      sidebar: document.getElementById("sidebar"),
+      sidebarBackdrop: document.getElementById("sidebar-backdrop"),
+
+      currentFolderTitle:
+        document.getElementById("current-folder-title"),
+
+      breadcrumb:
+        document.getElementById("breadcrumb"),
+
+      fileSearch:
+        document.getElementById("file-search"),
+
+      btnClearSearch:
+        document.getElementById("btn-clear-search"),
+
+      fileList:
+        document.getElementById("file-list"),
+
+      fileCount:
+        document.getElementById("file-count"),
+
+      placeholder:
+        document.getElementById("placeholder"),
+
+      pdfToolbar:
+        document.getElementById("pdf-toolbar"),
+
+      pdfContainer:
+        document.getElementById("pdf-container"),
+
+      pdfCanvas:
+        document.getElementById("pdf-canvas"),
+
+      pageNum:
+        document.getElementById("page-num"),
+
+      pageCount:
+        document.getElementById("page-count"),
+
+      btnPrev:
+        document.getElementById("btn-prev"),
+
+      btnNext:
+        document.getElementById("btn-next"),
+
+      btnZoomOut:
+        document.getElementById("btn-zoom-out"),
+
+      btnZoomIn:
+        document.getElementById("btn-zoom-in"),
+
+      zoomStatus:
+        document.getElementById("zoom-status"),
+
+      fitMode:
+        document.getElementById("fit-mode"),
+
+      btnDownloadOriginal:
+        document.getElementById("btn-download-original"),
+
+      audioContainer:
+        document.getElementById("audio-container"),
+
+      audioTitle:
+        document.getElementById("audio-title"),
+
+      audioPlayer:
+        document.getElementById("audio-player"),
+
+      loadingOverlay:
+        document.getElementById("loading-overlay"),
+
+      loadingTitle:
+        document.getElementById("loading-title"),
+
+      loadingMessage:
+        document.getElementById("loading-message"),
+
+      toastRegion:
+        document.getElementById("toast-region")
+    };
+
+    const canvasContext = dom.pdfCanvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+    /* =====================================================
+       4. KHỞI TẠO
+       ===================================================== */
+
+    document.addEventListener("DOMContentLoaded", initializeApp);
+
+    async function initializeApp() {
+      bindEvents();
+
+      showListMessage(
+        "Vui lòng kết nối Google Drive để tải danh sách."
+      );
+
+      try {
+        await waitForGoogleIdentityServices();
+
+        state.tokenClient =
+          google.accounts.oauth2.initTokenClient({
+            client_id: CONFIG.CLIENT_ID,
+            scope: CONFIG.SCOPES,
+
+            callback: handleTokenResponse,
+
+            error_callback: handleOAuthError
+          });
+      } catch (error) {
+        console.error("Không thể khởi tạo Google OAuth:", error);
+
+        showToast(
+          "Không thể tải dịch vụ đăng nhập Google. Hãy kiểm tra kết nối mạng.",
+          "error",
+          7000
+        );
+
+        dom.btnLogin.disabled = true;
+      }
+    }
+
+    function bindEvents() {
+      dom.btnLogin.addEventListener(
+        "click",
+        requestGoogleAccess
+      );
+
+      dom.btnLogout.addEventListener(
+        "click",
+        disconnectGoogleDrive
+      );
+
+      dom.btnOpenSidebar.addEventListener(
+        "click",
+        openSidebar
+      );
+
+      dom.btnCloseSidebar.addEventListener(
+        "click",
+        closeSidebar
+      );
+
+      dom.sidebarBackdrop.addEventListener(
+        "click",
+        closeSidebar
+      );
+
+      dom.fileSearch.addEventListener(
+        "input",
+        applyFileFilter
+      );
+
+      dom.btnClearSearch.addEventListener(
+        "click",
+        clearSearch
+      );
+
+      dom.btnPrev.addEventListener(
+        "click",
+        () => changePage(-1)
+      );
+
+      dom.btnNext.addEventListener(
+        "click",
+        () => changePage(1)
+      );
+
+      dom.btnZoomOut.addEventListener(
+        "click",
+        () => changeZoom(-CONFIG.ZOOM_STEP)
+      );
+
+      dom.btnZoomIn.addEventListener(
+        "click",
+        () => changeZoom(CONFIG.ZOOM_STEP)
+      );
+
+      dom.fitMode.addEventListener(
+        "change",
+        handleFitModeChange
+      );
+
+      dom.btnDownloadOriginal.addEventListener(
+        "click",
+        openOriginalFile
+      );
+
+      dom.audioPlayer.addEventListener(
+        "error",
+        handleAudioError
+      );
+
+      dom.audioPlayer.addEventListener(
+        "waiting",
+        () => {
+          showLoading(
+            "Đang tải âm thanh...",
+            "Tốc độ phụ thuộc vào kích thước file và đường truyền."
+          );
+        }
+      );
+
+      dom.audioPlayer.addEventListener(
+        "canplay",
+        hideLoading
+      );
+
+      dom.audioPlayer.addEventListener(
+        "playing",
+        hideLoading
+      );
+
+      window.addEventListener(
+        "resize",
+        handleWindowResize,
+        {
+          passive: true
+        }
+      );
+
+      document.addEventListener(
+        "keydown",
+        handleKeyboardShortcuts
+      );
+
+      window.addEventListener(
+        "beforeunload",
+        cleanupResources
+      );
+    }
+
+    function waitForGoogleIdentityServices(timeout = 12000) {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+
+        const timer = setInterval(() => {
+          const ready =
+            window.google &&
+            google.accounts &&
+            google.accounts.oauth2;
+
+          if (ready) {
+            clearInterval(timer);
+            resolve();
+            return;
+          }
+
+          if (Date.now() - startTime > timeout) {
+            clearInterval(timer);
+
+            reject(
+              new Error(
+                "Google Identity Services không phản hồi."
+              )
+            );
+          }
+        }, 100);
+      });
+    }
+
+    /* =====================================================
+       5. ĐĂNG NHẬP GOOGLE
+       ===================================================== */
+
+    function requestGoogleAccess() {
+      if (!state.tokenClient) {
+        showToast(
+          "Dịch vụ đăng nhập Google chưa sẵn sàng.",
+          "warning"
+        );
+
         return;
       }
 
-      document.getElementById('placeholder').style.display = 'none';
-      
-      if (mimeType.includes('audio/')) {
-        playAudio(fileId, fileName);
-      } else if (mimeType === 'application/pdf') {
-        renderPDF(fileId);
-      } else {
-        alert("Định dạng không được hỗ trợ!");
-      }
-    }
-
-    // ==========================================
-    // 4. MODULE AUDIO (STREAMING BẰNG THẺ <AUDIO>)
-    // Bí quyết: Truyền access_token thẳng vào URL alt=media
-    // ==========================================
-    function playAudio(fileId, fileName) {
-      // Ẩn PDF
-      document.getElementById('pdf-container').style.display = 'none';
-      document.getElementById('pdf-controls').style.display = 'none';
-      
-      // Hiện Audio
-      document.getElementById('audio-container').style.display = 'block';
-      document.getElementById('audio-title').innerText = fileName;
-
-      const audioPlayer = document.getElementById('audio-player');
-      
-      // URL trực tiếp lấy Media từ Drive, đính kèm token
-      const mediaUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${accessToken}`;
-      
-      audioPlayer.src = mediaUrl;
-      audioPlayer.play().catch(e => console.log("Auto-play bị chặn bởi trình duyệt, người dùng cần click play."));
-    }
-
-    // ==========================================
-    // 5. MODULE PDF (PDF.JS TỰ ĐỘNG CHIA RANGE REQUESTS)
-    // Bí quyết: Bỏ access_token vào httpHeaders
-    // ==========================================
-    async function renderPDF(fileId) {
-      // Ẩn Audio
-      document.getElementById('audio-container').style.display = 'none';
-      const audioPlayer = document.getElementById('audio-player');
-      audioPlayer.pause();
-      
-      // Hiện PDF
-      document.getElementById('pdf-container').style.display = 'block';
-      document.getElementById('pdf-controls').style.display = 'flex';
-      
-      const mediaUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-
-      // Cung cấp header cho PDF.js, nó sẽ tự động gửi byte-range requests HTTP 206
-      const loadingTask = pdfjsLib.getDocument({
-        url: mediaUrl,
-        httpHeaders: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+      dom.btnLogin.disabled = true;
 
       try {
-        pdfDoc = await loadingTask.promise;
-        document.getElementById('page-count').textContent = pdfDoc.numPages;
-        pageNum = 1;
-        renderPage(pageNum);
-      } catch (err) {
-        console.error('Lỗi khi load PDF:', err);
-        alert("Không thể tải PDF. Token có thể đã hết hạn.");
+        state.tokenClient.requestAccessToken({
+          prompt: state.accessToken ? "" : "consent"
+        });
+      } catch (error) {
+        dom.btnLogin.disabled = false;
+
+        console.error("Lỗi yêu cầu token:", error);
+
+        showToast(
+          "Không thể mở cửa sổ đăng nhập Google.",
+          "error"
+        );
       }
     }
 
-    async function renderPage(num) {
-      pageRendering = true;
-      const page = await pdfDoc.getPage(num);
-      
-      // Scale để vừa màn hình
-      const containerWidth = document.getElementById('pdf-container').clientWidth - 40;
-      const unscaledViewport = page.getViewport({scale: 1});
-      const scale = Math.min(containerWidth / unscaledViewport.width, 1.5); // Max scale 1.5
-      
-      const viewport = page.getViewport({ scale: scale });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+    async function handleTokenResponse(tokenResponse) {
+      dom.btnLogin.disabled = false;
 
-      const renderContext = {
-        canvasContext: ctx,
-        viewport: viewport
+      if (
+        !tokenResponse ||
+        !tokenResponse.access_token
+      ) {
+        showToast(
+          "Google không trả về mã truy cập hợp lệ.",
+          "error"
+        );
+
+        return;
+      }
+
+      state.accessToken = tokenResponse.access_token;
+
+      const expiresIn =
+        Number(tokenResponse.expires_in) || 3600;
+
+      state.tokenExpiresAt =
+        Date.now() + expiresIn * 1000;
+
+      updateAuthUI(true);
+
+      showToast(
+        "Đã kết nối Google Drive.",
+        "success"
+      );
+
+      state.folderStack = [
+        {
+          id: CONFIG.ROOT_FOLDER_ID,
+          name: "Thư mục gốc"
+        }
+      ];
+
+      await loadCurrentFolder();
+    }
+
+    function handleOAuthError(error) {
+      dom.btnLogin.disabled = false;
+
+      console.error("Google OAuth error:", error);
+
+      showToast(
+        "Đăng nhập Google không thành công hoặc đã bị hủy.",
+        "error"
+      );
+    }
+
+    function disconnectGoogleDrive() {
+      if (
+        state.accessToken &&
+        window.google?.accounts?.oauth2
+      ) {
+        google.accounts.oauth2.revoke(
+          state.accessToken,
+          () => {}
+        );
+      }
+
+      state.accessToken = null;
+      state.tokenExpiresAt = 0;
+      state.files = [];
+      state.filteredFiles = [];
+      state.folderStack = [
+        {
+          id: CONFIG.ROOT_FOLDER_ID,
+          name: "Thư mục gốc"
+        }
+      ];
+
+      cleanupViewer();
+      updateAuthUI(false);
+      updateBreadcrumb();
+
+      dom.currentFolderTitle.textContent =
+        "Thư mục gốc";
+
+      dom.currentFolderTitle.title =
+        "Thư mục gốc";
+
+      dom.fileSearch.value = "";
+      dom.fileCount.textContent = "Chưa có dữ liệu";
+
+      showListMessage(
+        "Vui lòng kết nối Google Drive để tải danh sách."
+      );
+
+      showToast(
+        "Đã ngắt kết nối Google Drive.",
+        "success"
+      );
+    }
+
+    function updateAuthUI(isConnected) {
+      dom.btnLogin.style.display =
+        isConnected ? "none" : "inline-flex";
+
+      dom.btnLogout.style.display =
+        isConnected ? "inline-flex" : "none";
+
+      dom.userStatus.style.display =
+        isConnected ? "flex" : "none";
+    }
+
+    function isTokenLikelyValid() {
+      if (!state.accessToken) {
+        return false;
+      }
+
+      /*
+       * Trừ trước 30 giây để tránh gửi yêu cầu
+       * đúng lúc token vừa hết hạn.
+       */
+      return Date.now() <
+        state.tokenExpiresAt - 30000;
+    }
+
+    function requireValidToken() {
+      if (isTokenLikelyValid()) {
+        return true;
+      }
+
+      state.accessToken = null;
+      state.tokenExpiresAt = 0;
+
+      updateAuthUI(false);
+
+      showToast(
+        "Phiên Google Drive đã hết hạn. Hãy kết nối lại.",
+        "warning",
+        6000
+      );
+
+      return false;
+    }
+
+    /* =====================================================
+       6. GỌI DRIVE API
+       ===================================================== */
+
+    async function driveFetch(
+      url,
+      options = {}
+    ) {
+      if (!requireValidToken()) {
+        throw new Error("TOKEN_EXPIRED");
+      }
+
+      const headers = new Headers(
+        options.headers || {}
+      );
+
+      headers.set(
+        "Authorization",
+        `Bearer ${state.accessToken}`
+      );
+
+      const response = await fetch(
+        url,
+        {
+          ...options,
+          headers
+        }
+      );
+
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        state.accessToken = null;
+        state.tokenExpiresAt = 0;
+
+        updateAuthUI(false);
+
+        throw new Error("TOKEN_EXPIRED");
+      }
+
+      if (!response.ok) {
+        let detail = "";
+
+        try {
+          const errorData = await response.json();
+
+          detail =
+            errorData?.error?.message || "";
+        } catch {
+          detail = await response
+            .text()
+            .catch(() => "");
+        }
+
+        throw new Error(
+          detail ||
+          `Google Drive trả về HTTP ${response.status}.`
+        );
+      }
+
+      return response;
+    }
+
+    async function loadCurrentFolder() {
+      const currentFolder =
+        state.folderStack[
+          state.folderStack.length - 1
+        ];
+
+      await loadDriveFiles(
+        currentFolder.id,
+        currentFolder.name
+      );
+    }
+
+    async function loadDriveFiles(
+      folderId,
+      folderName
+    ) {
+      if (!requireValidToken()) {
+        return;
+      }
+
+      closeSidebarOnSmallScreen();
+
+      dom.fileSearch.value = "";
+
+      dom.currentFolderTitle.textContent =
+        folderName;
+
+      dom.currentFolderTitle.title =
+        folderName;
+
+      updateBreadcrumb();
+
+      showListMessage("Đang tải danh sách file...");
+      dom.fileCount.textContent = "Đang tải...";
+
+      try {
+        const allFiles = [];
+        let pageToken = "";
+
+        do {
+          const query = [
+            `'${folderId}' in parents`,
+            "trashed = false",
+            "(",
+            "mimeType = 'application/vnd.google-apps.folder'",
+            "or mimeType = 'application/pdf'",
+            "or mimeType contains 'audio/'",
+            ")"
+          ].join(" ");
+
+          const params = new URLSearchParams({
+            q: query,
+
+            fields:
+              "nextPageToken,files(" +
+              "id,name,mimeType,size,modifiedTime" +
+              ")",
+
+            orderBy:
+              "folder,name_natural",
+
+            pageSize:
+              String(CONFIG.MAX_FILES_PER_PAGE),
+
+            supportsAllDrives:
+              "true",
+
+            includeItemsFromAllDrives:
+              "true"
+          });
+
+          if (pageToken) {
+            params.set(
+              "pageToken",
+              pageToken
+            );
+          }
+
+          const url =
+            `${CONFIG.DRIVE_API_BASE}/files?` +
+            params.toString();
+
+          const response =
+            await driveFetch(url);
+
+          const data =
+            await response.json();
+
+          if (Array.isArray(data.files)) {
+            allFiles.push(...data.files);
+          }
+
+          pageToken =
+            data.nextPageToken || "";
+        } while (pageToken);
+
+        state.files = allFiles;
+        state.filteredFiles = allFiles;
+
+        renderFileList(allFiles);
+      } catch (error) {
+        console.error(
+          "Lỗi tải danh sách Drive:",
+          error
+        );
+
+        if (
+          error.message === "TOKEN_EXPIRED"
+        ) {
+          showListMessage(
+            "Phiên đăng nhập đã hết hạn. Hãy kết nối lại Google Drive.",
+            true
+          );
+        } else {
+          showListMessage(
+            `Không thể tải thư mục: ${error.message}`,
+            true
+          );
+        }
+
+        dom.fileCount.textContent =
+          "Không tải được dữ liệu";
+      }
+    }
+
+    /* =====================================================
+       7. HIỂN THỊ DANH SÁCH FILE
+       ===================================================== */
+
+    function renderFileList(files) {
+      dom.fileList.replaceChildren();
+
+      if (!files.length) {
+        showListMessage(
+          state.files.length
+            ? "Không tìm thấy file phù hợp."
+            : "Thư mục này không có PDF hoặc file âm thanh."
+        );
+
+        updateFileCount(files.length);
+
+        return;
+      }
+
+      const fragment =
+        document.createDocumentFragment();
+
+      files.forEach((file) => {
+        fragment.appendChild(
+          createFileItem(file)
+        );
+      });
+
+      dom.fileList.appendChild(fragment);
+
+      updateFileCount(files.length);
+    }
+
+    function createFileItem(file) {
+      const item =
+        document.createElement("li");
+
+      item.className = "file-item";
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+
+      if (
+        file.id === state.activeFileId
+      ) {
+        item.classList.add("active");
+      }
+
+      const icon =
+        document.createElement("span");
+
+      icon.className = "file-item-icon";
+      icon.textContent =
+        getFileIcon(file.mimeType);
+
+      const content =
+        document.createElement("div");
+
+      content.className =
+        "file-item-content";
+
+      const name =
+        document.createElement("div");
+
+      name.className =
+        "file-item-name";
+
+      name.textContent = file.name;
+      name.title = file.name;
+
+      const type =
+        document.createElement("div");
+
+      type.className =
+        "file-item-type";
+
+      type.textContent =
+        getFileDescription(file);
+
+      content.append(name, type);
+      item.append(icon, content);
+
+      const activate = () => {
+        openFile(file);
       };
-      
-      await page.render(renderContext).promise;
-      pageRendering = false;
-      
-      if (pageNumPending !== null) {
-        renderPage(pageNumPending);
-        pageNumPending = null;
-      }
-      
-      document.getElementById('page-num').textContent = num;
+
+      item.addEventListener(
+        "click",
+        activate
+      );
+
+      item.addEventListener(
+        "keydown",
+        (event) => {
+          if (
+            event.key === "Enter" ||
+            event.key === " "
+          ) {
+            event.preventDefault();
+            activate();
+          }
+        }
+      );
+
+      return item;
     }
 
-    function queueRenderPage(num) {
-      if (pageRendering) {
-        pageNumPending = num;
-      } else {
-        renderPage(num);
+    function getFileIcon(mimeType) {
+      if (
+        mimeType ===
+        "application/vnd.google-apps.folder"
+      ) {
+        return "📁";
       }
+
+      if (
+        mimeType === "application/pdf"
+      ) {
+        return "📄";
+      }
+
+      if (
+        mimeType?.startsWith("audio/")
+      ) {
+        return "🎵";
+      }
+
+      return "📎";
+    }
+
+    function getFileDescription(file) {
+      if (
+        file.mimeType ===
+        "application/vnd.google-apps.folder"
+      ) {
+        return "Thư mục";
+      }
+
+      if (
+        file.mimeType === "application/pdf"
+      ) {
+        return formatFileTypeAndSize(
+          "Tài liệu PDF",
+          file.size
+        );
+      }
+
+      if (
+        file.mimeType?.startsWith("audio/")
+      ) {
+        return formatFileTypeAndSize(
+          "Âm thanh",
+          file.size
+        );
+      }
+
+      return file.mimeType || "Tệp";
+    }
+
+    function formatFileTypeAndSize(
+      label,
+      size
+    ) {
+      if (!size) {
+        return label;
+      }
+
+      return `${label} • ${formatBytes(size)}`;
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value);
+
+      if (
+        !Number.isFinite(bytes) ||
+        bytes <= 0
+      ) {
+        return "";
+      }
+
+      const units = [
+        "B",
+        "KB",
+        "MB",
+        "GB"
+      ];
+
+      const index = Math.min(
+        Math.floor(
+          Math.log(bytes) /
+          Math.log(1024)
+        ),
+        units.length - 1
+      );
+
+      const result =
+        bytes /
+        Math.pow(1024, index);
+
+      return (
+        result.toFixed(
+          index === 0 ? 0 : 1
+        ) +
+        " " +
+        units[index]
+      );
+    }
+
+    function showListMessage(
+      message,
+      isError = false
+    ) {
+      dom.fileList.replaceChildren();
+
+      const item =
+        document.createElement("li");
+
+      item.className =
+        "list-message" +
+        (isError ? " error" : "");
+
+      item.textContent = message;
+
+      dom.fileList.appendChild(item);
+    }
+
+    function updateFileCount(
+      visibleCount
+    ) {
+      if (
+        visibleCount === state.files.length
+      ) {
+        dom.fileCount.textContent =
+          `${visibleCount} mục`;
+      } else {
+        dom.fileCount.textContent =
+          `${visibleCount}/${state.files.length} mục`;
+      }
+    }
+
+    function applyFileFilter() {
+      const keyword =
+        normalizeSearchText(
+          dom.fileSearch.value
+        );
+
+      if (!keyword) {
+        state.filteredFiles =
+          [...state.files];
+
+        renderFileList(
+          state.filteredFiles
+        );
+
+        return;
+      }
+
+      state.filteredFiles =
+        state.files.filter((file) => {
+          return normalizeSearchText(
+            file.name
+          ).includes(keyword);
+        });
+
+      renderFileList(
+        state.filteredFiles
+      );
+    }
+
+    function normalizeSearchText(value) {
+      return String(value || "")
+        .normalize("NFD")
+        .replace(
+          /[\u0300-\u036f]/g,
+          ""
+        )
+        .toLowerCase()
+        .trim();
+    }
+
+    function clearSearch() {
+      dom.fileSearch.value = "";
+      dom.fileSearch.focus();
+
+      state.filteredFiles =
+        [...state.files];
+
+      renderFileList(
+        state.filteredFiles
+      );
+    }
+
+    /* =====================================================
+       8. ĐƯỜNG DẪN THƯ MỤC
+       ===================================================== */
+
+    function updateBreadcrumb() {
+      dom.breadcrumb.replaceChildren();
+
+      state.folderStack.forEach(
+        (folder, index) => {
+          if (index > 0) {
+            const separator =
+              document.createElement("span");
+
+            separator.textContent = "›";
+            separator.setAttribute(
+              "aria-hidden",
+              "true"
+            );
+
+            dom.breadcrumb.appendChild(
+              separator
+            );
+          }
+
+          const button =
+            document.createElement("button");
+
+          button.type = "button";
+          button.className =
+            "breadcrumb-button";
+
+          button.textContent =
+            folder.name;
+
+          button.title =
+            folder.name;
+
+          button.addEventListener(
+            "click",
+            async () => {
+              if (
+                index ===
+                state.folderStack.length - 1
+              ) {
+                return;
+              }
+
+              state.folderStack =
+                state.folderStack.slice(
+                  0,
+                  index + 1
+                );
+
+              await loadCurrentFolder();
+            }
+          );
+
+          dom.breadcrumb.appendChild(
+            button
+          );
+        }
+      );
+
+      requestAnimationFrame(() => {
+        dom.breadcrumb.scrollLeft =
+          dom.breadcrumb.scrollWidth;
+      });
+    }
+
+    async function openFolder(file) {
+      state.folderStack.push({
+        id: file.id,
+        name: file.name
+      });
+
+      await loadCurrentFolder();
+    }
+
+    /* =====================================================
+       9. MỞ FILE
+       ===================================================== */
+
+    async function openFile(file) {
+      if (!file?.id) {
+        return;
+      }
+
+      if (
+        file.mimeType ===
+        "application/vnd.google-apps.folder"
+      ) {
+        await openFolder(file);
+        return;
+      }
+
+      state.activeFileId =
+        file.id;
+
+      state.activeFileName =
+        file.name;
+
+      state.activeMimeType =
+        file.mimeType;
+
+      renderFileList(
+        state.filteredFiles
+      );
+
+      closeSidebarOnSmallScreen();
+
+      if (
+        file.mimeType?.startsWith("audio/")
+      ) {
+        playAudio(file);
+        return;
+      }
+
+      if (
+        file.mimeType ===
+        "application/pdf"
+      ) {
+        await openPdf(file);
+        return;
+      }
+
+      showToast(
+        "Định dạng file này chưa được hỗ trợ.",
+        "warning"
+      );
+    }
+
+    /* =====================================================
+       10. AUDIO
+       ===================================================== */
+
+    function playAudio(file) {
+      if (!requireValidToken()) {
+        return;
+      }
+
+      cleanupPdfOnly();
+
+      dom.placeholder.style.display =
+        "none";
+
+      dom.pdfToolbar.style.display =
+        "none";
+
+      dom.pdfContainer.style.display =
+        "none";
+
+      dom.audioContainer.style.display =
+        "block";
+
+      dom.audioTitle.textContent =
+        file.name;
+
+      showLoading(
+        "Đang chuẩn bị âm thanh...",
+        "Ứng dụng đang kết nối trực tiếp tới Google Drive."
+      );
+
+      dom.audioPlayer.pause();
+
+      dom.audioPlayer.removeAttribute(
+        "src"
+      );
+
+      dom.audioPlayer.load();
+
+      /*
+       * Thẻ audio không hỗ trợ tùy ý thêm header Authorization.
+       * Vì vậy token được gắn vào URL media để có thể phát trực tuyến.
+       * Không ghi URL này ra console.
+       */
+      const mediaUrl =
+        `${CONFIG.DRIVE_API_BASE}/files/` +
+        `${encodeURIComponent(file.id)}` +
+        `?alt=media&access_token=` +
+        encodeURIComponent(
+          state.accessToken
+        );
+
+      dom.audioPlayer.src = mediaUrl;
+      dom.audioPlayer.load();
+
+      const playPromise =
+        dom.audioPlayer.play();
+
+      if (
+        playPromise &&
+        typeof playPromise.catch ===
+          "function"
+      ) {
+        playPromise.catch(() => {
+          hideLoading();
+
+          showToast(
+            "Trình duyệt đã chặn phát tự động. Hãy nhấn nút Play.",
+            "warning",
+            5000
+          );
+        });
+      }
+    }
+
+    function handleAudioError() {
+      hideLoading();
+
+      const mediaError =
+        dom.audioPlayer.error;
+
+      let message =
+        "Không thể phát file âm thanh.";
+
+      if (mediaError) {
+        switch (mediaError.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            message =
+              "Quá trình phát âm thanh đã bị hủy.";
+            break;
+
+          case MediaError.MEDIA_ERR_NETWORK:
+            message =
+              "Lỗi mạng khi tải âm thanh.";
+            break;
+
+          case MediaError.MEDIA_ERR_DECODE:
+            message =
+              "Trình duyệt không giải mã được file âm thanh.";
+            break;
+
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            message =
+              "Định dạng âm thanh không được trình duyệt hỗ trợ hoặc phiên đăng nhập đã hết hạn.";
+            break;
+        }
+      }
+
+      showToast(
+        message,
+        "error",
+        6500
+      );
+    }
+
+    /* =====================================================
+       11. PDF
+       ===================================================== */
+
+    async function openPdf(file) {
+      if (!requireValidToken()) {
+        return;
+      }
+
+      cleanupAudioOnly();
+
+      dom.placeholder.style.display =
+        "none";
+
+      dom.audioContainer.style.display =
+        "none";
+
+      dom.pdfToolbar.style.display =
+        "flex";
+
+      dom.pdfContainer.style.display =
+        "block";
+
+      dom.pageNum.textContent = "0";
+      dom.pageCount.textContent = "0";
+
+      state.pageNum = 1;
+      state.pendingPageNum = null;
+      state.customZoom = 1;
+
+      updateZoomStatus();
+      updatePageButtons();
+
+      showLoading(
+        "Đang mở tài liệu PDF...",
+        "Ứng dụng đang đọc cấu trúc tài liệu. File lớn có thể cần thêm thời gian."
+      );
+
+      try {
+        await cleanupPdfDocument();
+
+        const mediaUrl =
+          `${CONFIG.DRIVE_API_BASE}/files/` +
+          `${encodeURIComponent(file.id)}` +
+          "?alt=media";
+
+        state.pdfLoadingTask =
+          pdfjsLib.getDocument({
+            url: mediaUrl,
+
+            httpHeaders: {
+              Authorization:
+                `Bearer ${state.accessToken}`
+            },
+
+            withCredentials: false,
+
+            disableAutoFetch: false,
+            disableStream: false,
+            disableRange: false,
+
+            rangeChunkSize:
+              1024 * 1024
+          });
+
+        state.pdfLoadingTask.onProgress =
+          handlePdfProgress;
+
+        state.pdfDoc =
+          await state.pdfLoadingTask.promise;
+
+        dom.pageCount.textContent =
+          String(state.pdfDoc.numPages);
+
+        state.pageNum = 1;
+
+        await renderPage(
+          state.pageNum,
+          {
+            resetScroll: true
+          }
+        );
+
+        showToast(
+          `Đã mở “${file.name}”.`,
+          "success",
+          3000
+        );
+      } catch (error) {
+        hideLoading();
+
+        console.error(
+          "Lỗi mở PDF:",
+          error
+        );
+
+        if (
+          error?.name ===
+          "RenderingCancelledException"
+        ) {
+          return;
+        }
+
+        if (
+          error?.name ===
+          "PasswordException"
+        ) {
+          showToast(
+            "PDF được bảo vệ bằng mật khẩu nên chưa thể mở.",
+            "error",
+            6500
+          );
+        } else {
+          showToast(
+            "Không thể tải PDF. Phiên đăng nhập có thể đã hết hạn hoặc file không cho phép truy cập.",
+            "error",
+            7000
+          );
+        }
+
+        showPlaceholder(
+          "Không thể mở tài liệu",
+          "Hãy kết nối lại Google Drive hoặc thử một file khác.",
+          "⚠️"
+        );
+      }
+    }
+
+    function handlePdfProgress(progress) {
+      if (
+        !progress ||
+        !progress.total
+      ) {
+        return;
+      }
+
+      const percent = Math.min(
+        100,
+        Math.round(
+          progress.loaded /
+          progress.total *
+          100
+        )
+      );
+
+      dom.loadingMessage.textContent =
+        `Đã tải khoảng ${percent}% dữ liệu tài liệu.`;
+    }
+
+    async function renderPage(
+      pageNumber,
+      options = {}
+    ) {
+      if (!state.pdfDoc) {
+        return;
+      }
+
+      if (
+        pageNumber < 1 ||
+        pageNumber > state.pdfDoc.numPages
+      ) {
+        return;
+      }
+
+      if (state.pageRendering) {
+        state.pendingPageNum =
+          pageNumber;
+
+        return;
+      }
+
+      state.pageRendering = true;
+
+      showLoading(
+        `Đang hiển thị trang ${pageNumber}...`,
+        "Ứng dụng đang vẽ nội dung trang PDF."
+      );
+
+      try {
+        if (state.pdfRenderTask) {
+          try {
+            state.pdfRenderTask.cancel();
+          } catch {
+            // Không cần xử lý thêm.
+          }
+
+          state.pdfRenderTask = null;
+        }
+
+        const page =
+          await state.pdfDoc.getPage(
+            pageNumber
+          );
+
+        const scale =
+          calculatePdfScale(page);
+
+        const viewport =
+          page.getViewport({
+            scale
+          });
+
+        const outputScale =
+          Math.min(
+            window.devicePixelRatio || 1,
+            2.5
+          );
+
+        const pixelWidth =
+          Math.max(
+            1,
+            Math.floor(
+              viewport.width *
+              outputScale
+            )
+          );
+
+        const pixelHeight =
+          Math.max(
+            1,
+            Math.floor(
+              viewport.height *
+              outputScale
+            )
+          );
+
+        dom.pdfCanvas.width =
+          pixelWidth;
+
+        dom.pdfCanvas.height =
+          pixelHeight;
+
+        dom.pdfCanvas.style.width =
+          `${Math.round(viewport.width)}px`;
+
+        dom.pdfCanvas.style.height =
+          `${Math.round(viewport.height)}px`;
+
+        canvasContext.setTransform(
+          1,
+          0,
+          0,
+          1,
+          0,
+          0
+        );
+
+        canvasContext.fillStyle =
+          "#ffffff";
+
+        canvasContext.fillRect(
+          0,
+          0,
+          pixelWidth,
+          pixelHeight
+        );
+
+        const renderContext = {
+          canvasContext,
+
+          viewport,
+
+          transform:
+            outputScale !== 1
+              ? [
+                  outputScale,
+                  0,
+                  0,
+                  outputScale,
+                  0,
+                  0
+                ]
+              : null,
+
+          background:
+            "#ffffff"
+        };
+
+        state.pdfRenderTask =
+          page.render(renderContext);
+
+        await state.pdfRenderTask.promise;
+
+        state.pdfRenderTask = null;
+        state.pageNum = pageNumber;
+
+        dom.pageNum.textContent =
+          String(pageNumber);
+
+        updatePageButtons();
+        updateZoomStatus();
+
+        if (options.resetScroll) {
+          dom.pdfContainer.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: "auto"
+          });
+        }
+      } catch (error) {
+        if (
+          error?.name !==
+          "RenderingCancelledException"
+        ) {
+          console.error(
+            "Lỗi render PDF:",
+            error
+          );
+
+          showToast(
+            "Không thể hiển thị trang PDF này.",
+            "error"
+          );
+        }
+      } finally {
+        state.pageRendering = false;
+        hideLoading();
+
+        if (
+          state.pendingPageNum !== null
+        ) {
+          const pending =
+            state.pendingPageNum;
+
+          state.pendingPageNum = null;
+
+          await renderPage(
+            pending,
+            {
+              resetScroll: true
+            }
+          );
+        }
+      }
+    }
+
+    function calculatePdfScale(page) {
+      const baseViewport =
+        page.getViewport({
+          scale: 1
+        });
+
+      const horizontalPadding =
+        window.innerWidth <= 620
+          ? 20
+          : 40;
+
+      const verticalPadding =
+        window.innerWidth <= 620
+          ? 20
+          : 40;
+
+      const availableWidth =
+        Math.max(
+          100,
+          dom.pdfContainer.clientWidth -
+          horizontalPadding
+        );
+
+      const availableHeight =
+        Math.max(
+          100,
+          dom.pdfContainer.clientHeight -
+          verticalPadding
+        );
+
+      if (
+        state.fitMode === "height"
+      ) {
+        const heightScale =
+          availableHeight /
+          baseViewport.height;
+
+        /*
+         * Đồng thời giới hạn theo chiều rộng.
+         * Cách này tránh lỗi iPad: canvas có chiều rộng
+         * vượt quá vùng hiển thị làm người dùng tưởng trang trống.
+         */
+        const widthScale =
+          availableWidth /
+          baseViewport.width;
+
+        return clamp(
+          Math.min(
+            heightScale,
+            widthScale
+          ),
+          CONFIG.MIN_ZOOM,
+          CONFIG.MAX_ZOOM
+        );
+      }
+
+      if (
+        state.fitMode === "actual"
+      ) {
+        return clamp(
+          state.customZoom,
+          CONFIG.MIN_ZOOM,
+          CONFIG.MAX_ZOOM
+        );
+      }
+
+      const widthScale =
+        availableWidth /
+        baseViewport.width;
+
+      return clamp(
+        widthScale *
+        state.customZoom,
+        CONFIG.MIN_ZOOM,
+        CONFIG.MAX_ZOOM
+      );
     }
 
     function changePage(offset) {
-      if (!pdfDoc) return;
-      if (pageNum + offset <= 0 || pageNum + offset > pdfDoc.numPages) return;
-      pageNum += offset;
-      queueRenderPage(pageNum);
+      if (!state.pdfDoc) {
+        return;
+      }
+
+      const nextPage =
+        state.pageNum + offset;
+
+      if (
+        nextPage < 1 ||
+        nextPage > state.pdfDoc.numPages
+      ) {
+        return;
+      }
+
+      renderPage(
+        nextPage,
+        {
+          resetScroll: true
+        }
+      );
+    }
+
+    function changeZoom(delta) {
+      if (!state.pdfDoc) {
+        return;
+      }
+
+      /*
+       * Khi người dùng điều chỉnh zoom thủ công,
+       * chuyển về chế độ kích thước thực để kết quả rõ ràng.
+       */
+      if (
+        state.fitMode === "height"
+      ) {
+        state.fitMode = "actual";
+        state.customZoom = 1;
+        dom.fitMode.value = "actual";
+      }
+
+      state.customZoom = clamp(
+        state.customZoom + delta,
+        CONFIG.MIN_ZOOM,
+        CONFIG.MAX_ZOOM
+      );
+
+      renderPage(
+        state.pageNum,
+        {
+          resetScroll: false
+        }
+      );
+    }
+
+    function handleFitModeChange() {
+      state.fitMode =
+        dom.fitMode.value;
+
+      state.customZoom = 1;
+
+      if (state.pdfDoc) {
+        renderPage(
+          state.pageNum,
+          {
+            resetScroll: true
+          }
+        );
+      }
+    }
+
+    function updatePageButtons() {
+      const hasPdf =
+        Boolean(state.pdfDoc);
+
+      dom.btnPrev.disabled =
+        !hasPdf ||
+        state.pageNum <= 1;
+
+      dom.btnNext.disabled =
+        !hasPdf ||
+        state.pageNum >=
+          (state.pdfDoc?.numPages || 0);
+    }
+
+    function updateZoomStatus() {
+      let displayValue;
+
+      if (
+        state.fitMode === "height"
+      ) {
+        displayValue = "Vừa cao";
+      } else if (
+        state.fitMode === "width" &&
+        state.customZoom === 1
+      ) {
+        displayValue = "Vừa rộng";
+      } else {
+        displayValue =
+          `${Math.round(
+            state.customZoom * 100
+          )}%`;
+      }
+
+      dom.zoomStatus.textContent =
+        displayValue;
+    }
+
+    /* =====================================================
+       12. MỞ FILE GỐC
+       ===================================================== */
+
+    function openOriginalFile() {
+      if (
+        !state.activeFileId ||
+        !state.accessToken
+      ) {
+        showToast(
+          "Chưa có file đang mở.",
+          "warning"
+        );
+
+        return;
+      }
+
+      /*
+       * URL này mở luồng media trong tab mới.
+       * Token chỉ dùng trong phiên hiện tại.
+       */
+      const url =
+        `${CONFIG.DRIVE_API_BASE}/files/` +
+        `${encodeURIComponent(
+          state.activeFileId
+        )}` +
+        "?alt=media&access_token=" +
+        encodeURIComponent(
+          state.accessToken
+        );
+
+      const newWindow =
+        window.open(
+          url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+
+      if (!newWindow) {
+        showToast(
+          "Trình duyệt đã chặn cửa sổ mới.",
+          "warning"
+        );
+      }
+    }
+
+    /* =====================================================
+       13. RESPONSIVE SIDEBAR
+       ===================================================== */
+
+    function openSidebar() {
+      dom.sidebar.classList.add("open");
+
+      dom.sidebarBackdrop.classList.add(
+        "visible"
+      );
+
+      dom.sidebarBackdrop.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+    }
+
+    function closeSidebar() {
+      dom.sidebar.classList.remove("open");
+
+      dom.sidebarBackdrop.classList.remove(
+        "visible"
+      );
+
+      dom.sidebarBackdrop.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+    }
+
+    function closeSidebarOnSmallScreen() {
+      if (window.innerWidth <= 900) {
+        closeSidebar();
+      }
+    }
+
+    /* =====================================================
+       14. PHÍM TẮT
+       ===================================================== */
+
+    function handleKeyboardShortcuts(event) {
+      const targetTag =
+        event.target?.tagName?.toLowerCase();
+
+      if (
+        targetTag === "input" ||
+        targetTag === "select" ||
+        targetTag === "textarea"
+      ) {
+        return;
+      }
+
+      if (!state.pdfDoc) {
+        return;
+      }
+
+      if (
+        event.key === "ArrowLeft" ||
+        event.key === "PageUp"
+      ) {
+        event.preventDefault();
+        changePage(-1);
+      }
+
+      if (
+        event.key === "ArrowRight" ||
+        event.key === "PageDown"
+      ) {
+        event.preventDefault();
+        changePage(1);
+      }
+
+      if (
+        event.key === "+" ||
+        event.key === "="
+      ) {
+        event.preventDefault();
+        changeZoom(
+          CONFIG.ZOOM_STEP
+        );
+      }
+
+      if (event.key === "-") {
+        event.preventDefault();
+        changeZoom(
+          -CONFIG.ZOOM_STEP
+        );
+      }
+    }
+
+    /* =====================================================
+       15. XỬ LÝ RESIZE
+       ===================================================== */
+
+    function handleWindowResize() {
+      clearTimeout(
+        state.resizeTimer
+      );
+
+      state.resizeTimer =
+        setTimeout(() => {
+          if (
+            window.innerWidth > 900
+          ) {
+            closeSidebar();
+          }
+
+          if (
+            state.pdfDoc &&
+            (
+              state.fitMode === "width" ||
+              state.fitMode === "height"
+            )
+          ) {
+            renderPage(
+              state.pageNum,
+              {
+                resetScroll: false
+              }
+            );
+          }
+        }, CONFIG.RESIZE_DELAY);
+    }
+
+    /* =====================================================
+       16. LOADING
+       ===================================================== */
+
+    function showLoading(
+      title,
+      message
+    ) {
+      dom.loadingTitle.textContent =
+        title || "Đang xử lý...";
+
+      dom.loadingMessage.textContent =
+        message ||
+        "Vui lòng chờ trong giây lát.";
+
+      dom.loadingOverlay.classList.add(
+        "visible"
+      );
+    }
+
+    function hideLoading() {
+      dom.loadingOverlay.classList.remove(
+        "visible"
+      );
+    }
+
+    /* =====================================================
+       17. TOAST
+       ===================================================== */
+
+    function showToast(
+      message,
+      type = "info",
+      duration = 4200
+    ) {
+      const toast =
+        document.createElement("div");
+
+      toast.className =
+        `toast ${type}`;
+
+      const icon =
+        document.createElement("span");
+
+      icon.textContent =
+        getToastIcon(type);
+
+      const text =
+        document.createElement("div");
+
+      text.className =
+        "toast-message";
+
+      text.textContent = message;
+
+      const closeButton =
+        document.createElement("button");
+
+      closeButton.type = "button";
+      closeButton.className =
+        "toast-close";
+
+      closeButton.textContent = "✕";
+      closeButton.setAttribute(
+        "aria-label",
+        "Đóng thông báo"
+      );
+
+      const removeToast = () => {
+        toast.remove();
+      };
+
+      closeButton.addEventListener(
+        "click",
+        removeToast
+      );
+
+      toast.append(
+        icon,
+        text,
+        closeButton
+      );
+
+      dom.toastRegion.appendChild(
+        toast
+      );
+
+      window.setTimeout(
+        removeToast,
+        duration
+      );
+    }
+
+    function getToastIcon(type) {
+      switch (type) {
+        case "success":
+          return "✓";
+
+        case "error":
+          return "⚠";
+
+        case "warning":
+          return "!";
+          
+        default:
+          return "ℹ";
+      }
+    }
+
+    /* =====================================================
+       18. DỌN DẸP TÀI NGUYÊN
+       ===================================================== */
+
+    function cleanupAudioOnly() {
+      dom.audioPlayer.pause();
+
+      dom.audioPlayer.removeAttribute(
+        "src"
+      );
+
+      dom.audioPlayer.load();
+
+      dom.audioContainer.style.display =
+        "none";
+    }
+
+    function cleanupPdfOnly() {
+      if (state.pdfRenderTask) {
+        try {
+          state.pdfRenderTask.cancel();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      state.pdfRenderTask = null;
+      state.pageRendering = false;
+      state.pendingPageNum = null;
+
+      dom.pdfToolbar.style.display =
+        "none";
+
+      dom.pdfContainer.style.display =
+        "none";
+    }
+
+    async function cleanupPdfDocument() {
+      if (state.pdfRenderTask) {
+        try {
+          state.pdfRenderTask.cancel();
+        } catch {
+          // Bỏ qua.
+        }
+
+        state.pdfRenderTask = null;
+      }
+
+      if (state.pdfLoadingTask) {
+        try {
+          await state.pdfLoadingTask.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+
+        state.pdfLoadingTask = null;
+      }
+
+      if (state.pdfDoc) {
+        try {
+          await state.pdfDoc.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+
+        state.pdfDoc = null;
+      }
+
+      state.pageRendering = false;
+      state.pendingPageNum = null;
+
+      dom.pdfCanvas.width = 1;
+      dom.pdfCanvas.height = 1;
+
+      dom.pdfCanvas.style.width = "1px";
+      dom.pdfCanvas.style.height = "1px";
+    }
+
+    function cleanupViewer() {
+      cleanupAudioOnly();
+      cleanupPdfOnly();
+
+      cleanupPdfDocument().catch(() => {});
+
+      state.activeFileId = null;
+      state.activeFileName = "";
+      state.activeMimeType = "";
+
+      showPlaceholder(
+        "Chưa chọn tài liệu",
+        "Kết nối Google Drive, sau đó chọn một file PDF hoặc file âm thanh để mở.",
+        "📖"
+      );
+
+      hideLoading();
+    }
+
+    function cleanupResources() {
+      cleanupAudioOnly();
+
+      if (state.pdfRenderTask) {
+        try {
+          state.pdfRenderTask.cancel();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      if (state.pdfLoadingTask) {
+        try {
+          state.pdfLoadingTask.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+
+      if (state.pdfDoc) {
+        try {
+          state.pdfDoc.destroy();
+        } catch {
+          // Bỏ qua.
+        }
+      }
+    }
+
+    /* =====================================================
+       19. PLACEHOLDER
+       ===================================================== */
+
+    function showPlaceholder(
+      title,
+      message,
+      icon = "📖"
+    ) {
+      cleanupAudioOnly();
+      cleanupPdfOnly();
+
+      dom.placeholder.replaceChildren();
+
+      const iconElement =
+        document.createElement("div");
+
+      iconElement.className =
+        "placeholder-icon";
+
+      iconElement.textContent = icon;
+
+      const titleElement =
+        document.createElement("h2");
+
+      titleElement.textContent = title;
+
+      const messageElement =
+        document.createElement("p");
+
+      messageElement.textContent =
+        message;
+
+      dom.placeholder.append(
+        iconElement,
+        titleElement,
+        messageElement
+      );
+
+      dom.placeholder.style.display =
+        "block";
+    }
+
+    /* =====================================================
+       20. TIỆN ÍCH
+       ===================================================== */
+
+    function clamp(
+      value,
+      min,
+      max
+    ) {
+      return Math.min(
+        max,
+        Math.max(min, value)
+      );
     }
   </script>
 </body>
