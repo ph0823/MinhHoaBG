@@ -875,6 +875,50 @@
     }
 
     /* =====================================================
+       TXT READER - TẢI THEO TRANG / RANGE
+       ===================================================== */
+
+    .txt-container {
+      flex: 1; min-height: 0; display: none; overflow: auto;
+      overscroll-behavior: contain;
+      padding: 18px calc(18px + var(--safe-right)) calc(28px + var(--safe-bottom)) calc(18px + var(--safe-left));
+      background: linear-gradient(180deg, #e8eef2 0%, var(--viewer-background) 100%);
+      -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
+    }
+    .txt-stage {
+      width: min(860px, 100%); min-height: 100%; margin: 0 auto;
+      padding: clamp(24px,4.5vw,54px) clamp(20px,6vw,68px);
+      border-radius: 12px; background: #fffefb; color: #253039; box-shadow: var(--shadow);
+    }
+    .txt-content {
+      --txt-font-scale: 1;
+      font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+      font-size: calc(18px * var(--txt-font-scale)); line-height: 1.86;
+      letter-spacing: .006em; text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased; overflow-wrap: break-word; word-break: normal;
+    }
+    .txt-content p { margin: 0 0 1.05em; text-align: justify; text-justify: inter-word; }
+    .txt-content .txt-heading {
+      margin: 1.45em 0 .9em; color: #0f5f59;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-size: 1.22em; font-weight: 800; line-height: 1.45; text-align: left; letter-spacing: .01em;
+    }
+    .txt-content .txt-heading:first-child { margin-top: 0; }
+    .txt-page-meta {
+      margin: 0 0 1.25rem; padding-bottom: .8rem; border-bottom: 1px solid #e5e7eb;
+      color: var(--text-secondary); font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-size: .78rem; line-height: 1.45; text-align: center;
+    }
+    .txt-container.is-loading .txt-stage { opacity: .58; }
+    .pdf-toolbar.txt-mode #fit-mode, .pdf-toolbar.txt-mode #page-effect { display: none; }
+    .pdf-toolbar.txt-mode .page-status { min-width: 108px; }
+    @media (max-width:620px) {
+      .txt-container { padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left); background: #fffefb; }
+      .txt-stage { width:100%; min-height:100%; padding:24px 18px 38px; border-radius:0; box-shadow:none; }
+      .txt-content { font-size: calc(17px * var(--txt-font-scale)); line-height:1.82; }
+    }
+
+    /* =====================================================
        LOADING OVERLAY
        ===================================================== */
 
@@ -1724,7 +1768,7 @@
           <h2>Chưa chọn tài liệu</h2>
 
           <p>
-            Kết nối Google Drive, sau đó chọn một file PDF hoặc EPUB để mở.
+            Kết nối Google Drive, sau đó chọn một file PDF, EPUB hoặc TXT để mở.
           </p>
         </section>
 
@@ -1922,6 +1966,14 @@
         </section>
 
 
+        <!-- TXT VIEWER -->
+        <section id="txt-container" class="txt-container" aria-label="Nội dung văn bản TXT">
+          <article id="txt-stage" class="txt-stage">
+            <div id="txt-page-meta" class="txt-page-meta"></div>
+            <div id="txt-content" class="txt-content"></div>
+          </article>
+        </section>
+
         <!-- LOADING -->
         <div
           id="loading-overlay"
@@ -1997,6 +2049,11 @@
       EPUB_DOWNLOAD_TIMEOUT: 90000,
       EPUB_LOCATION_BREAK: 1600,
 
+      TXT_PAGE_BYTES: 24 * 1024,
+      TXT_RANGE_GUARD_BYTES: 4,
+      TXT_CACHE_PAGES: 12,
+      TXT_PREFETCH_AHEAD: 2,
+
       AUTH_TOKEN_KEY:
         "docPdfGoogleAccessToken",
 
@@ -2045,6 +2102,15 @@
       epubOpenToken: 0,
       epubCacheDbPromise: null,
       epubRenderedOnce: false,
+
+      txtFileSize: 0,
+      txtPage: 1,
+      txtPageCount: 0,
+      txtFontScale: 1,
+      txtCache: new Map(),
+      txtLoadController: null,
+      txtOpenToken: 0,
+      txtActiveFile: null,
 
       pageNum: 1,
       pageRendering: false,
@@ -2110,6 +2176,15 @@
 
       epubStage:
         document.getElementById("epub-stage"),
+
+      txtContainer:
+        document.getElementById("txt-container"),
+      txtStage:
+        document.getElementById("txt-stage"),
+      txtPageMeta:
+        document.getElementById("txt-page-meta"),
+      txtContent:
+        document.getElementById("txt-content"),
 
       btnFocusControls:
         document.getElementById("btn-focus-controls"),
@@ -2436,6 +2511,26 @@
       );
 
       dom.pdfContainer.addEventListener(
+        "pointerup",
+        handlePdfTapNavigation
+      );
+
+      dom.txtContainer.addEventListener(
+        "touchstart",
+        handlePdfTouchStart,
+        { passive: true }
+      );
+      dom.txtContainer.addEventListener(
+        "touchmove",
+        handlePdfTouchMove,
+        { passive: true }
+      );
+      dom.txtContainer.addEventListener(
+        "touchend",
+        handlePdfTouchEnd,
+        { passive: true }
+      );
+      dom.txtContainer.addEventListener(
         "pointerup",
         handlePdfTapNavigation
       );
@@ -2867,7 +2962,9 @@
             "mimeType = 'application/vnd.google-apps.folder'",
             "or mimeType = 'application/pdf'",
             "or mimeType = 'application/epub+zip'",
+            "or mimeType = 'text/plain'",
             "or name contains '.epub'",
+            "or name contains '.txt'",
             ")"
           ].join(" ");
 
@@ -3012,7 +3109,7 @@
         showListMessage(
           state.files.length
             ? "Không tìm thấy file phù hợp."
-            : "Thư mục này không có file PDF hoặc EPUB."
+            : "Thư mục này không có file PDF, EPUB hoặc TXT."
         );
 
         updateFileCount(files.length);
@@ -3128,6 +3225,13 @@
         return "📘";
       }
 
+      if (
+        mimeType === "text/plain" ||
+        /\.txt$/i.test(String(fileName || ""))
+      ) {
+        return "📝";
+      }
+
       return "📎";
     }
 
@@ -3151,6 +3255,13 @@
       if (isEpubFile(file)) {
         return formatFileTypeAndSize(
           "Sách EPUB",
+          file.size
+        );
+      }
+
+      if (isTxtFile(file)) {
+        return formatFileTypeAndSize(
+          "Văn bản TXT",
           file.size
         );
       }
@@ -3383,6 +3494,15 @@
       );
     }
 
+    function isTxtFile(file) {
+      return Boolean(
+        file && (
+          file.mimeType === "text/plain" ||
+          /\.txt$/i.test(String(file.name || ""))
+        )
+      );
+    }
+
     async function openFile(file) {
       if (!file?.id) {
         return;
@@ -3424,6 +3544,11 @@
         return;
       }
 
+      if (isTxtFile(file)) {
+        await openTxt(file);
+        return;
+      }
+
       showToast(
         "Định dạng file này chưa được hỗ trợ.",
         "warning"
@@ -3441,6 +3566,7 @@
       }
 
       await cleanupEpub();
+      cleanupTxt();
       state.viewerType = "pdf";
 
       dom.placeholder.style.display =
@@ -3591,6 +3717,311 @@
           "⚠️"
         );
       }
+    }
+
+    /* =====================================================
+       TXT - TẢI NHANH THEO BYTE RANGE
+       ===================================================== */
+
+    async function openTxt(file) {
+      if (!requireValidToken() || !file?.id) return;
+
+      await cleanupPdfDocument();
+      cleanupPdfOnly();
+      await cleanupEpub();
+      cleanupTxt();
+
+      const openToken = ++state.txtOpenToken;
+      state.txtLoadController = new AbortController();
+      const signal = state.txtLoadController.signal;
+
+      if (signal.aborted) return;
+
+      state.viewerType = "txt";
+      state.txtActiveFile = file;
+      state.txtFileSize = Math.max(0, Number(file.size || 0));
+      state.txtFontScale = clamp(Number(localStorage.getItem("docTxtFontScale")) || 1, .72, 1.72);
+      state.txtCache.clear();
+
+      dom.placeholder.style.display = "none";
+      dom.pdfToolbar.style.display = "flex";
+      dom.pdfToolbar.classList.remove("epub-mode");
+      dom.pdfToolbar.classList.add("txt-mode");
+      dom.pdfContainer.style.display = "none";
+      dom.epubContainer.style.display = "none";
+      dom.txtContainer.style.display = "block";
+      dom.txtContainer.classList.add("is-loading");
+      dom.pageLabel.textContent = "Trang";
+      dom.fitMode.disabled = true;
+      dom.pageEffect.disabled = true;
+      applyTxtFontScale();
+      dom.zoomStatus.textContent = `${Math.round(state.txtFontScale * 100)}%`;
+      dom.btnEdgePrev.classList.add("pdf-visible");
+      dom.btnEdgeNext.classList.add("pdf-visible");
+
+      showLoading(
+        "Đang mở văn bản TXT...",
+        "Đang tải nhanh trang đầu tiên, không cần chờ toàn bộ tệp."
+      );
+
+      try {
+        if (!state.txtFileSize) {
+          const metadata = await fetchTxtMetadata(file.id, signal);
+          if (openToken !== state.txtOpenToken || signal.aborted) return;
+          state.txtFileSize = Math.max(0, Number(metadata.size || 0));
+          if (metadata.size) file.size = String(metadata.size);
+        }
+
+        if (!state.txtFileSize) throw new Error("Không xác định được dung lượng tệp TXT.");
+
+        state.txtPageCount = Math.max(1, Math.ceil(state.txtFileSize / CONFIG.TXT_PAGE_BYTES));
+        state.txtPage = clamp(
+          Number(localStorage.getItem(`docTxtPage:${file.id}`)) || 1,
+          1,
+          state.txtPageCount
+        );
+
+        configurePageJump({ enabled: true, label: "Trang", max: state.txtPageCount, value: state.txtPage });
+        await renderTxtPage(state.txtPage, { signal, openToken, showBusy: false });
+        if (openToken !== state.txtOpenToken || signal.aborted) return;
+
+        hideLoading();
+        dom.txtContainer.classList.remove("is-loading");
+        updatePageButtons();
+        scheduleTxtPrefetch(state.txtPage);
+      } catch (error) {
+        if (error?.name === "AbortError" || openToken !== state.txtOpenToken) return;
+        hideLoading();
+        dom.txtContainer.classList.remove("is-loading");
+        console.error("Lỗi mở TXT:", error);
+        showToast(
+          error?.message?.includes("TOKEN_EXPIRED")
+            ? "Phiên Google Drive đã hết hạn. Hãy kết nối lại."
+            : `Không thể mở tệp TXT: ${error?.message || "Lỗi không xác định"}`,
+          "error",
+          7000
+        );
+        showPlaceholder(
+          "Không thể mở văn bản TXT",
+          "Hãy kiểm tra quyền truy cập Google Drive hoặc thử một tệp TXT khác.",
+          "⚠️"
+        );
+      }
+    }
+
+    async function fetchTxtMetadata(fileId, signal) {
+      const url = `${CONFIG.DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}` +
+        "?fields=id,name,mimeType,size,modifiedTime&supportsAllDrives=true";
+      const response = await driveFetch(url, { signal });
+      return response.json();
+    }
+
+    function getTxtPageRange(pageNumber) {
+      const page = clamp(Math.floor(Number(pageNumber) || 1), 1, Math.max(1, state.txtPageCount));
+      const start = (page - 1) * CONFIG.TXT_PAGE_BYTES;
+      const end = Math.min(state.txtFileSize - 1, start + CONFIG.TXT_PAGE_BYTES - 1);
+      return { page, start, end };
+    }
+
+    function isUtf8ContinuationByte(byte) {
+      return (byte & 0xC0) === 0x80;
+    }
+
+    function decodeTxtRangeBytes(bytes, desiredStart, desiredEndExclusive) {
+      if (!(bytes instanceof Uint8Array) || !bytes.byteLength) return "";
+      let start = clamp(desiredStart, 0, bytes.byteLength);
+      let end = clamp(desiredEndExclusive, start, bytes.byteLength);
+      while (start < end && isUtf8ContinuationByte(bytes[start])) start++;
+      while (end < bytes.byteLength && isUtf8ContinuationByte(bytes[end])) end++;
+      let decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(start, end));
+      if (decoded.charCodeAt(0) === 0xFEFF) decoded = decoded.slice(1);
+      return decoded.replace(/\u0000/g, "");
+    }
+
+    async function fetchTxtPage(pageNumber, signal) {
+      const page = clamp(Math.floor(Number(pageNumber) || 1), 1, state.txtPageCount);
+      if (state.txtCache.has(page)) {
+        const cached = state.txtCache.get(page);
+        state.txtCache.delete(page);
+        state.txtCache.set(page, cached);
+        return cached;
+      }
+
+      const { start, end } = getTxtPageRange(page);
+      const guard = CONFIG.TXT_RANGE_GUARD_BYTES;
+      const requestStart = Math.max(0, start - guard);
+      const requestEnd = Math.min(state.txtFileSize - 1, end + guard);
+      const url = `${CONFIG.DRIVE_API_BASE}/files/${encodeURIComponent(state.txtActiveFile.id)}` +
+        "?alt=media&supportsAllDrives=true";
+
+      const response = await driveFetch(url, {
+        method: "GET",
+        headers: { Range: `bytes=${requestStart}-${requestEnd}` },
+        signal,
+        cache: "no-store"
+      });
+      const buffer = await response.arrayBuffer();
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      const bytes = new Uint8Array(buffer);
+
+      let desiredStart, desiredEnd;
+      if (response.status === 200 && bytes.byteLength >= state.txtFileSize) {
+        desiredStart = start;
+        desiredEnd = end + 1;
+      } else {
+        desiredStart = start - requestStart;
+        desiredEnd = end - requestStart + 1;
+      }
+
+      const result = { page, start, end, text: decodeTxtRangeBytes(bytes, desiredStart, desiredEnd) };
+      state.txtCache.set(page, result);
+      trimTxtPageCache();
+      return result;
+    }
+
+    function trimTxtPageCache() {
+      while (state.txtCache.size > CONFIG.TXT_CACHE_PAGES) {
+        state.txtCache.delete(state.txtCache.keys().next().value);
+      }
+    }
+
+    function renderTxtText(text) {
+      const fragment = document.createDocumentFragment();
+      const normalized = String(text || "").replace(/\r\n?/g, "\n").replace(/[ \t]+$/gm, "");
+      const lines = normalized.split("\n");
+      const headingPattern = /^\s*(?:quyển|phần|hồi|chương)\s+/iu;
+      let paragraphParts = [];
+
+      const flushParagraph = () => {
+        const value = paragraphParts.join(" ").trim();
+        paragraphParts = [];
+        if (!value) return;
+        const p = document.createElement("p");
+        p.textContent = value;
+        fragment.appendChild(p);
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) { flushParagraph(); continue; }
+        if (headingPattern.test(line)) {
+          flushParagraph();
+          const heading = document.createElement("div");
+          heading.className = "txt-heading";
+          heading.textContent = line;
+          fragment.appendChild(heading);
+          continue;
+        }
+        paragraphParts.push(line);
+        if (/[.!?…:;”"'’\]\)]$/u.test(line)) flushParagraph();
+      }
+      flushParagraph();
+
+      if (!fragment.childNodes.length) {
+        const p = document.createElement("p");
+        p.textContent = normalized || "(Trang này không có nội dung văn bản.)";
+        fragment.appendChild(p);
+      }
+      dom.txtContent.replaceChildren(fragment);
+    }
+
+    async function renderTxtPage(pageNumber, options = {}) {
+      if (state.viewerType !== "txt" || !state.txtActiveFile) return;
+      const page = clamp(Math.floor(Number(pageNumber) || 1), 1, state.txtPageCount);
+      const signal = options.signal || state.txtLoadController?.signal;
+      const openToken = options.openToken ?? state.txtOpenToken;
+      if (options.showBusy !== false) dom.txtContainer.classList.add("is-loading");
+
+      try {
+        const data = await fetchTxtPage(page, signal);
+        if (state.viewerType !== "txt" || openToken !== state.txtOpenToken || signal?.aborted) return;
+        state.txtPage = page;
+        state.pageNum = page;
+        renderTxtText(data.text);
+        applyTxtFontScale();
+        dom.pageNum.textContent = String(page);
+        dom.pageCount.textContent = String(state.txtPageCount);
+        dom.txtPageMeta.textContent = `${state.activeFileName || "Văn bản"} • Trang ${page}/${state.txtPageCount}`;
+        if (document.activeElement !== dom.pageJumpInput) dom.pageJumpInput.value = String(page);
+        localStorage.setItem(`docTxtPage:${state.txtActiveFile.id}`, String(page));
+        dom.txtContainer.scrollTop = 0;
+        updatePageButtons();
+        scheduleTxtPrefetch(page);
+      } finally {
+        if (options.showBusy !== false) dom.txtContainer.classList.remove("is-loading");
+      }
+    }
+
+    function scheduleTxtPrefetch(currentPage) {
+      if (state.viewerType !== "txt" || !state.txtActiveFile) return;
+      const openToken = state.txtOpenToken;
+      const run = async () => {
+        for (let step = 1; step <= CONFIG.TXT_PREFETCH_AHEAD; step++) {
+          const nextPage = currentPage + step;
+          if (nextPage > state.txtPageCount || openToken !== state.txtOpenToken) break;
+          try { await fetchTxtPage(nextPage, state.txtLoadController?.signal); }
+          catch (error) { if (error?.name !== "AbortError") console.debug("TXT prefetch:", error); break; }
+        }
+        const previousPage = currentPage - 1;
+        if (previousPage >= 1 && openToken === state.txtOpenToken && !state.txtCache.has(previousPage)) {
+          fetchTxtPage(previousPage, state.txtLoadController?.signal).catch(() => {});
+        }
+      };
+      if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 700 });
+      else setTimeout(run, 120);
+    }
+
+    async function changeTxtPage(offset) {
+      if (state.viewerType !== "txt" || state.pageTransitioning) return;
+      const nextPage = state.txtPage + Number(offset || 0);
+      if (nextPage < 1 || nextPage > state.txtPageCount) return;
+      state.pageTransitioning = true;
+      try { await renderTxtPage(nextPage); }
+      catch (error) {
+        if (error?.name !== "AbortError") {
+          console.error("Lỗi chuyển trang TXT:", error);
+          showToast("Không thể tải trang TXT tiếp theo.", "error", 4200);
+        }
+      } finally { state.pageTransitioning = false; }
+    }
+
+    async function jumpToTxtPage(pageNumber) {
+      if (state.viewerType !== "txt" || pageNumber < 1 || pageNumber > state.txtPageCount) {
+        markPageJumpInvalid(`Số trang phải từ 1 đến ${Math.max(1, state.txtPageCount)}.`);
+        return;
+      }
+      if (pageNumber === state.txtPage) { dom.pageJumpInput.blur(); return; }
+      await renderTxtPage(pageNumber);
+      dom.pageJumpInput.blur();
+    }
+
+    function changeTxtFont(delta) {
+      state.txtFontScale = clamp(state.txtFontScale + Number(delta || 0), .72, 1.72);
+      localStorage.setItem("docTxtFontScale", String(state.txtFontScale));
+      applyTxtFontScale();
+      dom.zoomStatus.textContent = `${Math.round(state.txtFontScale * 100)}%`;
+    }
+
+    function applyTxtFontScale() {
+      dom.txtContent.style.setProperty("--txt-font-scale", String(state.txtFontScale || 1));
+    }
+
+    function cleanupTxt(cancelPendingLoad = true) {
+      if (cancelPendingLoad) {
+        state.txtOpenToken++;
+        state.txtLoadController?.abort();
+      }
+      state.txtLoadController = null;
+      state.txtActiveFile = null;
+      state.txtFileSize = 0;
+      state.txtPage = 1;
+      state.txtPageCount = 0;
+      state.txtCache.clear();
+      dom.txtContent.replaceChildren();
+      dom.txtPageMeta.textContent = "";
+      dom.txtContainer.classList.remove("is-loading");
+      dom.txtContainer.style.display = "none";
+      dom.pdfToolbar.classList.remove("txt-mode");
     }
 
     /* =====================================================
@@ -3994,6 +4425,7 @@
 
       await cleanupPdfDocument();
       cleanupPdfOnly();
+      cleanupTxt();
       await cleanupEpub(false);
 
       if (openToken !== state.epubOpenToken || signal.aborted) return;
@@ -4347,6 +4779,11 @@
 
       if (state.viewerType === "epub") {
         await jumpToEpubLocation(targetNumber);
+        return;
+      }
+
+      if (state.viewerType === "txt") {
+        await jumpToTxtPage(targetNumber);
       }
     }
 
@@ -4891,6 +5328,11 @@
         return;
       }
 
+      if (state.viewerType === "txt") {
+        await changeTxtPage(offset);
+        return;
+      }
+
       if (!state.pdfDoc || state.pageTransitioning) {
         return;
       }
@@ -5045,7 +5487,7 @@
 
     function handlePdfTouchStart(event) {
       if (
-        (!state.pdfDoc && !state.epubRendition) ||
+        (!state.pdfDoc && !state.epubRendition && state.viewerType !== "txt") ||
         event.touches.length !== 1
       ) {
         state.touchTracking = false;
@@ -5095,7 +5537,7 @@
     function handlePdfTouchEnd(event) {
       if (
         !state.touchTracking ||
-        (!state.pdfDoc && !state.epubRendition)
+        (!state.pdfDoc && !state.epubRendition && state.viewerType !== "txt")
       ) {
         return;
       }
@@ -5124,7 +5566,7 @@
           90,
           Math.max(
             48,
-            dom.pdfContainer.clientWidth * 0.12
+            (state.viewerType === "txt" ? dom.txtContainer.clientWidth : dom.pdfContainer.clientWidth) * 0.12
           )
         );
 
@@ -5153,14 +5595,19 @@
     function handlePdfTapNavigation(event) {
       if (
         event.pointerType === "mouse" ||
-        (!state.pdfDoc && !state.epubRendition) ||
+        (!state.pdfDoc && !state.epubRendition && state.viewerType !== "txt") ||
         state.pageTransitioning
       ) {
         return;
       }
 
+      const navigationContainer =
+        state.viewerType === "txt"
+          ? dom.txtContainer
+          : dom.pdfContainer;
+
       const rect =
-        dom.pdfContainer.getBoundingClientRect();
+        navigationContainer.getBoundingClientRect();
 
       const relativeX =
         event.clientX - rect.left;
@@ -5218,6 +5665,11 @@
     function changeZoom(delta) {
       if (state.viewerType === "epub") {
         changeEpubFont(delta);
+        return;
+      }
+
+      if (state.viewerType === "txt") {
+        changeTxtFont(delta);
         return;
       }
 
@@ -5356,6 +5808,7 @@
     function updatePageButtons() {
       const hasPdf = Boolean(state.pdfDoc);
       const hasEpub = Boolean(state.epubRendition);
+      const hasTxt = state.viewerType === "txt" && state.txtPageCount > 0;
 
       let previousDisabled = true;
       let nextDisabled = true;
@@ -5363,6 +5816,9 @@
       if (hasEpub && state.viewerType === "epub") {
         previousDisabled = state.epubAtStart;
         nextDisabled = state.epubAtEnd;
+      } else if (hasTxt) {
+        previousDisabled = state.txtPage <= 1;
+        nextDisabled = state.txtPage >= state.txtPageCount;
       } else if (hasPdf) {
         previousDisabled = state.pageNum <= 1;
         nextDisabled =
@@ -5497,7 +5953,7 @@
         return;
       }
 
-      if (!state.pdfDoc && !state.epubRendition) {
+      if (!state.pdfDoc && !state.epubRendition && state.viewerType !== "txt") {
         return;
       }
 
@@ -5707,7 +6163,7 @@
 
       finishPageTransition();
 
-      if (state.viewerType !== "epub") {
+      if (state.viewerType !== "epub" && state.viewerType !== "txt") {
         dom.pdfToolbar.style.display = "none";
 
         configurePageJump({
@@ -5783,6 +6239,7 @@
 
       cleanupPdfDocument().catch(() => {});
       cleanupEpub().catch(() => {});
+      cleanupTxt();
 
       state.activeFileId = null;
       state.activeFileName = "";
@@ -5791,7 +6248,7 @@
 
       showPlaceholder(
         "Chưa chọn tài liệu",
-        "Kết nối Google Drive, sau đó chọn một file PDF hoặc EPUB để mở.",
+        "Kết nối Google Drive, sau đó chọn một file PDF, EPUB hoặc TXT để mở.",
         "📖"
       );
 
@@ -5838,6 +6295,10 @@
           // Bỏ qua.
         }
       }
+
+      state.txtLoadController?.abort();
+      state.txtLoadController = null;
+      state.txtCache.clear();
     }
 
     /* =====================================================
@@ -5851,6 +6312,7 @@
     ) {
       cleanupPdfOnly();
       cleanupEpub().catch(() => {});
+      cleanupTxt();
       state.viewerType = "";
 
       dom.placeholder.replaceChildren();
