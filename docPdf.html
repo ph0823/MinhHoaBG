@@ -4472,8 +4472,8 @@
         // Không tạo bản sao ArrayBuffer. EPUB.js và IndexedDB dùng cùng nguồn,
         // giúp giảm đáng kể RAM và thời gian với sách dung lượng lớn.
         state.epubBook = ePub(epubSource.buffer, {
-          replacements: "blobUrl",
-          openAs: "epub"
+          encoding: "binary",
+          replacements: "blobUrl"
         });
 
         state.epubRendition = state.epubBook.renderTo(dom.epubStage, {
