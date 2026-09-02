@@ -2061,7 +2061,11 @@
         "docPdfGoogleTokenExpiresAt"
     });
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
+    // CẤU HÌNH WEB WORKER CHO PDF.js:
+    // Đảm bảo được gán chính xác để giảm tải cho Main Thread
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = CONFIG.PDF_WORKER;
+    }
 
     /* =====================================================
        2. TRẠNG THÁI ỨNG DỤNG
@@ -4254,7 +4258,7 @@
 
       while (true) {
         if (signal?.aborted) {
-          try { await reader.cancel(); } catch {}
+          try { await reader.cancel(); } catch (err) { console.warn("Lỗi khi hủy reader:", err); }
           throw new DOMException("Đã hủy tải EPUB.", "AbortError");
         }
 
@@ -4577,7 +4581,7 @@
         },
         "body": {
           "font-family": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important",
-          "font-size": `${Math.round(state.epubFontScale * 100)}% !important`,
+          "font-size": `${Math.round(state.epubFontScale * 100)}% !important",
           "line-height": "1.68 !important",
           "padding": "0 4.5% !important",
           "margin": "0 !important",
@@ -4981,11 +4985,13 @@
       state.epubLoadController = null;
 
       if (state.epubRendition) {
-        try { state.epubRendition.destroy(); } catch {}
+        try { state.epubRendition.destroy(); } 
+        catch (err) { console.warn("Lỗi hủy epubRendition:", err); }
       }
 
       if (state.epubBook) {
-        try { state.epubBook.destroy(); } catch {}
+        try { state.epubBook.destroy(); } 
+        catch (err) { console.warn("Lỗi hủy epubBook:", err); }
       }
 
       state.epubRendition = null;
@@ -5067,8 +5073,8 @@
         if (state.pdfRenderTask) {
           try {
             state.pdfRenderTask.cancel();
-          } catch {
-            // Không cần xử lý thêm.
+          } catch (err) {
+            console.warn("Lỗi khi hủy pdfRenderTask:", err);
           }
 
           state.pdfRenderTask = null;
@@ -6151,8 +6157,8 @@
       if (state.pdfRenderTask) {
         try {
           state.pdfRenderTask.cancel();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfRenderTask:", err);
         }
       }
 
@@ -6197,8 +6203,8 @@
       if (state.pdfRenderTask) {
         try {
           state.pdfRenderTask.cancel();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfRenderTask:", err);
         }
 
         state.pdfRenderTask = null;
@@ -6207,8 +6213,8 @@
       if (state.pdfLoadingTask) {
         try {
           await state.pdfLoadingTask.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfLoadingTask:", err);
         }
 
         state.pdfLoadingTask = null;
@@ -6217,8 +6223,8 @@
       if (state.pdfDoc) {
         try {
           await state.pdfDoc.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfDoc:", err);
         }
 
         state.pdfDoc = null;
@@ -6237,8 +6243,8 @@
     function cleanupViewer() {
       cleanupPdfOnly();
 
-      cleanupPdfDocument().catch(() => {});
-      cleanupEpub().catch(() => {});
+      cleanupPdfDocument().catch((err) => { console.warn("Lỗi khi dọn dẹp Document PDF:", err); });
+      cleanupEpub().catch((err) => { console.warn("Lỗi khi dọn dẹp EPUB:", err); });
       cleanupTxt();
 
       state.activeFileId = null;
@@ -6259,40 +6265,40 @@
       if (state.pdfRenderTask) {
         try {
           state.pdfRenderTask.cancel();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfRenderTask:", err);
         }
       }
 
       if (state.pdfLoadingTask) {
         try {
           state.pdfLoadingTask.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfLoadingTask:", err);
         }
       }
 
       if (state.pdfDoc) {
         try {
           state.pdfDoc.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy pdfDoc:", err);
         }
       }
 
       if (state.epubRendition) {
         try {
           state.epubRendition.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy epubRendition:", err);
         }
       }
 
       if (state.epubBook) {
         try {
           state.epubBook.destroy();
-        } catch {
-          // Bỏ qua.
+        } catch (err) {
+          console.warn("Lỗi khi hủy epubBook:", err);
         }
       }
 
@@ -6311,39 +6317,18 @@
       icon = "📖"
     ) {
       cleanupPdfOnly();
-      cleanupEpub().catch(() => {});
+      cleanupEpub().catch((err) => { console.warn("Lỗi khi dọn dẹp EPUB trong showPlaceholder:", err); });
       cleanupTxt();
       state.viewerType = "";
 
-      dom.placeholder.replaceChildren();
+      // Đã được thay thế bằng Template Literal gọn gàng
+      dom.placeholder.innerHTML = `
+        <div class="placeholder-icon">${icon}</div>
+        <h2>${title}</h2>
+        <p>${message}</p>
+      `;
 
-      const iconElement =
-        document.createElement("div");
-
-      iconElement.className =
-        "placeholder-icon";
-
-      iconElement.textContent = icon;
-
-      const titleElement =
-        document.createElement("h2");
-
-      titleElement.textContent = title;
-
-      const messageElement =
-        document.createElement("p");
-
-      messageElement.textContent =
-        message;
-
-      dom.placeholder.append(
-        iconElement,
-        titleElement,
-        messageElement
-      );
-
-      dom.placeholder.style.display =
-        "block";
+      dom.placeholder.style.display = "block";
     }
 
     /* =====================================================
