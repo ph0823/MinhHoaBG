@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Kiểm Tra Tốc Độ Gõ Phím - Hà Huy Tập</title>
+    <title>Game Kiểm Tra Tốc Độ Gõ Phím - Thơ Tố Hữu</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -59,7 +59,7 @@
             font-size: 0.95rem;
         }
 
-        /* khung hiển thị thơ */
+        /* Khung hiển thị thơ có thanh cuộn mượt */
         .poem-container {
             font-size: 1.25rem;
             line-height: 1.8;
@@ -72,15 +72,15 @@
             user-select: none;
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
-            max-height: 250px;
-            overflow-y: auto; /* Tự động xuất hiện thanh cuộn nếu thơ quá dài */
+            max-height: 200px;
+            overflow-y: auto;
+            scroll-behavior: smooth; /* Tạo hiệu ứng cuộn mượt mà */
         }
         
         .char-correct { color: #2e7d32; background-color: #c8e6c9; }
         .char-incorrect { color: #c62828; background-color: #ffcdd2; }
-        .char-current { border-bottom: 3px solid #2196f3; }
+        .char-current { border-bottom: 3px solid #2196f3; background-color: #bbdefb; }
 
-        /* Khung nhập liệu */
         textarea {
             width: 100%;
             height: 140px;
@@ -134,7 +134,7 @@
         .score { font-weight: bold; }
     </style>
 
-    <!-- 1. Nhúng các thư viện Firebase SDK cần thiết -->
+    <!-- Nhúng thư viện Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
@@ -171,9 +171,7 @@
 </div>
 
 <script>
-    // -------------------------------------------------------------
-    // 2. CẤU HÌNH FIREBASE (Thay thế bằng thông tin Dự án của bạn)
-    // -------------------------------------------------------------
+    // 1. CẤU HÌNH FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
         authDomain: "luyen-go.firebaseapp.com",
@@ -181,19 +179,13 @@
         storageBucket: "luyen-go.firebasestorage.app",
         messagingSenderId: "79498233127",
         appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
-      };
+    };
 
-    
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const scoresRef = database.ref('typing_scores');
 
-    // -------------------------------------------------------------
-    // 3. LOGIC GAME
-    // -------------------------------------------------------------
-    // Danh sách các đoạn thơ dài của Tố Hữu (đảm bảo thời gian gõ >= 2 phút)
-    // Danh sách các đoạn thơ dài của Tố Hữu (đảm bảo thời gian gõ >= 2 phút)
+    // 2. DANH SÁCH BÀI THƠ DÀI
     const poemsList = [
         `Từ ấy trong tôi bừng nắng hạ
 Mặt trời chân lý chói qua tim
@@ -301,6 +293,7 @@ Tổ quốc Việt Nam mãi trường tồn!`
         wpmDisplay.innerText = "0";
         inputField.value = "";
         inputField.disabled = false;
+        poemDisplay.scrollTop = 0; // Đưa thanh cuộn về vị trí đầu
 
         const randomIndex = Math.floor(Math.random() * poemsList.length);
         currentPoem = poemsList[randomIndex];
@@ -314,6 +307,7 @@ Tổ quốc Việt Nam mãi trường tồn!`
         });
     }
 
+    // 3. XỬ LÝ GÕ & TỰ ĐỘNG CUỘN
     inputField.addEventListener('input', () => {
         if (!playerNameInput.value.trim()) {
             alert('Vui lòng nhập "Họ và tên học sinh" trước khi gõ!');
@@ -349,8 +343,16 @@ Tổ quốc Việt Nam mãi trường tồn!`
             }
         });
 
+        // Đánh dấu vị trí hiện tại & TỰ ĐỘNG CUỘN
         if (arrayValue.length < arrayPoemSpans.length) {
-            arrayPoemSpans[arrayValue.length].classList.add('char-current');
+            const currentSpan = arrayPoemSpans[arrayValue.length];
+            currentSpan.classList.add('char-current');
+            
+            // Tự động cuộn khung thơ theo con trỏ gõ
+            currentSpan.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
 
         if (arrayValue.length === currentPoem.length && isAllCorrect) {
@@ -359,7 +361,6 @@ Tổ quốc Việt Nam mãi trường tồn!`
             const finalWPM = parseInt(wpmDisplay.innerText);
             const name = playerNameInput.value.trim();
 
-            // GỬI ĐIỂM LÊN FIREBASE REALTIME
             saveScoreToFirebase(name, finalWPM);
 
             setTimeout(() => {
@@ -378,11 +379,7 @@ Tổ quốc Việt Nam mãi trường tồn!`
         wpmDisplay.innerText = wpm;
     }
 
-    // -------------------------------------------------------------
-    // 4. THAO TÁC VỚI FIREBASE (Ghi & Lắng nghe thời gian thực)
-    // -------------------------------------------------------------
-    
-    // Gửi điểm số mới lên Firebase
+    // 4. FIREBASE REALTIME
     function saveScoreToFirebase(name, wpm) {
         scoresRef.push({
             name: name,
@@ -391,17 +388,14 @@ Tổ quốc Việt Nam mãi trường tồn!`
         });
     }
 
-    // Lắng nghe sự thay đổi trên Firebase (Mỗi khi có ai hoàn thành, Bảng xếp hạng tự cập nhật)
     scoresRef.orderByChild('wpm').limitToLast(10).on('value', (snapshot) => {
         const scores = [];
         snapshot.forEach((childSnapshot) => {
             scores.push(childSnapshot.val());
         });
 
-        // Sắp xếp giảm dần theo WPM
         scores.sort((a, b) => b.wpm - a.wpm);
 
-        // Cập nhật giao diện
         leaderboardEl.innerHTML = '';
         if (scores.length === 0) {
             leaderboardEl.innerHTML = '<li style="color:#888; font-style:italic; padding:10px;">Chưa có lượt chơi nào.</li>';
