@@ -18,7 +18,7 @@
         .main-wrapper {
             display: flex;
             gap: 20px;
-            max-width: 1000px;
+            max-width: 1050px;
             width: 95%;
             flex-wrap: wrap;
         }
@@ -59,7 +59,6 @@
             font-size: 0.95rem;
         }
 
-        /* Khung hiển thị thơ có thanh cuộn mượt */
         .poem-container {
             font-size: 1.25rem;
             line-height: 1.8;
@@ -74,7 +73,7 @@
             font-family: 'Courier New', Courier, monospace;
             max-height: 200px;
             overflow-y: auto;
-            scroll-behavior: smooth; /* Tạo hiệu ứng cuộn mượt mà */
+            scroll-behavior: smooth;
         }
         
         .char-correct { color: #2e7d32; background-color: #c8e6c9; }
@@ -115,8 +114,8 @@
         }
         button:hover { background-color: #b71c1c; }
 
-        .stats { display: flex; gap: 10px; font-weight: bold; color: #333; }
-        .stat-box { background: #f0f0f0; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; }
+        .stats { display: flex; gap: 8px; font-weight: bold; color: #333; flex-wrap: wrap; }
+        .stat-box { background: #f0f0f0; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
 
         .leaderboard-list { list-style: none; padding: 0; margin: 0; }
         .leaderboard-item {
@@ -134,7 +133,6 @@
         .score { font-weight: bold; }
     </style>
 
-    <!-- Nhúng thư viện Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
@@ -159,6 +157,7 @@
             <div class="stats">
                 <div class="stat-box">Thời gian: <span id="timer">0</span>s</div>
                 <div class="stat-box">Tốc độ: <span id="wpm">0</span> WPM</div>
+                <div class="stat-box">Chính xác: <span id="accuracy">100</span>%</div>
             </div>
         </div>
     </div>
@@ -171,7 +170,6 @@
 </div>
 
 <script>
-    // 1. CẤU HÌNH FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
         authDomain: "luyen-go.firebaseapp.com",
@@ -185,7 +183,6 @@
     const database = firebase.database();
     const scoresRef = database.ref('typing_scores');
 
-    // 2. DANH SÁCH BÀI THƠ DÀI
     const poemsList = [
         `Từ ấy trong tôi bừng nắng hạ
 Mặt trời chân lý chói qua tim
@@ -240,43 +237,14 @@ Nhớ sao lớp học i tờ
 Nhớ sao ngày tháng cơ quan
 Gian lao mà vẫn dạt dào cất ca
 Nhớ sao tiếng mõ rừng chiều
-Chày đâm nát suối, đều đều suối xa...`,
-
-        `Bác sống như trời đất của ta
-Yêu thương tất cả, chỉ quên mình
-Môn đệ tự do, lòng trong sáng
-Đầu suối nguồn trong sóng muôn trùng
-
-Bác đã về đâu, Bác Bác ơi?
-Mùa thu gom nắng dệt tơ trời
-Con đường Nguyễn Huệ hoa dâng Bác
-Lối cũ vườn xưa nhớ bóng người
-
-Chúng con xin nguyện đi theo Bác
-Giữ vẹn niềm tin, trọn lời thề
-Đường ra mặt trận dù gian khổ
-Vẫn vững niềm tin buổi trở về...`,
-
-        `Con lại về thăm mẹ Tơm xưa
-Chợ Chùa phơ phất hạt mưa thưa
-Tôi lại về đây đường bãi cát
-Sóng xô bãi đá, gió rên hàng dừa
-
-Mẹ Tơm tóc bạc lưng đã còng
-Thương con từ thủa còn trong nôi
-Đêm đêm đốt lửa bên bếp lửa
-Chờ bước con về giữa đêm đông
-
-Cảm ơn mẹ đã nuôi dưỡng con
-Những ngày kháng chiến gian khổ tròn
-Thắp sáng lòng con niềm tin mới
-Tổ quốc Việt Nam mãi trường tồn!`
+Chày đâm nát suối, đều đều suối xa...`
     ];
 
     const poemDisplay = document.getElementById('poem-display');
     const inputField = document.getElementById('input-field');
     const timerDisplay = document.getElementById('timer');
     const wpmDisplay = document.getElementById('wpm');
+    const accuracyDisplay = document.getElementById('accuracy');
     const btnNext = document.getElementById('btn-next');
     const playerNameInput = document.getElementById('player-name-input');
     const leaderboardEl = document.getElementById('leaderboard');
@@ -285,15 +253,17 @@ Tổ quốc Việt Nam mãi trường tồn!`
     let startTime;
     let timerInterval;
     let isStarted = false;
+    let correctCharsCount = 0;
 
     function loadRandomPoem() {
         clearInterval(timerInterval);
         isStarted = false;
         timerDisplay.innerText = "0";
         wpmDisplay.innerText = "0";
+        accuracyDisplay.innerText = "100";
         inputField.value = "";
         inputField.disabled = false;
-        poemDisplay.scrollTop = 0; // Đưa thanh cuộn về vị trí đầu
+        poemDisplay.scrollTop = 0;
 
         const randomIndex = Math.floor(Math.random() * poemsList.length);
         currentPoem = poemsList[randomIndex];
@@ -307,7 +277,6 @@ Tổ quốc Việt Nam mãi trường tồn!`
         });
     }
 
-    // 3. XỬ LÝ GÕ & TỰ ĐỘNG CUỘN
     inputField.addEventListener('input', () => {
         if (!playerNameInput.value.trim()) {
             alert('Vui lòng nhập "Họ và tên học sinh" trước khi gõ!');
@@ -319,11 +288,13 @@ Tổ quốc Việt Nam mãi trường tồn!`
         if (!isStarted) {
             isStarted = true;
             startTime = new Date();
-            timerInterval = setInterval(updateTimer, 1000);
+            timerInterval = setInterval(updateStats, 1000);
         }
 
         const arrayPoemSpans = poemDisplay.querySelectorAll('span');
         const arrayValue = inputField.value.split('');
+        
+        correctCharsCount = 0;
         let isAllCorrect = true;
 
         arrayPoemSpans.forEach((characterSpan, index) => {
@@ -336,6 +307,7 @@ Tổ quốc Việt Nam mãi trường tồn!`
             } else if (character === characterSpan.innerText) {
                 characterSpan.classList.add('char-correct');
                 characterSpan.classList.remove('char-incorrect');
+                correctCharsCount++;
             } else {
                 characterSpan.classList.add('char-incorrect');
                 characterSpan.classList.remove('char-correct');
@@ -343,47 +315,61 @@ Tổ quốc Việt Nam mãi trường tồn!`
             }
         });
 
-        // Đánh dấu vị trí hiện tại & TỰ ĐỘNG CUỘN
+        // Tự động cuộn đến vị trí gõ hiện tại
         if (arrayValue.length < arrayPoemSpans.length) {
             const currentSpan = arrayPoemSpans[arrayValue.length];
             currentSpan.classList.add('char-current');
-            
-            // Tự động cuộn khung thơ theo con trỏ gõ
             currentSpan.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center'
             });
         }
 
+        updateStats();
+
+        // Kiểm tra khi hoàn thành bài gõ
         if (arrayValue.length === currentPoem.length && isAllCorrect) {
             clearInterval(timerInterval);
             inputField.disabled = true;
             const finalWPM = parseInt(wpmDisplay.innerText);
+            const finalAccuracy = parseInt(accuracyDisplay.innerText);
             const name = playerNameInput.value.trim();
 
-            saveScoreToFirebase(name, finalWPM);
-
-            setTimeout(() => {
-                alert(`🎉 Xuất sắc ${name}! Thành tích ${finalWPM} WPM của bạn đã được cập nhật tới toàn phòng máy!`);
-            }, 100);
+            if (finalAccuracy >= 90) {
+                saveScoreToFirebase(name, finalWPM, finalAccuracy);
+                setTimeout(() => {
+                    alert(`🎉 Chúc mừng ${name}!\nTốc độ: ${finalWPM} WPM\nĐộ chính xác: ${finalAccuracy}%\nThành tích đã lưu lên Bảng xếp hạng!`);
+                }, 100);
+            } else {
+                setTimeout(() => {
+                    alert(`⚠️ Độ chính xác của bạn là ${finalAccuracy}% (cần ≥ 90% để lên Bảng xếp hạng). Hãy bấm 'Đổi bài khác' để thử lại nhé!`);
+                }, 100);
+            }
         }
     });
 
-    function updateTimer() {
+    // Cập nhật chỉ số WPM chuẩn & Accuracy %
+    function updateStats() {
         const timeElapsed = Math.floor((new Date() - startTime) / 1000);
         timerDisplay.innerText = timeElapsed;
 
-        const wordsTyped = inputField.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+        const totalTyped = inputField.value.length;
+        
+        // Tính Accuracy (%)
+        const accuracy = totalTyped > 0 ? Math.round((correctCharsCount / totalTyped) * 100) : 100;
+        accuracyDisplay.innerText = accuracy;
+
+        // Tính WPM Chuẩn quốc tế (1 từ = 5 ký tự đúng)
         const minutes = timeElapsed / 60;
-        const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+        const wpm = minutes > 0 ? Math.round((correctCharsCount / 5) / minutes) : 0;
         wpmDisplay.innerText = wpm;
     }
 
-    // 4. FIREBASE REALTIME
-    function saveScoreToFirebase(name, wpm) {
+    function saveScoreToFirebase(name, wpm, accuracy) {
         scoresRef.push({
             name: name,
             wpm: wpm,
+            accuracy: accuracy,
             timestamp: Date.now()
         });
     }
@@ -408,7 +394,7 @@ Tổ quốc Việt Nam mãi trường tồn!`
             li.innerHTML = `
                 <span class="rank">#${index + 1}</span>
                 <span class="player-name">${escapeHTML(item.name)}</span>
-                <span class="score">${item.wpm} WPM</span>
+                <span class="score">${item.wpm} WPM (${item.accuracy || 100}%)</span>
             `;
             leaderboardEl.appendChild(li);
         });
