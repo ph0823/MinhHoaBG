@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Kiểm Tra Tốc Độ Gõ Phím - Thơ Tố Hữu</title>
+    <title>Game Kiểm Tra Tốc Độ Gõ Phím - by GV Phuoc</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -42,21 +42,37 @@
         h1, h2 { color: #d32f2f; margin-top: 0; margin-bottom: 10px; }
         .author { color: #666; font-style: italic; margin-bottom: 15px; }
         
-        .user-section {
+        /* Màn hình nhập tên ban đầu */
+        .start-screen {
             background: #e3f2fd;
-            padding: 12px;
+            padding: 25px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin: 20px 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            gap: 15px;
         }
-        .user-section input {
-            padding: 8px 12px;
-            border: 1px solid #90caf9;
-            border-radius: 4px;
-            font-size: 0.95rem;
+        .start-screen input {
+            padding: 10px 15px;
+            border: 2px solid #90caf9;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .btn-start {
+            background-color: #2e7d32 !important;
+            font-weight: bold;
+            font-size: 1.1rem !important;
+            padding: 10px 25px !important;
+        }
+        .btn-start:hover { background-color: #1b5e20 !important; }
+
+        /* Khu vực gõ thơ (Ẩn ban đầu) */
+        .game-screen {
+            display: none; /* Chỉ hiện khi bấm Bắt đầu */
         }
 
         .poem-container {
@@ -143,25 +159,35 @@
         <h1>Thử Tài Gõ Phím</h1>
         <div class="author">Các tác phẩm thơ Tố Hữu</div>
 
-        <div class="user-section">
-            <label for="player-name-input"><strong>Họ và tên học sinh:</strong></label>
-            <input type="text" id="player-name-input" placeholder="Nhập tên của bạn..." maxlength="20">
+        <!-- 1. MÀN HÌNH BẮT ĐẦU (Nhập tên) -->
+        <div class="start-screen" id="start-screen">
+            <label for="player-name-input"><strong>Nhập Họ và tên học sinh để bắt đầu:</strong></label>
+            <input type="text" id="player-name-input" placeholder="Ví dụ: Nguyễn Văn A" maxlength="20" autofocus>
+            <button class="btn-start" id="btn-start">🚀 Bắt Đầu Luyện Gõ</button>
         </div>
         
-        <div class="poem-container" id="poem-display"></div>
+        <!-- 2. KHU VỰC GAME (Ẩn ban đầu) -->
+        <div class="game-screen" id="game-screen">
+            <div style="margin-bottom: 10px; text-align: left; color: #1976d2; font-weight: bold;">
+                Học sinh: <span id="display-player-name"></span>
+            </div>
 
-        <textarea id="input-field" placeholder="Nhập tên ở trên, sau đó gõ văn bản tại đây..." autofocus></textarea>
+            <div class="poem-container" id="poem-display"></div>
 
-        <div class="controls">
-            <button id="btn-next">Đổi bài khác 🎲</button>
-            <div class="stats">
-                <div class="stat-box">Thời gian: <span id="timer">0</span>s</div>
-                <div class="stat-box">Tốc độ: <span id="wpm">0</span> WPM</div>
-                <div class="stat-box">Chính xác: <span id="accuracy">100</span>%</div>
+            <textarea id="input-field" placeholder="Gõ chính xác đoạn thơ phía trên vào đây..."></textarea>
+
+            <div class="controls">
+                <button id="btn-next">Đổi bài khác 🎲</button>
+                <div class="stats">
+                    <div class="stat-box">Thời gian: <span id="timer">0</span>s</div>
+                    <div class="stat-box">Tốc độ: <span id="wpm">0</span> WPM</div>
+                    <div class="stat-box">Chính xác: <span id="accuracy">100</span>%</div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- BẢNG XẾP HẠNG -->
     <div class="leaderboard-card">
         <h2>🏆 Bảng Xếp Hạng</h2>
         <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Thời gian thực (Real-time Firebase)</p>
@@ -240,13 +266,18 @@ Nhớ sao tiếng mõ rừng chiều
 Chày đâm nát suối, đều đều suối xa...`
     ];
 
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const btnStart = document.getElementById('btn-start');
+    const playerNameInput = document.getElementById('player-name-input');
+    const displayPlayerName = document.getElementById('display-player-name');
+
     const poemDisplay = document.getElementById('poem-display');
     const inputField = document.getElementById('input-field');
     const timerDisplay = document.getElementById('timer');
     const wpmDisplay = document.getElementById('wpm');
     const accuracyDisplay = document.getElementById('accuracy');
     const btnNext = document.getElementById('btn-next');
-    const playerNameInput = document.getElementById('player-name-input');
     const leaderboardEl = document.getElementById('leaderboard');
 
     let currentPoem = "";
@@ -254,6 +285,28 @@ Chày đâm nát suối, đều đều suối xa...`
     let timerInterval;
     let isStarted = false;
     let correctCharsCount = 0;
+
+    // XỬ LÝ NÚT BẮT ĐẦU
+    btnStart.addEventListener('click', startGame);
+    playerNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') startGame();
+    });
+
+    function startGame() {
+        const name = playerNameInput.value.trim();
+        if (!name) {
+            alert('Vui lòng nhập Họ và tên học sinh!');
+            playerNameInput.focus();
+            return;
+        }
+
+        // Chuyển màn hình
+        displayPlayerName.innerText = name;
+        startScreen.style.display = 'none';
+        gameScreen.style.display = 'block';
+
+        loadRandomPoem();
+    }
 
     function loadRandomPoem() {
         clearInterval(timerInterval);
@@ -275,16 +328,11 @@ Chày đâm nát suối, đều đều suối xa...`
             if (index === 0) charSpan.classList.add('char-current');
             poemDisplay.appendChild(charSpan);
         });
+
+        inputField.focus();
     }
 
     inputField.addEventListener('input', () => {
-        if (!playerNameInput.value.trim()) {
-            alert('Vui lòng nhập "Họ và tên học sinh" trước khi gõ!');
-            inputField.value = '';
-            playerNameInput.focus();
-            return;
-        }
-
         if (!isStarted) {
             isStarted = true;
             startTime = new Date();
@@ -315,7 +363,6 @@ Chày đâm nát suối, đều đều suối xa...`
             }
         });
 
-        // Tự động cuộn đến vị trí gõ hiện tại
         if (arrayValue.length < arrayPoemSpans.length) {
             const currentSpan = arrayPoemSpans[arrayValue.length];
             currentSpan.classList.add('char-current');
@@ -327,7 +374,6 @@ Chày đâm nát suối, đều đều suối xa...`
 
         updateStats();
 
-        // Kiểm tra khi hoàn thành bài gõ
         if (arrayValue.length === currentPoem.length && isAllCorrect) {
             clearInterval(timerInterval);
             inputField.disabled = true;
@@ -348,18 +394,14 @@ Chày đâm nát suối, đều đều suối xa...`
         }
     });
 
-    // Cập nhật chỉ số WPM chuẩn & Accuracy %
     function updateStats() {
         const timeElapsed = Math.floor((new Date() - startTime) / 1000);
         timerDisplay.innerText = timeElapsed;
 
         const totalTyped = inputField.value.length;
-        
-        // Tính Accuracy (%)
         const accuracy = totalTyped > 0 ? Math.round((correctCharsCount / totalTyped) * 100) : 100;
         accuracyDisplay.innerText = accuracy;
 
-        // Tính WPM Chuẩn quốc tế (1 từ = 5 ký tự đúng)
         const minutes = timeElapsed / 60;
         const wpm = minutes > 0 ? Math.round((correctCharsCount / 5) / minutes) : 0;
         wpmDisplay.innerText = wpm;
@@ -407,7 +449,6 @@ Chày đâm nát suối, đều đều suối xa...`
     }
 
     btnNext.addEventListener('click', loadRandomPoem);
-    loadRandomPoem();
 </script>
 
 </body>
