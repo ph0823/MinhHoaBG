@@ -477,6 +477,7 @@ textarea {
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 
@@ -830,6 +831,9 @@ const firebaseConfig = {
   authDomain:
     "luyen-go.firebaseapp.com",
 
+  databaseURL:
+    "https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app/",
+
   projectId:
     "luyen-go",
 
@@ -866,6 +870,25 @@ try {
 
   firebase.initializeApp(firebaseConfig);
 
+  const auth = firebase.auth();
+
+  async function ensureFirebaseAuth() {
+      if (auth.currentUser) {
+          return auth.currentUser;
+      }
+
+      const result = await auth.signInAnonymously();
+      return result.user;
+  }
+
+  ensureFirebaseAuth()
+    .then(user => {
+        console.log("Đã đăng nhập Firebase:", user.uid);
+    })
+    .catch(error => {
+        console.error("Lỗi Firebase Auth:", error);
+    });
+
   database =
     firebase.database();
 
@@ -874,17 +897,61 @@ try {
       'typing_best_scores_v2'
     );
 
-  firebaseReady = true;
+  let database = null;
+  let bestScoresRef = null;
+  let firebaseReady = false;
+  let firebaseUser = null;
+  let leaderboardListenerStarted = false;
 
-}
-catch (error) {
+  async function initFirebase() {
+    try {
+      // Chỉ khởi tạo Firebase đúng 1 lần
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
 
-  console.error(
-    'Firebase init error:',
-    error
-  );
+      const auth = firebase.auth();
 
-}
+      // Đăng nhập ẩn danh
+      if (auth.currentUser) {
+        firebaseUser = auth.currentUser;
+      } else {
+        const result = await auth.signInAnonymously();
+        firebaseUser = result.user;
+      }
+
+      // Sau khi xác thực xong mới tạo Database
+      database = firebase.database();
+
+      bestScoresRef = database.ref(
+        'typing_best_scores_v2'
+      );
+
+      firebaseReady = true;
+
+      console.log(
+        'Firebase Auth OK:',
+        firebaseUser.uid
+      );
+
+      startLeaderboardListener();
+
+    } catch (error) {
+      firebaseReady = false;
+
+      console.error(
+        'Firebase initialization error:',
+        error
+      );
+
+      if (els?.leaderboard) {
+        els.leaderboard.innerHTML =
+          '<li class="empty">' +
+          'Không thể kết nối Firebase.' +
+          '</li>';
+      }
+    }
+  }
 
 
 /* ==========================================================
@@ -3711,48 +3778,40 @@ els.leaderboardClassFilter
    LẮNG NGHE FIREBASE REALTIME
 ========================================================== */
 
-if (
-  firebaseReady
-  &&
-  bestScoresRef
-) {
+function startLeaderboardListener() {
+
+  if (
+    leaderboardListenerStarted ||
+    !firebaseReady ||
+    !bestScoresRef
+  ) {
+    return;
+  }
+
+  leaderboardListenerStarted = true;
 
   bestScoresRef.on(
-
     'value',
 
     snapshot => {
 
-      const items =
-        [];
-
+      const items = [];
 
       snapshot.forEach(
-
         child => {
+          const value = child.val();
 
-          items.push(
-            child.val()
-          );
-
+          if (value) {
+            items.push(value);
+          }
         }
-
       );
 
+      leaderboardCache = items;
 
-      leaderboardCache =
-        items;
+      updateClassFilter(items);
 
-
-      updateClassFilter(
-        items
-      );
-
-
-      renderLeaderboard(
-        items
-      );
-
+      renderLeaderboard(items);
     },
 
     error => {
@@ -3762,22 +3821,15 @@ if (
         error
       );
 
-
       els.leaderboard.innerHTML =
-
-        '<li class="empty">'
-        +
-        'Không thể tải bảng xếp hạng. '
-        +
-        'Kiểm tra Firebase hoặc Database Rules.'
-        +
+        '<li class="empty">' +
+        'Không thể tải bảng xếp hạng. ' +
+        'Kiểm tra Firebase hoặc Database Rules.' +
         '</li>';
-
     }
-
   );
-
 }
+
 else {
 
   els.leaderboard.innerHTML =
@@ -3833,6 +3885,7 @@ els.studentNoInput.addEventListener(
   }
 
 );
+initFirebase();
 
 </script>
 
