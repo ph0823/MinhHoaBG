@@ -179,8 +179,9 @@
         appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
       };
 
+    
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const scoresRef = database.ref('typing_scores');
 
