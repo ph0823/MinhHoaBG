@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Kiểm Tra Tốc Độ Gõ Phím - Hà Huy Tập</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            width: 95%;
+            flex-wrap: wrap;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            flex: 2;
+            min-width: 320px;
+            text-align: center;
+        }
+        .leaderboard-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 280px;
+        }
+        h1, h2 { color: #d32f2f; margin-top: 0; margin-bottom: 10px; }
+        .author { color: #666; font-style: italic; margin-bottom: 15px; }
+        
+        .user-section {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .user-section input {
+            padding: 8px 12px;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .poem-container {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            background: #fff8e1;
+            padding: 15px;
+            border-left: 5px solid #ffa000;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: left;
+            user-select: none;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .char-correct { color: #2e7d32; background-color: #c8e6c9; }
+        .char-incorrect { color: #c62828; background-color: #ffcdd2; }
+        .char-current { border-bottom: 3px solid #2196f3; }
+
+        textarea {
+            width: 100%;
+            height: 90px;
+            font-size: 1rem;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: none;
+            font-family: inherit;
+        }
+        textarea:focus { border-color: #d32f2f; outline: none; }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #b71c1c; }
+
+        .stats { display: flex; gap: 10px; font-weight: bold; color: #333; }
+        .stat-box { background: #f0f0f0; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; }
+
+        .leaderboard-list { list-style: none; padding: 0; margin: 0; }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+        .leaderboard-item:first-child { font-weight: bold; color: #d32f2f; background: #ffebee; }
+        .leaderboard-item:nth-child(2) { font-weight: bold; color: #f57c00; }
+        .leaderboard-item:nth-child(3) { font-weight: bold; color: #388e3c; }
+        .rank { width: 30px; }
+        .player-name { flex-grow: 1; text-align: left; }
+        .score { font-weight: bold; }
+    </style>
+
+    <!-- 1. Nhúng các thư viện Firebase SDK cần thiết -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="container">
+        <h1>Thử Tài Gõ Phím</h1>
+        <div class="author">Các tác phẩm thơ Tố Hữu</div>
+
+        <div class="user-section">
+            <label for="player-name-input"><strong>Họ và tên học sinh:</strong></label>
+            <input type="text" id="player-name-input" placeholder="Nhập tên của bạn..." maxlength="20">
+        </div>
+        
+        <div class="poem-container" id="poem-display"></div>
+
+        <textarea id="input-field" placeholder="Nhập tên ở trên, sau đó gõ văn bản tại đây..." autofocus></textarea>
+
+        <div class="controls">
+            <button id="btn-next">Đổi bài khác 🎲</button>
+            <div class="stats">
+                <div class="stat-box">Thời gian: <span id="timer">0</span>s</div>
+                <div class="stat-box">Tốc độ: <span id="wpm">0</span> WPM</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="leaderboard-card">
+        <h2>🏆 Bảng Xếp Hạng</h2>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Thời gian thực (Real-time Firebase)</p>
+        <ol class="leaderboard-list" id="leaderboard"></ol>
+    </div>
+</div>
+
+<script>
+    // -------------------------------------------------------------
+    // 2. CẤU HÌNH FIREBASE (Thay thế bằng thông tin Dự án của bạn)
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
+        authDomain: "luyen-go.firebaseapp.com",
+        projectId: "luyen-go",
+        storageBucket: "luyen-go.firebasestorage.app",
+        messagingSenderId: "79498233127",
+        appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
+      };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('typing_scores');
+
+    // -------------------------------------------------------------
+    // 3. LOGIC GAME
+    // -------------------------------------------------------------
+    const poemsList = [
+        "Từ ấy trong tôi bừng nắng hạ\nMặt trời chân lý chói qua tim\nHồn tôi là một vườn hoa lá\nRất đậm hương và rộn tiếng chim",
+        "Chú bé Lượm xắt xắt\nCái xắc xinh xinh\nCái chân thoăn thoắt\nCái đầu nghênh nghênh",
+        "Mình về mình có nhớ ta\nMười lăm năm ấy thiết tha mặn nồng\nMình về mình có nhớ không\nNhìn cây nhớ núi nhìn sông nhớ nguồn",
+        "Bác sống như trời đất của ta\nYêu thương tất cả chỉ quên mình\nMôn đệ tự do lòng trong sáng\nĐầu suối nguồn trong sóng muôn trùng",
+        "Đẹp lắm xóm làng quê hương ta\nBàn tay lao động dựng ngôi nhà\nSông dài biển rộng trời bao la\nViệt Nam gấm vóc đẹp như hoa"
+    ];
+
+    const poemDisplay = document.getElementById('poem-display');
+    const inputField = document.getElementById('input-field');
+    const timerDisplay = document.getElementById('timer');
+    const wpmDisplay = document.getElementById('wpm');
+    const btnNext = document.getElementById('btn-next');
+    const playerNameInput = document.getElementById('player-name-input');
+    const leaderboardEl = document.getElementById('leaderboard');
+
+    let currentPoem = "";
+    let startTime;
+    let timerInterval;
+    let isStarted = false;
+
+    function loadRandomPoem() {
+        clearInterval(timerInterval);
+        isStarted = false;
+        timerDisplay.innerText = "0";
+        wpmDisplay.innerText = "0";
+        inputField.value = "";
+        inputField.disabled = false;
+
+        const randomIndex = Math.floor(Math.random() * poemsList.length);
+        currentPoem = poemsList[randomIndex];
+
+        poemDisplay.innerHTML = '';
+        currentPoem.split('').forEach((char, index) => {
+            const charSpan = document.createElement('span');
+            charSpan.innerText = char;
+            if (index === 0) charSpan.classList.add('char-current');
+            poemDisplay.appendChild(charSpan);
+        });
+    }
+
+    inputField.addEventListener('input', () => {
+        if (!playerNameInput.value.trim()) {
+            alert('Vui lòng nhập "Họ và tên học sinh" trước khi gõ!');
+            inputField.value = '';
+            playerNameInput.focus();
+            return;
+        }
+
+        if (!isStarted) {
+            isStarted = true;
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        const arrayPoemSpans = poemDisplay.querySelectorAll('span');
+        const arrayValue = inputField.value.split('');
+        let isAllCorrect = true;
+
+        arrayPoemSpans.forEach((characterSpan, index) => {
+            const character = arrayValue[index];
+            characterSpan.classList.remove('char-current');
+
+            if (character == null) {
+                characterSpan.classList.remove('char-correct', 'char-incorrect');
+                isAllCorrect = false;
+            } else if (character === characterSpan.innerText) {
+                characterSpan.classList.add('char-correct');
+                characterSpan.classList.remove('char-incorrect');
+            } else {
+                characterSpan.classList.add('char-incorrect');
+                characterSpan.classList.remove('char-correct');
+                isAllCorrect = false;
+            }
+        });
+
+        if (arrayValue.length < arrayPoemSpans.length) {
+            arrayPoemSpans[arrayValue.length].classList.add('char-current');
+        }
+
+        if (arrayValue.length === currentPoem.length && isAllCorrect) {
+            clearInterval(timerInterval);
+            inputField.disabled = true;
+            const finalWPM = parseInt(wpmDisplay.innerText);
+            const name = playerNameInput.value.trim();
+
+            // GỬI ĐIỂM LÊN FIREBASE REALTIME
+            saveScoreToFirebase(name, finalWPM);
+
+            setTimeout(() => {
+                alert(`🎉 Xuất sắc ${name}! Thành tích ${finalWPM} WPM của bạn đã được cập nhật tới toàn phòng máy!`);
+            }, 100);
+        }
+    });
+
+    function updateTimer() {
+        const timeElapsed = Math.floor((new Date() - startTime) / 1000);
+        timerDisplay.innerText = timeElapsed;
+
+        const wordsTyped = inputField.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+        const minutes = timeElapsed / 60;
+        const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+        wpmDisplay.innerText = wpm;
+    }
+
+    // -------------------------------------------------------------
+    // 4. THAO TÁC VỚI FIREBASE (Ghi & Lắng nghe thời gian thực)
+    // -------------------------------------------------------------
+    
+    // Gửi điểm số mới lên Firebase
+    function saveScoreToFirebase(name, wpm) {
+        scoresRef.push({
+            name: name,
+            wpm: wpm,
+            timestamp: Date.now()
+        });
+    }
+
+    // Lắng nghe sự thay đổi trên Firebase (Mỗi khi có ai hoàn thành, Bảng xếp hạng tự cập nhật)
+    scoresRef.orderByChild('wpm').limitToLast(10).on('value', (snapshot) => {
+        const scores = [];
+        snapshot.forEach((childSnapshot) => {
+            scores.push(childSnapshot.val());
+        });
+
+        // Sắp xếp giảm dần theo WPM
+        scores.sort((a, b) => b.wpm - a.wpm);
+
+        // Cập nhật giao diện
+        leaderboardEl.innerHTML = '';
+        if (scores.length === 0) {
+            leaderboardEl.innerHTML = '<li style="color:#888; font-style:italic; padding:10px;">Chưa có lượt chơi nào.</li>';
+            return;
+        }
+
+        scores.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'leaderboard-item';
+            li.innerHTML = `
+                <span class="rank">#${index + 1}</span>
+                <span class="player-name">${escapeHTML(item.name)}</span>
+                <span class="score">${item.wpm} WPM</span>
+            `;
+            leaderboardEl.appendChild(li);
+        });
+    });
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+
+    btnNext.addEventListener('click', loadRandomPoem);
+    loadRandomPoem();
+</script>
+
+</body>
+</html>
