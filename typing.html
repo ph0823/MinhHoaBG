@@ -59,6 +59,7 @@
             font-size: 0.95rem;
         }
 
+        /* khung hiển thị thơ */
         .poem-container {
             font-size: 1.25rem;
             line-height: 1.8;
@@ -71,15 +72,18 @@
             user-select: none;
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
+            max-height: 250px;
+            overflow-y: auto; /* Tự động xuất hiện thanh cuộn nếu thơ quá dài */
         }
         
         .char-correct { color: #2e7d32; background-color: #c8e6c9; }
         .char-incorrect { color: #c62828; background-color: #ffcdd2; }
         .char-current { border-bottom: 3px solid #2196f3; }
 
+        /* Khung nhập liệu */
         textarea {
             width: 100%;
-            height: 90px;
+            height: 140px;
             font-size: 1rem;
             padding: 10px;
             border: 2px solid #ccc;
@@ -188,13 +192,93 @@
     // -------------------------------------------------------------
     // 3. LOGIC GAME
     // -------------------------------------------------------------
+    // Danh sách các đoạn thơ dài của Tố Hữu (đảm bảo thời gian gõ >= 2 phút)
     const poemsList = [
-        "Từ ấy trong tôi bừng nắng hạ\nMặt trời chân lý chói qua tim\nHồn tôi là một vườn hoa lá\nRất đậm hương và rộn tiếng chim",
-        "Chú bé Lượm xắt xắt\nCái xắc xinh xinh\nCái chân thoăn thoắt\nCái đầu nghênh nghênh",
-        "Mình về mình có nhớ ta\nMười lăm năm ấy thiết tha mặn nồng\nMình về mình có nhớ không\nNhìn cây nhớ núi nhìn sông nhớ nguồn",
-        "Bác sống như trời đất của ta\nYêu thương tất cả chỉ quên mình\nMôn đệ tự do lòng trong sáng\nĐầu suối nguồn trong sóng muôn trùng",
-        "Đẹp lắm xóm làng quê hương ta\nBàn tay lao động dựng ngôi nhà\nSông dài biển rộng trời bao la\nViệt Nam gấm vóc đẹp như hoa"
-    ];
+        `Từ ấy trong tôi bừng nắng hạ
+            Mặt trời chân lý chói qua tim
+            Hồn tôi là một vườn hoa lá
+            Rất đậm hương và rộn tiếng chim
+
+            Tôi buộc lòng tôi với mọi người
+            Để tình trang trải với muôn nơi
+            Để hồn tôi với bao hồn khổ
+            Gần gũi nhau thêm mạnh khối đời
+
+            Tôi đã là con của mọi nhà
+            Là em của vạn kiếp phôi pha
+            Là anh của vạn đầu em nhỏ
+            Không áo cơm, cù bất cù bơ...`,
+
+                    `Chú bé Lượm xắt xắt
+            Cái xắc xinh xinh
+            Cái chân thoăn thoắt
+            Cái đầu nghênh nghênh
+
+            Ca-lô đội lệch
+            Mồm huýt sáo vang
+            Như con chim chóc
+            Nhảy trên đường làng
+
+            Cháu đi liên lạc
+            Vui lắm chú ơi
+            Đường ra mặt trận
+            Thượng kerosene bao nhiêu...
+
+            Thôi rồi, Lượm ơi!
+            Một dòng máu đỏ
+            An nghỉ trên đồng
+            Cháu nằm trên lúa
+            Tay nắm chặt bông
+            Lúa thơm mùi sữa
+            Hồn bay giữa đồng...`,
+
+                    `Mình về mình có nhớ ta
+            Mười lăm năm ấy thiết tha mặn nồng
+            Mình về mình có nhớ không
+            Nhìn cây nhớ núi, nhìn sông nhớ nguồn?
+
+            Tiếng ai tha thiết bên lưng đèo
+            Mái tranh xám khói, lều tranh xiêu
+            Thương nhau, chia củ sắn lùi
+            Bát cơm xẻ nửa, chăn lùi đắp chung
+
+            Nhớ sao lớp học i tờ
+            Đồng khuya đuốc sáng những giờ liên hoan
+            Nhớ sao ngày tháng cơ quan
+            Gian lao mà vẫn dạt dào cất ca
+            Nhớ sao tiếng mõ rừng chiều
+            Chày đâm nát suối, đều đều suối xa...`,
+
+                    `Bác sống như trời đất của ta
+            Yêu thương tất cả, chỉ quên mình
+            Môn đệ tự do, lòng trong sáng
+            Đầu suối nguồn trong sóng muôn trùng
+
+            Bác đã về đâu, Bác Bác ơi?
+            Mùa thu gom nắng dệt tơ trời
+            Con đường Nguyễn Huệ hoa dâng Bác
+            Lối cũ vườn xưa nhớ bóng người
+
+            Chúng con xin nguyện đi theo Bác
+            Giữ vẹn niềm tin, trọn lời thề
+            Đường ra mặt trận dù gian khổ
+            Vẫn vững niềm tin buổi trở về...`,
+
+                    `Con lại về thăm mẹ Tơm xưa
+            Chợ Chùa phơ phất hạt mưa thưa
+            Tôi lại về đây đường bãi cát
+            Sóng xô bãi đá, gió rên hàng dừa
+
+            Mẹ Tơm tóc bạc lưng đã còng
+            Thương con từ thủa còn trong nôi
+            Đêm đêm đốt lửa bên bếp lửa
+            Chờ bước con về giữa đêm đông
+
+            Cảm ơn mẹ đã nuôi dưỡng con
+            Những ngày kháng chiến gian khổ tròn
+            Thắp sáng lòng con niềm tin mới
+            Tổ quốc Việt Nam mãi trường tồn!`
+                ];
 
     const poemDisplay = document.getElementById('poem-display');
     const inputField = document.getElementById('input-field');
