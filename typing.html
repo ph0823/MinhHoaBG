@@ -1,217 +1,906 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Kiểm Tra Tốc Độ Gõ Phím - by GV Phuoc</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px 0;
-        }
-        .main-wrapper {
-            display: flex;
-            gap: 20px;
-            max-width: 1050px;
-            width: 95%;
-            flex-wrap: wrap;
-        }
-        .container {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            flex: 2;
-            min-width: 320px;
-            text-align: center;
-        }
-        .leaderboard-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 280px;
-        }
-        h1, h2 { color: #d32f2f; margin-top: 0; margin-bottom: 10px; }
-        .author { color: #666; font-style: italic; margin-bottom: 15px; }
-        
-        /* Màn hình nhập tên ban đầu */
-        .start-screen {
-            background: #e3f2fd;
-            padding: 25px;
-            border-radius: 8px;
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-        .start-screen input {
-            padding: 10px 15px;
-            border: 2px solid #90caf9;
-            border-radius: 6px;
-            font-size: 1.05rem;
-            width: 80%;
-            max-width: 300px;
-            text-align: center;
-        }
-        .btn-start {
-            background-color: #2e7d32 !important;
-            font-weight: bold;
-            font-size: 1.1rem !important;
-            padding: 10px 25px !important;
-        }
-        .btn-start:hover { background-color: #1b5e20 !important; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thử Tài Gõ Phím V2</title>
 
-        /* Khu vực gõ thơ (Ẩn ban đầu) */
-        .game-screen {
-            display: none; /* Chỉ hiện khi bấm Bắt đầu */
-        }
+<style>
+:root {
+  --primary:#c62828;
+  --primary-dark:#8e0000;
+  --accent:#1565c0;
+  --success:#2e7d32;
+  --warning:#ef6c00;
+  --bg:#f4f7f6;
+  --card:#fff;
+  --border:#e0e0e0;
+  --text:#263238;
+  --muted:#607d8b;
+}
 
-        .poem-container {
-            font-size: 1.25rem;
-            line-height: 1.8;
-            background: #fff8e1;
-            padding: 15px;
-            border-left: 5px solid #ffa000;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            text-align: left;
-            user-select: none;
-            white-space: pre-wrap;
-            font-family: 'Courier New', Courier, monospace;
-            max-height: 200px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-        
-        .char-correct { color: #2e7d32; background-color: #c8e6c9; }
-        .char-incorrect { color: #c62828; background-color: #ffcdd2; }
-        .char-current { border-bottom: 3px solid #2196f3; background-color: #bbdefb; }
+* {
+  box-sizing:border-box;
+}
 
-        textarea {
-            width: 100%;
-            height: 140px;
-            font-size: 1rem;
-            padding: 10px;
-            border: 2px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            resize: none;
-            font-family: inherit;
-        }
-        textarea:focus { border-color: #d32f2f; outline: none; }
+body {
+  margin:0;
+  min-height:100vh;
+  font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+button,
+input,
+select,
+textarea {
+  font:inherit;
+}
 
-        button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 9px 16px;
-            font-size: 0.95rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover { background-color: #b71c1c; }
+button {
+  cursor:pointer;
+}
 
-        .stats { display: flex; gap: 8px; font-weight: bold; color: #333; flex-wrap: wrap; }
-        .stat-box { background: #f0f0f0; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
+.hidden {
+  display:none !important;
+}
 
-        .leaderboard-list { list-style: none; padding: 0; margin: 0; }
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.95rem;
-        }
-        .leaderboard-item:first-child { font-weight: bold; color: #d32f2f; background: #ffebee; }
-        .leaderboard-item:nth-child(2) { font-weight: bold; color: #f57c00; }
-        .leaderboard-item:nth-child(3) { font-weight: bold; color: #388e3c; }
-        .rank { width: 30px; }
-        .player-name { flex-grow: 1; text-align: left; }
-        .score { font-weight: bold; }
-    </style>
+.app {
+  width:min(1180px, 96%);
+  margin:18px auto;
+}
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+.header {
+  text-align:center;
+  margin-bottom:16px;
+}
+
+.header h1 {
+  margin:0;
+  color:var(--primary);
+  font-size:clamp(1.8rem,4vw,2.6rem);
+}
+
+.header p {
+  margin:6px 0 0;
+  color:var(--muted);
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:minmax(0, 2fr) minmax(280px, 1fr);
+  gap:18px;
+  align-items:start;
+}
+
+.card {
+  background:var(--card);
+  border-radius:14px;
+  box-shadow:0 5px 18px rgba(0,0,0,.08);
+  padding:20px;
+}
+
+.section-title {
+  margin:0 0 14px;
+  color:var(--primary);
+}
+
+.form-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.field {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  text-align:left;
+}
+
+.field label {
+  font-weight:700;
+  font-size:.92rem;
+}
+
+.field input,
+.field select {
+  width:100%;
+  padding:11px 12px;
+  border:1.5px solid #b0bec5;
+  border-radius:8px;
+  background:#fff;
+}
+
+.field input:focus,
+.field select:focus,
+textarea:focus {
+  outline:2px solid rgba(21,101,192,.14);
+  border-color:var(--accent);
+}
+
+.mode-picker {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+.mode-btn {
+  border:2px solid #cfd8dc;
+  border-radius:10px;
+  padding:12px;
+  background:#fafafa;
+  color:var(--text);
+  font-weight:800;
+}
+
+.mode-btn.active {
+  border-color:var(--accent);
+  background:#e3f2fd;
+  color:#0d47a1;
+}
+
+.actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+.btn {
+  border:none;
+  border-radius:8px;
+  padding:10px 16px;
+  color:#fff;
+  background:var(--primary);
+  font-weight:700;
+}
+
+.btn:hover {
+  filter:brightness(.94);
+}
+
+.btn.secondary {
+  background:#546e7a;
+}
+
+.btn.success {
+  background:var(--success);
+}
+
+.btn.warning {
+  background:var(--warning);
+}
+
+.btn:disabled {
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.student-bar {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:9px;
+  background:#e3f2fd;
+  margin-bottom:12px;
+  font-weight:700;
+}
+
+.lesson-title {
+  font-weight:800;
+  color:#5d4037;
+  margin-bottom:8px;
+}
+
+.progress-wrap {
+  margin-bottom:10px;
+}
+
+.progress-head {
+  display:flex;
+  justify-content:space-between;
+  font-size:.86rem;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+
+.progress-bar {
+  height:9px;
+  background:#eceff1;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.progress-fill {
+  height:100%;
+  width:0%;
+  background:var(--success);
+  transition:width .15s linear;
+}
+
+.poem {
+  min-height:185px;
+  max-height:245px;
+  overflow-y:auto;
+  padding:16px;
+  border-left:5px solid #ffa000;
+  border-radius:8px;
+  background:#fff8e1;
+  text-align:left;
+  white-space:pre-wrap;
+  user-select:none;
+  font-family:"Courier New",Courier,monospace;
+  font-size:1.18rem;
+  line-height:1.75;
+  scroll-behavior:smooth;
+}
+
+.char-correct {
+  color:#1b5e20;
+  background:#c8e6c9;
+}
+
+.char-incorrect {
+  color:#b71c1c;
+  background:#ffcdd2;
+}
+
+.char-current {
+  border-bottom:3px solid #1976d2;
+  background:#bbdefb;
+}
+
+textarea {
+  width:100%;
+  height:150px;
+  resize:none;
+  margin-top:12px;
+  padding:12px;
+  border:2px solid #cfd8dc;
+  border-radius:8px;
+  line-height:1.5;
+}
+
+.stats {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+}
+
+.stat {
+  background:#f5f5f5;
+  padding:9px 8px;
+  border-radius:8px;
+  text-align:center;
+  font-size:.82rem;
+}
+
+.stat strong {
+  display:block;
+  font-size:1rem;
+  margin-top:2px;
+}
+
+.notice {
+  margin-top:10px;
+  padding:9px 11px;
+  border-radius:8px;
+  background:#fff3e0;
+  color:#8d4e00;
+  font-size:.88rem;
+}
+
+.leaderboard-head {
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.leaderboard-head select {
+  flex:1;
+  padding:8px;
+  border:1px solid #b0bec5;
+  border-radius:7px;
+}
+
+.leaderboard-list {
+  list-style:none;
+  padding:0;
+  margin:0;
+}
+
+.leaderboard-item {
+  display:grid;
+  grid-template-columns:42px 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:10px 8px;
+  border-bottom:1px solid #eceff1;
+  font-size:.93rem;
+}
+
+.leaderboard-item:nth-child(1) {
+  background:#ffebee;
+  color:#b71c1c;
+  font-weight:800;
+}
+
+.leaderboard-item:nth-child(2) {
+  color:#ef6c00;
+  font-weight:800;
+}
+
+.leaderboard-item:nth-child(3) {
+  color:#2e7d32;
+  font-weight:800;
+}
+
+.player-meta {
+  font-size:.78rem;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.empty {
+  padding:14px;
+  text-align:center;
+  color:var(--muted);
+  font-style:italic;
+}
+
+.countdown {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.58);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+
+.countdown-number {
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:4rem;
+  font-weight:900;
+  color:var(--primary);
+  box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:60;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+
+.modal-card {
+  width:min(480px,100%);
+  background:#fff;
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 15px 40px rgba(0,0,0,.24);
+  text-align:center;
+}
+
+.result-score {
+  font-size:2.2rem;
+  font-weight:900;
+  color:var(--primary);
+  margin:8px 0;
+}
+
+.result-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  margin:12px 0;
+}
+
+.result-grid div {
+  background:#f5f5f5;
+  border-radius:8px;
+  padding:10px;
+}
+
+.error-list {
+  text-align:left;
+  max-height:140px;
+  overflow:auto;
+  background:#fafafa;
+  border:1px solid #eee;
+  border-radius:8px;
+  padding:10px;
+  margin-top:10px;
+}
+
+.small {
+  font-size:.82rem;
+  color:var(--muted);
+}
+
+@media (max-width:900px) {
+  .grid {
+    grid-template-columns:1fr;
+  }
+
+  .stats {
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media (max-width:620px) {
+  .app {
+    width:100%;
+    margin:0;
+  }
+
+  .card {
+    border-radius:0;
+    box-shadow:none;
+    padding:14px;
+  }
+
+  .header {
+    padding:14px 10px 0;
+  }
+
+  .form-grid,
+  .mode-picker {
+    grid-template-columns:1fr;
+  }
+
+  .stats {
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .poem {
+    font-size:1.05rem;
+    max-height:215px;
+  }
+}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
+
 <body>
 
-<div class="main-wrapper">
-    <div class="container">
-        <h1>Thử Tài Gõ Phím</h1>
-        <div class="author">Các tác phẩm thơ Tố Hữu</div>
+<div class="app">
 
-        <!-- 1. MÀN HÌNH BẮT ĐẦU (Nhập tên) -->
-        <div class="start-screen" id="start-screen">
-            <label for="player-name-input"><strong>Nhập Họ và tên học sinh để bắt đầu:</strong></label>
-            <input type="text" id="player-name-input" placeholder="Ví dụ: Nguyễn Văn A" maxlength="20" autofocus>
-            <button class="btn-start" id="btn-start">🚀 Bắt Đầu Luyện Gõ</button>
+  <header class="header">
+    <h1>Thử Tài Gõ Phím V2</h1>
+    <p>
+      Luyện gõ tiếng Việt · Theo dõi tốc độ,
+      độ chính xác và thành tích tốt nhất
+    </p>
+  </header>
+
+  <div class="grid">
+
+    <main class="card">
+
+      <section id="setup-screen">
+
+        <h2 class="section-title">Thông tin học sinh</h2>
+
+        <div class="form-grid">
+
+          <div class="field">
+            <label for="class-input">Lớp</label>
+            <input
+              id="class-input"
+              type="text"
+              maxlength="10"
+              placeholder="Ví dụ: 7.1"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="field">
+            <label for="student-no-input">STT</label>
+            <input
+              id="student-no-input"
+              type="number"
+              min="1"
+              max="99"
+              placeholder="Ví dụ: 12"
+            >
+          </div>
+
+          <div class="field" style="grid-column:1/-1">
+            <label for="player-name-input">Họ và tên</label>
+
+            <input
+              id="player-name-input"
+              type="text"
+              maxlength="50"
+              placeholder="Ví dụ: Nguyễn Văn A"
+              autocomplete="off"
+            >
+          </div>
+
         </div>
-        
-        <!-- 2. KHU VỰC GAME (Ẩn ban đầu) -->
-        <div class="game-screen" id="game-screen">
-            <div style="margin-bottom: 10px; text-align: left; color: #1976d2; font-weight: bold;">
-                Học sinh: <span id="display-player-name"></span>
-            </div>
 
-            <div class="poem-container" id="poem-display"></div>
+        <div class="mode-picker">
 
-            <textarea id="input-field" placeholder="Gõ chính xác đoạn thơ phía trên vào đây..."></textarea>
+          <button
+            class="mode-btn active"
+            data-mode="practice"
+            type="button"
+          >
+            Luyện tập
+            <br>
+            <span class="small">
+              Được đổi bài, không ghi BXH
+            </span>
+          </button>
 
-            <div class="controls">
-                <button id="btn-next">Đổi bài khác 🎲</button>
-                <div class="stats">
-                    <div class="stat-box">Thời gian: <span id="timer">0</span>s</div>
-                    <div class="stat-box">Tốc độ: <span id="wpm">0</span> WPM</div>
-                    <div class="stat-box">Chính xác: <span id="accuracy">100</span>%</div>
-                </div>
-            </div>
+          <button
+            class="mode-btn"
+            data-mode="challenge"
+            type="button"
+          >
+            Thử thách
+            <br>
+            <span class="small">
+              Đếm ngược, ghi thành tích tốt nhất
+            </span>
+          </button>
+
         </div>
-    </div>
 
-    <!-- BẢNG XẾP HẠNG -->
-    <div class="leaderboard-card">
-        <h2>🏆 Bảng Xếp Hạng</h2>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Thời gian thực (Real-time Firebase)</p>
-        <ol class="leaderboard-list" id="leaderboard"></ol>
-    </div>
+        <div class="actions">
+          <button
+            class="btn success"
+            id="btn-start"
+            type="button"
+          >
+            Bắt đầu
+          </button>
+        </div>
+
+        <div class="notice">
+          Ứng dụng chặn dán/thả văn bản.
+          Trong chế độ Thử thách: không đổi bài giữa lượt
+          và chỉ thành tích tốt nhất được giữ trên bảng xếp hạng.
+        </div>
+
+      </section>
+
+      <section id="game-screen" class="hidden">
+
+        <div class="student-bar">
+          <span id="student-display"></span>
+          <span id="mode-display"></span>
+        </div>
+
+        <div
+          class="lesson-title"
+          id="lesson-title"
+        ></div>
+
+        <div class="progress-wrap">
+
+          <div class="progress-head">
+            <span>Tiến độ</span>
+            <span id="progress-text">0%</span>
+          </div>
+
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="progress-fill"
+            ></div>
+          </div>
+
+        </div>
+
+        <div
+          class="poem"
+          id="poem-display"
+        ></div>
+
+        <textarea
+          id="input-field"
+          placeholder="Gõ chính xác nội dung phía trên..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          disabled
+        ></textarea>
+
+        <div class="stats">
+
+          <div class="stat">
+            Thời gian
+            <strong>
+              <span id="timer">0.0</span>s
+            </strong>
+          </div>
+
+          <div class="stat">
+            Raw WPM
+            <strong id="raw-wpm">0</strong>
+          </div>
+
+          <div class="stat">
+            Net WPM
+            <strong id="net-wpm">0</strong>
+          </div>
+
+          <div class="stat">
+            Chính xác
+            <strong>
+              <span id="accuracy">100</span>%
+            </strong>
+          </div>
+
+          <div class="stat">
+            Lỗi
+            <strong id="error-count">0</strong>
+          </div>
+
+        </div>
+
+        <div class="actions">
+
+          <button
+            class="btn warning"
+            id="btn-next"
+            type="button"
+          >
+            Đổi bài khác
+          </button>
+
+          <button
+            class="btn secondary"
+            id="btn-exit"
+            type="button"
+          >
+            Kết thúc / Đổi người chơi
+          </button>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <aside class="card">
+
+      <h2 class="section-title">
+        🏆 Bảng xếp hạng
+      </h2>
+
+      <div class="leaderboard-head">
+
+        <select id="leaderboard-class-filter">
+          <option value="all">
+            Tất cả lớp
+          </option>
+        </select>
+
+      </div>
+
+      <ol
+        class="leaderboard-list"
+        id="leaderboard"
+      ></ol>
+
+      <p class="small">
+        BXH sử dụng Net WPM;
+        nếu bằng nhau sẽ ưu tiên độ chính xác cao hơn.
+      </p>
+
+    </aside>
+
+  </div>
+
 </div>
 
+
+<div
+  class="countdown hidden"
+  id="countdown-overlay"
+>
+  <div
+    class="countdown-number"
+    id="countdown-number"
+  >
+    3
+  </div>
+</div>
+
+
+<div
+  class="modal hidden"
+  id="result-modal"
+>
+
+  <div class="modal-card">
+
+    <h2 id="result-title">
+      Hoàn thành
+    </h2>
+
+    <div class="result-score">
+      <span id="result-net-wpm">0</span>
+      WPM
+    </div>
+
+    <div class="result-grid">
+
+      <div>
+        Chính xác
+        <br>
+        <strong>
+          <span id="result-accuracy">100</span>%
+        </strong>
+      </div>
+
+      <div>
+        Lỗi
+        <br>
+        <strong id="result-errors">0</strong>
+      </div>
+
+      <div>
+        Thời gian
+        <br>
+        <strong>
+          <span id="result-time">0</span>s
+        </strong>
+      </div>
+
+      <div>
+        Xếp loại
+        <br>
+        <strong id="result-badge">-</strong>
+      </div>
+
+    </div>
+
+    <div
+      id="result-save-status"
+      class="small"
+    ></div>
+
+    <div
+      id="result-errors-detail"
+      class="error-list hidden"
+    ></div>
+
+    <div
+      class="actions"
+      style="justify-content:center"
+    >
+
+      <button
+        class="btn success"
+        id="btn-play-again"
+        type="button"
+      >
+        Chơi tiếp
+      </button>
+
+      <button
+        class="btn secondary"
+        id="btn-close-result"
+        type="button"
+      >
+        Đóng
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
-        authDomain: "luyen-go.firebaseapp.com",
-        projectId: "luyen-go",
-        storageBucket: "luyen-go.firebasestorage.app",
-        messagingSenderId: "79498233127",
-        appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
-    };
+'use strict';
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const scoresRef = database.ref('typing_scores');
 
-    const poemsList = [
-        `Từ ấy
-Từ ấy trong tôi bừng nắng hạ
+/* ==========================================================
+   FIREBASE
+========================================================== */
+
+const firebaseConfig = {
+
+  apiKey:
+    "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
+
+  authDomain:
+    "luyen-go.firebaseapp.com",
+
+  projectId:
+    "luyen-go",
+
+  storageBucket:
+    "luyen-go.firebasestorage.app",
+
+  messagingSenderId:
+    "79498233127",
+
+  appId:
+    "1:79498233127:web:a6c2e2bab71ba737ca9502"
+
+  /*
+    Nếu Firebase Realtime Database của dự án yêu cầu
+    databaseURL, bổ sung tại đây.
+
+    Ví dụ:
+
+    databaseURL:
+      "https://TEN-DATABASE.firebasedatabase.app"
+
+    Phải dùng URL chính xác được hiển thị trong
+    Firebase Console → Realtime Database.
+  */
+};
+
+
+let database = null;
+let bestScoresRef = null;
+let firebaseReady = false;
+
+
+try {
+
+  firebase.initializeApp(firebaseConfig);
+
+  database =
+    firebase.database();
+
+  bestScoresRef =
+    database.ref(
+      'typing_best_scores_v2'
+    );
+
+  firebaseReady = true;
+
+}
+catch (error) {
+
+  console.error(
+    'Firebase init error:',
+    error
+  );
+
+}
+
+
+/* ==========================================================
+   DỮ LIỆU BÀI LUYỆN
+========================================================== */
+
+const lessons = [
+
+  {
+    id:'tu-ay',
+
+    title:'Từ ấy',
+
+    text:`Từ ấy trong tôi bừng nắng hạ
 Mặt trời chân lý chói qua tim
 Hồn tôi là một vườn hoa lá
 Rất đậm hương và rộn tiếng chim
@@ -225,10 +914,16 @@ Tôi đã là con của vạn nhà
 Là em của vạn kiếp phôi pha
 Là anh của vạn đầu em nhỏ
 Không áo cơm, cù bất cù bơ...
-        Tháng 7-1938 Máu lửa`,
+        Tháng 7-1938 Máu lửa`
+  },
 
-        `Lượm
-Ngày Huế đổ máu
+
+  {
+    id:'luom',
+
+    title:'Lượm',
+
+    text:`Ngày Huế đổ máu
 Chú Hà Nội về
 Tình cờ chú cháu
 Gặp nhau Hàng Bè.
@@ -259,10 +954,16 @@ Chú lên đường ra
 Chợt nghe tin nhà.
 
 Ra thế
-Lượm ơi !`,
+Lượm ơi !`
+  },
 
-        `Việt Bắc
-Mình về mình có nhớ ta
+
+  {
+    id:'viet-bac',
+
+    title:'Việt Bắc',
+
+    text:`Mình về mình có nhớ ta
 Mười lăm năm ấy thiết tha mặn nồng
 Mình về mình có nhớ không
 Nhìn cây nhớ núi, nhìn sông nhớ nguồn?
@@ -288,10 +989,16 @@ Tân Trào, Hồng Thái, mái đình cây đa?
 - Ta với mình, mình với ta
 Lòng ta sau trước mặn mà đinh ninh
 Mình đi, mình lại nhớ mình
-Nguồn bao nhiêu nước nghĩa tình bấy nhiêu...`,
+Nguồn bao nhiêu nước nghĩa tình bấy nhiêu...`
+  },
 
-        `Truyện cổ nước mình
-Tôi yêu truyện cổ nước tôi
+
+  {
+    id:'truyen-co',
+
+    title:'Truyện cổ nước mình',
+
+    text:`Tôi yêu truyện cổ nước tôi
 Vừa nhân hậu lại tuyệt vời sâu xa
 Thương người rồi mới thương ta
 Yêu nhau dù mấy cách xa cũng tìm
@@ -320,191 +1027,2815 @@ Sẽ đi qua cuộc đời tôi
 Bấy nhiêu thời nữa chuyển dời xa xôi.
 Nhưng bao truyện cổ trên đời
 Vẫn luôn mới mẻ rạng ngời lương tâm.`
+  }
+
+].map(item => ({
+
+  ...item,
+
+  text:
+    normalizeText(item.text)
+
+}));
+
+
+/* ==========================================================
+   DOM
+========================================================== */
+
+const els = {
+
+  setup:
+    document.getElementById(
+      'setup-screen'
+    ),
+
+  game:
+    document.getElementById(
+      'game-screen'
+    ),
+
+  classInput:
+    document.getElementById(
+      'class-input'
+    ),
+
+  studentNoInput:
+    document.getElementById(
+      'student-no-input'
+    ),
+
+  nameInput:
+    document.getElementById(
+      'player-name-input'
+    ),
+
+  modeButtons:
+    [
+      ...document.querySelectorAll(
+        '.mode-btn'
+      )
+    ],
+
+  btnStart:
+    document.getElementById(
+      'btn-start'
+    ),
+
+  studentDisplay:
+    document.getElementById(
+      'student-display'
+    ),
+
+  modeDisplay:
+    document.getElementById(
+      'mode-display'
+    ),
+
+  lessonTitle:
+    document.getElementById(
+      'lesson-title'
+    ),
+
+  poemDisplay:
+    document.getElementById(
+      'poem-display'
+    ),
+
+  input:
+    document.getElementById(
+      'input-field'
+    ),
+
+  timer:
+    document.getElementById(
+      'timer'
+    ),
+
+  rawWpm:
+    document.getElementById(
+      'raw-wpm'
+    ),
+
+  netWpm:
+    document.getElementById(
+      'net-wpm'
+    ),
+
+  accuracy:
+    document.getElementById(
+      'accuracy'
+    ),
+
+  errorCount:
+    document.getElementById(
+      'error-count'
+    ),
+
+  progressText:
+    document.getElementById(
+      'progress-text'
+    ),
+
+  progressFill:
+    document.getElementById(
+      'progress-fill'
+    ),
+
+  btnNext:
+    document.getElementById(
+      'btn-next'
+    ),
+
+  btnExit:
+    document.getElementById(
+      'btn-exit'
+    ),
+
+  leaderboard:
+    document.getElementById(
+      'leaderboard'
+    ),
+
+  leaderboardClassFilter:
+    document.getElementById(
+      'leaderboard-class-filter'
+    ),
+
+  countdownOverlay:
+    document.getElementById(
+      'countdown-overlay'
+    ),
+
+  countdownNumber:
+    document.getElementById(
+      'countdown-number'
+    ),
+
+  resultModal:
+    document.getElementById(
+      'result-modal'
+    ),
+
+  resultTitle:
+    document.getElementById(
+      'result-title'
+    ),
+
+  resultNetWpm:
+    document.getElementById(
+      'result-net-wpm'
+    ),
+
+  resultAccuracy:
+    document.getElementById(
+      'result-accuracy'
+    ),
+
+  resultErrors:
+    document.getElementById(
+      'result-errors'
+    ),
+
+  resultTime:
+    document.getElementById(
+      'result-time'
+    ),
+
+  resultBadge:
+    document.getElementById(
+      'result-badge'
+    ),
+
+  resultSaveStatus:
+    document.getElementById(
+      'result-save-status'
+    ),
+
+  resultErrorsDetail:
+    document.getElementById(
+      'result-errors-detail'
+    ),
+
+  btnPlayAgain:
+    document.getElementById(
+      'btn-play-again'
+    ),
+
+  btnCloseResult:
+    document.getElementById(
+      'btn-close-result'
+    )
+
+};
+
+
+/* ==========================================================
+   TRẠNG THÁI
+========================================================== */
+
+const state = {
+
+  mode:'practice',
+
+  student:null,
+
+  currentLessonIndex:-1,
+
+  previousLessonIndex:-1,
+
+  started:false,
+
+  completed:false,
+
+  startTime:0,
+
+  rafId:null,
+
+  totalKeystrokes:0,
+
+  errorKeystrokes:0,
+
+  mistakes:{},
+
+  previousValue:'',
+
+  lastStats:null
+
+};
+
+
+/* ==========================================================
+   HÀM TIỆN ÍCH
+========================================================== */
+
+function normalizeText(text) {
+
+  return String(text)
+
+    .replace(/\r\n/g,'\n')
+
+    .replace(/\r/g,'\n')
+
+    .trim();
+
+}
+
+
+function normalizeClassName(value) {
+
+  return String(
+    value || ''
+  )
+    .trim()
+    .replace(/\s+/g,'')
+    .toUpperCase();
+
+}
+
+
+function sanitizeKey(value) {
+
+  return String(value)
+
+    .trim()
+
+    .toLowerCase()
+
+    .normalize('NFD')
+
+    .replace(
+      /[\u0300-\u036f]/g,
+      ''
+    )
+
+    .replace(
+      /[^a-z0-9_-]+/g,
+      '_'
+    )
+
+    .replace(
+      /^_+|_+$/g,
+      ''
+    )
+
+    || 'unknown';
+
+}
+
+
+function escapeHTML(str) {
+
+  return String(str).replace(
+
+    /[&<>'"]/g,
+
+    ch => ({
+
+      '&':'&amp;',
+
+      '<':'&lt;',
+
+      '>':'&gt;',
+
+      "'":'&#39;',
+
+      '"':'&quot;'
+
+    }[ch])
+
+  );
+
+}
+
+
+function getStudentKey(student) {
+
+  return (
+    sanitizeKey(
+      student.className
+    )
+
+    + '_'
+
+    + String(
+      student.studentNo
+    ).padStart(
+      2,
+      '0'
+    )
+  );
+
+}
+
+
+function delay(ms) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
+
+}
+
+
+/* ==========================================================
+   KIỂM TRA THÔNG TIN HỌC SINH
+========================================================== */
+
+function validateStudent() {
+
+  const className =
+    normalizeClassName(
+      els.classInput.value
+    );
+
+
+  const studentNo =
+    Number.parseInt(
+      els.studentNoInput.value,
+      10
+    );
+
+
+  const name =
+    els.nameInput.value
+
+      .trim()
+
+      .replace(
+        /\s+/g,
+        ' '
+      );
+
+
+  if (!className) {
+
+    return {
+
+      ok:false,
+
+      message:
+        'Vui lòng nhập lớp.'
+
+    };
+
+  }
+
+
+  if (
+    !Number.isInteger(
+      studentNo
+    )
+
+    ||
+    studentNo < 1
+
+    ||
+    studentNo > 99
+  ) {
+
+    return {
+
+      ok:false,
+
+      message:
+        'STT phải từ 1 đến 99.'
+
+    };
+
+  }
+
+
+  if (
+    name.length < 2
+  ) {
+
+    return {
+
+      ok:false,
+
+      message:
+        'Vui lòng nhập họ và tên học sinh.'
+
+    };
+
+  }
+
+
+  return {
+
+    ok:true,
+
+    student:{
+
+      className,
+
+      studentNo,
+
+      name
+
+    }
+
+  };
+
+}
+
+
+/* ==========================================================
+   CHỌN CHẾ ĐỘ
+========================================================== */
+
+function setMode(mode) {
+
+  state.mode =
+    mode;
+
+
+  els.modeButtons.forEach(
+
+    btn => {
+
+      btn.classList.toggle(
+
+        'active',
+
+        btn.dataset.mode
+          === mode
+
+      );
+
+    }
+
+  );
+
+}
+
+
+els.modeButtons.forEach(
+
+  btn => {
+
+    btn.addEventListener(
+
+      'click',
+
+      () =>
+        setMode(
+          btn.dataset.mode
+        )
+
+    );
+
+  }
+
+);
+
+
+/* ==========================================================
+   BẮT ĐẦU
+========================================================== */
+
+els.btnStart.addEventListener(
+
+  'click',
+
+  async () => {
+
+    const check =
+      validateStudent();
+
+
+    if (!check.ok) {
+
+      alert(
+        check.message
+      );
+
+      return;
+
+    }
+
+
+    state.student =
+      check.student;
+
+
+    els.setup.classList.add(
+      'hidden'
+    );
+
+
+    els.game.classList.remove(
+      'hidden'
+    );
+
+
+    els.studentDisplay.textContent =
+      `${state.student.className} · `
+      + `STT ${state.student.studentNo} · `
+      + `${state.student.name}`;
+
+
+    els.modeDisplay.textContent =
+
+      state.mode ===
+      'challenge'
+
+        ? 'Thử thách'
+
+        : 'Luyện tập';
+
+
+    els.btnNext.classList.toggle(
+
+      'hidden',
+
+      state.mode ===
+      'challenge'
+
+    );
+
+
+    loadNewLesson();
+
+
+    if (
+      state.mode ===
+      'challenge'
+    ) {
+
+      await runCountdownAndEnable();
+
+    }
+    else {
+
+      enableTyping();
+
+    }
+
+  }
+
+);
+
+
+/* ==========================================================
+   CHỌN BÀI
+========================================================== */
+
+function chooseLessonIndex() {
+
+  if (
+    lessons.length === 1
+  ) {
+
+    return 0;
+
+  }
+
+
+  let idx;
+
+
+  do {
+
+    idx =
+      Math.floor(
+        Math.random()
+        * lessons.length
+      );
+
+  }
+  while (
+    idx ===
+    state.previousLessonIndex
+  );
+
+
+  return idx;
+
+}
+
+
+/* ==========================================================
+   NẠP BÀI
+========================================================== */
+
+function loadNewLesson() {
+
+  stopTimer();
+
+
+  state.previousLessonIndex =
+    state.currentLessonIndex;
+
+
+  state.currentLessonIndex =
+    chooseLessonIndex();
+
+
+  state.started = false;
+
+  state.completed = false;
+
+  state.startTime = 0;
+
+  state.totalKeystrokes = 0;
+
+  state.errorKeystrokes = 0;
+
+  state.mistakes = {};
+
+  state.previousValue = '';
+
+  state.lastStats = null;
+
+
+  els.input.value = '';
+
+  els.input.disabled = true;
+
+  els.poemDisplay.scrollTop = 0;
+
+
+  renderLesson();
+
+
+  renderStats({
+
+    elapsed:0,
+
+    rawWpm:0,
+
+    netWpm:0,
+
+    accuracy:100,
+
+    errors:0,
+
+    progress:0
+
+  });
+
+}
+
+
+/* ==========================================================
+   HIỂN THỊ BÀI
+========================================================== */
+
+function renderLesson() {
+
+  const lesson =
+    lessons[
+      state.currentLessonIndex
     ];
 
-    const startScreen = document.getElementById('start-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const btnStart = document.getElementById('btn-start');
-    const playerNameInput = document.getElementById('player-name-input');
-    const displayPlayerName = document.getElementById('display-player-name');
 
-    const poemDisplay = document.getElementById('poem-display');
-    const inputField = document.getElementById('input-field');
-    const timerDisplay = document.getElementById('timer');
-    const wpmDisplay = document.getElementById('wpm');
-    const accuracyDisplay = document.getElementById('accuracy');
-    const btnNext = document.getElementById('btn-next');
-    const leaderboardEl = document.getElementById('leaderboard');
+  els.lessonTitle.textContent =
+    `Bài: ${lesson.title} · `
+    + `${lesson.text.length} ký tự`;
 
-    let currentPoem = "";
-    let startTime;
-    let timerInterval;
-    let isStarted = false;
-    let correctCharsCount = 0;
 
-    // XỬ LÝ NÚT BẮT ĐẦU
-    btnStart.addEventListener('click', startGame);
-    playerNameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') startGame();
-    });
+  els.poemDisplay.innerHTML =
+    '';
 
-    function startGame() {
-        const name = playerNameInput.value.trim();
-        if (!name) {
-            alert('Vui lòng nhập Họ và tên học sinh!');
-            playerNameInput.focus();
-            return;
-        }
 
-        // Chuyển màn hình
-        displayPlayerName.innerText = name;
-        startScreen.style.display = 'none';
-        gameScreen.style.display = 'block';
+  const frag =
+    document.createDocumentFragment();
 
-        loadRandomPoem();
-    }
 
-    function loadRandomPoem() {
-        clearInterval(timerInterval);
-        isStarted = false;
-        timerDisplay.innerText = "0";
-        wpmDisplay.innerText = "0";
-        accuracyDisplay.innerText = "100";
-        inputField.value = "";
-        inputField.disabled = false;
-        poemDisplay.scrollTop = 0;
+  [...lesson.text].forEach(
 
-        const randomIndex = Math.floor(Math.random() * poemsList.length);
-        currentPoem = poemsList[randomIndex];
+    (char,index) => {
 
-        poemDisplay.innerHTML = '';
-        currentPoem.split('').forEach((char, index) => {
-            const charSpan = document.createElement('span');
-            charSpan.innerText = char;
-            if (index === 0) charSpan.classList.add('char-current');
-            poemDisplay.appendChild(charSpan);
-        });
-
-        inputField.focus();
-    }
-
-    inputField.addEventListener('input', () => {
-        if (!isStarted) {
-            isStarted = true;
-            startTime = new Date();
-            timerInterval = setInterval(updateStats, 1000);
-        }
-
-        const arrayPoemSpans = poemDisplay.querySelectorAll('span');
-        const arrayValue = inputField.value.split('');
-        
-        correctCharsCount = 0;
-        let isAllCorrect = true;
-
-        arrayPoemSpans.forEach((characterSpan, index) => {
-            const character = arrayValue[index];
-            characterSpan.classList.remove('char-current');
-
-            if (character == null) {
-                characterSpan.classList.remove('char-correct', 'char-incorrect');
-                isAllCorrect = false;
-            } else if (character === characterSpan.innerText) {
-                characterSpan.classList.add('char-correct');
-                characterSpan.classList.remove('char-incorrect');
-                correctCharsCount++;
-            } else {
-                characterSpan.classList.add('char-incorrect');
-                characterSpan.classList.remove('char-correct');
-                isAllCorrect = false;
-            }
-        });
-
-        if (arrayValue.length < arrayPoemSpans.length) {
-            const currentSpan = arrayPoemSpans[arrayValue.length];
-            currentSpan.classList.add('char-current');
-            currentSpan.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        }
-
-        updateStats();
-
-        if (arrayValue.length === currentPoem.length && isAllCorrect) {
-            clearInterval(timerInterval);
-            inputField.disabled = true;
-            const finalWPM = parseInt(wpmDisplay.innerText);
-            const finalAccuracy = parseInt(accuracyDisplay.innerText);
-            const name = playerNameInput.value.trim();
-
-            if (finalAccuracy >= 90) {
-                saveScoreToFirebase(name, finalWPM, finalAccuracy);
-                setTimeout(() => {
-                    alert(`🎉 Chúc mừng ${name}!\nTốc độ: ${finalWPM} WPM\nĐộ chính xác: ${finalAccuracy}%\nThành tích đã lưu lên Bảng xếp hạng!`);
-                }, 100);
-            } else {
-                setTimeout(() => {
-                    alert(`⚠️ Độ chính xác của bạn là ${finalAccuracy}% (cần ≥ 90% để lên Bảng xếp hạng). Hãy bấm 'Đổi bài khác' để thử lại nhé!`);
-                }, 100);
-            }
-        }
-    });
-
-    function updateStats() {
-        const timeElapsed = Math.floor((new Date() - startTime) / 1000);
-        timerDisplay.innerText = timeElapsed;
-
-        const totalTyped = inputField.value.length;
-        const accuracy = totalTyped > 0 ? Math.round((correctCharsCount / totalTyped) * 100) : 100;
-        accuracyDisplay.innerText = accuracy;
-
-        const minutes = timeElapsed / 60;
-        const wpm = minutes > 0 ? Math.round((correctCharsCount / 5) / minutes) : 0;
-        wpmDisplay.innerText = wpm;
-    }
-
-    function saveScoreToFirebase(name, wpm, accuracy) {
-        scoresRef.push({
-            name: name,
-            wpm: wpm,
-            accuracy: accuracy,
-            timestamp: Date.now()
-        });
-    }
-
-    scoresRef.orderByChild('wpm').limitToLast(10).on('value', (snapshot) => {
-        const scores = [];
-        snapshot.forEach((childSnapshot) => {
-            scores.push(childSnapshot.val());
-        });
-
-        scores.sort((a, b) => b.wpm - a.wpm);
-
-        leaderboardEl.innerHTML = '';
-        if (scores.length === 0) {
-            leaderboardEl.innerHTML = '<li style="color:#888; font-style:italic; padding:10px;">Chưa có lượt chơi nào.</li>';
-            return;
-        }
-
-        scores.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.className = 'leaderboard-item';
-            li.innerHTML = `
-                <span class="rank">#${index + 1}</span>
-                <span class="player-name">${escapeHTML(item.name)}</span>
-                <span class="score">${item.wpm} WPM (${item.accuracy || 100}%)</span>
-            `;
-            leaderboardEl.appendChild(li);
-        });
-    });
-
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
-            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      const span =
+        document.createElement(
+          'span'
         );
+
+
+      span.textContent =
+        char;
+
+
+      if (
+        index === 0
+      ) {
+
+        span.classList.add(
+          'char-current'
+        );
+
+      }
+
+
+      frag.appendChild(
+        span
+      );
+
     }
 
-    btnNext.addEventListener('click', loadRandomPoem);
+  );
+
+
+  els.poemDisplay.appendChild(
+    frag
+  );
+
+}
+
+
+/* ==========================================================
+   KÍCH HOẠT NHẬP
+========================================================== */
+
+function enableTyping() {
+
+  els.input.disabled =
+    false;
+
+
+  els.input.focus();
+
+}
+
+
+/* ==========================================================
+   COUNTDOWN
+========================================================== */
+
+async function runCountdownAndEnable() {
+
+  els.countdownOverlay
+    .classList
+    .remove(
+      'hidden'
+    );
+
+
+  for (
+    const label of
+    [
+      '3',
+      '2',
+      '1',
+      'BẮT ĐẦU'
+    ]
+  ) {
+
+    els.countdownNumber
+      .textContent =
+        label;
+
+
+    if (
+      label ===
+      'BẮT ĐẦU'
+    ) {
+
+      els.countdownNumber
+        .style
+        .fontSize =
+          '1.55rem';
+
+    }
+    else {
+
+      els.countdownNumber
+        .style
+        .fontSize =
+          '4rem';
+
+    }
+
+
+    await delay(
+
+      label ===
+      'BẮT ĐẦU'
+
+        ? 450
+
+        : 700
+
+    );
+
+  }
+
+
+  els.countdownOverlay
+    .classList
+    .add(
+      'hidden'
+    );
+
+
+  /*
+    Quan chữ BẮT ĐẦU kết thúc,
+    đồng hồ chạy ngay.
+  */
+
+  state.started =
+    true;
+
+
+  state.startTime =
+    performance.now();
+
+
+  startTimer();
+
+
+  enableTyping();
+
+}
+
+
+/* ==========================================================
+   CHẶN PASTE / DROP
+========================================================== */
+
+els.input.addEventListener(
+
+  'paste',
+
+  e => {
+
+    e.preventDefault();
+
+    flashBlocked(
+      'Không được dán văn bản.'
+    );
+
+  }
+
+);
+
+
+els.input.addEventListener(
+
+  'drop',
+
+  e => {
+
+    e.preventDefault();
+
+    flashBlocked(
+      'Không được thả văn bản vào ô nhập.'
+    );
+
+  }
+
+);
+
+
+els.input.addEventListener(
+
+  'beforeinput',
+
+  e => {
+
+    if (
+
+      e.inputType ===
+      'insertFromPaste'
+
+      ||
+
+      e.inputType ===
+      'insertFromDrop'
+
+    ) {
+
+      e.preventDefault();
+
+    }
+
+  }
+
+);
+
+
+function flashBlocked(message) {
+
+  if (
+    state.mode ===
+    'challenge'
+  ) {
+
+    alert(message);
+
+  }
+
+}
+
+
+/* ==========================================================
+   XỬ LÝ GÕ PHÍM
+========================================================== */
+
+els.input.addEventListener(
+
+  'input',
+
+  handleInput
+
+);
+
+
+function handleInput() {
+
+  if (
+    state.completed
+  ) {
+
+    return;
+
+  }
+
+
+  const lessonText =
+    lessons[
+      state.currentLessonIndex
+    ].text;
+
+
+  const currentValue =
+    els.input.value;
+
+
+  /*
+    Ở chế độ Luyện tập,
+    đồng hồ chỉ bắt đầu khi
+    học sinh gõ ký tự đầu tiên.
+  */
+
+  if (
+
+    !state.started
+
+    &&
+
+    currentValue.length > 0
+
+  ) {
+
+    state.started =
+      true;
+
+
+    state.startTime =
+      performance.now();
+
+
+    startTimer();
+
+  }
+
+
+  trackNewKeystrokes(
+
+    state.previousValue,
+
+    currentValue,
+
+    lessonText
+
+  );
+
+
+  state.previousValue =
+    currentValue;
+
+
+  updateCharacterRendering(
+
+    currentValue,
+
+    lessonText
+
+  );
+
+
+  const stats =
+    calculateStats();
+
+
+  renderStats(
+    stats
+  );
+
+
+  /*
+    Chỉ hoàn thành khi:
+    - đủ chiều dài
+    - toàn bộ nội dung chính xác.
+  */
+
+  if (
+
+    currentValue.length ===
+      lessonText.length
+
+    &&
+
+    currentValue ===
+      lessonText
+
+  ) {
+
+    finishGame();
+
+  }
+
+}
+
+
+/* ==========================================================
+   THEO DÕI SỐ LẦN GÕ VÀ LỖI
+========================================================== */
+
+function trackNewKeystrokes(
+  oldValue,
+  newValue,
+  target
+) {
+
+  /*
+    Backspace hoặc xóa ký tự
+    không tính là một lần gõ sai mới.
+  */
+
+  if (
+    newValue.length <=
+    oldValue.length
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Tìm phần đầu giống nhau.
+    Những ký tự mới sau đó mới được
+    xem là thao tác nhập mới.
+  */
+
+  let commonPrefix = 0;
+
+
+  const minLen =
+    Math.min(
+
+      oldValue.length,
+
+      newValue.length
+
+    );
+
+
+  while (
+
+    commonPrefix <
+      minLen
+
+    &&
+
+    oldValue[
+      commonPrefix
+    ] ===
+
+    newValue[
+      commonPrefix
+    ]
+
+  ) {
+
+    commonPrefix++;
+
+  }
+
+
+  for (
+    let i = commonPrefix;
+    i < newValue.length;
+    i++
+  ) {
+
+    const typed =
+      newValue[i];
+
+
+    const expected =
+      target[i];
+
+
+    state.totalKeystrokes++;
+
+
+    if (
+      typed !==
+      expected
+    ) {
+
+      state.errorKeystrokes++;
+
+
+      const expectedLabel =
+
+        expected === '\n'
+
+          ? '↵'
+
+          : (
+              expected
+              ?? '∅'
+            );
+
+
+      const typedLabel =
+
+        typed === '\n'
+
+          ? '↵'
+
+          : typed;
+
+
+      const key =
+        `${expectedLabel} → ${typedLabel}`;
+
+
+      state.mistakes[key] =
+        (
+          state.mistakes[key]
+          || 0
+        )
+        + 1;
+
+    }
+
+  }
+
+}
+
+
+/* ==========================================================
+   TÔ MÀU KÝ TỰ
+========================================================== */
+
+function updateCharacterRendering(
+  value,
+  target
+) {
+
+  const spans =
+    els.poemDisplay
+      .querySelectorAll(
+        'span'
+      );
+
+
+  let firstMismatch =
+    -1;
+
+
+  spans.forEach(
+
+    (span,index) => {
+
+      span.classList.remove(
+
+        'char-correct',
+
+        'char-incorrect',
+
+        'char-current'
+
+      );
+
+
+      if (
+        index <
+        value.length
+      ) {
+
+        if (
+
+          value[index] ===
+          target[index]
+
+        ) {
+
+          span.classList.add(
+            'char-correct'
+          );
+
+        }
+        else {
+
+          span.classList.add(
+            'char-incorrect'
+          );
+
+
+          if (
+            firstMismatch ===
+            -1
+          ) {
+
+            firstMismatch =
+              index;
+
+          }
+
+        }
+
+      }
+
+    }
+
+  );
+
+
+  const cursorIndex =
+    Math.min(
+
+      value.length,
+
+      spans.length - 1
+
+    );
+
+
+  if (
+
+    value.length <
+      spans.length
+
+    &&
+
+    spans[
+      cursorIndex
+    ]
+
+  ) {
+
+    spans[
+      cursorIndex
+    ]
+      .classList
+      .add(
+        'char-current'
+      );
+
+
+    smartScrollToSpan(
+
+      spans[
+        cursorIndex
+      ]
+
+    );
+
+  }
+  else if (
+
+    firstMismatch >= 0
+
+    &&
+
+    spans[
+      firstMismatch
+    ]
+
+  ) {
+
+    smartScrollToSpan(
+
+      spans[
+        firstMismatch
+      ]
+
+    );
+
+  }
+
+}
+
+
+/* ==========================================================
+   CUỘN THÔNG MINH
+========================================================== */
+
+function smartScrollToSpan(
+  span
+) {
+
+  const containerRect =
+    els.poemDisplay
+      .getBoundingClientRect();
+
+
+  const spanRect =
+    span
+      .getBoundingClientRect();
+
+
+  /*
+    Chỉ cuộn khi con trỏ sắp ra ngoài
+    vùng hiển thị, tránh rung màn hình.
+  */
+
+  if (
+
+    spanRect.top <
+      containerRect.top + 15
+
+    ||
+
+    spanRect.bottom >
+      containerRect.bottom - 15
+
+  ) {
+
+    const targetTop =
+
+      span.offsetTop
+
+      -
+
+      els.poemDisplay.clientHeight
+      / 2;
+
+
+    els.poemDisplay.scrollTo({
+
+      top:
+        Math.max(
+          0,
+          targetTop
+        ),
+
+      behavior:
+        'smooth'
+
+    });
+
+  }
+
+}
+
+
+/* ==========================================================
+   TIMER
+========================================================== */
+
+function startTimer() {
+
+  stopTimer();
+
+
+  const tick = () => {
+
+    if (
+
+      !state.started
+
+      ||
+
+      state.completed
+
+    ) {
+
+      return;
+
+    }
+
+
+    renderStats(
+      calculateStats()
+    );
+
+
+    state.rafId =
+      requestAnimationFrame(
+        tick
+      );
+
+  };
+
+
+  state.rafId =
+    requestAnimationFrame(
+      tick
+    );
+
+}
+
+
+function stopTimer() {
+
+  if (
+    state.rafId
+  ) {
+
+    cancelAnimationFrame(
+      state.rafId
+    );
+
+  }
+
+
+  state.rafId =
+    null;
+
+}
+
+
+/* ==========================================================
+   TÍNH THỐNG KÊ
+========================================================== */
+
+function calculateStats() {
+
+  const now =
+
+    state.completed
+    &&
+    state.lastStats
+
+      ?
+
+      state.startTime
+      +
+      state.lastStats.elapsed
+      * 1000
+
+      :
+
+      performance.now();
+
+
+  const elapsed =
+
+    state.started
+
+      ?
+
+      Math.max(
+
+        (
+          now -
+          state.startTime
+        )
+        / 1000,
+
+        0.001
+
+      )
+
+      :
+
+      0;
+
+
+  const minutes =
+    elapsed / 60;
+
+
+  const typedLength =
+    els.input.value.length;
+
+
+  /*
+    Raw WPM:
+    5 ký tự được quy ước là một từ.
+  */
+
+  const rawWpm =
+
+    minutes > 0
+
+      ?
+
+      (
+        typedLength
+        / 5
+      )
+      / minutes
+
+      :
+
+      0;
+
+
+  /*
+    Mỗi lần gõ sai tạo một khoản
+    phạt trên Net WPM.
+  */
+
+  const errorPenaltyPerMinute =
+
+    minutes > 0
+
+      ?
+
+      state.errorKeystrokes
+      / minutes
+
+      :
+
+      0;
+
+
+  const netWpm =
+    Math.max(
+
+      0,
+
+      rawWpm
+      -
+      errorPenaltyPerMinute
+
+    );
+
+
+  /*
+    Accuracy tính trên lịch sử thao tác,
+    không phải chỉ văn bản cuối cùng.
+
+    Vì vậy:
+    gõ sai → Backspace → sửa đúng
+    vẫn bị ghi nhận lỗi.
+  */
+
+  const accuracy =
+
+    state.totalKeystrokes > 0
+
+      ?
+
+      Math.max(
+
+        0,
+
+        (
+          (
+            state.totalKeystrokes
+            -
+            state.errorKeystrokes
+          )
+
+          /
+
+          state.totalKeystrokes
+
+        )
+        * 100
+
+      )
+
+      :
+
+      100;
+
+
+  const progress =
+
+    lessons[
+      state.currentLessonIndex
+    ]
+
+      ?
+
+      Math.min(
+
+        100,
+
+        (
+          typedLength
+          /
+          lessons[
+            state.currentLessonIndex
+          ].text.length
+        )
+        * 100
+
+      )
+
+      :
+
+      0;
+
+
+  return {
+
+    elapsed,
+
+    rawWpm:
+      Math.round(
+        rawWpm
+      ),
+
+    netWpm:
+      Math.round(
+        netWpm
+      ),
+
+    accuracy:
+      Math.round(
+        accuracy
+      ),
+
+    errors:
+      state.errorKeystrokes,
+
+    progress:
+      Math.round(
+        progress
+      )
+
+  };
+
+}
+
+
+/* ==========================================================
+   HIỂN THỊ THỐNG KÊ
+========================================================== */
+
+function renderStats(
+  stats
+) {
+
+  els.timer.textContent =
+    stats.elapsed
+      .toFixed(1);
+
+
+  els.rawWpm.textContent =
+    stats.rawWpm;
+
+
+  els.netWpm.textContent =
+    stats.netWpm;
+
+
+  els.accuracy.textContent =
+    stats.accuracy;
+
+
+  els.errorCount.textContent =
+    stats.errors;
+
+
+  els.progressText.textContent =
+    `${stats.progress}%`;
+
+
+  els.progressFill.style.width =
+    `${stats.progress}%`;
+
+}
+
+
+/* ==========================================================
+   HOÀN THÀNH
+========================================================== */
+
+async function finishGame() {
+
+  if (
+    state.completed
+  ) {
+
+    return;
+
+  }
+
+
+  state.completed =
+    true;
+
+
+  stopTimer();
+
+
+  const finalStats =
+    calculateStats();
+
+
+  state.lastStats =
+    finalStats;
+
+
+  els.input.disabled =
+    true;
+
+
+  renderStats(
+    finalStats
+  );
+
+
+  showResult(
+    finalStats
+  );
+
+
+  if (
+    state.mode ===
+    'challenge'
+  ) {
+
+    els.resultSaveStatus.textContent =
+      'Đang lưu thành tích...';
+
+
+    const result =
+      await saveBestScore(
+        finalStats
+      );
+
+
+    els.resultSaveStatus.textContent =
+      result.message;
+
+  }
+  else {
+
+    els.resultSaveStatus.textContent =
+      'Chế độ Luyện tập: kết quả không được ghi vào bảng xếp hạng.';
+
+  }
+
+}
+
+
+/* ==========================================================
+   XẾP LOẠI
+========================================================== */
+
+function getBadge(
+  netWpm,
+  accuracy
+) {
+
+  if (
+    accuracy < 85
+  ) {
+
+    return 'Cần chính xác hơn';
+
+  }
+
+
+  if (
+    netWpm >= 45
+  ) {
+
+    return '🏆 Siêu tốc';
+
+  }
+
+
+  if (
+    netWpm >= 35
+  ) {
+
+    return '🥇 Rất tốt';
+
+  }
+
+
+  if (
+    netWpm >= 25
+  ) {
+
+    return '🥈 Tốt';
+
+  }
+
+
+  if (
+    netWpm >= 15
+  ) {
+
+    return '🥉 Khá';
+
+  }
+
+
+  return '🌱 Đang luyện';
+
+}
+
+
+/* ==========================================================
+   MODAL KẾT QUẢ
+========================================================== */
+
+function showResult(
+  stats
+) {
+
+  els.resultTitle.textContent =
+    `Hoàn thành · ${
+      lessons[
+        state.currentLessonIndex
+      ].title
+    }`;
+
+
+  els.resultNetWpm.textContent =
+    stats.netWpm;
+
+
+  els.resultAccuracy.textContent =
+    stats.accuracy;
+
+
+  els.resultErrors.textContent =
+    stats.errors;
+
+
+  els.resultTime.textContent =
+    stats.elapsed
+      .toFixed(1);
+
+
+  els.resultBadge.textContent =
+    getBadge(
+
+      stats.netWpm,
+
+      stats.accuracy
+
+    );
+
+
+  renderMistakeDetails();
+
+
+  els.resultModal
+    .classList
+    .remove(
+      'hidden'
+    );
+
+}
+
+
+/* ==========================================================
+   THỐNG KÊ LỖI
+========================================================== */
+
+function renderMistakeDetails() {
+
+  const entries =
+
+    Object.entries(
+      state.mistakes
+    )
+
+    .sort(
+      (a,b) =>
+        b[1] - a[1]
+    )
+
+    .slice(
+      0,
+      8
+    );
+
+
+  if (
+    !entries.length
+  ) {
+
+    els.resultErrorsDetail
+      .classList
+      .add(
+        'hidden'
+      );
+
+
+    els.resultErrorsDetail
+      .innerHTML =
+        '';
+
+
+    return;
+
+  }
+
+
+  els.resultErrorsDetail
+    .classList
+    .remove(
+      'hidden'
+    );
+
+
+  els.resultErrorsDetail
+    .innerHTML =
+
+      `<strong>Lỗi gõ thường gặp</strong><br>`
+
+      +
+
+      entries.map(
+
+        ([key,count]) =>
+
+          `${escapeHTML(key)}: `
+          + `${count} lần`
+
+      ).join(
+        '<br>'
+      );
+
+}
+
+
+/* ==========================================================
+   LƯU KỶ LỤC FIREBASE
+========================================================== */
+
+async function saveBestScore(
+  stats
+) {
+
+  if (
+
+    !firebaseReady
+
+    ||
+
+    !bestScoresRef
+
+  ) {
+
+    return {
+
+      saved:false,
+
+      message:
+        'Không thể kết nối Firebase; kết quả chưa được lưu.'
+
+    };
+
+  }
+
+
+  /*
+    Ngưỡng tối thiểu để lên bảng.
+  */
+
+  if (
+    stats.accuracy < 85
+  ) {
+
+    return {
+
+      saved:false,
+
+      message:
+        'Độ chính xác dưới 85%; kết quả không được ghi vào bảng xếp hạng.'
+
+    };
+
+  }
+
+
+  /*
+    Loại bỏ kết quả tốc độ bất thường.
+  */
+
+  if (
+    stats.netWpm > 250
+  ) {
+
+    return {
+
+      saved:false,
+
+      message:
+        'Kết quả vượt ngưỡng hợp lệ và không được lưu.'
+
+    };
+
+  }
+
+
+  const key =
+    getStudentKey(
+      state.student
+    );
+
+
+  const ref =
+    bestScoresRef.child(
+      key
+    );
+
+
+  const payload = {
+
+    name:
+      state.student.name,
+
+    className:
+      state.student.className,
+
+    studentNo:
+      state.student.studentNo,
+
+    netWpm:
+      stats.netWpm,
+
+    rawWpm:
+      stats.rawWpm,
+
+    accuracy:
+      stats.accuracy,
+
+    errors:
+      stats.errors,
+
+    lessonId:
+      lessons[
+        state.currentLessonIndex
+      ].id,
+
+    lessonTitle:
+      lessons[
+        state.currentLessonIndex
+      ].title,
+
+    elapsed:
+      Number(
+        stats.elapsed
+          .toFixed(1)
+      ),
+
+    updatedAt:
+      firebase.database
+        .ServerValue
+        .TIMESTAMP
+
+  };
+
+
+  try {
+
+    /*
+      transaction giúp tránh việc hai lượt
+      ghi đè lẫn nhau.
+
+      Chỉ thay record cũ nếu:
+      - Net WPM cao hơn
+      - hoặc Net WPM bằng nhau nhưng accuracy cao hơn.
+    */
+
+    const transactionResult =
+      await ref.transaction(
+
+        current => {
+
+          if (
+            !current
+          ) {
+
+            return payload;
+
+          }
+
+
+          const currentNet =
+            Number(
+              current.netWpm
+              || 0
+            );
+
+
+          const currentAccuracy =
+            Number(
+              current.accuracy
+              || 0
+            );
+
+
+          if (
+
+            payload.netWpm >
+              currentNet
+
+            ||
+
+            (
+              payload.netWpm ===
+                currentNet
+
+              &&
+
+              payload.accuracy >
+                currentAccuracy
+            )
+
+          ) {
+
+            return payload;
+
+          }
+
+
+          /*
+            undefined = hủy transaction,
+            tức không ghi đè kỷ lục cũ.
+          */
+
+          return;
+
+        }
+
+      );
+
+
+    if (
+      transactionResult.committed
+    ) {
+
+      return {
+
+        saved:true,
+
+        message:
+          'Đã lưu kỷ lục cá nhân mới lên bảng xếp hạng.'
+
+      };
+
+    }
+
+
+    return {
+
+      saved:false,
+
+      message:
+        'Đã hoàn thành. Thành tích này chưa vượt kỷ lục cá nhân.'
+
+    };
+
+  }
+  catch (error) {
+
+    console.error(
+      'Save score error:',
+      error
+    );
+
+
+    return {
+
+      saved:false,
+
+      message:
+        'Lỗi khi lưu Firebase; vui lòng kiểm tra kết nối hoặc Database Rules.'
+
+    };
+
+  }
+
+}
+
+
+/* ==========================================================
+   ĐỔI BÀI
+========================================================== */
+
+els.btnNext.addEventListener(
+
+  'click',
+
+  () => {
+
+    if (
+      state.mode !==
+      'practice'
+    ) {
+
+      return;
+
+    }
+
+
+    loadNewLesson();
+
+
+    enableTyping();
+
+  }
+
+);
+
+
+/* ==========================================================
+   KẾT THÚC / ĐỔI NGƯỜI
+========================================================== */
+
+els.btnExit.addEventListener(
+
+  'click',
+
+  resetToSetup
+
+);
+
+
+function resetToSetup() {
+
+  stopTimer();
+
+
+  state.started =
+    false;
+
+
+  state.completed =
+    false;
+
+
+  els.input.value =
+    '';
+
+
+  els.game
+    .classList
+    .add(
+      'hidden'
+    );
+
+
+  els.setup
+    .classList
+    .remove(
+      'hidden'
+    );
+
+
+  els.resultModal
+    .classList
+    .add(
+      'hidden'
+    );
+
+
+  els.nameInput.focus();
+
+}
+
+
+/* ==========================================================
+   CHƠI TIẾP
+========================================================== */
+
+els.btnPlayAgain.addEventListener(
+
+  'click',
+
+  async () => {
+
+    els.resultModal
+      .classList
+      .add(
+        'hidden'
+      );
+
+
+    loadNewLesson();
+
+
+    if (
+      state.mode ===
+      'challenge'
+    ) {
+
+      await runCountdownAndEnable();
+
+    }
+    else {
+
+      enableTyping();
+
+    }
+
+  }
+
+);
+
+
+/* ==========================================================
+   ĐÓNG MODAL
+========================================================== */
+
+els.btnCloseResult.addEventListener(
+
+  'click',
+
+  () => {
+
+    els.resultModal
+      .classList
+      .add(
+        'hidden'
+      );
+
+  }
+
+);
+
+
+/* ==========================================================
+   BẢNG XẾP HẠNG
+========================================================== */
+
+function renderLeaderboard(
+  items
+) {
+
+  const selectedClass =
+    els.leaderboardClassFilter
+      .value;
+
+
+  let filtered =
+    items.filter(
+
+      item =>
+
+        item
+
+        &&
+
+        item.name
+
+        &&
+
+        Number.isFinite(
+          Number(
+            item.netWpm
+          )
+        )
+
+    );
+
+
+  if (
+    selectedClass !==
+    'all'
+  ) {
+
+    filtered =
+      filtered.filter(
+
+        item =>
+          item.className ===
+          selectedClass
+
+      );
+
+  }
+
+
+  filtered.sort(
+
+    (a,b) =>
+
+      Number(
+        b.netWpm
+      )
+
+      -
+
+      Number(
+        a.netWpm
+      )
+
+      ||
+
+      Number(
+        b.accuracy
+      )
+
+      -
+
+      Number(
+        a.accuracy
+      )
+
+      ||
+
+      Number(
+        a.studentNo
+      )
+
+      -
+
+      Number(
+        b.studentNo
+      )
+
+  );
+
+
+  filtered =
+    filtered.slice(
+      0,
+      10
+    );
+
+
+  if (
+    !filtered.length
+  ) {
+
+    els.leaderboard.innerHTML =
+      '<li class="empty">'
+      +
+      'Chưa có thành tích phù hợp.'
+      +
+      '</li>';
+
+
+    return;
+
+  }
+
+
+  els.leaderboard.innerHTML =
+
+    filtered.map(
+
+      (item,index) => `
+
+        <li class="leaderboard-item">
+
+          <span>
+            #${index + 1}
+          </span>
+
+          <span>
+
+            ${escapeHTML(
+              item.name
+            )}
+
+            <div class="player-meta">
+
+              ${escapeHTML(
+                item.className || ''
+              )}
+
+              · STT
+
+              ${Number(
+                item.studentNo || 0
+              )}
+
+            </div>
+
+          </span>
+
+          <span>
+
+            <strong>
+
+              ${Number(
+                item.netWpm || 0
+              )}
+
+              WPM
+
+            </strong>
+
+            <div class="player-meta">
+
+              ${Number(
+                item.accuracy || 0
+              )}%
+
+            </div>
+
+          </span>
+
+        </li>
+
+      `
+
+    ).join('');
+
+}
+
+
+/* ==========================================================
+   DANH SÁCH LỚP TRÊN BXH
+========================================================== */
+
+function updateClassFilter(
+  items
+) {
+
+  const current =
+    els.leaderboardClassFilter
+      .value;
+
+
+  const classes =
+    [
+      ...new Set(
+
+        items
+
+          .map(
+            item =>
+              item?.className
+          )
+
+          .filter(
+            Boolean
+          )
+
+      )
+    ];
+
+
+  classes.sort(
+
+    (a,b) =>
+      a.localeCompare(
+
+        b,
+
+        'vi',
+
+        {
+          numeric:true
+        }
+
+      )
+
+  );
+
+
+  els.leaderboardClassFilter
+    .innerHTML =
+
+      '<option value="all">'
+      +
+      'Tất cả lớp'
+      +
+      '</option>'
+
+      +
+
+      classes.map(
+
+        className =>
+
+          `<option value="${escapeHTML(
+            className
+          )}">`
+
+          +
+
+          `${escapeHTML(
+            className
+          )}`
+
+          +
+
+          '</option>'
+
+      ).join('');
+
+
+  if (
+
+    classes.includes(
+      current
+    )
+
+    ||
+
+    current ===
+    'all'
+
+  ) {
+
+    els.leaderboardClassFilter
+      .value =
+        current;
+
+  }
+
+}
+
+
+/* ==========================================================
+   CACHE BXH
+========================================================== */
+
+let leaderboardCache =
+  [];
+
+
+els.leaderboardClassFilter
+  .addEventListener(
+
+    'change',
+
+    () =>
+      renderLeaderboard(
+        leaderboardCache
+      )
+
+  );
+
+
+/* ==========================================================
+   LẮNG NGHE FIREBASE REALTIME
+========================================================== */
+
+if (
+  firebaseReady
+  &&
+  bestScoresRef
+) {
+
+  bestScoresRef.on(
+
+    'value',
+
+    snapshot => {
+
+      const items =
+        [];
+
+
+      snapshot.forEach(
+
+        child => {
+
+          items.push(
+            child.val()
+          );
+
+        }
+
+      );
+
+
+      leaderboardCache =
+        items;
+
+
+      updateClassFilter(
+        items
+      );
+
+
+      renderLeaderboard(
+        items
+      );
+
+    },
+
+    error => {
+
+      console.error(
+        'Leaderboard error:',
+        error
+      );
+
+
+      els.leaderboard.innerHTML =
+
+        '<li class="empty">'
+        +
+        'Không thể tải bảng xếp hạng. '
+        +
+        'Kiểm tra Firebase hoặc Database Rules.'
+        +
+        '</li>';
+
+    }
+
+  );
+
+}
+else {
+
+  els.leaderboard.innerHTML =
+
+    '<li class="empty">'
+    +
+    'Firebase chưa sẵn sàng.'
+    +
+    '</li>';
+
+}
+
+
+/* ==========================================================
+   HỖ TRỢ PHÍM ENTER
+========================================================== */
+
+els.nameInput.addEventListener(
+
+  'keydown',
+
+  e => {
+
+    if (
+      e.key ===
+      'Enter'
+    ) {
+
+      els.btnStart.click();
+
+    }
+
+  }
+
+);
+
+
+els.studentNoInput.addEventListener(
+
+  'keydown',
+
+  e => {
+
+    if (
+      e.key ===
+      'Enter'
+    ) {
+
+      els.nameInput.focus();
+
+    }
+
+  }
+
+);
+
 </script>
 
 </body>
