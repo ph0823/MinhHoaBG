@@ -266,6 +266,7 @@ textarea:focus {
   font-family: "Courier New", Courier, monospace;
   font-size: 1.18rem;
   line-height: 1.75;
+  scroll-behavior: auto;
 }
 
 .char-correct {
@@ -2049,8 +2050,7 @@ function updateCharacterRendering(
       ) {
 
         if (
-          value[index] ===
-          target[index]
+          value[index] === target[index]
         ) {
           span.classList.add(
             "char-correct"
@@ -2071,15 +2071,13 @@ function updateCharacterRendering(
   );
 
   if (
-    value.length <
-    spans.length
+    value.length < spans.length
   ) {
 
     const currentSpan =
       spans[value.length];
 
     if (currentSpan) {
-
       currentSpan.classList.add(
         "char-current"
       );
@@ -2097,6 +2095,10 @@ function updateCharacterRendering(
       spans[firstMismatch];
 
     if (mismatchSpan) {
+      mismatchSpan.classList.add(
+        "char-current"
+      );
+
       smartScrollToSpan(
         mismatchSpan
       );
@@ -2110,34 +2112,60 @@ function updateCharacterRendering(
 ========================================================= */
 
 function smartScrollToSpan(span) {
+  const container = els.poemDisplay;
+
+  if (!container || !span) return;
 
   const containerRect =
-    els.poemDisplay
-      .getBoundingClientRect();
+    container.getBoundingClientRect();
 
   const spanRect =
     span.getBoundingClientRect();
 
+  /*
+    Vị trí của ký tự hiện tại
+    bên trong vùng cuộn.
+  */
+  const relativeTop =
+    spanRect.top
+    -
+    containerRect.top
+    +
+    container.scrollTop;
+
+  /*
+    Giữ ký tự đang gõ
+    ở khoảng 35% chiều cao khung.
+  */
+  const targetScrollTop =
+    relativeTop
+    -
+    container.clientHeight * 0.35;
+
+  /*
+    Chỉ cuộn khi ký tự nằm
+    ngoài vùng trung tâm.
+  */
+  const upperThreshold =
+    containerRect.top
+    +
+    container.clientHeight * 0.25;
+
+  const lowerThreshold =
+    containerRect.top
+    +
+    container.clientHeight * 0.70;
+
   if (
-    spanRect.top <
-      containerRect.top + 20
+    spanRect.top < upperThreshold
     ||
-    spanRect.bottom >
-      containerRect.bottom - 20
+    spanRect.bottom > lowerThreshold
   ) {
-
-    const targetTop =
-      span.offsetTop
-      -
-      els.poemDisplay.clientHeight
-      / 2;
-
-    els.poemDisplay.scrollTo({
-      top:
-        Math.max(
-          0,
-          targetTop
-        ),
+    container.scrollTo({
+      top: Math.max(
+        0,
+        targetScrollTop
+      ),
       behavior: "smooth"
     });
   }
