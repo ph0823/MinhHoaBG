@@ -87,6 +87,22 @@ th{background:#edf5ff}
 }
 .demo-mode .progress-bar{background:#7e57c2}
 
+/* ===== TRẢI NGHIỆM DUYỆT BÀI GIÁO VIÊN ===== */
+.teacher-list-panel{transition:.2s ease}
+.teacher-list-collapsed{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:12px 0;padding:11px 13px;border:1px solid var(--border);border-radius:11px;
+  background:#f8fbff
+}
+.review-nav{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  position:sticky;top:8px;z-index:8;margin-bottom:14px;padding:10px;
+  background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.06)
+}
+.review-nav-center{font-weight:700;color:var(--primary2);text-align:center;flex:1;min-width:180px}
+.review-nav .btn{white-space:nowrap}
+
 
 /* ===== REVIEW / CHẤM PHIẾU ===== */
 .review-sheet{margin-top:14px}
@@ -323,6 +339,11 @@ th{background:#edf5ff}
       <div><strong id="kpiAvg">0%</strong>Tiến độ TB</div>
       <div><strong id="kpiRecent">-</strong>Cập nhật gần nhất</div>
     </div>
+    <div id="teacherListCollapsed" class="teacher-list-collapsed hidden">
+      <span id="teacherListCollapsedText" class="small">Danh sách học sinh đang được thu gọn.</span>
+      <button class="btn light" id="showTeacherListBtn" type="button">Hiện danh sách</button>
+    </div>
+    <div id="teacherListPanel" class="teacher-list-panel">
     <div class="table-wrap">
       <table class="teacher-table">
         <thead>
@@ -333,6 +354,7 @@ th{background:#edf5ff}
         </thead>
         <tbody id="teacherBody"></tbody>
       </table>
+    </div>
     </div>
     <div id="teacherDetail" style="margin-top:14px"></div>
   </section>
@@ -366,6 +388,8 @@ let firebaseReady = false;
 let firebaseRecords = {};
 let teacherMode = false;
 let teacherListener = null;
+let teacherCurrentView = [];
+let currentReviewUid = null;
 let reviewsRef = null;
 let ownReviewRef = null;
 let teacherReviews = {};
@@ -1001,6 +1025,8 @@ document.getElementById("teacherBackBtn").onclick=async()=>{
   document.getElementById("teacherScreen").classList.add("hidden");
   document.getElementById("loginScreen").classList.remove("hidden");
   document.getElementById("teacherDetail").innerHTML="";
+  currentReviewUid=null;
+  expandTeacherList(false);
   await logoutTeacherAndRestoreStudent();
 };
 
@@ -1037,6 +1063,10 @@ function renderTeacher(){
   const view=filter.value==="all"
     ? entries
     : entries.filter(r=>r.className===filter.value);
+
+  // Lưu đúng thứ tự danh sách hiện đang được giáo viên xem/lọc.
+  // Các nút Học sinh trước / kế tiếp sẽ dựa trên mảng này.
+  teacherCurrentView=view.map(r=>r.uid);
 
   document.getElementById("kpiStudents").textContent=view.length;
   document.getElementById("kpiCompleted").textContent=
@@ -1081,7 +1111,13 @@ function renderTeacher(){
     b=>b.onclick=()=>deleteStudentResult(b.dataset.delete)
   );
 }
-document.getElementById("teacherClassFilter").onchange=renderTeacher;
+document.getElementById("teacherClassFilter").onchange=()=>{
+  currentReviewUid=null;
+  document.getElementById("teacherDetail").innerHTML="";
+  expandTeacherList(false);
+  renderTeacher();
+};
+document.getElementById("showTeacherListBtn").onclick=()=>expandTeacherList(true);
 
 function removeLocalStudentRecord(className,studentNo){
   const key=studentKey(className,studentNo);
@@ -1320,16 +1356,63 @@ function renderReviewQuestions(record){
   }).join("");
 }
 
+function collapseTeacherList(){
+  const panel=document.getElementById("teacherListPanel");
+  const collapsed=document.getElementById("teacherListCollapsed");
+  if(panel)panel.classList.add("hidden");
+  if(collapsed){
+    collapsed.classList.remove("hidden");
+    const pos=teacherCurrentView.indexOf(currentReviewUid);
+    const text=document.getElementById("teacherListCollapsedText");
+    if(text){
+      text.textContent=pos>=0
+        ? `Danh sách đã thu gọn · Đang xem học sinh ${pos+1}/${teacherCurrentView.length}`
+        : "Danh sách học sinh đang được thu gọn.";
+    }
+  }
+}
+
+function expandTeacherList(scroll=true){
+  const panel=document.getElementById("teacherListPanel");
+  const collapsed=document.getElementById("teacherListCollapsed");
+  if(panel)panel.classList.remove("hidden");
+  if(collapsed)collapsed.classList.add("hidden");
+  if(scroll && panel)panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function openAdjacentStudent(step){
+  if(!currentReviewUid || !teacherCurrentView.length)return;
+  const index=teacherCurrentView.indexOf(currentReviewUid);
+  if(index<0)return;
+  const nextIndex=index+step;
+  if(nextIndex<0 || nextIndex>=teacherCurrentView.length)return;
+  showDetail(teacherCurrentView[nextIndex]);
+}
+
 function showDetail(uid){
   if(!teacherMode)return;
   const r=(firebaseRecords||{})[uid];
   if(!r)return;
+
+  currentReviewUid=uid;
+  collapseTeacherList();
+
+  const currentIndex=teacherCurrentView.indexOf(uid);
+  const hasPrev=currentIndex>0;
+  const hasNext=currentIndex>=0 && currentIndex<teacherCurrentView.length-1;
 
   const stats=autoReviewStats(r);
   const review=teacherReviews?.[uid]||{};
   const doneCount=(r.done||[]).filter(Boolean).length;
 
   document.getElementById("teacherDetail").innerHTML=`
+    <div class="review-nav">
+      <button class="btn light" id="prevStudentBtn" ${hasPrev?"":"disabled"}>← Học sinh trước</button>
+      <div class="review-nav-center">
+        ${currentIndex>=0?`Học sinh ${currentIndex+1}/${teacherCurrentView.length} · `:""}${esc(r.className)} · STT ${Number(r.studentNo)}
+      </div>
+      <button class="btn light" id="nextStudentBtn" ${hasNext?"":"disabled"}>Học sinh kế tiếp →</button>
+    </div>
     <div class="card review-sheet">
       <div class="review-header">
         <div>
@@ -1378,9 +1461,19 @@ function showDetail(uid){
       </div>
     </div>`;
 
-  document.getElementById("closeReviewBtn").onclick=()=>document.getElementById("teacherDetail").innerHTML="";
+  document.getElementById("prevStudentBtn").onclick=()=>openAdjacentStudent(-1);
+  document.getElementById("nextStudentBtn").onclick=()=>openAdjacentStudent(1);
+  document.getElementById("closeReviewBtn").onclick=()=>{
+    currentReviewUid=null;
+    document.getElementById("teacherDetail").innerHTML="";
+    expandTeacherList(true);
+  };
   document.getElementById("saveReviewBtn").onclick=()=>saveTeacherReview(uid);
-  document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"});
+
+  // Đợi DOM cập nhật rồi cuộn đúng tới đầu khung chi tiết.
+  requestAnimationFrame(()=>{
+    document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"});
+  });
 }
 
 async function saveTeacherReview(studentUid){
