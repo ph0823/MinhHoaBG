@@ -3,3168 +3,575 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Thử Tài Gõ Phím V2</title>
-
+<title>Thử Tài Gõ Phím V2 - Tinh Gọn</title>
 <style>
-:root {
-  --primary: #c62828;
-  --primary-dark: #8e0000;
-  --accent: #1565c0;
-  --success: #2e7d32;
-  --warning: #ef6c00;
-  --bg: #f4f7f6;
-  --card: #ffffff;
-  --border: #e0e0e0;
-  --text: #263238;
-  --muted: #607d8b;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-.hidden {
-  display: none !important;
-}
-
-.app {
-  width: min(1180px, 96%);
-  margin: 18px auto;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--primary);
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-}
-
-.header p {
-  margin: 6px 0 0;
-  color: var(--muted);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: 18px;
-  align-items: start;
-}
-
-.card {
-  background: var(--card);
-  border-radius: 14px;
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
-  padding: 20px;
-}
-
-.section-title {
-  margin: 0 0 14px;
-  color: var(--primary);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-}
-
-.field label {
-  font-weight: 700;
-  font-size: 0.92rem;
-}
-
-.field input,
-.field select {
-  width: 100%;
-  padding: 11px 12px;
-  border: 1.5px solid #b0bec5;
-  border-radius: 8px;
-  background: white;
-}
-
-.field input:focus,
-.field select:focus,
-textarea:focus {
-  outline: 2px solid rgba(21, 101, 192, 0.14);
-  border-color: var(--accent);
-}
-
-.mode-picker {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.mode-btn {
-  border: 2px solid #cfd8dc;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fafafa;
-  color: var(--text);
-  font-weight: 800;
-}
-
-.mode-btn.active {
-  border-color: var(--accent);
-  background: #e3f2fd;
-  color: #0d47a1;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.btn {
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  color: white;
-  background: var(--primary);
-  font-weight: 700;
-}
-
-.btn:hover {
-  filter: brightness(0.94);
-}
-
-.btn.secondary {
-  background: #546e7a;
-}
-
-.btn.success {
-  background: var(--success);
-}
-
-.btn.warning {
-  background: var(--warning);
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.notice {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #fff3e0;
-  color: #8d4e00;
-  font-size: 0.88rem;
-}
-
-.firebase-status {
-  margin-top: 10px;
-  padding: 9px 11px;
-  border-radius: 8px;
-  font-size: 0.86rem;
-  background: #eceff1;
-  color: #455a64;
-}
-
-.firebase-status.ok {
-  background: #e8f5e9;
-  color: #1b5e20;
-}
-
-.firebase-status.error {
-  background: #ffebee;
-  color: #b71c1c;
-}
-
-.student-bar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 9px;
-  background: #e3f2fd;
-  margin-bottom: 12px;
-  font-weight: 700;
-}
-
-.lesson-title {
-  font-weight: 800;
-  color: #5d4037;
-  margin-bottom: 8px;
-}
-
-.progress-wrap {
-  margin-bottom: 10px;
-}
-
-.progress-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.86rem;
-  color: var(--muted);
-  margin-bottom: 5px;
-}
-
-.progress-bar {
-  height: 9px;
-  background: #eceff1;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--success);
-  transition: width 0.15s linear;
-}
-
-.poem {
-  min-height: 185px;
-  max-height: 245px;
-  overflow-y: auto;
-  padding: 16px;
-  border-left: 5px solid #ffa000;
-  border-radius: 8px;
-  background: #fff8e1;
-  text-align: left;
-  white-space: pre-wrap;
-  user-select: none;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 1.18rem;
-  line-height: 1.75;
-  scroll-behavior: auto;
-}
-
-.char-correct {
-  color: #1b5e20;
-  background: #c8e6c9;
-}
-
-.char-incorrect {
-  color: #b71c1c;
-  background: #ffcdd2;
-}
-
-.char-current {
-  border-bottom: 3px solid #1976d2;
-  background: #bbdefb;
-}
-
-textarea {
-  width: 100%;
-  height: 150px;
-  resize: none;
-  margin-top: 12px;
-  padding: 12px;
-  border: 2px solid #cfd8dc;
-  border-radius: 8px;
-  line-height: 1.5;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.stat {
-  background: #f5f5f5;
-  padding: 9px 8px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 0.82rem;
-}
-
-.stat strong {
-  display: block;
-  font-size: 1rem;
-  margin-top: 2px;
-}
-
-.leaderboard-head {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.leaderboard-head select {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #b0bec5;
-  border-radius: 7px;
-}
-
-.leaderboard-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.leaderboard-item {
-  display: grid;
-  grid-template-columns: 42px 1fr auto;
-  gap: 8px;
-  align-items: center;
-  padding: 10px 8px;
-  border-bottom: 1px solid #eceff1;
-  font-size: 0.93rem;
-}
-
-.leaderboard-item:nth-child(1) {
-  background: #ffebee;
-  color: #b71c1c;
-  font-weight: 800;
-}
-
-.leaderboard-item:nth-child(2) {
-  color: #ef6c00;
-  font-weight: 800;
-}
-
-.leaderboard-item:nth-child(3) {
-  color: #2e7d32;
-  font-weight: 800;
-}
-
-.player-meta {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.empty {
-  padding: 14px;
-  text-align: center;
-  color: var(--muted);
-  font-style: italic;
-}
-
-.countdown {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.58);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.countdown-number {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  font-weight: 900;
-  color: var(--primary);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.modal-card {
-  width: min(480px, 100%);
-  background: white;
-  border-radius: 16px;
-  padding: 22px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.24);
-  text-align: center;
-}
-
-.result-score {
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: var(--primary);
-  margin: 8px 0;
-}
-
-.result-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.result-grid div {
-  background: #f5f5f5;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.error-list {
-  text-align: left;
-  max-height: 140px;
-  overflow: auto;
-  background: #fafafa;
-  border: 1px solid #eeeeee;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-.small {
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 620px) {
-  .app {
-    width: 100%;
-    margin: 0;
-  }
-
-  .card {
-    border-radius: 0;
-    box-shadow: none;
-    padding: 14px;
-  }
-
-  .header {
-    padding: 14px 10px 0;
-  }
-
-  .form-grid,
-  .mode-picker {
-    grid-template-columns: 1fr;
-  }
-
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .poem {
-    font-size: 1.05rem;
-    max-height: 215px;
-  }
-}
+:root { --primary: #c62828; --accent: #1565c0; --success: #2e7d32; --warning: #ef6c00; --bg: #f4f7f6; --text: #263238; --muted: #607d8b; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; font-family: "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.app { width: min(1180px, 96%); margin: 18px auto; }
+.header { text-align: center; margin-bottom: 16px; }
+.header h1 { margin: 0; color: var(--primary); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.header p { margin: 6px 0 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+.card { background: #fff; border-radius: 14px; box-shadow: 0 5px 18px rgba(0,0,0,0.08); padding: 20px; }
+.section-title { margin: 0 0 14px; color: var(--primary); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.field label { font-weight: 700; font-size: 0.92rem; }
+.field input, .field select { width: 100%; padding: 11px 12px; border: 1.5px solid #b0bec5; border-radius: 8px; background: white; }
+.field input:focus, .field select:focus, textarea:focus { outline: 2px solid rgba(21, 101, 192, 0.14); border-color: var(--accent); }
+.mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.mode-btn { border: 2px solid #cfd8dc; border-radius: 10px; padding: 12px; background: #fafafa; color: var(--text); font-weight: 800; }
+.mode-btn.active { border-color: var(--accent); background: #e3f2fd; color: #0d47a1; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.btn { border: none; border-radius: 8px; padding: 10px 16px; color: white; background: var(--primary); font-weight: 700; }
+.btn:hover { filter: brightness(0.94); }
+.btn.secondary { background: #546e7a; }
+.btn.success { background: var(--success); }
+.btn.warning { background: var(--warning); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.firebase-status { margin-top: 10px; padding: 9px 11px; border-radius: 8px; font-size: 0.86rem; background: #eceff1; color: #455a64; }
+.firebase-status.ok { background: #e8f5e9; color: #1b5e20; }
+.firebase-status.error { background: #ffebee; color: #b71c1c; }
+.student-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 9px; background: #e3f2fd; margin-bottom: 12px; font-weight: 700; }
+.lesson-title { font-weight: 800; color: #5d4037; margin-bottom: 8px; }
+.progress-wrap { margin-bottom: 10px; }
+.progress-head { display: flex; justify-content: space-between; font-size: 0.86rem; color: var(--muted); margin-bottom: 5px; }
+.progress-bar { height: 9px; background: #eceff1; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; background: var(--success); transition: width 0.15s linear; }
+.poem { min-height: 185px; max-height: 245px; overflow-y: auto; padding: 16px; border-left: 5px solid #ffa000; border-radius: 8px; background: #fff8e1; text-align: left; white-space: pre-wrap; user-select: none; font-family: "Courier New", monospace; font-size: 1.18rem; line-height: 1.75; }
+.char-correct { color: #1b5e20; background: #c8e6c9; }
+.char-incorrect { color: #b71c1c; background: #ffcdd2; }
+.char-current { border-bottom: 3px solid #1976d2; background: #bbdefb; }
+textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 12px; border: 2px solid #cfd8dc; border-radius: 8px; line-height: 1.5; }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.stat { background: #f5f5f5; padding: 9px 8px; border-radius: 8px; text-align: center; font-size: 0.82rem; }
+.stat strong { display: block; font-size: 1rem; margin-top: 2px; }
+.leaderboard-head { display: flex; gap: 8px; margin-bottom: 12px; }
+.leaderboard-head select { flex: 1; padding: 8px; border: 1px solid #b0bec5; border-radius: 7px; }
+.leaderboard-list { list-style: none; padding: 0; margin: 0; }
+.leaderboard-item { display: grid; grid-template-columns: 42px 1fr auto; gap: 8px; align-items: center; padding: 10px 8px; border-bottom: 1px solid #eceff1; font-size: 0.93rem; }
+.leaderboard-item:nth-child(1) { background: #ffebee; color: #b71c1c; font-weight: 800; }
+.leaderboard-item:nth-child(2) { color: #ef6c00; font-weight: 800; }
+.leaderboard-item:nth-child(3) { color: #2e7d32; font-weight: 800; }
+.player-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.empty { padding: 14px; text-align: center; color: var(--muted); font-style: italic; }
+.countdown { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.58); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.countdown-number { width: 150px; height: 150px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 900; color: var(--primary); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-card { width: min(480px, 100%); background: white; border-radius: 16px; padding: 22px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.24); text-align: center; }
+.result-score { font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 8px 0; }
+.result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+.result-grid div { background: #f5f5f5; border-radius: 8px; padding: 10px; }
+.error-list { text-align: left; max-height: 140px; overflow: auto; background: #fafafa; border: 1px solid #eeeeee; border-radius: 8px; padding: 10px; margin-top: 10px; }
+.small { font-size: 0.82rem; color: var(--muted); }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 14px 10px 0; } .form-grid, .mode-picker { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } .poem { font-size: 1.05rem; max-height: 215px; } }
 </style>
-
-<!-- Firebase Compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
-
 <body>
 
 <div class="app">
-
   <header class="header">
     <h1>Thử Tài Gõ Phím</h1>
-    <p>
-      Luyện gõ tiếng Việt · Theo dõi tốc độ và độ chính xác
-    </p>
+    <p>Luyện gõ tiếng Việt · Theo dõi tốc độ và độ chính xác</p>
   </header>
 
   <div class="grid">
-
     <main class="card">
-
-      <!-- MÀN HÌNH BAN ĐẦU -->
       <section id="setup-screen">
-
-        <h2 class="section-title">
-          Thông tin học sinh
-        </h2>
-
+        <h2 class="section-title">Thông tin học sinh</h2>
         <div class="form-grid">
-
           <div class="field">
             <label for="class-select">Lớp</label>
             <select id="class-select">
-              <!-- Các lớp từ 6.8 đến 6.16 -->
-              <option value="6.8">6.8</option>
-              <option value="6.9">6.9</option>
-              <option value="6.10">6.10</option>
-              <option value="6.11">6.11</option>
-              <option value="6.12">6.12</option>
-              <option value="6.13">6.13</option>
-              <option value="6.14">6.14</option>
-              <option value="6.15">6.15</option>
-              <option value="6.16">6.16</option>
-
-              <!-- Các lớp từ 9.1 đến 9.9 -->
-              <option value="9.1">9.1</option>
-              <option value="9.2">9.2</option>
-              <option value="9.3">9.3</option>
-              <option value="9.4">9.4</option>
-              <option value="9.5">9.5</option>
-              <option value="9.6">9.6</option>
-              <option value="9.7">9.7</option>
-              <option value="9.8">9.8</option>
-              <option value="9.9">9.9</option>
+              <option value="6.8">6.8</option><option value="6.9">6.9</option><option value="6.10">6.10</option>
+              <option value="6.11">6.11</option><option value="6.12">6.12</option><option value="6.13">6.13</option>
+              <option value="6.14">6.14</option><option value="6.15">6.15</option><option value="6.16">6.16</option>
+              <option value="9.1">9.1</option><option value="9.2">9.2</option><option value="9.3">9.3</option>
+              <option value="9.4">9.4</option><option value="9.5">9.5</option><option value="9.6">9.6</option>
+              <option value="9.7">9.7</option><option value="9.8">9.8</option><option value="9.9">9.9</option>
             </select>
-
           </div>
-
           <div class="field">
             <label for="student-no-input">STT</label>
-            <input
-              id="student-no-input"
-              type="number"
-              min="1"
-              max="99"
-              placeholder="Ví dụ: 12"
-            >
+            <input id="student-no-input" type="number" min="1" max="99" placeholder="Ví dụ: 12">
           </div>
-
-          <div
-            class="field"
-            style="grid-column:1/-1"
-          >
-            <label for="player-name-input">
-              Họ và tên
-            </label>
-
-            <input
-              id="player-name-input"
-              type="text"
-              maxlength="50"
-              placeholder="Ví dụ: Nguyễn Văn A"
-              autocomplete="off"
-            >
+          <div class="field" style="grid-column:1/-1">
+            <label for="player-name-input">Họ và tên</label>
+            <input id="player-name-input" type="text" maxlength="50" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off">
           </div>
-
         </div>
 
         <div class="mode-picker">
-
-          <button
-            class="mode-btn active"
-            data-mode="practice"
-            type="button"
-          >
-            Luyện tập
-            <br>
-            <span class="small">
-              Được đổi bài · Không ghi BXH
-            </span>
-          </button>
-
-          <button
-            class="mode-btn"
-            data-mode="challenge"
-            type="button"
-          >
-            Thử thách
-            <br>
-            <span class="small">
-              Đếm ngược · Ghi thành tích tốt nhất
-            </span>
-          </button>
-
+          <button class="mode-btn active" data-mode="practice" type="button">Luyện tập<br><span class="small">Được đổi bài · Không ghi BXH</span></button>
+          <button class="mode-btn" data-mode="challenge" type="button">Thử thách<br><span class="small">Đếm ngược · Ghi thành tích tốt nhất</span></button>
         </div>
 
         <div class="actions">
-
-          <button
-            class="btn success"
-            id="btn-start"
-            type="button"
-          >
-            Bắt đầu
-          </button>
-
+          <button class="btn success" id="btn-start" type="button">Bắt đầu</button>
         </div>
-
-        <div class="notice">     
-        </div>
-
-        <div
-          class="firebase-status"
-          id="firebase-status"
-        >
-          Đang kết nối Firebase...
-        </div>
-
+        <div class="firebase-status" id="firebase-status">Đang kết nối Firebase...</div>
       </section>
 
-
-      <!-- MÀN HÌNH GÕ -->
-      <section
-        id="game-screen"
-        class="hidden"
-      >
-
+      <section id="game-screen" class="hidden">
         <div class="student-bar">
-
           <span id="student-display"></span>
-
           <span id="mode-display"></span>
-
         </div>
-
-        <div
-          class="lesson-title"
-          id="lesson-title"
-        ></div>
-
+        <div class="lesson-title" id="lesson-title"></div>
         <div class="progress-wrap">
-
-          <div class="progress-head">
-            <span>Tiến độ</span>
-            <span id="progress-text">0%</span>
-          </div>
-
-          <div class="progress-bar">
-
-            <div
-              class="progress-fill"
-              id="progress-fill"
-            ></div>
-
-          </div>
-
+          <div class="progress-head"><span>Tiến độ</span><span id="progress-text">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
         </div>
-
-        <div
-          class="poem"
-          id="poem-display"
-        ></div>
-
-        <textarea
-          id="input-field"
-          placeholder="Gõ chính xác nội dung phía trên..."
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-          disabled
-        ></textarea>
+        <div class="poem" id="poem-display"></div>
+        <textarea id="input-field" placeholder="Gõ chính xác nội dung phía trên..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled></textarea>
 
         <div class="stats">
-
-          <div class="stat">
-            Thời gian
-            <strong>
-              <span id="timer">0.0</span>s
-            </strong>
-          </div>
-
-          <div class="stat">
-            Raw WPM
-            <strong id="raw-wpm">0</strong>
-          </div>
-
-          <div class="stat">
-            Net WPM
-            <strong id="net-wpm">0</strong>
-          </div>
-
-          <div class="stat">
-            Chính xác
-            <strong>
-              <span id="accuracy">100</span>%
-            </strong>
-          </div>
-
-          <div class="stat">
-            Lỗi
-            <strong id="error-count">0</strong>
-          </div>
-
+          <div class="stat">Thời gian<strong><span id="timer">0.0</span>s</strong></div>
+          <div class="stat">Raw WPM<strong id="raw-wpm">0</strong></div>
+          <div class="stat">Net WPM<strong id="net-wpm">0</strong></div>
+          <div class="stat">Chính xác<strong><span id="accuracy">100</span>%</strong></div>
+          <div class="stat">Lỗi<strong id="error-count">0</strong></div>
         </div>
 
         <div class="actions">
-
-          <button
-            class="btn warning"
-            id="btn-next"
-            type="button"
-          >
-            Đổi bài khác
-          </button>
-
-          <button
-            class="btn secondary"
-            id="btn-exit"
-            type="button"
-          >
-            Kết thúc / Đổi người chơi
-          </button>
-
+          <button class="btn warning" id="btn-next" type="button">Đổi bài khác</button>
+          <button class="btn secondary" id="btn-exit" type="button">Kết thúc / Đổi người chơi</button>
         </div>
-
       </section>
-
     </main>
 
-
-    <!-- BXH -->
     <aside class="card">
-
-      <h2 class="section-title">
-        🏆 Bảng xếp hạng
-      </h2>
-
+      <h2 class="section-title">🏆 Bảng xếp hạng</h2>
       <div class="leaderboard-head">
-
-        <select id="leaderboard-class-filter">
-
-          <option value="all">
-            Tất cả lớp
-          </option>
-
-        </select>
-
+        <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
       </div>
-
-      <ol
-        class="leaderboard-list"
-        id="leaderboard"
-      >
-        <li class="empty">
-          Đang tải bảng xếp hạng...
-        </li>
-      </ol>
-
-      <p class="small">
-        Xếp theo Net WPM.
-        Nếu bằng nhau, ưu tiên độ chính xác cao hơn.
-      </p>
-
+      <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
+      <p class="small">Xếp theo Net WPM. Nếu bằng nhau, ưu tiên độ chính xác cao hơn.</p>
     </aside>
-
   </div>
 </div>
 
+<div class="countdown hidden" id="countdown-overlay"><div class="countdown-number" id="countdown-number">3</div></div>
 
-<!-- COUNTDOWN -->
-<div
-  class="countdown hidden"
-  id="countdown-overlay"
->
-  <div
-    class="countdown-number"
-    id="countdown-number"
-  >
-    3
-  </div>
-</div>
-
-
-<!-- MODAL KẾT QUẢ -->
-<div
-  class="modal hidden"
-  id="result-modal"
->
-
+<div class="modal hidden" id="result-modal">
   <div class="modal-card">
-
-    <h2 id="result-title">
-      Hoàn thành
-    </h2>
-
-    <div class="result-score">
-      <span id="result-net-wpm">0</span>
-      WPM
-    </div>
-
+    <h2 id="result-title">Hoàn thành</h2>
+    <div class="result-score"><span id="result-net-wpm">0</span> WPM</div>
     <div class="result-grid">
-
-      <div>
-        Chính xác
-        <br>
-        <strong>
-          <span id="result-accuracy">100</span>%
-        </strong>
-      </div>
-
-      <div>
-        Lỗi
-        <br>
-        <strong id="result-errors">0</strong>
-      </div>
-
-      <div>
-        Thời gian
-        <br>
-        <strong>
-          <span id="result-time">0</span>s
-        </strong>
-      </div>
-
-      <div>
-        Xếp loại
-        <br>
-        <strong id="result-badge">-</strong>
-      </div>
-
+      <div>Chính xác<br><strong><span id="result-accuracy">100</span>%</strong></div>
+      <div>Lỗi<br><strong id="result-errors">0</strong></div>
+      <div>Thời gian<br><strong><span id="result-time">0</span>s</strong></div>
+      <div>Xếp loại<br><strong id="result-badge">-</strong></div>
     </div>
-
-    <div
-      id="result-save-status"
-      class="small"
-    ></div>
-
-    <div
-      id="result-errors-detail"
-      class="error-list hidden"
-    ></div>
-
-    <div
-      class="actions"
-      style="justify-content:center"
-    >
-
-      <button
-        class="btn success"
-        id="btn-play-again"
-        type="button"
-      >
-        Chơi tiếp
-      </button>
-
-      <button
-        class="btn secondary"
-        id="btn-close-result"
-        type="button"
-      >
-        Đóng
-      </button>
-
+    <div id="result-save-status" class="small"></div>
+    <div id="result-errors-detail" class="error-list hidden"></div>
+    <div class="actions" style="justify-content:center">
+      <button class="btn success" id="btn-play-again" type="button">Chơi tiếp</button>
+      <button class="btn secondary" id="btn-close-result" type="button">Đóng</button>
     </div>
-
   </div>
-
 </div>
-
 
 <script>
 "use strict";
 
-/* =========================================================
-   FIREBASE CONFIG
-========================================================= */
-
 const firebaseConfig = {
-  apiKey:
-    "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
-
-  authDomain:
-    "luyen-go.firebaseapp.com",
-
-  databaseURL:
-    "https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",
-
-  projectId:
-    "luyen-go",
-
-  storageBucket:
-    "luyen-go.firebasestorage.app",
-
-  messagingSenderId:
-    "79498233127",
-
-  appId:
-    "1:79498233127:web:a6c2e2bab71ba737ca9502"
+  apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
+  authDomain: "luyen-go.firebaseapp.com",
+  databaseURL: "https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "luyen-go",
+  storageBucket: "luyen-go.firebasestorage.app",
+  messagingSenderId: "79498233127",
+  appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
 };
 
+let database = null, bestScoresRef = null, firebaseReady = false, firebaseUser = null, leaderboardListenerStarted = false;
 
-/* =========================================================
-   TRẠNG THÁI FIREBASE
-========================================================= */
-
-let database = null;
-let bestScoresRef = null;
-let firebaseReady = false;
-let firebaseUser = null;
-let leaderboardListenerStarted = false;
-
-
-/* =========================================================
-   DỮ LIỆU BÀI LUYỆN
-========================================================= */
-
+// ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
-
-  {
-    id: "tu-ay",
-
-    title: "Từ ấy",
-
-    text: `Từ ấy trong tôi bừng nắng hạ
-Mặt trời chân lý chói qua tim
-Hồn tôi là một vườn hoa lá
-Rất đậm hương và rộn tiếng chim
-
-Tôi buộc lòng tôi với mọi người
-Để tình trang trải với muôn nơi
-Để hồn tôi với bao hồn khổ
-Gần gũi nhau thêm mạnh khối đời
-
-Tôi đã là con của vạn nhà
-Là em của vạn kiếp phôi pha
-Là anh của vạn đầu em nhỏ
-Không áo cơm, cù bất cù bơ...
-Tháng 7-1938 Máu lửa`
-  },
-
-  {
-    id: "luom",
-
-    title: "Lượm",
-
-    text: `Ngày Huế đổ máu
-Chú Hà Nội về
-Tình cờ chú cháu
-Gặp nhau Hàng Bè.
-
-Cháu bé loắt choắt
-Cái xắc xinh xinh
-Cái chân thoăn thoắt
-Cái đầu nghênh nghênh
-
-Ca-lô đội lệch
-Mồm huýt sáo vang
-Như con chim chích
-Nhảy trên đường vàng…
-
-Cháu đi liên lạc
-Vui lắm chú à
-Ở đồn Mang Cá
-Thích hơn ở nhà !
-
-Cháu cười híp mí,
-Má đỏ bồ quân
-- Thôi, chào đồng chí !
-Cháu đi xa dần…
-
-Cháu đi đường cháu
-Chú lên đường ra
-Đến nay tháng sáu
-Chợt nghe tin nhà.
-
-Ra thế
-Lượm ơi !`
-  },
-
-  {
-    id: "viet-bac",
-
-    title: "Việt Bắc",
-
-    text: `Mình về mình có nhớ ta
-Mười lăm năm ấy thiết tha mặn nồng
-Mình về mình có nhớ không
-Nhìn cây nhớ núi, nhìn sông nhớ nguồn?
-
-Tiếng ai tha thiết bên cồn
-Bâng khuâng trong dạ, bồn chồn bước đi
-Áo chàm đưa buổi phân ly
-Cầm tay nhau biết nói gì hôm nay...
-
-- Mình đi, có nhớ những ngày
-Mưa nguồn suối lũ, những mây cùng mù?
-Mình về, có nhớ chiến khu
-Miếng cơm chấm muối, mối thù nặng vai?
-Mình về, rừng núi nhớ ai
-Trám bùi để rụng, măng mai để già.
-Mình đi, có nhớ những nhà
-Hắt hiu lau xám, đậm đà lòng son
-Mình về, còn nhớ núi non
-Nhớ khi kháng Nhật, thuở còn Việt Minh
-Mình đi, mình có nhớ mình
-Tân Trào, Hồng Thái, mái đình cây đa?
-
-- Ta với mình, mình với ta
-Lòng ta sau trước mặn mà đinh ninh
-Mình đi, mình lại nhớ mình
-Nguồn bao nhiêu nước nghĩa tình bấy nhiêu...`
-  },
-
-  {
-    id: "truyen-co",
-
-    title: "Truyện cổ nước mình",
-
-    text: `Tôi yêu truyện cổ nước tôi
-Vừa nhân hậu lại tuyệt vời sâu xa
-Thương người rồi mới thương ta
-Yêu nhau dù mấy cách xa cũng tìm
-Ở hiền thì lại gặp hiền
-Người ngay thì gặp người tiên độ trì
-Mang theo truyện cổ tôi đi
-Nghe trong cuộc sống thầm thì tiếng xưa
-Vàng cơn nắng, trắng cơn mưa
-Con sông chảy có rặng dừa nghiêng soi
-Đời cha ông với đời tôi
-Như con sông với chân trời đã xa
-Chỉ còn truyện cổ thiết tha
-Cho tôi nhận mặt ông cha của mình
-Rất công bằng, rất thông minh
-Vừa độ lượng lại đa tình, đa mang.
-Thị thơm thì giấu người thơm
-Chăm làm thì được áo cơm cửa nhà
-Đẽo cày theo ý người ta
-Sẽ thành khúc gỗ chẳng ra việc gì
-
-Tôi nghe truyện cổ thầm thì
-Lời cha ông dạy cũng vì đời sau.
-Đậm đà cái tích trầu cau
-Miếng trầu đỏ thắm nặng sâu tình người.
-Sẽ đi qua cuộc đời tôi
-Bấy nhiêu thời nữa chuyển dời xa xôi.
-Nhưng bao truyện cổ trên đời
-Vẫn luôn mới mẻ rạng ngời lương tâm.`
-  }
-
-].map(item => ({
-  ...item,
-  text: normalizeText(item.text)
-}));
-
-
-/* =========================================================
-   DOM
-========================================================= */
+  { id: "tu-ay", title: "Từ ấy", text: `Từ ấy trong tôi bừng nắng hạ\nMặt trời chân lý chói qua tim\nHồn tôi là một vườn hoa lá\nRất đậm hương và rộn tiếng chim\n\nTôi buộc lòng tôi với mọi người\nĐể tình trang trải với muôn nơi\nĐể hồn tôi với bao hồn khổ\nGần gũi nhau thêm mạnh khối đời\n\nTôi đã là con của vạn nhà\nLà em của vạn kiếp phôi pha\nLà anh của vạn đầu em nhỏ\nKhông áo cơm, cù bất cù bơ...\nTháng 7-1938 Máu lửa` },
+  { id: "luom", title: "Lượm", text: `Ngày Huế đổ máu\nChú Hà Nội về\nTình cờ chú cháu\nGặp nhau Hàng Bè.\n\nCháu bé loắt choắt\nCái xắc xinh xinh\nCái chân thoăn thoắt\nCái đầu nghênh nghênh\n\nCa-lô đội lệch\nMồm huýt sáo vang\nNhư con chim chích\nNhảy trên đường vàng…\n\nCháu đi liên lạc\nVui lắm chú à\nỞ đồn Mang Cá\nThích hơn ở nhà !\n\nCháu cười híp mí,\nMá đỏ bồ quân\n- Thôi, chào đồng chí !\nCháu đi xa dần…\n\nCháu đi đường cháu\nChú lên đường ra\nĐến nay tháng sáu\nChợt nghe tin nhà.\n\nRa thế\nLượm ơi !` },
+  { id: "viet-bac", title: "Việt Bắc", text: `Mình về mình có nhớ ta\nMười lăm năm ấy thiết tha mặn nồng\nMình về mình có nhớ không\nNhìn cây nhớ núi, nhìn sông nhớ nguồn?\n\nTiếng ai tha thiết bên cồn\nBâng khuâng trong dạ, bồn chồn bước đi\nÁo chàm đưa buổi phân ly\nCầm tay nhau biết nói gì hôm nay...\n\n- Mình đi, có nhớ những ngày\nMưa nguồn suối lũ, những mây cùng mù?\nMình về, có nhớ chiến khu\nMiếng cơm chấm muối, mối thù nặng vai?\nMình về, rừng núi nhớ ai\nTrám bùi để rụng, măng mai để già.\nMình đi, có nhớ những nhà\nHắt hiu lau xám, đậm đà lòng son\nMình về, còn nhớ núi non\nNhớ khi kháng Nhật, thuở còn Việt Minh\nMình đi, mình có nhớ mình\nTân Trào, Hồng Thái, mái đình cây đa?\n\n- Ta với mình, mình với ta\nLòng ta sau trước mặn mà đinh ninh\nMình đi, mình lại nhớ mình\nNguồn bao nhiêu nước nghĩa tình bấy nhiêu...` },
+  { id: "truyen-co", title: "Truyện cổ nước mình", text: `Tôi yêu truyện cổ nước tôi\nVừa nhân hậu lại tuyệt vời sâu xa\nThương người rồi mới thương ta\nYêu nhau dù mấy cách xa cũng tìm\nỞ hiền thì lại gặp hiền\nNgười ngay thì gặp người tiên độ trì\nMang theo truyện cổ tôi đi\nNghe trong cuộc sống thầm thì tiếng xưa\nVàng cơn nắng, trắng cơn mưa\nCon sông chảy có rặng dừa nghiêng soi\nĐời cha ông với đời tôi\nNhư con sông với chân trời đã xa\nChỉ còn truyện cổ thiết tha\nCho tôi nhận mặt ông cha của mình\nRất công bằng, rất thông minh\nVừa độ lượng lại đa tình, đa mang.\nThị thơm thì giấu người thơm\nChăm làm thì được áo cơm cửa nhà\nĐẽo cày theo ý người ta\nSẽ thành khúc gỗ chẳng ra việc gì\n\nTôi nghe truyện cổ thầm thì\nLời cha ông dạy cũng vì đời sau.\nĐậm đà cái tích trầu cau\nMiếng trầu đỏ thắm nặng sâu tình người.\nSẽ đi qua cuộc đời tôi\nBấy nhiêu thời nữa chuyển dời xa xôi.\nNhưng bao truyện cổ trên đời\nVẫn luôn mới mẻ rạng ngời lương tâm.` }
+].map(item => ({ ...item, text: normalizeText(item.text) }));
 
 const els = {
-  setup:
-    document.getElementById("setup-screen"),
-
-  game:
-    document.getElementById("game-screen"),
-
-  classInput:
-    document.getElementById("class-input"),
-
-  studentNoInput:
-    document.getElementById("student-no-input"),
-
-  nameInput:
-    document.getElementById("player-name-input"),
-
-  modeButtons:
-    [...document.querySelectorAll(".mode-btn")],
-
-  btnStart:
-    document.getElementById("btn-start"),
-
-  studentDisplay:
-    document.getElementById("student-display"),
-
-  modeDisplay:
-    document.getElementById("mode-display"),
-
-  lessonTitle:
-    document.getElementById("lesson-title"),
-
-  poemDisplay:
-    document.getElementById("poem-display"),
-
-  input:
-    document.getElementById("input-field"),
-
-  timer:
-    document.getElementById("timer"),
-
-  rawWpm:
-    document.getElementById("raw-wpm"),
-
-  netWpm:
-    document.getElementById("net-wpm"),
-
-  accuracy:
-    document.getElementById("accuracy"),
-
-  errorCount:
-    document.getElementById("error-count"),
-
-  progressText:
-    document.getElementById("progress-text"),
-
-  progressFill:
-    document.getElementById("progress-fill"),
-
-  btnNext:
-    document.getElementById("btn-next"),
-
-  btnExit:
-    document.getElementById("btn-exit"),
-
-  leaderboard:
-    document.getElementById("leaderboard"),
-
-  leaderboardClassFilter:
-    document.getElementById(
-      "leaderboard-class-filter"
-    ),
-
-  firebaseStatus:
-    document.getElementById(
-      "firebase-status"
-    ),
-
-  countdownOverlay:
-    document.getElementById(
-      "countdown-overlay"
-    ),
-
-  countdownNumber:
-    document.getElementById(
-      "countdown-number"
-    ),
-
-  resultModal:
-    document.getElementById(
-      "result-modal"
-    ),
-
-  resultTitle:
-    document.getElementById(
-      "result-title"
-    ),
-
-  resultNetWpm:
-    document.getElementById(
-      "result-net-wpm"
-    ),
-
-  resultAccuracy:
-    document.getElementById(
-      "result-accuracy"
-    ),
-
-  resultErrors:
-    document.getElementById(
-      "result-errors"
-    ),
-
-  resultTime:
-    document.getElementById(
-      "result-time"
-    ),
-
-  resultBadge:
-    document.getElementById(
-      "result-badge"
-    ),
-
-  resultSaveStatus:
-    document.getElementById(
-      "result-save-status"
-    ),
-
-  resultErrorsDetail:
-    document.getElementById(
-      "result-errors-detail"
-    ),
-
-  btnPlayAgain:
-    document.getElementById(
-      "btn-play-again"
-    ),
-
-  btnCloseResult:
-    document.getElementById(
-      "btn-close-result"
-    )
+  setup: document.getElementById("setup-screen"), game: document.getElementById("game-screen"),
+  classInput: document.getElementById("class-select"), studentNoInput: document.getElementById("student-no-input"), nameInput: document.getElementById("player-name-input"),
+  modeButtons: [...document.querySelectorAll(".mode-btn")], btnStart: document.getElementById("btn-start"),
+  studentDisplay: document.getElementById("student-display"), modeDisplay: document.getElementById("mode-display"), lessonTitle: document.getElementById("lesson-title"),
+  poemDisplay: document.getElementById("poem-display"), input: document.getElementById("input-field"), timer: document.getElementById("timer"),
+  rawWpm: document.getElementById("raw-wpm"), netWpm: document.getElementById("net-wpm"), accuracy: document.getElementById("accuracy"), errorCount: document.getElementById("error-count"),
+  progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
+  leaderboard: document.getElementById("leaderboard"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), firebaseStatus: document.getElementById("firebase-status"),
+  countdownOverlay: document.getElementById("countdown-overlay"), countdownNumber: document.getElementById("countdown-number"), resultModal: document.getElementById("result-modal"),
+  resultTitle: document.getElementById("result-title"), resultNetWpm: document.getElementById("result-net-wpm"), resultAccuracy: document.getElementById("result-accuracy"),
+  resultErrors: document.getElementById("result-errors"), resultTime: document.getElementById("result-time"), resultBadge: document.getElementById("result-badge"),
+  resultSaveStatus: document.getElementById("result-save-status"), resultErrorsDetail: document.getElementById("result-errors-detail"), btnPlayAgain: document.getElementById("btn-play-again"), btnCloseResult: document.getElementById("btn-close-result")
 };
 
+const state = { mode: "practice", student: null, currentLessonIndex: -1, previousLessonIndex: -1, started: false, completed: false, startTime: 0, rafId: null, totalKeystrokes: 0, errorKeystrokes: 0, mistakes: {}, previousValue: "", lastStats: null };
 
-/* =========================================================
-   GAME STATE
-========================================================= */
-
-const state = {
-  mode: "practice",
-
-  student: null,
-
-  currentLessonIndex: -1,
-
-  previousLessonIndex: -1,
-
-  started: false,
-
-  completed: false,
-
-  startTime: 0,
-
-  rafId: null,
-
-  totalKeystrokes: 0,
-
-  errorKeystrokes: 0,
-
-  mistakes: {},
-
-  previousValue: "",
-
-  lastStats: null
-};
-
-
-/* =========================================================
-   TIỆN ÍCH
-========================================================= */
-
-function normalizeText(text) {
-  return String(text)
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .trim();
-}
-
-
-function normalizeClassName(value) {
-  return String(value || "")
-    .trim()
-    .replace(/\s+/g, "")
-    .toUpperCase();
-}
-
-
-function sanitizeKey(value) {
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    || "unknown";
-}
-
-
-function escapeHTML(str) {
-  return String(str).replace(
-    /[&<>'"]/g,
-    ch => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;"
-    }[ch])
-  );
-}
-
-
-function getStudentKey(student) {
-  return (
-    sanitizeKey(student.className)
-    + "_"
-    + String(student.studentNo)
-        .padStart(2, "0")
-  );
-}
-
-
-function delay(ms) {
-  return new Promise(
-    resolve => setTimeout(resolve, ms)
-  );
-}
-
-
-/* =========================================================
-   FIREBASE
-========================================================= */
+function normalizeText(text) { return String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim(); }
+function normalizeClassName(value) { return String(value || "").trim().replace(/\s+/g, "").toUpperCase(); }
+function sanitizeKey(value) { return String(value).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "unknown"; }
+function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch])); }
+function getStudentKey(student) { return sanitizeKey(student.className) + "_" + String(student.studentNo).padStart(2, "0"); }
+function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 async function initFirebase() {
   try {
-
-    setFirebaseStatus(
-      "Đang kết nối Firebase...",
-      ""
-    );
-
-    /*
-      Chỉ initialize một lần.
-    */
-    if (!firebase.apps.length) {
-      firebase.initializeApp(
-        firebaseConfig
-      );
-    }
-
-    const auth =
-      firebase.auth();
-
-    /*
-      Chờ Auth xác định trạng thái hiện tại.
-    */
-    firebaseUser =
-      await getOrCreateAnonymousUser(auth);
-
-    /*
-      Chỉ mở database sau khi auth thành công.
-    */
-    database =
-      firebase.database();
-
-    bestScoresRef =
-      database.ref(
-        "typing_best_scores_v2"
-      );
-
+    setFirebaseStatus("Đang kết nối Firebase...", "");
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    firebaseUser = await getOrCreateAnonymousUser(auth);
+    database = firebase.database();
+    bestScoresRef = database.ref("typing_best_scores_v2");
     firebaseReady = true;
-
-    console.log(
-      "Firebase Auth OK:",
-      firebaseUser.uid
-    );
-
-    setFirebaseStatus(
-      "Firebase đã kết nối · Có thể lưu bảng xếp hạng.",
-      "ok"
-    );
-
+    setFirebaseStatus("Firebase đã kết nối · Có thể lưu bảng xếp hạng.", "ok");
     startLeaderboardListener();
-
   } catch (error) {
-
     firebaseReady = false;
-
-    console.error(
-      "Firebase initialization error:",
-      error
-    );
-
-    setFirebaseStatus(
-      "Không thể kết nối Firebase. Chế độ luyện tập vẫn sử dụng được.",
-      "error"
-    );
-
-    els.leaderboard.innerHTML =
-      '<li class="empty">'
-      + "Không thể kết nối Firebase."
-      + "</li>";
+    setFirebaseStatus("Không thể kết nối Firebase. Chế độ luyện tập vẫn sử dụng được.", "error");
+    els.leaderboard.innerHTML = '<li class="empty">Không thể kết nối Firebase.</li>';
   }
 }
-
 
 function getOrCreateAnonymousUser(auth) {
-  return new Promise(
-    (resolve, reject) => {
-
-      let finished = false;
-
-      const unsubscribe =
-        auth.onAuthStateChanged(
-          async user => {
-
-            if (finished) {
-              return;
-            }
-
-            if (user) {
-              finished = true;
-              unsubscribe();
-              resolve(user);
-              return;
-            }
-
-            try {
-              const result =
-                await auth.signInAnonymously();
-
-              finished = true;
-              unsubscribe();
-
-              resolve(
-                result.user
-              );
-
-            } catch (error) {
-
-              finished = true;
-              unsubscribe();
-              reject(error);
-            }
-          },
-
-          error => {
-            if (finished) {
-              return;
-            }
-
-            finished = true;
-            unsubscribe();
-            reject(error);
-          }
-        );
-    }
-  );
-}
-
-
-function setFirebaseStatus(
-  message,
-  type
-) {
-  els.firebaseStatus.textContent =
-    message;
-
-  els.firebaseStatus.className =
-    "firebase-status";
-
-  if (type) {
-    els.firebaseStatus.classList.add(
-      type
-    );
-  }
-}
-
-
-/* =========================================================
-   KIỂM TRA HỌC SINH
-========================================================= */
-
-function validateStudent() {
-
-  const className =
-    normalizeClassName(
-      els.classInput.value
-    );
-
-  const studentNo =
-    Number.parseInt(
-      els.studentNoInput.value,
-      10
-    );
-
-  const name =
-    els.nameInput.value
-      .trim()
-      .replace(/\s+/g, " ");
-
-  if (!className) {
-    return {
-      ok: false,
-      message:
-        "Vui lòng nhập lớp."
-    };
-  }
-
-  if (
-    !Number.isInteger(studentNo)
-    ||
-    studentNo < 1
-    ||
-    studentNo > 99
-  ) {
-    return {
-      ok: false,
-      message:
-        "STT phải từ 1 đến 99."
-    };
-  }
-
-  if (name.length < 2) {
-    return {
-      ok: false,
-      message:
-        "Vui lòng nhập họ và tên học sinh."
-    };
-  }
-
-  return {
-    ok: true,
-
-    student: {
-      className,
-      studentNo,
-      name
-    }
-  };
-}
-
-
-/* =========================================================
-   CHỌN CHẾ ĐỘ
-========================================================= */
-
-function setMode(mode) {
-
-  state.mode = mode;
-
-  els.modeButtons.forEach(
-    btn => {
-
-      btn.classList.toggle(
-        "active",
-        btn.dataset.mode === mode
-      );
-
-    }
-  );
-}
-
-
-els.modeButtons.forEach(
-  btn => {
-
-    btn.addEventListener(
-      "click",
-      () => {
-        setMode(
-          btn.dataset.mode
-        );
-      }
-    );
-
-  }
-);
-
-
-/* =========================================================
-   BẮT ĐẦU
-========================================================= */
-
-els.btnStart.addEventListener(
-  "click",
-  async () => {
-
-    const check =
-      validateStudent();
-
-    if (!check.ok) {
-      alert(check.message);
-      return;
-    }
-
-    /*
-      Challenge cần Firebase để lưu BXH.
-      Nếu Firebase chưa sẵn sàng, vẫn cho luyện.
-    */
-    if (
-      state.mode === "challenge"
-      &&
-      !firebaseReady
-    ) {
-      const continueWithoutSave =
-        confirm(
-          "Firebase chưa sẵn sàng.\n\n"
-          + "Kết quả có thể không được lưu vào bảng xếp hạng.\n\n"
-          + "Bạn vẫn muốn tiếp tục?"
-        );
-
-      if (!continueWithoutSave) {
-        return;
-      }
-    }
-
-    state.student =
-      check.student;
-
-    els.setup.classList.add(
-      "hidden"
-    );
-
-    els.game.classList.remove(
-      "hidden"
-    );
-
-    els.studentDisplay.textContent =
-      `${state.student.className}`
-      + ` · STT ${state.student.studentNo}`
-      + ` · ${state.student.name}`;
-
-    els.modeDisplay.textContent =
-      state.mode === "challenge"
-        ? "Thử thách"
-        : "Luyện tập";
-
-    els.btnNext.classList.toggle(
-      "hidden",
-      state.mode === "challenge"
-    );
-
-    loadNewLesson();
-
-    if (
-      state.mode === "challenge"
-    ) {
-      await runCountdownAndEnable();
-    } else {
-      enableTyping();
-    }
-  }
-);
-
-
-/* =========================================================
-   CHỌN BÀI
-========================================================= */
-
-function chooseLessonIndex() {
-
-  if (lessons.length === 1) {
-    return 0;
-  }
-
-  let index;
-
-  do {
-    index =
-      Math.floor(
-        Math.random()
-        * lessons.length
-      );
-
-  } while (
-    index ===
-    state.previousLessonIndex
-  );
-
-  return index;
-}
-
-
-/* =========================================================
-   NẠP BÀI
-========================================================= */
-
-function loadNewLesson() {
-
-  stopTimer();
-
-  state.previousLessonIndex =
-    state.currentLessonIndex;
-
-  state.currentLessonIndex =
-    chooseLessonIndex();
-
-  state.started = false;
-  state.completed = false;
-  state.startTime = 0;
-
-  state.totalKeystrokes = 0;
-  state.errorKeystrokes = 0;
-
-  state.mistakes = {};
-
-  state.previousValue = "";
-
-  state.lastStats = null;
-
-  els.input.value = "";
-  els.input.disabled = true;
-
-  els.poemDisplay.scrollTop = 0;
-
-  renderLesson();
-
-  renderStats({
-    elapsed: 0,
-    rawWpm: 0,
-    netWpm: 0,
-    accuracy: 100,
-    errors: 0,
-    progress: 0
+  return new Promise((resolve, reject) => {
+    let finished = false;
+    const unsubscribe = auth.onAuthStateChanged(async user => {
+      if (finished) return;
+      if (user) { finished = true; unsubscribe(); resolve(user); return; }
+      try {
+        const result = await auth.signInAnonymously();
+        finished = true; unsubscribe(); resolve(result.user);
+      } catch (error) { finished = true; unsubscribe(); reject(error); }
+    }, error => { if (!finished) { finished = true; unsubscribe(); reject(error); } });
   });
 }
 
+function setFirebaseStatus(message, type) {
+  els.firebaseStatus.textContent = message;
+  els.firebaseStatus.className = "firebase-status" + (type ? " " + type : "");
+}
 
-/* =========================================================
-   HIỂN THỊ BÀI
-========================================================= */
+function validateStudent() {
+  const className = normalizeClassName(els.classInput.value);
+  const studentNo = Number.parseInt(els.studentNoInput.value, 10);
+  const name = els.nameInput.value.trim().replace(/\s+/g, " ");
+  if (!className) return { ok: false, message: "Vui lòng nhập lớp." };
+  if (!Number.isInteger(studentNo) || studentNo < 1 || studentNo > 99) return { ok: false, message: "STT phải từ 1 đến 99." };
+  if (name.length < 2) return { ok: false, message: "Vui lòng nhập họ và tên học sinh." };
+  return { ok: true, student: { className, studentNo, name } };
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  els.modeButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.mode === mode));
+}
+els.modeButtons.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
+
+els.btnStart.addEventListener("click", async () => {
+  const check = validateStudent();
+  if (!check.ok) { alert(check.message); return; }
+  if (state.mode === "challenge" && !firebaseReady) {
+    if (!confirm("Firebase chưa sẵn sàng.\n\nKết quả có thể không được lưu vào bảng xếp hạng.\n\nBạn vẫn muốn tiếp tục?")) return;
+  }
+  state.student = check.student;
+  els.setup.classList.add("hidden");
+  els.game.classList.remove("hidden");
+  els.studentDisplay.textContent = `${state.student.className} · STT ${state.student.studentNo} · ${state.student.name}`;
+  els.modeDisplay.textContent = state.mode === "challenge" ? "Thử thách" : "Luyện tập";
+  els.btnNext.classList.toggle("hidden", state.mode === "challenge");
+  loadNewLesson();
+  if (state.mode === "challenge") await runCountdownAndEnable();
+  else enableTyping();
+});
+
+function chooseLessonIndex() {
+  if (lessons.length === 1) return 0;
+  let index;
+  do { index = Math.floor(Math.random() * lessons.length); } while (index === state.previousLessonIndex);
+  return index;
+}
+
+function loadNewLesson() {
+  stopTimer();
+  state.previousLessonIndex = state.currentLessonIndex;
+  state.currentLessonIndex = chooseLessonIndex();
+  state.started = state.completed = false;
+  state.startTime = state.totalKeystrokes = state.errorKeystrokes = 0;
+  state.mistakes = {}; state.previousValue = ""; state.lastStats = null;
+  els.input.value = ""; els.input.disabled = true; els.poemDisplay.scrollTop = 0;
+  renderLesson();
+  renderStats({ elapsed: 0, rawWpm: 0, netWpm: 0, accuracy: 100, errors: 0, progress: 0 });
+}
 
 function renderLesson() {
-
-  const lesson =
-    lessons[
-      state.currentLessonIndex
-    ];
-
-  els.lessonTitle.textContent =
-    `Bài: ${lesson.title}`
-    + ` · ${lesson.text.length} ký tự`;
-
-  els.poemDisplay.innerHTML =
-    "";
-
-  const fragment =
-    document.createDocumentFragment();
-
-  [...lesson.text].forEach(
-    (char, index) => {
-
-      const span =
-        document.createElement(
-          "span"
-        );
-
-      span.textContent = char;
-
-      if (index === 0) {
-        span.classList.add(
-          "char-current"
-        );
-      }
-
-      fragment.appendChild(
-        span
-      );
-    }
-  );
-
-  els.poemDisplay.appendChild(
-    fragment
-  );
+  const lesson = lessons[state.currentLessonIndex];
+  els.lessonTitle.textContent = `Bài: ${lesson.title} · ${lesson.text.length} ký tự`;
+  els.poemDisplay.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  [...lesson.text].forEach((char, index) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    if (index === 0) span.classList.add("char-current");
+    fragment.appendChild(span);
+  });
+  els.poemDisplay.appendChild(fragment);
 }
 
-
-/* =========================================================
-   ENABLE TYPING
-========================================================= */
-
-function enableTyping() {
-  els.input.disabled = false;
-  els.input.focus();
-}
-
-
-/* =========================================================
-   COUNTDOWN
-========================================================= */
+function enableTyping() { els.input.disabled = false; els.input.focus(); }
 
 async function runCountdownAndEnable() {
-
   els.input.disabled = true;
-
-  els.countdownOverlay.classList.remove(
-    "hidden"
-  );
-
-  const labels =
-    ["3", "2", "1", "BẮT ĐẦU"];
-
-  for (const label of labels) {
-
-    els.countdownNumber.textContent =
-      label;
-
-    els.countdownNumber.style.fontSize =
-      label === "BẮT ĐẦU"
-        ? "1.5rem"
-        : "4rem";
-
-    await delay(
-      label === "BẮT ĐẦU"
-        ? 450
-        : 700
-    );
+  els.countdownOverlay.classList.remove("hidden");
+  for (const label of ["3", "2", "1", "BẮT ĐẦU"]) {
+    els.countdownNumber.textContent = label;
+    els.countdownNumber.style.fontSize = label === "BẮT ĐẦU" ? "1.5rem" : "4rem";
+    await delay(label === "BẮT ĐẦU" ? 450 : 700);
   }
-
-  els.countdownOverlay.classList.add(
-    "hidden"
-  );
-
-  /*
-    Challenge bắt đầu tính giờ ngay
-    khi hết countdown.
-  */
+  els.countdownOverlay.classList.add("hidden");
   state.started = true;
-
-  state.startTime =
-    performance.now();
-
+  state.startTime = performance.now();
   startTimer();
-
   enableTyping();
 }
 
+els.input.addEventListener("paste", e => { e.preventDefault(); notifyBlocked("Không được dán văn bản."); });
+els.input.addEventListener("drop", e => { e.preventDefault(); notifyBlocked("Không được thả văn bản vào ô nhập."); });
+els.input.addEventListener("beforeinput", e => { if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") e.preventDefault(); });
+function notifyBlocked(msg) { if (state.mode === "challenge") alert(msg); }
 
-/* =========================================================
-   CHỐNG PASTE / DROP
-========================================================= */
-
-els.input.addEventListener(
-  "paste",
-  event => {
-
-    event.preventDefault();
-
-    notifyBlocked(
-      "Không được dán văn bản."
-    );
-  }
-);
-
-
-els.input.addEventListener(
-  "drop",
-  event => {
-
-    event.preventDefault();
-
-    notifyBlocked(
-      "Không được thả văn bản vào ô nhập."
-    );
-  }
-);
-
-
-els.input.addEventListener(
-  "beforeinput",
-  event => {
-
-    if (
-      event.inputType === "insertFromPaste"
-      ||
-      event.inputType === "insertFromDrop"
-    ) {
-      event.preventDefault();
-    }
-  }
-);
-
-
-function notifyBlocked(message) {
-
-  if (
-    state.mode === "challenge"
-  ) {
-    alert(message);
-  }
-}
-
-
-/* =========================================================
-   NHẬP VĂN BẢN
-========================================================= */
-
-els.input.addEventListener(
-  "input",
-  handleInput
-);
-
-
+els.input.addEventListener("input", handleInput);
 function handleInput() {
-
-  if (state.completed) {
-    return;
+  if (state.completed) return;
+  const lessonText = lessons[state.currentLessonIndex].text;
+  const currentValue = els.input.value;
+  if (!state.started && currentValue.length > 0) {
+    state.started = true; state.startTime = performance.now(); startTimer();
   }
-
-  const lessonText =
-    lessons[
-      state.currentLessonIndex
-    ].text;
-
-  const currentValue =
-    els.input.value;
-
-  /*
-    Practice chỉ bắt đầu giờ
-    khi nhập ký tự đầu tiên.
-  */
-  if (
-    !state.started
-    &&
-    currentValue.length > 0
-  ) {
-    state.started = true;
-
-    state.startTime =
-      performance.now();
-
-    startTimer();
-  }
-
-  trackNewKeystrokes(
-    state.previousValue,
-    currentValue,
-    lessonText
-  );
-
-  state.previousValue =
-    currentValue;
-
-  updateCharacterRendering(
-    currentValue,
-    lessonText
-  );
-
-  const stats =
-    calculateStats();
-
+  trackNewKeystrokes(state.previousValue, currentValue, lessonText);
+  state.previousValue = currentValue;
+  updateCharacterRendering(currentValue, lessonText);
+  const stats = calculateStats();
   renderStats(stats);
-
-  if (
-    currentValue.length ===
-      lessonText.length
-    &&
-    currentValue ===
-      lessonText
-  ) {
-    finishGame();
-  }
+  if (currentValue.length === lessonText.length && currentValue === lessonText) finishGame();
 }
 
-
-/* =========================================================
-   THEO DÕI LỖI
-========================================================= */
-
-function trackNewKeystrokes(
-  oldValue,
-  newValue,
-  target
-) {
-
-  /*
-    Xóa ký tự / Backspace
-    không tính thành lỗi mới.
-  */
-  if (
-    newValue.length <=
-    oldValue.length
-  ) {
-    return;
-  }
-
-  let commonPrefix = 0;
-
-  const minLength =
-    Math.min(
-      oldValue.length,
-      newValue.length
-    );
-
-  while (
-    commonPrefix < minLength
-    &&
-    oldValue[commonPrefix] ===
-      newValue[commonPrefix]
-  ) {
-    commonPrefix++;
-  }
-
-  for (
-    let i = commonPrefix;
-    i < newValue.length;
-    i++
-  ) {
-
-    const typed =
-      newValue[i];
-
-    const expected =
-      target[i];
-
+function trackNewKeystrokes(oldValue, newValue, target) {
+  if (newValue.length <= oldValue.length) return;
+  let commonPrefix = 0, minLength = Math.min(oldValue.length, newValue.length);
+  while (commonPrefix < minLength && oldValue[commonPrefix] === newValue[commonPrefix]) commonPrefix++;
+  for (let i = commonPrefix; i < newValue.length; i++) {
+    const typed = newValue[i], expected = target[i];
     state.totalKeystrokes++;
-
-    if (
-      typed !== expected
-    ) {
-
+    if (typed !== expected) {
       state.errorKeystrokes++;
-
-      const expectedLabel =
-        expected === "\n"
-          ? "↵"
-          : expected ?? "∅";
-
-      const typedLabel =
-        typed === "\n"
-          ? "↵"
-          : typed;
-
-      const key =
-        `${expectedLabel} → ${typedLabel}`;
-
-      state.mistakes[key] =
-        (
-          state.mistakes[key]
-          || 0
-        ) + 1;
+      const expectedLabel = expected === "\n" ? "↵" : expected ?? "∅";
+      const typedLabel = typed === "\n" ? "↵" : typed;
+      const key = `${expectedLabel} → ${typedLabel}`;
+      state.mistakes[key] = (state.mistakes[key] || 0) + 1;
     }
   }
 }
 
-
-/* =========================================================
-   TÔ MÀU KÝ TỰ
-========================================================= */
-
-function updateCharacterRendering(
-  value,
-  target
-) {
-
-  const spans =
-    els.poemDisplay.querySelectorAll(
-      "span"
-    );
-
+function updateCharacterRendering(value, target) {
+  const spans = els.poemDisplay.querySelectorAll("span");
   let firstMismatch = -1;
-
-  spans.forEach(
-    (span, index) => {
-
-      span.classList.remove(
-        "char-correct",
-        "char-incorrect",
-        "char-current"
-      );
-
-      if (
-        index < value.length
-      ) {
-
-        if (
-          value[index] === target[index]
-        ) {
-          span.classList.add(
-            "char-correct"
-          );
-        } else {
-          span.classList.add(
-            "char-incorrect"
-          );
-
-          if (
-            firstMismatch === -1
-          ) {
-            firstMismatch = index;
-          }
-        }
-      }
+  spans.forEach((span, index) => {
+    span.classList.remove("char-correct", "char-incorrect", "char-current");
+    if (index < value.length) {
+      if (value[index] === target[index]) span.classList.add("char-correct");
+      else { span.classList.add("char-incorrect"); if (firstMismatch === -1) firstMismatch = index; }
     }
-  );
-
-  if (
-    value.length < spans.length
-  ) {
-
-    const currentSpan =
-      spans[value.length];
-
-    if (currentSpan) {
-      currentSpan.classList.add(
-        "char-current"
-      );
-
-      smartScrollToSpan(
-        currentSpan
-      );
-    }
-
-  } else if (
-    firstMismatch >= 0
-  ) {
-
-    const mismatchSpan =
-      spans[firstMismatch];
-
-    if (mismatchSpan) {
-      mismatchSpan.classList.add(
-        "char-current"
-      );
-
-      smartScrollToSpan(
-        mismatchSpan
-      );
-    }
+  });
+  if (value.length < spans.length) {
+    const currentSpan = spans[value.length];
+    if (currentSpan) { currentSpan.classList.add("char-current"); smartScrollToSpan(currentSpan); }
+  } else if (firstMismatch >= 0) {
+    const mismatchSpan = spans[firstMismatch];
+    if (mismatchSpan) { mismatchSpan.classList.add("char-current"); smartScrollToSpan(mismatchSpan); }
   }
 }
-
-
-/* =========================================================
-   CUỘN THÔNG MINH
-========================================================= */
 
 function smartScrollToSpan(span) {
   const container = els.poemDisplay;
-
   if (!container || !span) return;
-
-  const containerRect =
-    container.getBoundingClientRect();
-
-  const spanRect =
-    span.getBoundingClientRect();
-
-  /*
-    Vị trí của ký tự hiện tại
-    bên trong vùng cuộn.
-  */
-  const relativeTop =
-    spanRect.top
-    -
-    containerRect.top
-    +
-    container.scrollTop;
-
-  /*
-    Giữ ký tự đang gõ
-    ở khoảng 35% chiều cao khung.
-  */
-  const targetScrollTop =
-    relativeTop
-    -
-    container.clientHeight * 0.35;
-
-  /*
-    Chỉ cuộn khi ký tự nằm
-    ngoài vùng trung tâm.
-  */
-  const upperThreshold =
-    containerRect.top
-    +
-    container.clientHeight * 0.25;
-
-  const lowerThreshold =
-    containerRect.top
-    +
-    container.clientHeight * 0.70;
-
-  if (
-    spanRect.top < upperThreshold
-    ||
-    spanRect.bottom > lowerThreshold
-  ) {
-    container.scrollTo({
-      top: Math.max(
-        0,
-        targetScrollTop
-      ),
-      behavior: "smooth"
-    });
+  const containerRect = container.getBoundingClientRect(), spanRect = span.getBoundingClientRect();
+  const relativeTop = spanRect.top - containerRect.top + container.scrollTop;
+  const targetScrollTop = relativeTop - container.clientHeight * 0.35;
+  if (spanRect.top < containerRect.top + container.clientHeight * 0.25 || spanRect.bottom > containerRect.top + container.clientHeight * 0.70) {
+    container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
   }
 }
-
-
-/* =========================================================
-   TIMER
-========================================================= */
 
 function startTimer() {
-
   stopTimer();
-
   const tick = () => {
-
-    if (
-      !state.started
-      ||
-      state.completed
-    ) {
-      return;
-    }
-
-    renderStats(
-      calculateStats()
-    );
-
-    state.rafId =
-      requestAnimationFrame(
-        tick
-      );
+    if (!state.started || state.completed) return;
+    renderStats(calculateStats());
+    state.rafId = requestAnimationFrame(tick);
   };
-
-  state.rafId =
-    requestAnimationFrame(
-      tick
-    );
+  state.rafId = requestAnimationFrame(tick);
 }
 
-
-function stopTimer() {
-
-  if (state.rafId !== null) {
-
-    cancelAnimationFrame(
-      state.rafId
-    );
-
-    state.rafId = null;
-  }
-}
-
-
-/* =========================================================
-   TÍNH THỐNG KÊ
-========================================================= */
+function stopTimer() { if (state.rafId !== null) { cancelAnimationFrame(state.rafId); state.rafId = null; } }
 
 function calculateStats() {
-
-  const now =
-    performance.now();
-
-  const elapsed =
-    state.started
-      ? Math.max(
-          (
-            now -
-            state.startTime
-          ) / 1000,
-          0.001
-        )
-      : 0;
-
-  const minutes =
-    elapsed / 60;
-
-  const typedLength =
-    els.input.value.length;
-
-  /*
-    Gross / Raw WPM:
-    5 ký tự = 1 từ.
-  */
-  const rawWpm =
-    minutes > 0
-      ? (
-          typedLength / 5
-        ) / minutes
-      : 0;
-
-  /*
-    Net WPM:
-    Raw WPM - lỗi/phút.
-  */
-  const errorsPerMinute =
-    minutes > 0
-      ? state.errorKeystrokes
-        / minutes
-      : 0;
-
-  const netWpm =
-    Math.max(
-      0,
-      rawWpm -
-      errorsPerMinute
-    );
-
-  /*
-    Accuracy dựa trên lịch sử nhập.
-
-    Nếu gõ sai rồi sửa đúng,
-    lỗi vẫn được ghi nhận.
-  */
-  const accuracy =
-    state.totalKeystrokes > 0
-      ? Math.max(
-          0,
-          (
-            (
-              state.totalKeystrokes
-              -
-              state.errorKeystrokes
-            )
-            /
-            state.totalKeystrokes
-          )
-          * 100
-        )
-      : 100;
-
-  const lesson =
-    lessons[
-      state.currentLessonIndex
-    ];
-
-  const progress =
-    lesson
-      ? Math.min(
-          100,
-          (
-            typedLength
-            /
-            lesson.text.length
-          )
-          * 100
-        )
-      : 0;
-
-  return {
-    elapsed,
-
-    rawWpm:
-      Math.round(rawWpm),
-
-    netWpm:
-      Math.round(netWpm),
-
-    accuracy:
-      Math.round(accuracy),
-
-    errors:
-      state.errorKeystrokes,
-
-    progress:
-      Math.round(progress)
-  };
+  const now = performance.now();
+  const elapsed = state.started ? Math.max((now - state.startTime) / 1000, 0.001) : 0;
+  const minutes = elapsed / 60, typedLength = els.input.value.length;
+  const rawWpm = minutes > 0 ? (typedLength / 5) / minutes : 0;
+  const errorsPerMinute = minutes > 0 ? state.errorKeystrokes / minutes : 0;
+  const netWpm = Math.max(0, rawWpm - errorsPerMinute);
+  const accuracy = state.totalKeystrokes > 0 ? Math.max(0, ((state.totalKeystrokes - state.errorKeystrokes) / state.totalKeystrokes) * 100) : 100;
+  const lesson = lessons[state.currentLessonIndex];
+  const progress = lesson ? Math.min(100, (typedLength / lesson.text.length) * 100) : 0;
+  return { elapsed, rawWpm: Math.round(rawWpm), netWpm: Math.round(netWpm), accuracy: Math.round(accuracy), errors: state.errorKeystrokes, progress: Math.round(progress) };
 }
-
-
-/* =========================================================
-   HIỂN THỊ THỐNG KÊ
-========================================================= */
 
 function renderStats(stats) {
-
-  els.timer.textContent =
-    stats.elapsed.toFixed(1);
-
-  els.rawWpm.textContent =
-    stats.rawWpm;
-
-  els.netWpm.textContent =
-    stats.netWpm;
-
-  els.accuracy.textContent =
-    stats.accuracy;
-
-  els.errorCount.textContent =
-    stats.errors;
-
-  els.progressText.textContent =
-    `${stats.progress}%`;
-
-  els.progressFill.style.width =
-    `${stats.progress}%`;
+  els.timer.textContent = stats.elapsed.toFixed(1);
+  els.rawWpm.textContent = stats.rawWpm;
+  els.netWpm.textContent = stats.netWpm;
+  els.accuracy.textContent = stats.accuracy;
+  els.errorCount.textContent = stats.errors;
+  els.progressText.textContent = `${stats.progress}%`;
+  els.progressFill.style.width = `${stats.progress}%`;
 }
-
-
-/* =========================================================
-   HOÀN THÀNH
-========================================================= */
 
 async function finishGame() {
-
-  if (state.completed) {
-    return;
-  }
-
-  /*
-    Quan tính stats cuối,
-    cần lấy trước khi đánh dấu completed.
-  */
-  const finalStats =
-    calculateStats();
-
-  state.completed = true;
-
-  state.lastStats =
-    finalStats;
-
-  stopTimer();
-
-  els.input.disabled =
-    true;
-
-  renderStats(
-    finalStats
-  );
-
-  showResult(
-    finalStats
-  );
-
-  if (
-    state.mode === "challenge"
-  ) {
-
-    els.resultSaveStatus.textContent =
-      "Đang lưu thành tích...";
-
-    const result =
-      await saveBestScore(
-        finalStats
-      );
-
-    els.resultSaveStatus.textContent =
-      result.message;
-
+  if (state.completed) return;
+  const finalStats = calculateStats();
+  state.completed = true; state.lastStats = finalStats;
+  stopTimer(); els.input.disabled = true;
+  renderStats(finalStats); showResult(finalStats);
+  if (state.mode === "challenge") {
+    els.resultSaveStatus.textContent = "Đang lưu thành tích...";
+    const result = await saveBestScore(finalStats);
+    els.resultSaveStatus.textContent = result.message;
   } else {
-
-    els.resultSaveStatus.textContent =
-      "Chế độ Luyện tập: kết quả không được ghi vào bảng xếp hạng.";
+    els.resultSaveStatus.textContent = "Chế độ Luyện tập: kết quả không được ghi vào bảng xếp hạng.";
   }
 }
 
-
-/* =========================================================
-   XẾP LOẠI
-========================================================= */
-
-function getBadge(
-  netWpm,
-  accuracy
-) {
-
-  if (
-    accuracy < 85
-  ) {
-    return "Cần chính xác hơn";
-  }
-
-  if (
-    netWpm >= 45
-  ) {
-    return "🏆 Siêu tốc";
-  }
-
-  if (
-    netWpm >= 35
-  ) {
-    return "🥇 Rất tốt";
-  }
-
-  if (
-    netWpm >= 25
-  ) {
-    return "🥈 Tốt";
-  }
-
-  if (
-    netWpm >= 15
-  ) {
-    return "🥉 Khá";
-  }
-
+function getBadge(netWpm, accuracy) {
+  if (accuracy < 85) return "Cần chính xác hơn";
+  if (netWpm >= 45) return "🏆 Siêu tốc";
+  if (netWpm >= 35) return "🥇 Rất tốt";
+  if (netWpm >= 25) return "🥈 Tốt";
+  if (netWpm >= 15) return "🥉 Khá";
   return "🌱 Đang luyện";
 }
 
-
-/* =========================================================
-   MODAL KẾT QUẢ
-========================================================= */
-
 function showResult(stats) {
-
-  const lesson =
-    lessons[
-      state.currentLessonIndex
-    ];
-
-  els.resultTitle.textContent =
-    `Hoàn thành · ${lesson.title}`;
-
-  els.resultNetWpm.textContent =
-    stats.netWpm;
-
-  els.resultAccuracy.textContent =
-    stats.accuracy;
-
-  els.resultErrors.textContent =
-    stats.errors;
-
-  els.resultTime.textContent =
-    stats.elapsed.toFixed(1);
-
-  els.resultBadge.textContent =
-    getBadge(
-      stats.netWpm,
-      stats.accuracy
-    );
-
+  const lesson = lessons[state.currentLessonIndex];
+  els.resultTitle.textContent = `Hoàn thành · ${lesson.title}`;
+  els.resultNetWpm.textContent = stats.netWpm;
+  els.resultAccuracy.textContent = stats.accuracy;
+  els.resultErrors.textContent = stats.errors;
+  els.resultTime.textContent = stats.elapsed.toFixed(1);
+  els.resultBadge.textContent = getBadge(stats.netWpm, stats.accuracy);
   renderMistakeDetails();
-
-  els.resultModal.classList.remove(
-    "hidden"
-  );
+  els.resultModal.classList.remove("hidden");
 }
-
-
-/* =========================================================
-   CHI TIẾT LỖI
-========================================================= */
 
 function renderMistakeDetails() {
-
-  const entries =
-    Object.entries(
-      state.mistakes
-    )
-    .sort(
-      (a, b) =>
-        b[1] - a[1]
-    )
-    .slice(0, 8);
-
-  if (!entries.length) {
-
-    els.resultErrorsDetail.classList.add(
-      "hidden"
-    );
-
-    els.resultErrorsDetail.innerHTML =
-      "";
-
-    return;
-  }
-
-  els.resultErrorsDetail.classList.remove(
-    "hidden"
-  );
-
-  els.resultErrorsDetail.innerHTML =
-    "<strong>Lỗi gõ thường gặp</strong><br>"
-    +
-    entries.map(
-      ([key, count]) =>
-        `${escapeHTML(key)}: ${count} lần`
-    ).join("<br>");
+  const entries = Object.entries(state.mistakes).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  if (!entries.length) { els.resultErrorsDetail.classList.add("hidden"); els.resultErrorsDetail.innerHTML = ""; return; }
+  els.resultErrorsDetail.classList.remove("hidden");
+  els.resultErrorsDetail.innerHTML = "<strong>Lỗi gõ thường gặp</strong><br>" + entries.map(([key, count]) => `${escapeHTML(key)}: ${count} lần`).join("<br>");
 }
-
-
-/* =========================================================
-   LƯU KỶ LỤC
-========================================================= */
 
 async function saveBestScore(stats) {
+  if (!firebaseReady || !firebaseUser || !bestScoresRef) return { saved: false, message: "Firebase chưa sẵn sàng; kết quả chưa được lưu." };
+  if (stats.accuracy < 85) return { saved: false, message: "Độ chính xác dưới 85%; kết quả không được ghi vào bảng xếp hạng." };
+  if (stats.netWpm > 250 || stats.rawWpm > 300) return { saved: false, message: "Kết quả vượt ngưỡng hợp lệ và không được lưu." };
 
-  if (
-    !firebaseReady
-    ||
-    !firebaseUser
-    ||
-    !bestScoresRef
-  ) {
-
-    return {
-      saved: false,
-      message:
-        "Firebase chưa sẵn sàng; kết quả chưa được lưu."
-    };
-  }
-
-  if (
-    stats.accuracy < 85
-  ) {
-
-    return {
-      saved: false,
-      message:
-        "Độ chính xác dưới 85%; kết quả không được ghi vào bảng xếp hạng."
-    };
-  }
-
-  if (
-    stats.netWpm > 250
-    ||
-    stats.rawWpm > 300
-  ) {
-
-    return {
-      saved: false,
-      message:
-        "Kết quả vượt ngưỡng hợp lệ và không được lưu."
-    };
-  }
-
-  /*
-    Vẫn dùng lớp + STT làm key,
-    tương thích với Rules và BXH hiện tại.
-  */
-  const studentKey =
-    getStudentKey(
-      state.student
-    );
-
-  const ref =
-    bestScoresRef.child(
-      studentKey
-    );
-
-  const lesson =
-    lessons[
-      state.currentLessonIndex
-    ];
-
-  const payload = {
-
-    name:
-      state.student.name,
-
-    className:
-      state.student.className,
-
-    studentNo:
-      state.student.studentNo,
-
-    netWpm:
-      stats.netWpm,
-
-    rawWpm:
-      stats.rawWpm,
-
-    accuracy:
-      stats.accuracy,
-
-    errors:
-      stats.errors,
-
-    elapsed:
-      Number(
-        stats.elapsed.toFixed(1)
-      ),
-
-    lessonId:
-      lesson.id,
-
-    lessonTitle:
-      lesson.title,
-
-    updatedAt:
-      firebase.database
-        .ServerValue
-        .TIMESTAMP
-  };
+  const studentKey = getStudentKey(state.student);
+  const ref = bestScoresRef.child(studentKey);
+  const lesson = lessons[state.currentLessonIndex];
+  const payload = { name: state.student.name, className: state.student.className, studentNo: state.student.studentNo, netWpm: stats.netWpm, rawWpm: stats.rawWpm, accuracy: stats.accuracy, errors: stats.errors, elapsed: Number(stats.elapsed.toFixed(1)), lessonId: lesson.id, lessonTitle: lesson.title, updatedAt: firebase.database.ServerValue.TIMESTAMP };
 
   try {
-
-    const transactionResult =
-      await ref.transaction(
-        current => {
-
-          /*
-            Chưa có kỷ lục.
-          */
-          if (!current) {
-            return payload;
-          }
-
-          const oldWpm =
-            Number(
-              current.netWpm || 0
-            );
-
-          const oldAccuracy =
-            Number(
-              current.accuracy || 0
-            );
-
-          /*
-            Chỉ ghi khi tốt hơn.
-          */
-          if (
-            payload.netWpm > oldWpm
-            ||
-            (
-              payload.netWpm === oldWpm
-              &&
-              payload.accuracy >
-                oldAccuracy
-            )
-          ) {
-            return payload;
-          }
-
-          /*
-            undefined:
-            không ghi đè.
-          */
-          return undefined;
-        }
-      );
-
-    if (
-      transactionResult.committed
-    ) {
-
-      return {
-        saved: true,
-        message:
-          "Đã lưu kỷ lục cá nhân mới lên bảng xếp hạng."
-      };
-    }
-
-    return {
-      saved: false,
-      message:
-        "Đã hoàn thành nhưng thành tích chưa vượt kỷ lục cá nhân."
-    };
-
+    const transactionResult = await ref.transaction(current => {
+      if (!current) return payload;
+      const oldWpm = Number(current.netWpm || 0), oldAccuracy = Number(current.accuracy || 0);
+      if (payload.netWpm > oldWpm || (payload.netWpm === oldWpm && payload.accuracy > oldAccuracy)) return payload;
+      return undefined;
+    });
+    if (transactionResult.committed) return { saved: true, message: "Đã lưu kỷ lục cá nhân mới lên bảng xếp hạng." };
+    return { saved: false, message: "Đã hoàn thành nhưng thành tích chưa vượt kỷ lục cá nhân." };
   } catch (error) {
-
-    console.error(
-      "Save score error:",
-      error
-    );
-
-    if (
-      String(error?.code || "")
-        .toLowerCase()
-        .includes("permission")
-    ) {
-
-      return {
-        saved: false,
-        message:
-          "Firebase từ chối ghi dữ liệu. Hãy kiểm tra Realtime Database Rules."
-      };
-    }
-
-    return {
-      saved: false,
-      message:
-        "Không thể lưu thành tích lên Firebase."
-    };
+    if (String(error?.code || "").toLowerCase().includes("permission")) return { saved: false, message: "Firebase từ chối ghi dữ liệu. Hãy kiểm tra Realtime Database Rules." };
+    return { saved: false, message: "Không thể lưu thành tích lên Firebase." };
   }
 }
 
-
-/* =========================================================
-   ĐỔI BÀI
-========================================================= */
-
-els.btnNext.addEventListener(
-  "click",
-  () => {
-
-    if (
-      state.mode !== "practice"
-    ) {
-      return;
-    }
-
-    loadNewLesson();
-
-    enableTyping();
-  }
-);
-
-
-/* =========================================================
-   THOÁT
-========================================================= */
-
-els.btnExit.addEventListener(
-  "click",
-  resetToSetup
-);
-
+els.btnNext.addEventListener("click", () => { if (state.mode === "practice") { loadNewLesson(); enableTyping(); } });
+els.btnExit.addEventListener("click", resetToSetup);
 
 function resetToSetup() {
-
-  stopTimer();
-
-  state.started = false;
-  state.completed = false;
-
-  els.input.value = "";
-
-  els.game.classList.add(
-    "hidden"
-  );
-
-  els.setup.classList.remove(
-    "hidden"
-  );
-
-  els.resultModal.classList.add(
-    "hidden"
-  );
-
-  els.nameInput.focus();
+  stopTimer(); state.started = state.completed = false;
+  els.input.value = ""; els.game.classList.add("hidden"); els.setup.classList.remove("hidden"); els.resultModal.classList.add("hidden"); els.nameInput.focus();
 }
 
+els.btnPlayAgain.addEventListener("click", async () => {
+  els.resultModal.classList.add("hidden"); loadNewLesson();
+  if (state.mode === "challenge") await runCountdownAndEnable(); else enableTyping();
+});
 
-/* =========================================================
-   CHƠI TIẾP
-========================================================= */
-
-els.btnPlayAgain.addEventListener(
-  "click",
-  async () => {
-
-    els.resultModal.classList.add(
-      "hidden"
-    );
-
-    loadNewLesson();
-
-    if (
-      state.mode === "challenge"
-    ) {
-
-      await runCountdownAndEnable();
-
-    } else {
-
-      enableTyping();
-    }
-  }
-);
-
-
-/* =========================================================
-   ĐÓNG KẾT QUẢ
-========================================================= */
-
-els.btnCloseResult.addEventListener(
-  "click",
-  () => {
-
-    els.resultModal.classList.add(
-      "hidden"
-    );
-  }
-);
-
-
-/* =========================================================
-   CACHE BXH
-========================================================= */
+els.btnCloseResult.addEventListener("click", () => els.resultModal.classList.add("hidden"));
 
 let leaderboardCache = [];
 
-
-/* =========================================================
-   HIỂN THỊ BXH
-========================================================= */
-
 function renderLeaderboard(items) {
+  const selectedClass = els.leaderboardClassFilter.value;
+  let filtered = items.filter(item => item && item.name && Number.isFinite(Number(item.netWpm)));
+  if (selectedClass !== "all") filtered = filtered.filter(item => item.className === selectedClass);
+  filtered.sort((a, b) => Number(b.netWpm) - Number(a.netWpm) || Number(b.accuracy) - Number(a.accuracy) || Number(a.studentNo) - Number(b.studentNo));
+  filtered = filtered.slice(0, 10);
 
-  const selectedClass =
-    els.leaderboardClassFilter.value;
-
-  let filtered =
-    items.filter(
-      item =>
-        item
-        &&
-        item.name
-        &&
-        Number.isFinite(
-          Number(item.netWpm)
-        )
-    );
-
-  if (
-    selectedClass !== "all"
-  ) {
-
-    filtered =
-      filtered.filter(
-        item =>
-          item.className ===
-          selectedClass
-      );
-  }
-
-  filtered.sort(
-    (a, b) =>
-
-      Number(b.netWpm)
-      -
-      Number(a.netWpm)
-
-      ||
-
-      Number(b.accuracy)
-      -
-      Number(a.accuracy)
-
-      ||
-
-      Number(a.studentNo)
-      -
-      Number(b.studentNo)
-  );
-
-  filtered =
-    filtered.slice(0, 10);
-
-  if (!filtered.length) {
-
-    els.leaderboard.innerHTML =
-      '<li class="empty">'
-      +
-      "Chưa có thành tích phù hợp."
-      +
-      "</li>";
-
-    return;
-  }
-
-  els.leaderboard.innerHTML =
-    filtered.map(
-      (item, index) => {
-
-        return `
-          <li class="leaderboard-item">
-
-            <span>
-              #${index + 1}
-            </span>
-
-            <span>
-
-              ${escapeHTML(
-                item.name
-              )}
-
-              <div class="player-meta">
-
-                ${escapeHTML(
-                  item.className || ""
-                )}
-
-                · STT
-
-                ${Number(
-                  item.studentNo || 0
-                )}
-
-              </div>
-
-            </span>
-
-            <span>
-
-              <strong>
-                ${Number(
-                  item.netWpm || 0
-                )}
-                WPM
-              </strong>
-
-              <div class="player-meta">
-                ${Number(
-                  item.accuracy || 0
-                )}%
-              </div>
-
-            </span>
-
-          </li>
-        `;
-      }
-    ).join("");
+  if (!filtered.length) { els.leaderboard.innerHTML = '<li class="empty">Chưa có thành tích phù hợp.</li>'; return; }
+  els.leaderboard.innerHTML = filtered.map((item, index) => `<li class="leaderboard-item"><span>#${index + 1}</span><span>${escapeHTML(item.name)}<div class="player-meta">${escapeHTML(item.className || "")} · STT ${Number(item.studentNo || 0)}</div></span><span><strong>${Number(item.netWpm || 0)} WPM</strong><div class="player-meta">${Number(item.accuracy || 0)}%</div></span></li>`).join("");
 }
-
-
-/* =========================================================
-   BỘ LỌC LỚP
-========================================================= */
 
 function updateClassFilter(items) {
-
-  const current =
-    els.leaderboardClassFilter.value;
-
-  const classes =
-    [
-      ...new Set(
-        items
-          .map(
-            item =>
-              item?.className
-          )
-          .filter(Boolean)
-      )
-    ];
-
-  classes.sort(
-    (a, b) =>
-      a.localeCompare(
-        b,
-        "vi",
-        {
-          numeric: true
-        }
-      )
-  );
-
-  els.leaderboardClassFilter.innerHTML =
-    '<option value="all">'
-    +
-    "Tất cả lớp"
-    +
-    "</option>"
-    +
-    classes.map(
-      className =>
-        `<option value="${escapeHTML(className)}">`
-        +
-        `${escapeHTML(className)}`
-        +
-        "</option>"
-    ).join("");
-
-  if (
-    current === "all"
-    ||
-    classes.includes(current)
-  ) {
-    els.leaderboardClassFilter.value =
-      current;
-  }
+  const current = els.leaderboardClassFilter.value;
+  const classes = [...new Set(items.map(item => item?.className).filter(Boolean))];
+  classes.sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+  els.leaderboardClassFilter.innerHTML = '<option value="all">Tất cả lớp</option>' + classes.map(className => `<option value="${escapeHTML(className)}">${escapeHTML(className)}</option>`).join("");
+  if (current === "all" || classes.includes(current)) els.leaderboardClassFilter.value = current;
 }
 
-
-els.leaderboardClassFilter.addEventListener(
-  "change",
-  () => {
-    renderLeaderboard(
-      leaderboardCache
-    );
-  }
-);
-
-
-/* =========================================================
-   FIREBASE REALTIME LISTENER
-========================================================= */
+els.leaderboardClassFilter.addEventListener("change", () => renderLeaderboard(leaderboardCache));
 
 function startLeaderboardListener() {
-
-  if (
-    leaderboardListenerStarted
-    ||
-    !firebaseReady
-    ||
-    !bestScoresRef
-  ) {
-    return;
-  }
-
+  if (leaderboardListenerStarted || !firebaseReady || !bestScoresRef) return;
   leaderboardListenerStarted = true;
-
-  bestScoresRef.on(
-    "value",
-
-    snapshot => {
-
-      const items = [];
-
-      snapshot.forEach(
-        child => {
-
-          const value =
-            child.val();
-
-          if (value) {
-            items.push(value);
-          }
-        }
-      );
-
-      leaderboardCache =
-        items;
-
-      updateClassFilter(
-        items
-      );
-
-      renderLeaderboard(
-        items
-      );
-    },
-
-    error => {
-
-      console.error(
-        "Leaderboard error:",
-        error
-      );
-
-      els.leaderboard.innerHTML =
-        '<li class="empty">'
-        +
-        "Không thể tải bảng xếp hạng. "
-        +
-        "Kiểm tra Firebase Database Rules."
-        +
-        "</li>";
-    }
-  );
+  bestScoresRef.on("value", snapshot => {
+    const items = [];
+    snapshot.forEach(child => { const val = child.val(); if (val) items.push(val); });
+    leaderboardCache = items; updateClassFilter(items); renderLeaderboard(items);
+  }, error => {
+    els.leaderboard.innerHTML = '<li class="empty">Không thể tải bảng xếp hạng. Kiểm tra Firebase Database Rules.</li>';
+  });
 }
 
-
-/* =========================================================
-   ENTER
-========================================================= */
-
-els.studentNoInput.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key === "Enter"
-    ) {
-      els.nameInput.focus();
-    }
-  }
-);
-
-
-els.nameInput.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key === "Enter"
-    ) {
-      els.btnStart.click();
-    }
-  }
-);
-
-
-/* =========================================================
-   KHỞI ĐỘNG FIREBASE
-========================================================= */
+els.studentNoInput.addEventListener("keydown", event => { if (event.key === "Enter") els.nameInput.focus(); });
+els.nameInput.addEventListener("keydown", event => { if (event.key === "Enter") els.btnStart.click(); });
 
 initFirebase();
-
 </script>
-
 </body>
 </html>
