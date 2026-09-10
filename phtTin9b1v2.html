@@ -66,6 +66,13 @@ th{background:#edf5ff}
 .firebase-status{margin-top:10px;padding:9px 11px;border-radius:8px;background:#eceff1;color:#455a64;font-size:.88rem}
 .firebase-status.ok{background:#e8f5e9;color:#1b5e20}
 .firebase-status.error{background:#ffebee;color:#b71c1c}
+.browser-warning{
+  margin-top:12px;padding:12px 14px;border-radius:10px;
+  background:#fff3cd;border:1px solid #ffcc80;color:#7a4a00;
+  font-size:.92rem;line-height:1.45
+}
+.browser-warning strong{color:#b45309}
+.browser-warning.hidden{display:none!important}
 .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 .kpi>div{background:#f7f9fb;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
 .kpi strong{display:block;font-size:1.35rem;color:var(--primary2)}
@@ -96,6 +103,36 @@ th{background:#edf5ff}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
+
+<script>
+(function(){
+  function showBrowserWarning(){
+    var ua = navigator.userAgent || "";
+    var match = ua.match(/Chrome\/(\d+)/);
+    var warning = document.getElementById("browserWarning");
+
+    if(!warning) return;
+
+    if(match){
+      var major = parseInt(match[1], 10);
+      if(!isNaN(major) && major < 110){
+        warning.className = "browser-warning";
+        warning.innerHTML =
+          "<strong>Cảnh báo: Chrome " + major + " đã khá cũ.</strong><br>" +
+          "Một số chức năng có thể không hoạt động đúng, như danh sách STT, lưu bài hoặc đồng bộ Firebase. " +
+          "Em hãy báo giáo viên và cập nhật Chrome lên phiên bản mới trước khi làm bài.";
+      }
+    }
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", showBrowserWarning);
+  }else{
+    showBrowserWarning();
+  }
+})();
+</script>
+
 <div class="app">
   <div class="header">
     <h1>PHIẾU HỌC TẬP SỐ - TIN HỌC 9</h1>
@@ -117,7 +154,59 @@ th{background:#edf5ff}
       </div>
       <div class="field">
         <label>STT</label>
-        <select id="studentNo"></select>
+        <select id="studentNo">
+          <option value="">-- Chọn STT --</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="15">15</option>
+          <option value="16">16</option>
+          <option value="17">17</option>
+          <option value="18">18</option>
+          <option value="19">19</option>
+          <option value="20">20</option>
+          <option value="21">21</option>
+          <option value="22">22</option>
+          <option value="23">23</option>
+          <option value="24">24</option>
+          <option value="25">25</option>
+          <option value="26">26</option>
+          <option value="27">27</option>
+          <option value="28">28</option>
+          <option value="29">29</option>
+          <option value="30">30</option>
+          <option value="31">31</option>
+          <option value="32">32</option>
+          <option value="33">33</option>
+          <option value="34">34</option>
+          <option value="35">35</option>
+          <option value="36">36</option>
+          <option value="37">37</option>
+          <option value="38">38</option>
+          <option value="39">39</option>
+          <option value="40">40</option>
+          <option value="41">41</option>
+          <option value="42">42</option>
+          <option value="43">43</option>
+          <option value="44">44</option>
+          <option value="45">45</option>
+          <option value="46">46</option>
+          <option value="47">47</option>
+          <option value="48">48</option>
+          <option value="49">49</option>
+          <option value="50">50</option>          
+        </select>
       </div>
       <div class="field" style="grid-column:1/-1">
         <label>Họ và tên</label>
@@ -129,6 +218,11 @@ th{background:#edf5ff}
       Học sinh khác không thể đọc hoặc ghi bài của em qua Firebase.
     </div>
     <div class="firebase-status" id="firebaseStatus">Đang kết nối Firebase...</div>
+    <div id="browserWarning" class="browser-warning hidden">
+      <strong>Trình duyệt của máy đang cũ.</strong>
+      Một số chức năng của phiếu học tập có thể không hoạt động đúng, ví dụ danh sách STT, lưu bài hoặc đồng bộ Firebase.
+      Em hãy báo giáo viên và cập nhật Chrome lên phiên bản mới trước khi làm bài.
+    </div>
     <div class="topbar">
       <button class="btn success" id="startBtn">Bắt đầu / Tiếp tục</button>
       <button class="btn secondary" id="teacherBtn">Đăng nhập giáo viên</button>
@@ -143,7 +237,7 @@ th{background:#edf5ff}
         </div>
         <div class="field">
           <label>Mật khẩu</label>
-          <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="Mật khẩu Firebase Auth">
+          <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="Mật khẩu">
         </div>
       </div>
       <div class="topbar">
@@ -249,11 +343,6 @@ let demoMode = false;
 let remoteSaveTimer = null;
 
 const studentNo = document.getElementById("studentNo");
-for(let i=1;i<=55;i++){
-  const o=document.createElement("option");
-  o.value=i;o.textContent=i;studentNo.appendChild(o);
-}
-
 const activities = [
   {
     title:"Phiếu 1 - Khởi động: Thiết bị nào có bộ xử lí?",
@@ -489,7 +578,7 @@ async function ensureAnonymousStudent(){
   firebaseReady=true;
 
   setFirebaseStatus(
-    "Firebase bảo mật đã kết nối · Học sinh chỉ truy cập bài của chính mình.",
+    "CSDL bảo mật đã bật · Học sinh chỉ truy cập bài của chính mình.",
     "ok"
   );
   console.log("Student anonymous UID:",firebaseUser.uid);
@@ -502,8 +591,8 @@ async function initFirebase(){
     await ensureAnonymousStudent();
   }catch(err){
     firebaseReady=false;
-    setFirebaseStatus("Không thể kết nối Firebase · Vẫn lưu tạm trên máy.","error");
-    console.error("Firebase init error:",err);
+    setFirebaseStatus("Không thể kết nối CSDL GV· Vẫn lưu tạm trên máy.","error");
+    console.error("CSDL init error:",err);
   }
 }
 
@@ -750,7 +839,7 @@ async function enterStudent(){
 
   if(remote && !remoteMatches){
     alert(
-      "Trình duyệt này đã có dữ liệu Firebase của học sinh khác ("+
+      "Trình duyệt này đã có dữ liệu của học sinh khác ("+
       remote.className+" - STT "+remote.studentNo+").\n\n"+
       "Để bảo vệ dữ liệu, một UID ẩn danh chỉ gắn với một học sinh."
     );
