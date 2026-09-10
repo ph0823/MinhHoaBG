@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thử Tài Gõ Phím V2 - Tinh Gọn</title>
+<title>Thử Tài Gõ Phím V3 - BXH theo buổi học</title>
 <style>
 :root { --primary: #c62828; --accent: #1565c0; --success: #2e7d32; --warning: #ef6c00; --bg: #f4f7f6; --text: #263238; --muted: #607d8b; }
 * { box-sizing: border-box; }
@@ -111,7 +111,7 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
 
         <div class="mode-picker">
           <button class="mode-btn active" data-mode="practice" type="button">Luyện tập<br><span class="small">Được đổi bài · Không ghi BXH</span></button>
-          <button class="mode-btn" data-mode="challenge" type="button">Thử thách<br><span class="small">Đếm ngược · Ghi thành tích tốt nhất</span></button>
+          <button class="mode-btn" data-mode="challenge" type="button">Thử thách<br><span class="small">Đếm ngược · Xếp hạng trong buổi học</span></button>
         </div>
 
         <div class="actions">
@@ -149,12 +149,13 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
     </main>
 
     <aside class="card">
-      <h2 class="section-title">🏆 Bảng xếp hạng</h2>
+      <h2 class="section-title">🏆 Bảng xếp hạng buổi học</h2>
       <div class="leaderboard-head">
         <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
+        <button class="btn secondary hidden" id="btn-clear-leaderboard" type="button">Xoá BXH (GV)</button>
       </div>
       <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
-      <p class="small">Xếp theo Net WPM. Nếu bằng nhau, ưu tiên độ chính xác cao hơn.</p>
+      <p class="small">Chỉ gồm học sinh tham gia trong buổi học hiện tại. Xếp theo Net WPM, sau đó độ chính xác.</p>
     </aside>
   </div>
 </div>
@@ -193,7 +194,7 @@ const firebaseConfig = {
   appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
 };
 
-let database = null, bestScoresRef = null, firebaseReady = false, firebaseUser = null, leaderboardListenerStarted = false;
+let database = null, sessionScoresRef = null, firebaseReady = false, firebaseUser = null, leaderboardListenerStarted = false, isTeacher = false;
 
 // ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
@@ -211,7 +212,7 @@ const els = {
   poemDisplay: document.getElementById("poem-display"), input: document.getElementById("input-field"), timer: document.getElementById("timer"),
   rawWpm: document.getElementById("raw-wpm"), netWpm: document.getElementById("net-wpm"), accuracy: document.getElementById("accuracy"), errorCount: document.getElementById("error-count"),
   progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
-  leaderboard: document.getElementById("leaderboard"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), firebaseStatus: document.getElementById("firebase-status"),
+  leaderboard: document.getElementById("leaderboard"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), btnClearLeaderboard: document.getElementById("btn-clear-leaderboard"), firebaseStatus: document.getElementById("firebase-status"),
   countdownOverlay: document.getElementById("countdown-overlay"), countdownNumber: document.getElementById("countdown-number"), resultModal: document.getElementById("result-modal"),
   resultTitle: document.getElementById("result-title"), resultNetWpm: document.getElementById("result-net-wpm"), resultAccuracy: document.getElementById("result-accuracy"),
   resultErrors: document.getElementById("result-errors"), resultTime: document.getElementById("result-time"), resultBadge: document.getElementById("result-badge"),
@@ -234,14 +235,25 @@ async function initFirebase() {
     const auth = firebase.auth();
     firebaseUser = await getOrCreateAnonymousUser(auth);
     database = firebase.database();
-    bestScoresRef = database.ref("typing_best_scores_v2");
+    sessionScoresRef = database.ref("typing_session_scores_v1");
     firebaseReady = true;
-    setFirebaseStatus("Firebase đã kết nối · Có thể lưu bảng xếp hạng.", "ok");
+    setFirebaseStatus("Firebase đã kết nối · BXH buổi học đã sẵn sàng.", "ok");
     startLeaderboardListener();
   } catch (error) {
     firebaseReady = false;
     setFirebaseStatus("Không thể kết nối Firebase. Chế độ luyện tập vẫn sử dụng được.", "error");
     els.leaderboard.innerHTML = '<li class="empty">Không thể kết nối Firebase.</li>';
+  }
+}
+
+async function checkTeacherRole(uid) {
+  if (!database || !uid) return false;
+  try {
+    const snapshot = await database.ref(`tin9_bai1_secure/teachers/${uid}`).once("value");
+    return snapshot.val() === true;
+  } catch (error) {
+    console.warn("Không kiểm tra được quyền giáo viên:", error);
+    return false;
   }
 }
 
@@ -494,24 +506,25 @@ function renderMistakeDetails() {
 }
 
 async function saveBestScore(stats) {
-  if (!firebaseReady || !firebaseUser || !bestScoresRef) return { saved: false, message: "Firebase chưa sẵn sàng; kết quả chưa được lưu." };
+  if (!firebaseReady || !firebaseUser || !sessionScoresRef) return { saved: false, message: "Firebase chưa sẵn sàng; kết quả chưa được lưu." };
   if (stats.accuracy < 85) return { saved: false, message: "Độ chính xác dưới 85%; kết quả không được ghi vào bảng xếp hạng." };
   if (stats.netWpm > 250 || stats.rawWpm > 300) return { saved: false, message: "Kết quả vượt ngưỡng hợp lệ và không được lưu." };
 
   const studentKey = getStudentKey(state.student);
-  const ref = bestScoresRef.child(studentKey);
+  const ref = sessionScoresRef.child(studentKey);
   const lesson = lessons[state.currentLessonIndex];
-  const payload = { name: state.student.name, className: state.student.className, studentNo: state.student.studentNo, netWpm: stats.netWpm, rawWpm: stats.rawWpm, accuracy: stats.accuracy, errors: stats.errors, elapsed: Number(stats.elapsed.toFixed(1)), lessonId: lesson.id, lessonTitle: lesson.title, updatedAt: firebase.database.ServerValue.TIMESTAMP };
+  const payload = { ownerUid: firebaseUser.uid, name: state.student.name, className: state.student.className, studentNo: state.student.studentNo, netWpm: stats.netWpm, rawWpm: stats.rawWpm, accuracy: stats.accuracy, errors: stats.errors, elapsed: Number(stats.elapsed.toFixed(1)), lessonId: lesson.id, lessonTitle: lesson.title, updatedAt: firebase.database.ServerValue.TIMESTAMP };
 
   try {
     const transactionResult = await ref.transaction(current => {
       if (!current) return payload;
+      if (current.ownerUid && current.ownerUid !== firebaseUser.uid) return undefined;
       const oldWpm = Number(current.netWpm || 0), oldAccuracy = Number(current.accuracy || 0);
       if (payload.netWpm > oldWpm || (payload.netWpm === oldWpm && payload.accuracy > oldAccuracy)) return payload;
       return undefined;
     });
-    if (transactionResult.committed) return { saved: true, message: "Đã lưu kỷ lục cá nhân mới lên bảng xếp hạng." };
-    return { saved: false, message: "Đã hoàn thành nhưng thành tích chưa vượt kỷ lục cá nhân." };
+    if (transactionResult.committed) return { saved: true, message: "Đã cập nhật thành tích của em trong bảng xếp hạng buổi học." };
+    return { saved: false, message: "Đã hoàn thành nhưng thành tích chưa cao hơn lần trước trong buổi học này." };
   } catch (error) {
     if (String(error?.code || "").toLowerCase().includes("permission")) return { saved: false, message: "Firebase từ chối ghi dữ liệu. Hãy kiểm tra Realtime Database Rules." };
     return { saved: false, message: "Không thể lưu thành tích lên Firebase." };
@@ -557,9 +570,9 @@ function updateClassFilter(items) {
 els.leaderboardClassFilter.addEventListener("change", () => renderLeaderboard(leaderboardCache));
 
 function startLeaderboardListener() {
-  if (leaderboardListenerStarted || !firebaseReady || !bestScoresRef) return;
+  if (leaderboardListenerStarted || !firebaseReady || !sessionScoresRef) return;
   leaderboardListenerStarted = true;
-  bestScoresRef.on("value", snapshot => {
+  sessionScoresRef.on("value", snapshot => {
     const items = [];
     snapshot.forEach(child => { const val = child.val(); if (val) items.push(val); });
     leaderboardCache = items; updateClassFilter(items); renderLeaderboard(items);
@@ -567,6 +580,31 @@ function startLeaderboardListener() {
     els.leaderboard.innerHTML = '<li class="empty">Không thể tải bảng xếp hạng. Kiểm tra Firebase Database Rules.</li>';
   });
 }
+
+
+async function clearSessionLeaderboard() {
+  if (!firebaseReady || !sessionScoresRef) {
+    alert("Firebase chưa sẵn sàng.");
+    return;
+  }
+  if (!isTeacher) {
+    alert("Chỉ tài khoản giáo viên mới được xoá bảng xếp hạng.");
+    return;
+  }
+  const ok = confirm("Xoá toàn bộ bảng xếp hạng của buổi học hiện tại?\n\nDữ liệu này sẽ bị xoá khỏi Firebase và không thể khôi phục.");
+  if (!ok) return;
+  try {
+    els.btnClearLeaderboard.disabled = true;
+    await sessionScoresRef.remove();
+    alert("Đã xoá bảng xếp hạng. Có thể bắt đầu buổi học mới.");
+  } catch (error) {
+    alert("Không thể xoá bảng xếp hạng. Hãy kiểm tra Firebase Database Rules.");
+  } finally {
+    els.btnClearLeaderboard.disabled = false;
+  }
+}
+
+els.btnClearLeaderboard.addEventListener("click", clearSessionLeaderboard);
 
 els.studentNoInput.addEventListener("keydown", event => { if (event.key === "Enter") els.nameInput.focus(); });
 els.nameInput.addEventListener("keydown", event => { if (event.key === "Enter") els.btnStart.click(); });
