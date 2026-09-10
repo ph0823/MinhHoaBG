@@ -74,6 +74,12 @@ th{background:#edf5ff}
 .security-ok{background:#e8f5e9;color:#1b5e20;padding:9px 11px;border-radius:9px}
 .uid-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.75rem;word-break:break-all;color:var(--muted)}
 .duplicate{background:#fff8e1}
+.demo-banner{
+  margin:10px 0;padding:10px 12px;border-radius:10px;
+  background:#ede7f6;color:#4527a0;font-weight:700
+}
+.demo-mode .progress-bar{background:#7e57c2}
+
 @media(max-width:800px){
   .grid2,.match-grid{grid-template-columns:1fr}
   .activity-nav{grid-template-columns:repeat(4,1fr)}
@@ -119,8 +125,8 @@ th{background:#edf5ff}
       </div>
     </div>
     <div class="notice">
-      Tiến độ được lưu tạm trên máy và đồng bộ vào vùng dữ liệu riêng của tài khoản trên máy.
-      Học sinh khác không thể đọc hoặc ghi bài của em.
+      Tiến độ được lưu tạm trên máy và đồng bộ vào vùng dữ liệu riêng của tài khoản ẩn danh trên máy này.
+      Học sinh khác không thể đọc hoặc ghi bài của em qua Firebase.
     </div>
     <div class="firebase-status" id="firebaseStatus">Đang kết nối Firebase...</div>
     <div class="topbar">
@@ -145,12 +151,15 @@ th{background:#edf5ff}
         <button class="btn light" id="teacherLoginCancelBtn">Hủy</button>
       </div>
       <div id="teacherLoginStatus" class="auth-note">
-      
+        Tài khoản phải được bật Email/Password trong Firebase Authentication và UID phải có quyền giáo viên trong Realtime Database.
       </div>
     </div>
   </section>
 
   <section id="studentScreen" class="hidden">
+    <div id="demoBanner" class="demo-banner hidden">
+      CHẾ ĐỘ DEMO· Không lưu trên máy
+    </div>
     <div class="card">
       <div class="topbar">
         <span class="badge" id="studentBadge"></span>
@@ -174,13 +183,14 @@ th{background:#edf5ff}
       <button class="btn light" id="teacherBackBtn">Đăng xuất giáo viên</button>
     </div>
     <div class="security-ok">
-      Chế độ bảo mật: giáo viên chỉ đọc toàn bộ kết quả; 
+      Chế độ bảo mật: học sinh chỉ đọc/ghi dữ liệu dưới UID của chính mình.      
     </div>
     <div class="teacher-toolbar">
       <select id="teacherClassFilter"><option value="all">Tất cả lớp</option></select>
       <button class="btn" id="exportCsvBtn">Xuất CSV</button>
       <button class="btn secondary" id="exportJsonBtn">Xuất JSON</button>
-      <span class="small">Giáo viên ở chế độ chỉ đọc để tránh sửa/xóa bài học sinh từ trình duyệt.</span>
+      <button class="btn warning" id="demoBtn">Bắt đầu Demo</button>
+      <span class="small">Demo không ghi và không lưu.</span>
     </div>
     <div class="kpi">
       <div><strong id="kpiStudents">0</strong>Học sinh</div>
@@ -235,6 +245,7 @@ let currentKey = null;
 let currentRecord = null;
 let currentActivity = 0;
 let saveTimer = null;
+let demoMode = false;
 let remoteSaveTimer = null;
 
 const studentNo = document.getElementById("studentNo");
@@ -478,7 +489,7 @@ async function ensureAnonymousStudent(){
   firebaseReady=true;
 
   setFirebaseStatus(
-    "CSDL bảo mật đã bật· Học sinh chỉ truy cập bài của chính mình.",
+    "Firebase bảo mật đã kết nối · Học sinh chỉ truy cập bài của chính mình.",
     "ok"
   );
   console.log("Student anonymous UID:",firebaseUser.uid);
@@ -491,13 +502,13 @@ async function initFirebase(){
     await ensureAnonymousStudent();
   }catch(err){
     firebaseReady=false;
-    setFirebaseStatus("Không thể kết nối CSDL · Vẫn lưu tạm trên máy.","error");
-    console.error("CSDL init error:",err);
+    setFirebaseStatus("Không thể kết nối Firebase · Vẫn lưu tạm trên máy.","error");
+    console.error("Firebase init error:",err);
   }
 }
 
 async function syncCurrentToFirebase(){
-  if(!firebaseReady||teacherMode||!ownResultRef||!firebaseUser||!currentRecord)return false;
+  if(demoMode||!firebaseReady||teacherMode||!ownResultRef||!firebaseUser||!currentRecord)return false;
 
   const payload={
     ...currentRecord,
@@ -676,10 +687,24 @@ function capture(e){
   saveTimer=setTimeout(()=>{persistCurrent();document.getElementById("saveStatus").textContent="Đã lưu";},300);
 }
 function persistCurrent(){
-  if(!currentKey||!currentRecord)return;
+  if(!currentRecord)return;
+
+  if(demoMode){
+    currentRecord.updatedAt=Date.now();
+    const el=document.getElementById("saveStatus");
+    if(el) el.textContent="DEMO · Không lưu";
+    return;
+  }
+
+  if(!currentKey)return;
+
   currentRecord.updatedAt=Date.now();
   currentRecord.ownerUid=firebaseUser?.uid||currentRecord.ownerUid||"";
-  const d=allData();d[currentKey]=currentRecord;saveAll(d);
+
+  const d=allData();
+  d[currentKey]=currentRecord;
+  saveAll(d);
+
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer=setTimeout(async()=>{
     const ok=await syncCurrentToFirebase();
@@ -696,6 +721,10 @@ function updateProgress(){
   document.getElementById("progressBar").style.width=`${n/7*100}%`;
 }
 async function enterStudent(){
+  demoMode=false;
+  document.getElementById("studentScreen").classList.remove("demo-mode");
+  document.getElementById("demoBanner").classList.add("hidden");
+
   const cls=document.getElementById("studentClass").value;
   const no=document.getElementById("studentNo").value;
   const name=document.getElementById("studentName").value.trim().replace(/\s+/g," ");
@@ -753,7 +782,24 @@ async function enterStudent(){
   renderActivity();
 }
 document.getElementById("startBtn").onclick=enterStudent;
-document.getElementById("backLoginBtn").onclick=()=>{persistCurrent();document.getElementById("studentScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden")};
+
+document.getElementById("backLoginBtn").onclick=()=>{
+  if(!demoMode) persistCurrent();
+
+  document.getElementById("studentScreen").classList.add("hidden");
+
+  if(demoMode && teacherMode){
+    demoMode=false;
+    currentKey=null;
+    currentRecord=null;
+    document.getElementById("demoBanner").classList.add("hidden");
+    document.getElementById("studentScreen").classList.remove("demo-mode");
+    document.getElementById("teacherScreen").classList.remove("hidden");
+    renderTeacher();
+  }else{
+    document.getElementById("loginScreen").classList.remove("hidden");
+  }
+};
 
 function teacherOpen(){
   document.getElementById("teacherLoginPanel").classList.remove("hidden");
@@ -800,6 +846,9 @@ document.getElementById("teacherLoginBtn").onclick=async()=>{
 };
 
 document.getElementById("teacherBackBtn").onclick=async()=>{
+  demoMode=false;
+  currentKey=null;
+  currentRecord=null;
   document.getElementById("teacherScreen").classList.add("hidden");
   document.getElementById("loginScreen").classList.remove("hidden");
   document.getElementById("teacherDetail").innerHTML="";
@@ -868,15 +917,113 @@ function renderTeacher(){
       <td>${n}/7</td>
       <td>${new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN")}</td>
       <td><span class="uid-text">${esc(r.uid)}</span></td>
-      <td><button class="btn light" data-detail="${esc(r.uid)}">Xem</button></td>
+      <td>
+        <button class="btn light" data-detail="${esc(r.uid)}">Xem</button>
+        <button class="btn danger" data-delete="${esc(r.uid)}" style="margin-left:5px">Xóa</button>
+      </td>
     </tr>`;
   }).join("")||'<tr><td colspan="8" class="small">Chưa có dữ liệu.</td></tr>';
 
   document.querySelectorAll("[data-detail]").forEach(
     b=>b.onclick=()=>showDetail(b.dataset.detail)
   );
+
+  document.querySelectorAll("[data-delete]").forEach(
+    b=>b.onclick=()=>deleteStudentResult(b.dataset.delete)
+  );
 }
 document.getElementById("teacherClassFilter").onchange=renderTeacher;
+
+function removeLocalStudentRecord(className,studentNo){
+  const key=studentKey(className,studentNo);
+  const data=allData();
+
+  if(Object.prototype.hasOwnProperty.call(data,key)){
+    delete data[key];
+    saveAll(data);
+  }
+
+  if(currentKey===key && !demoMode){
+    currentKey=null;
+    currentRecord=null;
+  }
+}
+
+async function deleteStudentResult(uid){
+  if(!teacherMode||!firebaseUser||!database){
+    alert("Chỉ giáo viên đã đăng nhập mới được xóa dữ liệu.");
+    return;
+  }
+
+  const record=(firebaseRecords||{})[uid];
+  if(!record){
+    alert("Không tìm thấy dữ liệu học sinh.");
+    return;
+  }
+
+  const label=`${record.className} · STT ${record.studentNo} · ${record.name}`;
+
+  const ok=confirm(
+    "XÓA TOÀN BỘ DỮ LIỆU HỌC SINH?\\n\\n"+
+    label+"\\n\\n"+
+    "Toàn bộ câu trả lời và tiến độ của bản ghi này sẽ bị xóa.\\n"+
+    "Giáo viên không thể hoàn tác thao tác này."
+  );
+
+  if(!ok)return;
+
+  try{
+    await database.ref(`${RESULTS_PATH}/${uid}`).remove();
+
+    // Nếu giáo viên từng demo bằng đúng Lớp + STT trên máy này,
+    // dọn cả dữ liệu cục bộ để tránh đồng bộ trở lại.
+    removeLocalStudentRecord(record.className,record.studentNo);
+
+    document.getElementById("teacherDetail").innerHTML="";
+    alert(`Đã xóa dữ liệu:\\n${label}`);
+  }catch(error){
+    console.error("Delete student result error:",error);
+    alert(
+      "Không thể xóa dữ liệu.\\n"+
+      "Hãy kiểm tra tài khoản giáo viên và Firebase Rules."
+    );
+  }
+}
+
+function startTeacherDemo(){
+  if(!teacherMode){
+    alert("Cần đăng nhập giáo viên trước khi mở chế độ Demo.");
+    return;
+  }
+
+  demoMode=true;
+  currentKey=null;
+  currentActivity=0;
+  currentRecord={
+    className:"DEMO",
+    studentNo:0,
+    name:"GIÁO VIÊN DEMO",
+    answers:{},
+    done:[false,false,false,false,false,false,false],
+    ownerUid:"",
+    updatedAt:Date.now()
+  };
+
+  document.getElementById("teacherScreen").classList.add("hidden");
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("studentScreen").classList.remove("hidden");
+  document.getElementById("studentScreen").classList.add("demo-mode");
+  document.getElementById("demoBanner").classList.remove("hidden");
+
+  document.getElementById("studentBadge").textContent=
+    "DEMO · Giáo viên · Không lưu dữ liệu";
+  document.getElementById("saveStatus").textContent=
+    "DEMO · Không lưu";
+
+  renderActivity();
+}
+
+document.getElementById("demoBtn").onclick=startTeacherDemo;
 
 function showDetail(uid){
   if(!teacherMode)return;
