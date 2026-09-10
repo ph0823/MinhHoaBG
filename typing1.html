@@ -68,6 +68,13 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
 .result-grid div { background: #f5f5f5; border-radius: 8px; padding: 10px; }
 .error-list { text-align: left; max-height: 140px; overflow: auto; background: #fafafa; border: 1px solid #eeeeee; border-radius: 8px; padding: 10px; margin-top: 10px; }
 .small { font-size: 0.82rem; color: var(--muted); }
+ .teacher-tools { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eceff1; }
+.teacher-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.teacher-status { flex:1; min-width:180px; font-size:.82rem; color:var(--muted); }
+.teacher-status.active { color:#1b5e20; font-weight:700; }
+.teacher-login-form { display:grid; gap:10px; margin-top:12px; text-align:left; }
+.teacher-login-form input { width:100%; padding:11px 12px; border:1.5px solid #b0bec5; border-radius:8px; }
+.teacher-login-error { min-height:1.2em; color:#b71c1c; font-size:.84rem; }
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 14px 10px 0; } .form-grid, .mode-picker { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } .poem { font-size: 1.05rem; max-height: 215px; } }
 </style>
@@ -152,10 +159,18 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
       <h2 class="section-title">🏆 Bảng xếp hạng buổi học</h2>
       <div class="leaderboard-head">
         <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
-        <button class="btn secondary hidden" id="btn-clear-leaderboard" type="button">Xoá BXH (GV)</button>
       </div>
       <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
       <p class="small">Chỉ gồm học sinh tham gia trong buổi học hiện tại. Xếp theo Net WPM, sau đó độ chính xác.</p>
+
+      <div class="teacher-tools">
+        <div class="teacher-row">
+          <span id="teacher-status" class="teacher-status">Chế độ học sinh</span>
+          <button class="btn secondary" id="btn-teacher-login" type="button">Đăng nhập giáo viên</button>
+          <button class="btn secondary hidden" id="btn-teacher-logout" type="button">Đăng xuất GV</button>
+          <button class="btn warning hidden" id="btn-clear-leaderboard" type="button">Xoá BXH buổi học</button>
+        </div>
+      </div>
     </aside>
   </div>
 </div>
@@ -181,6 +196,28 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
   </div>
 </div>
 
+<div class="modal hidden" id="teacher-login-modal">
+  <div class="modal-card">
+    <h2>Đăng nhập giáo viên</h2>
+    <p class="small">Dùng tài khoản giáo viên đã được tạo trong Firebase Authentication.</p>
+    <form id="teacher-login-form" class="teacher-login-form">
+      <div class="field">
+        <label for="teacher-email">Email</label>
+        <input id="teacher-email" type="email" autocomplete="username" placeholder="giaovien@example.com" required>
+      </div>
+      <div class="field">
+        <label for="teacher-password">Mật khẩu</label>
+        <input id="teacher-password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+      </div>
+      <div id="teacher-login-error" class="teacher-login-error"></div>
+      <div class="actions" style="justify-content:center;margin-top:2px">
+        <button class="btn success" id="btn-teacher-submit" type="submit">Đăng nhập</button>
+        <button class="btn secondary" id="btn-teacher-cancel" type="button">Huỷ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -194,7 +231,7 @@ const firebaseConfig = {
   appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
 };
 
-let database = null, sessionScoresRef = null, firebaseReady = false, firebaseUser = null, leaderboardListenerStarted = false, isTeacher = false;
+let database = null, sessionScoresRef = null, firebaseReady = false, firebaseUser = null, firebaseAuth = null, leaderboardListenerStarted = false, isTeacher = false;
 
 // ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
@@ -213,6 +250,8 @@ const els = {
   rawWpm: document.getElementById("raw-wpm"), netWpm: document.getElementById("net-wpm"), accuracy: document.getElementById("accuracy"), errorCount: document.getElementById("error-count"),
   progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
   leaderboard: document.getElementById("leaderboard"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), btnClearLeaderboard: document.getElementById("btn-clear-leaderboard"), firebaseStatus: document.getElementById("firebase-status"),
+  teacherStatus: document.getElementById("teacher-status"), btnTeacherLogin: document.getElementById("btn-teacher-login"), btnTeacherLogout: document.getElementById("btn-teacher-logout"),
+  teacherLoginModal: document.getElementById("teacher-login-modal"), teacherLoginForm: document.getElementById("teacher-login-form"), teacherEmail: document.getElementById("teacher-email"), teacherPassword: document.getElementById("teacher-password"), teacherLoginError: document.getElementById("teacher-login-error"), btnTeacherSubmit: document.getElementById("btn-teacher-submit"), btnTeacherCancel: document.getElementById("btn-teacher-cancel"),
   countdownOverlay: document.getElementById("countdown-overlay"), countdownNumber: document.getElementById("countdown-number"), resultModal: document.getElementById("result-modal"),
   resultTitle: document.getElementById("result-title"), resultNetWpm: document.getElementById("result-net-wpm"), resultAccuracy: document.getElementById("result-accuracy"),
   resultErrors: document.getElementById("result-errors"), resultTime: document.getElementById("result-time"), resultBadge: document.getElementById("result-badge"),
@@ -232,15 +271,22 @@ async function initFirebase() {
   try {
     setFirebaseStatus("Đang kết nối Firebase...", "");
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    firebaseUser = await getOrCreateAnonymousUser(auth);
+    firebaseAuth = firebase.auth();
+    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
     database = firebase.database();
     sessionScoresRef = database.ref("typing_session_scores_v1");
     firebaseReady = true;
-    setFirebaseStatus("Firebase đã kết nối · BXH buổi học đã sẵn sàng.", "ok");
+
+    isTeacher = await checkTeacherRole(firebaseUser.uid);
+    updateTeacherUI();
+    setFirebaseStatus(
+      isTeacher ? "Firebase đã kết nối · Đang đăng nhập với quyền giáo viên." : "Firebase đã kết nối · BXH buổi học đã sẵn sàng.",
+      "ok"
+    );
     startLeaderboardListener();
   } catch (error) {
     firebaseReady = false;
+    updateTeacherUI();
     setFirebaseStatus("Không thể kết nối Firebase. Chế độ luyện tập vẫn sử dụng được.", "error");
     els.leaderboard.innerHTML = '<li class="empty">Không thể kết nối Firebase.</li>';
   }
@@ -275,6 +321,113 @@ function setFirebaseStatus(message, type) {
   els.firebaseStatus.textContent = message;
   els.firebaseStatus.className = "firebase-status" + (type ? " " + type : "");
 }
+
+function updateTeacherUI() {
+  const signedInTeacher = Boolean(firebaseUser && isTeacher);
+  els.btnTeacherLogin.classList.toggle("hidden", signedInTeacher);
+  els.btnTeacherLogout.classList.toggle("hidden", !signedInTeacher);
+  els.btnClearLeaderboard.classList.toggle("hidden", !signedInTeacher);
+  els.teacherStatus.textContent = signedInTeacher
+    ? `Giáo viên · ${firebaseUser.email || "UID đã xác thực"}`
+    : "Chế độ học sinh";
+  els.teacherStatus.classList.toggle("active", signedInTeacher);
+}
+
+function openTeacherLogin() {
+  els.teacherLoginError.textContent = "";
+  els.teacherPassword.value = "";
+  els.teacherLoginModal.classList.remove("hidden");
+  setTimeout(() => els.teacherEmail.focus(), 50);
+}
+
+function closeTeacherLogin() {
+  els.teacherLoginModal.classList.add("hidden");
+  els.teacherLoginError.textContent = "";
+  els.teacherPassword.value = "";
+}
+
+function teacherLoginErrorMessage(error) {
+  const code = String(error?.code || "");
+  if (code.includes("invalid-email")) return "Email không hợp lệ.";
+  if (code.includes("user-disabled")) return "Tài khoản giáo viên đã bị vô hiệu hoá.";
+  if (code.includes("user-not-found") || code.includes("wrong-password") || code.includes("invalid-credential")) return "Email hoặc mật khẩu không đúng.";
+  if (code.includes("too-many-requests")) return "Đăng nhập sai quá nhiều lần. Hãy thử lại sau.";
+  if (code.includes("network-request-failed")) return "Không thể kết nối mạng để đăng nhập.";
+  if (code.includes("operation-not-allowed")) return "Firebase chưa bật phương thức đăng nhập Email/Password.";
+  return "Không thể đăng nhập giáo viên.";
+}
+
+async function loginTeacher(email, password) {
+  if (!firebaseAuth || !database) throw new Error("Firebase chưa sẵn sàng.");
+
+  stopLeaderboardListener();
+  const credential = await firebaseAuth.signInWithEmailAndPassword(email, password);
+  const user = credential.user;
+  const allowed = await checkTeacherRole(user.uid);
+
+  if (!allowed) {
+    await firebaseAuth.signOut();
+    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
+    isTeacher = false;
+    startLeaderboardListener();
+    updateTeacherUI();
+    throw new Error("Tài khoản này chưa được cấp quyền giáo viên.");
+  }
+
+  firebaseUser = user;
+  isTeacher = true;
+  startLeaderboardListener();
+  updateTeacherUI();
+  setFirebaseStatus("Đã đăng nhập giáo viên · Có quyền xoá BXH buổi học.", "ok");
+}
+
+async function logoutTeacher() {
+  if (!firebaseAuth) return;
+  stopLeaderboardListener();
+  try {
+    await firebaseAuth.signOut();
+    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
+    isTeacher = false;
+    updateTeacherUI();
+    startLeaderboardListener();
+    setFirebaseStatus("Đã đăng xuất giáo viên · Chuyển về chế độ học sinh.", "ok");
+  } catch (error) {
+    console.error(error);
+    setFirebaseStatus("Không thể đăng xuất giáo viên.", "error");
+  }
+}
+
+els.btnTeacherLogin.addEventListener("click", openTeacherLogin);
+els.btnTeacherCancel.addEventListener("click", closeTeacherLogin);
+els.teacherLoginModal.addEventListener("click", event => { if (event.target === els.teacherLoginModal) closeTeacherLogin(); });
+els.btnTeacherLogout.addEventListener("click", () => {
+  if (confirm("Đăng xuất khỏi chế độ giáo viên?")) logoutTeacher();
+});
+
+els.teacherLoginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = els.teacherEmail.value.trim();
+  const password = els.teacherPassword.value;
+  if (!email || !password) {
+    els.teacherLoginError.textContent = "Vui lòng nhập đầy đủ email và mật khẩu.";
+    return;
+  }
+
+  els.teacherLoginError.textContent = "";
+  els.btnTeacherSubmit.disabled = true;
+  els.btnTeacherSubmit.textContent = "Đang đăng nhập...";
+  try {
+    await loginTeacher(email, password);
+    closeTeacherLogin();
+  } catch (error) {
+    els.teacherLoginError.textContent = error?.message === "Tài khoản này chưa được cấp quyền giáo viên."
+      ? error.message
+      : teacherLoginErrorMessage(error);
+  } finally {
+    els.btnTeacherSubmit.disabled = false;
+    els.btnTeacherSubmit.textContent = "Đăng nhập";
+  }
+});
 
 function validateStudent() {
   const className = normalizeClassName(els.classInput.value);
@@ -569,8 +722,13 @@ function updateClassFilter(items) {
 
 els.leaderboardClassFilter.addEventListener("change", () => renderLeaderboard(leaderboardCache));
 
+function stopLeaderboardListener() {
+  if (sessionScoresRef && leaderboardListenerStarted) sessionScoresRef.off("value");
+  leaderboardListenerStarted = false;
+}
+
 function startLeaderboardListener() {
-  if (leaderboardListenerStarted || !firebaseReady || !sessionScoresRef) return;
+  if (leaderboardListenerStarted || !firebaseReady || !sessionScoresRef || !firebaseAuth?.currentUser) return;
   leaderboardListenerStarted = true;
   sessionScoresRef.on("value", snapshot => {
     const items = [];
