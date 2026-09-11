@@ -53,7 +53,10 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
 .leaderboard-head { display: flex; gap: 8px; margin-bottom: 12px; }
 .leaderboard-head select { flex: 1; padding: 8px; border: 1px solid #b0bec5; border-radius: 7px; }
 .leaderboard-list { list-style: none; padding: 0; margin: 0; }
-.leaderboard-item { display: grid; grid-template-columns: 42px 1fr auto; gap: 8px; align-items: center; padding: 10px 8px; border-bottom: 1px solid #eceff1; font-size: 0.93rem; }
+.leaderboard-item { display: grid; grid-template-columns: 42px minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 10px 8px; border-bottom: 1px solid #eceff1; font-size: 0.93rem; }
+.delete-score-btn { border: none; border-radius: 7px; padding: 7px 9px; background: #ffebee; color: #b71c1c; font-weight: 800; line-height: 1; }
+.delete-score-btn:hover { background: #ffcdd2; }
+.delete-score-btn:disabled { opacity: .5; cursor: wait; }
 .leaderboard-item:nth-child(1) { background: #ffebee; color: #b71c1c; font-weight: 800; }
 .leaderboard-item:nth-child(2) { color: #ef6c00; font-weight: 800; }
 .leaderboard-item:nth-child(3) { color: #2e7d32; font-weight: 800; }
@@ -232,6 +235,8 @@ const firebaseConfig = {
 };
 
 let database = null, sessionScoresRef = null, firebaseReady = false, firebaseUser = null, firebaseAuth = null, leaderboardListenerStarted = false, isTeacher = false;
+let authReadyResolved = false;
+let authStateUnsubscribe = null;
 
 // ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
@@ -271,24 +276,67 @@ async function initFirebase() {
   try {
     setFirebaseStatus("Đang kết nối Firebase...", "");
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
     firebaseAuth = firebase.auth();
-    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
     database = firebase.database();
     sessionScoresRef = database.ref("typing_session_scores_v1");
-    firebaseReady = true;
 
-    isTeacher = await checkTeacherRole(firebaseUser.uid);
-    updateTeacherUI();
-    setFirebaseStatus(
-      isTeacher ? "Firebase đã kết nối · Đang đăng nhập với quyền giáo viên." : "Firebase đã kết nối · BXH buổi học đã sẵn sàng.",
-      "ok"
-    );
-    startLeaderboardListener();
+    // Chỉ khởi tạo một bộ theo dõi auth duy nhất. Mọi thay đổi anonymous/GV đều đi qua đây.
+    authStateUnsubscribe = firebaseAuth.onAuthStateChanged(async user => {
+      try {
+        if (!user) {
+          firebaseReady = false;
+          firebaseUser = null;
+          isTeacher = false;
+          stopLeaderboardListener();
+          updateTeacherUI();
+          setFirebaseStatus("Đang tạo phiên đăng nhập học sinh...", "");
+          els.leaderboard.innerHTML = '<li class="empty">Đang xác thực để tải bảng xếp hạng...</li>';
+          return;
+        }
+
+        firebaseUser = user;
+        firebaseReady = true;
+        isTeacher = await checkTeacherRole(user.uid);
+        updateTeacherUI();
+
+        stopLeaderboardListener();
+        startLeaderboardListener();
+
+        setFirebaseStatus(
+          isTeacher ? "Firebase đã kết nối · Đang đăng nhập với quyền giáo viên." : "Firebase đã kết nối · BXH buổi học đã sẵn sàng.",
+          "ok"
+        );
+      } catch (error) {
+        console.error("Lỗi xử lý trạng thái đăng nhập:", error);
+        setFirebaseStatus("Đã kết nối Firebase nhưng chưa xác thực được quyền truy cập BXH.", "error");
+      }
+    }, error => {
+      console.error("Auth state error:", error);
+      firebaseReady = false;
+      setFirebaseStatus("Lỗi xác thực Firebase.", "error");
+    });
+
+    // Nếu chưa có người dùng, tạo anonymous. Rules hiện tại yêu cầu auth != null để đọc BXH.
+    if (!firebaseAuth.currentUser) {
+      try {
+        await firebaseAuth.signInAnonymously();
+      } catch (error) {
+        const code = String(error?.code || "");
+        console.error("Không đăng nhập ẩn danh được:", error);
+        if (code.includes("operation-not-allowed")) {
+          setFirebaseStatus("Firebase chưa bật Anonymous Authentication. Hãy bật Anonymous trong Authentication → Sign-in method.", "error");
+          els.leaderboard.innerHTML = '<li class="empty">Không thể tải BXH: Anonymous Authentication chưa được bật.</li>';
+        } else {
+          setFirebaseStatus("Không thể tạo phiên đăng nhập học sinh.", "error");
+          els.leaderboard.innerHTML = '<li class="empty">Không thể xác thực để tải bảng xếp hạng.</li>';
+        }
+        throw error;
+      }
+    }
   } catch (error) {
-    firebaseReady = false;
+    console.error("initFirebase:", error);
     updateTeacherUI();
-    setFirebaseStatus("Không thể kết nối Firebase. Chế độ luyện tập vẫn sử dụng được.", "error");
-    els.leaderboard.innerHTML = '<li class="empty">Không thể kết nối Firebase.</li>';
   }
 }
 
@@ -303,18 +351,10 @@ async function checkTeacherRole(uid) {
   }
 }
 
-function getOrCreateAnonymousUser(auth) {
-  return new Promise((resolve, reject) => {
-    let finished = false;
-    const unsubscribe = auth.onAuthStateChanged(async user => {
-      if (finished) return;
-      if (user) { finished = true; unsubscribe(); resolve(user); return; }
-      try {
-        const result = await auth.signInAnonymously();
-        finished = true; unsubscribe(); resolve(result.user);
-      } catch (error) { finished = true; unsubscribe(); reject(error); }
-    }, error => { if (!finished) { finished = true; unsubscribe(); reject(error); } });
-  });
+async function getOrCreateAnonymousUser(auth) {
+  if (auth.currentUser) return auth.currentUser;
+  const result = await auth.signInAnonymously();
+  return result.user;
 }
 
 function setFirebaseStatus(message, type) {
@@ -331,6 +371,7 @@ function updateTeacherUI() {
     ? `Giáo viên · ${firebaseUser.email || "UID đã xác thực"}`
     : "Chế độ học sinh";
   els.teacherStatus.classList.toggle("active", signedInTeacher);
+  if (Array.isArray(leaderboardCache)) renderLeaderboard(leaderboardCache);
 }
 
 function openTeacherLogin() {
@@ -367,18 +408,12 @@ async function loginTeacher(email, password) {
 
   if (!allowed) {
     await firebaseAuth.signOut();
-    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
-    isTeacher = false;
-    startLeaderboardListener();
-    updateTeacherUI();
+    await firebaseAuth.signInAnonymously();
     throw new Error("Tài khoản này chưa được cấp quyền giáo viên.");
   }
 
-  firebaseUser = user;
-  isTeacher = true;
-  startLeaderboardListener();
-  updateTeacherUI();
-  setFirebaseStatus("Đã đăng nhập giáo viên · Có quyền xoá BXH buổi học.", "ok");
+  // onAuthStateChanged sẽ đồng bộ firebaseUser/isTeacher và bật lại listener.
+  setFirebaseStatus("Đã đăng nhập giáo viên · Đang đồng bộ quyền...", "ok");
 }
 
 async function logoutTeacher() {
@@ -386,11 +421,8 @@ async function logoutTeacher() {
   stopLeaderboardListener();
   try {
     await firebaseAuth.signOut();
-    firebaseUser = await getOrCreateAnonymousUser(firebaseAuth);
-    isTeacher = false;
-    updateTeacherUI();
-    startLeaderboardListener();
-    setFirebaseStatus("Đã đăng xuất giáo viên · Chuyển về chế độ học sinh.", "ok");
+    await firebaseAuth.signInAnonymously();
+    setFirebaseStatus("Đã đăng xuất giáo viên · Đang chuyển về chế độ học sinh...", "ok");
   } catch (error) {
     console.error(error);
     setFirebaseStatus("Không thể đăng xuất giáo viên.", "error");
@@ -669,9 +701,16 @@ async function saveBestScore(stats) {
   const payload = { ownerUid: firebaseUser.uid, name: state.student.name, className: state.student.className, studentNo: state.student.studentNo, netWpm: stats.netWpm, rawWpm: stats.rawWpm, accuracy: stats.accuracy, errors: stats.errors, elapsed: Number(stats.elapsed.toFixed(1)), lessonId: lesson.id, lessonTitle: lesson.title, updatedAt: firebase.database.ServerValue.TIMESTAMP };
 
   try {
+    // Với rule ownerUid hiện tại, cùng Lớp + STT đã được một UID khác ghi thì UID mới không thể chiếm lại.
+    // Báo rõ nguyên nhân thay vì nhầm là "điểm chưa cao hơn".
+    const existingSnap = await ref.once("value");
+    const existing = existingSnap.val();
+    if (existing && existing.ownerUid && existing.ownerUid !== firebaseUser.uid) {
+      return { saved: false, message: "STT này đã có dữ liệu từ một phiên đăng nhập khác. Giáo viên cần xoá mục cũ hoặc xoá BXH trước khi em làm lại." };
+    }
     const transactionResult = await ref.transaction(current => {
       if (!current) return payload;
-      if (current.ownerUid && current.ownerUid !== firebaseUser.uid) return undefined;
+      if (current.ownerUid && current.ownerUid !== firebaseUser.uid) return;
       const oldWpm = Number(current.netWpm || 0), oldAccuracy = Number(current.accuracy || 0);
       if (payload.netWpm > oldWpm || (payload.netWpm === oldWpm && payload.accuracy > oldAccuracy)) return payload;
       return undefined;
@@ -708,8 +747,27 @@ function renderLeaderboard(items) {
   filtered.sort((a, b) => Number(b.netWpm) - Number(a.netWpm) || Number(b.accuracy) - Number(a.accuracy) || Number(a.studentNo) - Number(b.studentNo));
   filtered = filtered.slice(0, 10);
 
-  if (!filtered.length) { els.leaderboard.innerHTML = '<li class="empty">Chưa có thành tích phù hợp.</li>'; return; }
-  els.leaderboard.innerHTML = filtered.map((item, index) => `<li class="leaderboard-item"><span>#${index + 1}</span><span>${escapeHTML(item.name)}<div class="player-meta">${escapeHTML(item.className || "")} · STT ${Number(item.studentNo || 0)}</div></span><span><strong>${Number(item.netWpm || 0)} WPM</strong><div class="player-meta">${Number(item.accuracy || 0)}%</div></span></li>`).join("");
+  if (!filtered.length) {
+    els.leaderboard.innerHTML = '<li class="empty">Chưa có thành tích phù hợp.</li>';
+    return;
+  }
+
+  els.leaderboard.innerHTML = filtered.map((item, index) => {
+    const deleteButton = isTeacher
+      ? `<button type="button" class="delete-score-btn" data-student-key="${escapeHTML(item._key || "")}" title="Xoá thành tích của học sinh này" aria-label="Xoá ${escapeHTML(item.name)}">🗑</button>`
+      : "";
+
+    return `<li class="leaderboard-item">
+      <span>#${index + 1}</span>
+      <span>${escapeHTML(item.name)}
+        <div class="player-meta">${escapeHTML(item.className || "")} · STT ${Number(item.studentNo || 0)}</div>
+      </span>
+      <span><strong>${Number(item.netWpm || 0)} WPM</strong>
+        <div class="player-meta">${Number(item.accuracy || 0)}%</div>
+      </span>
+      ${deleteButton}
+    </li>`;
+  }).join("");
 }
 
 function updateClassFilter(items) {
@@ -728,17 +786,82 @@ function stopLeaderboardListener() {
 }
 
 function startLeaderboardListener() {
-  if (leaderboardListenerStarted || !firebaseReady || !sessionScoresRef || !firebaseAuth?.currentUser) return;
+  const user = firebaseAuth?.currentUser;
+  if (leaderboardListenerStarted || !firebaseReady || !sessionScoresRef || !user) return;
+
   leaderboardListenerStarted = true;
+  els.leaderboard.innerHTML = '<li class="empty">Đang tải bảng xếp hạng...</li>';
+
   sessionScoresRef.on("value", snapshot => {
     const items = [];
-    snapshot.forEach(child => { const val = child.val(); if (val) items.push(val); });
-    leaderboardCache = items; updateClassFilter(items); renderLeaderboard(items);
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val === "object") items.push({ ...val, _key: child.key });
+    });
+    leaderboardCache = items;
+    updateClassFilter(items);
+    renderLeaderboard(items);
   }, error => {
-    els.leaderboard.innerHTML = '<li class="empty">Không thể tải bảng xếp hạng. Kiểm tra Firebase Database Rules.</li>';
+    console.error("Leaderboard read error:", error);
+    leaderboardCache = [];
+    const code = String(error?.code || "").toLowerCase();
+    if (code.includes("permission")) {
+      els.leaderboard.innerHTML = '<li class="empty">Firebase từ chối đọc BXH. Kiểm tra Anonymous Auth và rule .read = auth != null.</li>';
+      setFirebaseStatus("Đã đăng nhập nhưng Firebase từ chối quyền đọc BXH.", "error");
+    } else {
+      els.leaderboard.innerHTML = '<li class="empty">Không thể tải bảng xếp hạng do lỗi kết nối.</li>';
+    }
   });
 }
 
+
+async function deleteStudentScore(studentKey) {
+  if (!firebaseReady || !sessionScoresRef) {
+    alert("Firebase chưa sẵn sàng.");
+    return;
+  }
+  if (!isTeacher) {
+    alert("Chỉ tài khoản giáo viên mới được xoá thành tích học sinh.");
+    return;
+  }
+
+  const item = leaderboardCache.find(row => row?._key === studentKey);
+  if (!item) {
+    alert("Không tìm thấy bản ghi này. Bảng xếp hạng có thể vừa được cập nhật.");
+    return;
+  }
+
+  const ok = confirm(
+    `Xoá thành tích của học sinh này?\n\n` +
+    `${item.className} · STT ${item.studentNo} · ${item.name}\n` +
+    `${item.netWpm} WPM · Chính xác ${item.accuracy}%\n\n` +
+    `Sau khi xoá, học sinh có thể làm lại và tạo thành tích mới.`
+  );
+  if (!ok) return;
+
+  const button = els.leaderboard.querySelector(`.delete-score-btn[data-student-key="${CSS.escape(studentKey)}"]`);
+  if (button) button.disabled = true;
+
+  try {
+    await sessionScoresRef.child(studentKey).remove();
+  } catch (error) {
+    console.error("Delete student score error:", error);
+    const code = String(error?.code || "").toLowerCase();
+    if (code.includes("permission")) {
+      alert("Firebase từ chối xoá. Hãy cập nhật Database Rules để giáo viên được xoá từng $studentKey.");
+    } else {
+      alert("Không thể xoá thành tích học sinh. Hãy kiểm tra kết nối mạng.");
+    }
+    if (button) button.disabled = false;
+  }
+}
+
+els.leaderboard.addEventListener("click", event => {
+  const button = event.target.closest(".delete-score-btn");
+  if (!button) return;
+  const studentKey = button.dataset.studentKey;
+  if (studentKey) deleteStudentScore(studentKey);
+});
 
 async function clearSessionLeaderboard() {
   if (!firebaseReady || !sessionScoresRef) {
