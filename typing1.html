@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thử Tài Gõ Phím V3 - BXH theo buổi học</title>
+<title>Thử Tài Gõ Phím V5 - Theo dõi lớp trực tiếp</title>
 <style>
 :root { --primary: #c62828; --accent: #1565c0; --success: #2e7d32; --warning: #ef6c00; --bg: #f4f7f6; --text: #263238; --muted: #607d8b; }
 * { box-sizing: border-box; }
@@ -23,9 +23,6 @@ button { cursor: pointer; }
 .field label { font-weight: 700; font-size: 0.92rem; }
 .field input, .field select { width: 100%; padding: 11px 12px; border: 1.5px solid #b0bec5; border-radius: 8px; background: white; }
 .field input:focus, .field select:focus, textarea:focus { outline: 2px solid rgba(21, 101, 192, 0.14); border-color: var(--accent); }
-.mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-.mode-btn { border: 2px solid #cfd8dc; border-radius: 10px; padding: 12px; background: #fafafa; color: var(--text); font-weight: 800; }
-.mode-btn.active { border-color: var(--accent); background: #e3f2fd; color: #0d47a1; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .btn { border: none; border-radius: 8px; padding: 10px 16px; color: white; background: var(--primary); font-weight: 700; }
 .btn:hover { filter: brightness(0.94); }
@@ -42,17 +39,34 @@ button { cursor: pointer; }
 .progress-head { display: flex; justify-content: space-between; font-size: 0.86rem; color: var(--muted); margin-bottom: 5px; }
 .progress-bar { height: 9px; background: #eceff1; border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; width: 0%; background: var(--success); transition: width 0.15s linear; }
-.poem { min-height: 185px; max-height: 245px; overflow-y: auto; padding: 16px; border-left: 5px solid #ffa000; border-radius: 8px; background: #fff8e1; text-align: left; white-space: pre-wrap; user-select: none; font-family: "Courier New", monospace; font-size: 1.18rem; line-height: 1.75; }
+.poem { height: clamp(125px, 20vh, 165px); min-height: 125px; max-height: 165px; overflow-y: auto; padding: 12px 16px; border-left: 5px solid #ffa000; border-radius: 8px; background: #fff8e1; text-align: left; white-space: pre-wrap; user-select: none; font-family: "Courier New", monospace; font-size: 1.18rem; line-height: 1.75; }
 .char-correct { color: #1b5e20; background: #c8e6c9; }
 .char-incorrect { color: #b71c1c; background: #ffcdd2; }
 .char-current { border-bottom: 3px solid #1976d2; background: #bbdefb; }
-textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 12px; border: 2px solid #cfd8dc; border-radius: 8px; line-height: 1.5; }
-.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-top: 9px; padding: 12px; border: 2px solid #cfd8dc; border-radius: 8px; line-height: 1.5; }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 9px; }
 .stat { background: #f5f5f5; padding: 9px 8px; border-radius: 8px; text-align: center; font-size: 0.82rem; }
 .stat strong { display: block; font-size: 1rem; margin-top: 2px; }
+
+.live-panel { margin-bottom: 14px; }
+.live-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.live-head h3 { margin:0; color:#1565c0; font-size:1.03rem; }
+.live-count { min-width:28px; padding:3px 8px; border-radius:999px; background:#e3f2fd; color:#0d47a1; text-align:center; font-weight:800; font-size:.82rem; }
+.live-list { list-style:none; padding:0; margin:0; max-height:360px; overflow:auto; border:1px solid #e5e7eb; border-radius:9px; }
+.live-item { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:9px 10px; border-bottom:1px solid #eceff1; }
+.live-item:last-child { border-bottom:none; }
+.live-name { font-weight:750; }
+.live-stats { text-align:right; white-space:nowrap; }
+.live-wpm { font-weight:900; color:#1565c0; }
+.live-progress { height:5px; border-radius:999px; background:#eceff1; overflow:hidden; margin-top:5px; }
+.live-progress > span { display:block; height:100%; background:#2e7d32; }
+.teacher-view-actions { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.leaderboard-wrap { border-top:1px solid #eceff1; padding-top:12px; margin-top:10px; }
+.teacher-only-note { padding:12px; border-radius:8px; background:#f5f7f8; color:var(--muted); font-size:.86rem; }
+
 .leaderboard-head { display: flex; gap: 8px; margin-bottom: 12px; }
 .leaderboard-head select { flex: 1; padding: 8px; border: 1px solid #b0bec5; border-radius: 7px; }
-.leaderboard-list { list-style: none; padding: 0; margin: 0; }
+.leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 330px; overflow-y: auto; min-height: 72px; }
 .leaderboard-item { display: grid; grid-template-columns: 42px minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 10px 8px; border-bottom: 1px solid #eceff1; font-size: 0.93rem; }
 .delete-score-btn { border: none; border-radius: 7px; padding: 7px 9px; background: #ffebee; color: #b71c1c; font-weight: 800; line-height: 1; }
 .delete-score-btn:hover { background: #ffcdd2; }
@@ -62,8 +76,6 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
 .leaderboard-item:nth-child(3) { color: #2e7d32; font-weight: 800; }
 .player-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
 .empty { padding: 14px; text-align: center; color: var(--muted); font-style: italic; }
-.countdown { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.58); display: flex; align-items: center; justify-content: center; z-index: 50; }
-.countdown-number { width: 150px; height: 150px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 900; color: var(--primary); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
 .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .modal-card { width: min(480px, 100%); background: white; border-radius: 16px; padding: 22px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.24); text-align: center; }
 .result-score { font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 8px 0; }
@@ -79,7 +91,7 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
 .teacher-login-form input { width:100%; padding:11px 12px; border:1.5px solid #b0bec5; border-radius:8px; }
 .teacher-login-error { min-height:1.2em; color:#b71c1c; font-size:.84rem; }
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 14px 10px 0; } .form-grid, .mode-picker { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } .poem { font-size: 1.05rem; max-height: 215px; } }
+@media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 10px 10px 0; } .header h1 { font-size: 1.65rem; } .form-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); gap: 6px; } .poem { font-size: 1.02rem; height: 135px; min-height: 135px; max-height: 135px; } textarea { height: 90px; } .live-list { max-height:260px; } }
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -119,10 +131,7 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
           </div>
         </div>
 
-        <div class="mode-picker">
-          <button class="mode-btn active" data-mode="practice" type="button">Luyện tập<br><span class="small">Được đổi bài · Không ghi BXH</span></button>
-          <button class="mode-btn" data-mode="challenge" type="button">Thử thách<br><span class="small">Đếm ngược · Xếp hạng trong buổi học</span></button>
-        </div>
+        <p class="small" style="margin:12px 0 0">Kết quả tốt nhất sau khi hoàn thành bài sẽ được lưu. Giáo viên có thể theo dõi tiến độ khi đăng nhập.</p>
 
         <div class="actions">
           <button class="btn success" id="btn-start" type="button">Bắt đầu</button>
@@ -133,7 +142,7 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
       <section id="game-screen" class="hidden">
         <div class="student-bar">
           <span id="student-display"></span>
-          <span id="mode-display"></span>
+          <span id="mode-display">Luyện gõ</span>
         </div>
         <div class="lesson-title" id="lesson-title"></div>
         <div class="progress-wrap">
@@ -159,12 +168,35 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
     </main>
 
     <aside class="card">
-      <h2 class="section-title">🏆 Bảng xếp hạng buổi học</h2>
-      <div class="leaderboard-head">
-        <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
+      <h2 class="section-title">Theo dõi lớp</h2>
+
+      <div id="student-side-note" class="teacher-only-note">Giáo viên đăng nhập để xem học sinh đang luyện tập và bảng xếp hạng.</div>
+
+      <div id="teacher-monitor" class="hidden">
+        <div class="leaderboard-head">
+          <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
+        </div>
+
+        <section class="live-panel">
+          <div class="live-head">
+            <h3>● Đang thực hiện</h3>
+            <span id="live-count" class="live-count">0</span>
+          </div>
+          <div id="live-info" class="small" style="margin-bottom:7px">Đang tải trạng thái lớp...</div>
+          <ul id="live-list" class="live-list"><li class="empty">Chưa có học sinh đang luyện tập.</li></ul>
+        </section>
+
+        <div class="teacher-view-actions">
+          <button class="btn secondary" id="btn-toggle-leaderboard" type="button">Xem bảng xếp hạng</button>
+        </div>
+
+        <section id="leaderboard-wrap" class="leaderboard-wrap hidden">
+          <h3 style="margin:0 0 8px;color:#c62828">🏆 Bảng xếp hạng</h3>
+          <div id="leaderboard-info" class="small" style="margin:0 0 8px">Đang kiểm tra dữ liệu BXH...</div>
+          <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
+          <p class="small">Chỉ lưu kết quả tốt nhất sau khi học sinh hoàn thành bài.</p>
+        </section>
       </div>
-      <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
-      <p class="small">Chỉ gồm học sinh tham gia trong buổi học hiện tại. Xếp theo Net WPM, sau đó độ chính xác.</p>
 
       <div class="teacher-tools">
         <div class="teacher-row">
@@ -178,7 +210,6 @@ textarea { width: 100%; height: 150px; resize: none; margin-top: 12px; padding: 
   </div>
 </div>
 
-<div class="countdown hidden" id="countdown-overlay"><div class="countdown-number" id="countdown-number">3</div></div>
 
 <div class="modal hidden" id="result-modal">
   <div class="modal-card">
@@ -234,12 +265,12 @@ const firebaseConfig = {
   appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
 };
 
-let database = null, sessionScoresRef = null, firebaseReady = false, firebaseUser = null, firebaseAuth = null, leaderboardListenerStarted = false, isTeacher = false;
-let authReadyResolved = false;
-let authStateUnsubscribe = null;
+let database = null, sessionScoresRef = null, liveSessionsRef = null, firebaseReady = false, firebaseUser = null, firebaseAuth = null, leaderboardListenerStarted = false, liveListenerStarted = false, isTeacher = false;
+let authStateUnsubscribe = null, liveHeartbeatId = null, lastLiveWriteAt = 0;
 
 // ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
+  { id: "ai-english-basic", title: "AI and English Learning", text: `Artificial intelligence is helping students learn English faster and easier. Smart applications can correct typing mistakes and pronounce difficult words correctly. AI can also answer tricky questions and create fun quizzes for extra practice. By using these clever digital tools wisely every day, you can study much better and prepare well for the future. Remember to practice typing regularly to improve your speed and accuracy!` },
   { id: "tu-ay", title: "Từ ấy", text: `Từ ấy trong tôi bừng nắng hạ\nMặt trời chân lý chói qua tim\nHồn tôi là một vườn hoa lá\nRất đậm hương và rộn tiếng chim\n\nTôi buộc lòng tôi với mọi người\nĐể tình trang trải với muôn nơi\nĐể hồn tôi với bao hồn khổ\nGần gũi nhau thêm mạnh khối đời\n\nTôi đã là con của vạn nhà\nLà em của vạn kiếp phôi pha\nLà anh của vạn đầu em nhỏ\nKhông áo cơm, cù bất cù bơ...\nTháng 7-1938 Máu lửa` },
   { id: "luom", title: "Lượm", text: `Ngày Huế đổ máu\nChú Hà Nội về\nTình cờ chú cháu\nGặp nhau Hàng Bè.\n\nCháu bé loắt choắt\nCái xắc xinh xinh\nCái chân thoăn thoắt\nCái đầu nghênh nghênh\n\nCa-lô đội lệch\nMồm huýt sáo vang\nNhư con chim chích\nNhảy trên đường vàng…\n\nCháu đi liên lạc\nVui lắm chú à\nỞ đồn Mang Cá\nThích hơn ở nhà !\n\nCháu cười híp mí,\nMá đỏ bồ quân\n- Thôi, chào đồng chí !\nCháu đi xa dần…\n\nCháu đi đường cháu\nChú lên đường ra\nĐến nay tháng sáu\nChợt nghe tin nhà.\n\nRa thế\nLượm ơi !` },
   { id: "viet-bac", title: "Việt Bắc", text: `Mình về mình có nhớ ta\nMười lăm năm ấy thiết tha mặn nồng\nMình về mình có nhớ không\nNhìn cây nhớ núi, nhìn sông nhớ nguồn?\n\nTiếng ai tha thiết bên cồn\nBâng khuâng trong dạ, bồn chồn bước đi\nÁo chàm đưa buổi phân ly\nCầm tay nhau biết nói gì hôm nay...\n\n- Mình đi, có nhớ những ngày\nMưa nguồn suối lũ, những mây cùng mù?\nMình về, có nhớ chiến khu\nMiếng cơm chấm muối, mối thù nặng vai?\nMình về, rừng núi nhớ ai\nTrám bùi để rụng, măng mai để già.\nMình đi, có nhớ những nhà\nHắt hiu lau xám, đậm đà lòng son\nMình về, còn nhớ núi non\nNhớ khi kháng Nhật, thuở còn Việt Minh\nMình đi, mình có nhớ mình\nTân Trào, Hồng Thái, mái đình cây đa?\n\n- Ta với mình, mình với ta\nLòng ta sau trước mặn mà đinh ninh\nMình đi, mình lại nhớ mình\nNguồn bao nhiêu nước nghĩa tình bấy nhiêu...` },
@@ -249,28 +280,28 @@ const lessons = [
 const els = {
   setup: document.getElementById("setup-screen"), game: document.getElementById("game-screen"),
   classInput: document.getElementById("class-select"), studentNoInput: document.getElementById("student-no-input"), nameInput: document.getElementById("player-name-input"),
-  modeButtons: [...document.querySelectorAll(".mode-btn")], btnStart: document.getElementById("btn-start"),
+  btnStart: document.getElementById("btn-start"),
   studentDisplay: document.getElementById("student-display"), modeDisplay: document.getElementById("mode-display"), lessonTitle: document.getElementById("lesson-title"),
   poemDisplay: document.getElementById("poem-display"), input: document.getElementById("input-field"), timer: document.getElementById("timer"),
   rawWpm: document.getElementById("raw-wpm"), netWpm: document.getElementById("net-wpm"), accuracy: document.getElementById("accuracy"), errorCount: document.getElementById("error-count"),
   progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
-  leaderboard: document.getElementById("leaderboard"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), btnClearLeaderboard: document.getElementById("btn-clear-leaderboard"), firebaseStatus: document.getElementById("firebase-status"),
+  leaderboard: document.getElementById("leaderboard"), leaderboardInfo: document.getElementById("leaderboard-info"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), btnClearLeaderboard: document.getElementById("btn-clear-leaderboard"), firebaseStatus: document.getElementById("firebase-status"),
+  liveList: document.getElementById("live-list"), liveInfo: document.getElementById("live-info"), liveCount: document.getElementById("live-count"), teacherMonitor: document.getElementById("teacher-monitor"), studentSideNote: document.getElementById("student-side-note"), btnToggleLeaderboard: document.getElementById("btn-toggle-leaderboard"), leaderboardWrap: document.getElementById("leaderboard-wrap"),
   teacherStatus: document.getElementById("teacher-status"), btnTeacherLogin: document.getElementById("btn-teacher-login"), btnTeacherLogout: document.getElementById("btn-teacher-logout"),
   teacherLoginModal: document.getElementById("teacher-login-modal"), teacherLoginForm: document.getElementById("teacher-login-form"), teacherEmail: document.getElementById("teacher-email"), teacherPassword: document.getElementById("teacher-password"), teacherLoginError: document.getElementById("teacher-login-error"), btnTeacherSubmit: document.getElementById("btn-teacher-submit"), btnTeacherCancel: document.getElementById("btn-teacher-cancel"),
-  countdownOverlay: document.getElementById("countdown-overlay"), countdownNumber: document.getElementById("countdown-number"), resultModal: document.getElementById("result-modal"),
+  resultModal: document.getElementById("result-modal"),
   resultTitle: document.getElementById("result-title"), resultNetWpm: document.getElementById("result-net-wpm"), resultAccuracy: document.getElementById("result-accuracy"),
   resultErrors: document.getElementById("result-errors"), resultTime: document.getElementById("result-time"), resultBadge: document.getElementById("result-badge"),
   resultSaveStatus: document.getElementById("result-save-status"), resultErrorsDetail: document.getElementById("result-errors-detail"), btnPlayAgain: document.getElementById("btn-play-again"), btnCloseResult: document.getElementById("btn-close-result")
 };
 
-const state = { mode: "practice", student: null, currentLessonIndex: -1, previousLessonIndex: -1, started: false, completed: false, startTime: 0, rafId: null, totalKeystrokes: 0, errorKeystrokes: 0, mistakes: {}, previousValue: "", lastStats: null };
+const state = { student: null, currentLessonIndex: -1, previousLessonIndex: -1, started: false, completed: false, startTime: 0, rafId: null, isComposing: false, lastStats: null };
 
-function normalizeText(text) { return String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim(); }
+function normalizeText(text) { return String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").normalize("NFC").trim(); }
 function normalizeClassName(value) { return String(value || "").trim().replace(/\s+/g, "").toUpperCase(); }
 function sanitizeKey(value) { return String(value).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "unknown"; }
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch])); }
 function getStudentKey(student) { return sanitizeKey(student.className) + "_" + String(student.studentNo).padStart(2, "0"); }
-function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 async function initFirebase() {
   try {
@@ -280,6 +311,7 @@ async function initFirebase() {
     firebaseAuth = firebase.auth();
     database = firebase.database();
     sessionScoresRef = database.ref("typing_session_scores_v1");
+    liveSessionsRef = database.ref("typing_live_sessions_v1");
 
     // Chỉ khởi tạo một bộ theo dõi auth duy nhất. Mọi thay đổi anonymous/GV đều đi qua đây.
     authStateUnsubscribe = firebaseAuth.onAuthStateChanged(async user => {
@@ -289,6 +321,7 @@ async function initFirebase() {
           firebaseUser = null;
           isTeacher = false;
           stopLeaderboardListener();
+          stopLiveSessionsListener();
           updateTeacherUI();
           setFirebaseStatus("Đang tạo phiên đăng nhập học sinh...", "");
           els.leaderboard.innerHTML = '<li class="empty">Đang xác thực để tải bảng xếp hạng...</li>';
@@ -301,7 +334,10 @@ async function initFirebase() {
         updateTeacherUI();
 
         stopLeaderboardListener();
+        stopLiveSessionsListener();
         startLeaderboardListener();
+        if (isTeacher) startLiveSessionsListener();
+        else if (state.student && !state.completed) beginLivePresence();
 
         setFirebaseStatus(
           isTeacher ? "Firebase đã kết nối · Đang đăng nhập với quyền giáo viên." : "Firebase đã kết nối · BXH buổi học đã sẵn sàng.",
@@ -351,12 +387,6 @@ async function checkTeacherRole(uid) {
   }
 }
 
-async function getOrCreateAnonymousUser(auth) {
-  if (auth.currentUser) return auth.currentUser;
-  const result = await auth.signInAnonymously();
-  return result.user;
-}
-
 function setFirebaseStatus(message, type) {
   els.firebaseStatus.textContent = message;
   els.firebaseStatus.className = "firebase-status" + (type ? " " + type : "");
@@ -367,10 +397,16 @@ function updateTeacherUI() {
   els.btnTeacherLogin.classList.toggle("hidden", signedInTeacher);
   els.btnTeacherLogout.classList.toggle("hidden", !signedInTeacher);
   els.btnClearLeaderboard.classList.toggle("hidden", !signedInTeacher);
+  els.teacherMonitor.classList.toggle("hidden", !signedInTeacher);
+  els.studentSideNote.classList.toggle("hidden", signedInTeacher);
   els.teacherStatus.textContent = signedInTeacher
     ? `Giáo viên · ${firebaseUser.email || "UID đã xác thực"}`
     : "Chế độ học sinh";
   els.teacherStatus.classList.toggle("active", signedInTeacher);
+  if (!signedInTeacher) {
+    els.leaderboardWrap.classList.add("hidden");
+    els.btnToggleLeaderboard.textContent = "Xem bảng xếp hạng";
+  }
   if (Array.isArray(leaderboardCache)) renderLeaderboard(leaderboardCache);
 }
 
@@ -471,33 +507,37 @@ function validateStudent() {
   return { ok: true, student: { className, studentNo, name } };
 }
 
-function setMode(mode) {
-  state.mode = mode;
-  els.modeButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.mode === mode));
-}
-els.modeButtons.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
-
 els.btnStart.addEventListener("click", async () => {
   const check = validateStudent();
   if (!check.ok) { alert(check.message); return; }
-  if (state.mode === "challenge" && !firebaseReady) {
-    if (!confirm("Firebase chưa sẵn sàng.\n\nKết quả có thể không được lưu vào bảng xếp hạng.\n\nBạn vẫn muốn tiếp tục?")) return;
+  if (!firebaseReady) {
+    if (!confirm("CSDL chưa sẵn sàng. Tiến độ trực tiếp và kết quả có thể chưa được lưu. Bạn vẫn muốn tiếp tục?")) return;
   }
   state.student = check.student;
   els.setup.classList.add("hidden");
   els.game.classList.remove("hidden");
   els.studentDisplay.textContent = `${state.student.className} · STT ${state.student.studentNo} · ${state.student.name}`;
-  els.modeDisplay.textContent = state.mode === "challenge" ? "Thử thách" : "Luyện tập";
-  els.btnNext.classList.toggle("hidden", state.mode === "challenge");
+  els.modeDisplay.textContent = "Luyện gõ";
+  els.btnNext.classList.remove("hidden");
   loadNewLesson();
-  if (state.mode === "challenge") await runCountdownAndEnable();
-  else enableTyping();
+  await beginLivePresence();
+  enableTyping();
 });
 
 function chooseLessonIndex() {
   if (lessons.length === 1) return 0;
+
+  // Lần luyện đầu tiên ưu tiên bài tiếng Anh cơ bản để học sinh làm quen
+  // với bàn phím mà chưa phải xử lý dấu tiếng Việt.
+  if (state.currentLessonIndex === -1 && state.previousLessonIndex === -1) {
+    const basicEnglishIndex = lessons.findIndex(item => item.id === "ai-english-basic");
+    if (basicEnglishIndex >= 0) return basicEnglishIndex;
+  }
+
   let index;
-  do { index = Math.floor(Math.random() * lessons.length); } while (index === state.previousLessonIndex);
+  do {
+    index = Math.floor(Math.random() * lessons.length);
+  } while (index === state.previousLessonIndex);
   return index;
 }
 
@@ -506,8 +546,7 @@ function loadNewLesson() {
   state.previousLessonIndex = state.currentLessonIndex;
   state.currentLessonIndex = chooseLessonIndex();
   state.started = state.completed = false;
-  state.startTime = state.totalKeystrokes = state.errorKeystrokes = 0;
-  state.mistakes = {}; state.previousValue = ""; state.lastStats = null;
+  state.startTime = 0; state.isComposing = false; state.lastStats = null;
   els.input.value = ""; els.input.disabled = true; els.poemDisplay.scrollTop = 0;
   renderLesson();
   renderStats({ elapsed: 0, rawWpm: 0, netWpm: 0, accuracy: 100, errors: 0, progress: 0 });
@@ -529,71 +568,110 @@ function renderLesson() {
 
 function enableTyping() { els.input.disabled = false; els.input.focus(); }
 
-async function runCountdownAndEnable() {
-  els.input.disabled = true;
-  els.countdownOverlay.classList.remove("hidden");
-  for (const label of ["3", "2", "1", "BẮT ĐẦU"]) {
-    els.countdownNumber.textContent = label;
-    els.countdownNumber.style.fontSize = label === "BẮT ĐẦU" ? "1.5rem" : "4rem";
-    await delay(label === "BẮT ĐẦU" ? 450 : 700);
-  }
-  els.countdownOverlay.classList.add("hidden");
-  state.started = true;
-  state.startTime = performance.now();
-  startTimer();
-  enableTyping();
-}
-
-els.input.addEventListener("paste", e => { e.preventDefault(); notifyBlocked("Không được dán văn bản."); });
-els.input.addEventListener("drop", e => { e.preventDefault(); notifyBlocked("Không được thả văn bản vào ô nhập."); });
+els.input.addEventListener("paste", e => { e.preventDefault(); alert("Không được dán văn bản."); });
+els.input.addEventListener("drop", e => { e.preventDefault(); alert("Không được thả văn bản vào ô nhập."); });
 els.input.addEventListener("beforeinput", e => { if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") e.preventDefault(); });
-function notifyBlocked(msg) { if (state.mode === "challenge") alert(msg); }
 
-els.input.addEventListener("input", handleInput);
-function handleInput() {
+// Quan trọng với bộ gõ tiếng Việt: không chấm các trạng thái trung gian khi IME đang ghép dấu.
+els.input.addEventListener("compositionstart", () => { state.isComposing = true; });
+els.input.addEventListener("compositionend", () => {
+  state.isComposing = false;
+  processTypingInput();
+});
+els.input.addEventListener("input", event => {
+  if (state.isComposing || event.isComposing) return;
+  processTypingInput();
+});
+
+function processTypingInput() {
   if (state.completed) return;
   const lessonText = lessons[state.currentLessonIndex].text;
-  const currentValue = els.input.value;
-  if (!state.started && currentValue.length > 0) {
-    state.started = true; state.startTime = performance.now(); startTimer();
+  const normalizedValue = normalizeTypedValue(els.input.value);
+
+  if (!state.started && normalizedValue.length > 0) {
+    state.started = true;
+    state.startTime = performance.now();
+    startTimer();
   }
-  trackNewKeystrokes(state.previousValue, currentValue, lessonText);
-  state.previousValue = currentValue;
-  updateCharacterRendering(currentValue, lessonText);
-  const stats = calculateStats();
+
+  updateCharacterRendering(normalizedValue, lessonText);
+  const stats = calculateStats(normalizedValue);
   renderStats(stats);
-  if (currentValue.length === lessonText.length && currentValue === lessonText) finishGame();
+  updateLivePresence(stats);
+
+  if (normalizedValue === lessonText) finishGame();
 }
 
-function trackNewKeystrokes(oldValue, newValue, target) {
-  if (newValue.length <= oldValue.length) return;
-  let commonPrefix = 0, minLength = Math.min(oldValue.length, newValue.length);
-  while (commonPrefix < minLength && oldValue[commonPrefix] === newValue[commonPrefix]) commonPrefix++;
-  for (let i = commonPrefix; i < newValue.length; i++) {
-    const typed = newValue[i], expected = target[i];
-    state.totalKeystrokes++;
-    if (typed !== expected) {
-      state.errorKeystrokes++;
-      const expectedLabel = expected === "\n" ? "↵" : expected ?? "∅";
-      const typedLabel = typed === "\n" ? "↵" : typed;
-      const key = `${expectedLabel} → ${typedLabel}`;
-      state.mistakes[key] = (state.mistakes[key] || 0) + 1;
+function normalizeTypedValue(value) {
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").normalize("NFC");
+}
+
+function levenshteinDistance(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  let curr = new Array(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,       // thiếu/thừa một ký tự
+        curr[j - 1] + 1,
+        prev[j - 1] + cost // thay sai một ký tự
+      );
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+function compareTyping(value, target) {
+  const typed = Array.from(value);
+  const expected = Array.from(target);
+  if (!typed.length) return { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
+
+  // So khớp với một vài độ dài prefix lân cận để 1 ký tự thiếu/thừa
+  // không làm hàng loạt ký tự phía sau bị tính sai oan.
+  const radius = 3;
+  const from = Math.max(0, typed.length - radius);
+  const to = Math.min(expected.length, typed.length + radius);
+  let bestDistance = Infinity;
+  let bestTargetLength = Math.min(typed.length, expected.length);
+
+  for (let len = from; len <= to; len++) {
+    const distance = levenshteinDistance(typed, expected.slice(0, len));
+    const better = distance < bestDistance ||
+      (distance === bestDistance && Math.abs(len - typed.length) < Math.abs(bestTargetLength - typed.length));
+    if (better) {
+      bestDistance = distance;
+      bestTargetLength = len;
     }
   }
+
+  const errors = Math.min(typed.length, bestDistance);
+  const correct = Math.max(0, typed.length - errors);
+  return { typedLength: typed.length, correct, errors, alignedTargetLength: bestTargetLength };
 }
 
 function updateCharacterRendering(value, target) {
+  const typed = Array.from(value);
+  const expected = Array.from(target);
   const spans = els.poemDisplay.querySelectorAll("span");
   let firstMismatch = -1;
+
   spans.forEach((span, index) => {
     span.classList.remove("char-correct", "char-incorrect", "char-current");
-    if (index < value.length) {
-      if (value[index] === target[index]) span.classList.add("char-correct");
+    if (index < typed.length) {
+      if (typed[index] === expected[index]) span.classList.add("char-correct");
       else { span.classList.add("char-incorrect"); if (firstMismatch === -1) firstMismatch = index; }
     }
   });
-  if (value.length < spans.length) {
-    const currentSpan = spans[value.length];
+
+  const cursorIndex = Math.min(typed.length, spans.length - 1);
+  if (typed.length < spans.length) {
+    const currentSpan = spans[cursorIndex];
     if (currentSpan) { currentSpan.classList.add("char-current"); smartScrollToSpan(currentSpan); }
   } else if (firstMismatch >= 0) {
     const mismatchSpan = spans[firstMismatch];
@@ -616,7 +694,9 @@ function startTimer() {
   stopTimer();
   const tick = () => {
     if (!state.started || state.completed) return;
-    renderStats(calculateStats());
+    const stats = calculateStats();
+    renderStats(stats);
+    updateLivePresence(stats);
     state.rafId = requestAnimationFrame(tick);
   };
   state.rafId = requestAnimationFrame(tick);
@@ -624,17 +704,20 @@ function startTimer() {
 
 function stopTimer() { if (state.rafId !== null) { cancelAnimationFrame(state.rafId); state.rafId = null; } }
 
-function calculateStats() {
+function calculateStats(valueOverride = null) {
   const now = performance.now();
   const elapsed = state.started ? Math.max((now - state.startTime) / 1000, 0.001) : 0;
-  const minutes = elapsed / 60, typedLength = els.input.value.length;
-  const rawWpm = minutes > 0 ? (typedLength / 5) / minutes : 0;
-  const errorsPerMinute = minutes > 0 ? state.errorKeystrokes / minutes : 0;
-  const netWpm = Math.max(0, rawWpm - errorsPerMinute);
-  const accuracy = state.totalKeystrokes > 0 ? Math.max(0, ((state.totalKeystrokes - state.errorKeystrokes) / state.totalKeystrokes) * 100) : 100;
+  const value = valueOverride === null ? normalizeTypedValue(els.input.value) : valueOverride;
   const lesson = lessons[state.currentLessonIndex];
-  const progress = lesson ? Math.min(100, (typedLength / lesson.text.length) * 100) : 0;
-  return { elapsed, rawWpm: Math.round(rawWpm), netWpm: Math.round(netWpm), accuracy: Math.round(accuracy), errors: state.errorKeystrokes, progress: Math.round(progress) };
+  const comparison = lesson ? compareTyping(value, lesson.text) : { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
+  const minutes = elapsed / 60;
+  const rawWpm = minutes > 0 ? (comparison.typedLength / 5) / minutes : 0;
+  // Net WPM dựa trên ký tự ĐÚNG hiện tại, không trừ mỗi lỗi như một từ hoàn chỉnh.
+  const netWpm = minutes > 0 ? (comparison.correct / 5) / minutes : 0;
+  // Học sinh sửa đúng thì lỗi hiện tại biến mất và độ chính xác phục hồi.
+  const accuracy = comparison.typedLength > 0 ? (comparison.correct / comparison.typedLength) * 100 : 100;
+  const progress = lesson ? Math.min(100, (comparison.alignedTargetLength / Array.from(lesson.text).length) * 100) : 0;
+  return { elapsed, rawWpm: Math.round(rawWpm), netWpm: Math.round(netWpm), accuracy: Math.round(accuracy), errors: comparison.errors, progress: Math.round(progress) };
 }
 
 function renderStats(stats) {
@@ -653,13 +736,10 @@ async function finishGame() {
   state.completed = true; state.lastStats = finalStats;
   stopTimer(); els.input.disabled = true;
   renderStats(finalStats); showResult(finalStats);
-  if (state.mode === "challenge") {
-    els.resultSaveStatus.textContent = "Đang lưu thành tích...";
-    const result = await saveBestScore(finalStats);
-    els.resultSaveStatus.textContent = result.message;
-  } else {
-    els.resultSaveStatus.textContent = "Chế độ Luyện tập: kết quả không được ghi vào bảng xếp hạng.";
-  }
+  await endLivePresence();
+  els.resultSaveStatus.textContent = "Đang lưu thành tích tốt nhất...";
+  const result = await saveBestScore(finalStats);
+  els.resultSaveStatus.textContent = result.message;
 }
 
 function getBadge(netWpm, accuracy) {
@@ -684,10 +764,9 @@ function showResult(stats) {
 }
 
 function renderMistakeDetails() {
-  const entries = Object.entries(state.mistakes).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (!entries.length) { els.resultErrorsDetail.classList.add("hidden"); els.resultErrorsDetail.innerHTML = ""; return; }
-  els.resultErrorsDetail.classList.remove("hidden");
-  els.resultErrorsDetail.innerHTML = "<strong>Lỗi gõ thường gặp</strong><br>" + entries.map(([key, count]) => `${escapeHTML(key)}: ${count} lần`).join("<br>");
+  // Bài chỉ hoàn thành khi văn bản khớp hoàn toàn, nên không hiển thị lịch sử lỗi đã được học sinh sửa.
+  els.resultErrorsDetail.classList.add("hidden");
+  els.resultErrorsDetail.innerHTML = "";
 }
 
 async function saveBestScore(stats) {
@@ -723,20 +802,142 @@ async function saveBestScore(stats) {
   }
 }
 
-els.btnNext.addEventListener("click", () => { if (state.mode === "practice") { loadNewLesson(); enableTyping(); } });
+els.btnNext.addEventListener("click", async () => { await endLivePresence(); loadNewLesson(); await beginLivePresence(); enableTyping(); });
 els.btnExit.addEventListener("click", resetToSetup);
 
-function resetToSetup() {
-  stopTimer(); state.started = state.completed = false;
+async function resetToSetup() {
+  stopTimer(); await endLivePresence(); state.started = state.completed = false;
   els.input.value = ""; els.game.classList.add("hidden"); els.setup.classList.remove("hidden"); els.resultModal.classList.add("hidden"); els.nameInput.focus();
 }
 
 els.btnPlayAgain.addEventListener("click", async () => {
-  els.resultModal.classList.add("hidden"); loadNewLesson();
-  if (state.mode === "challenge") await runCountdownAndEnable(); else enableTyping();
+  els.resultModal.classList.add("hidden"); loadNewLesson(); await beginLivePresence(); enableTyping();
 });
 
 els.btnCloseResult.addEventListener("click", () => els.resultModal.classList.add("hidden"));
+
+let liveSessionsCache = [];
+
+function currentLiveRef() {
+  const uid = firebaseAuth?.currentUser?.uid;
+  if (!liveSessionsRef || !uid || isTeacher) return null;
+  return liveSessionsRef.child(uid);
+}
+
+async function beginLivePresence() {
+  const ref = currentLiveRef();
+  if (!ref || !state.student) return;
+  try {
+    await ref.onDisconnect().remove();
+    startLiveHeartbeat();
+    await updateLivePresence(calculateStats(), true);
+  } catch (error) {
+    console.warn("Không thể khởi tạo trạng thái trực tiếp:", error);
+  }
+}
+
+function startLiveHeartbeat() {
+  stopLiveHeartbeat();
+  liveHeartbeatId = setInterval(() => {
+    if (state.student && !state.completed && !isTeacher) updateLivePresence(calculateStats(), true);
+  }, 10000);
+}
+
+function stopLiveHeartbeat() {
+  if (liveHeartbeatId) clearInterval(liveHeartbeatId);
+  liveHeartbeatId = null;
+}
+
+async function updateLivePresence(stats, force = false) {
+  const ref = currentLiveRef();
+  if (!ref || !state.student || state.completed) return;
+  const now = Date.now();
+  if (!force && now - lastLiveWriteAt < 1500) return;
+  lastLiveWriteAt = now;
+  const lesson = lessons[state.currentLessonIndex];
+  const payload = {
+    ownerUid: firebaseAuth.currentUser.uid,
+    name: state.student.name,
+    className: state.student.className,
+    studentNo: state.student.studentNo,
+    netWpm: Number(stats.netWpm || 0),
+    rawWpm: Number(stats.rawWpm || 0),
+    accuracy: Number(stats.accuracy || 100),
+    errors: Number(stats.errors || 0),
+    elapsed: Number((stats.elapsed || 0).toFixed(1)),
+    progress: Number(stats.progress || 0),
+    lessonId: lesson?.id || "",
+    lessonTitle: lesson?.title || "",
+    updatedAt: firebase.database.ServerValue.TIMESTAMP
+  };
+  try { await ref.set(payload); }
+  catch (error) { console.warn("Không cập nhật được trạng thái trực tiếp:", error); }
+}
+
+async function endLivePresence() {
+  stopLiveHeartbeat();
+  const ref = currentLiveRef();
+  if (!ref) return;
+  try { await ref.remove(); } catch (error) { console.warn("Không xoá được trạng thái trực tiếp:", error); }
+}
+
+function stopLiveSessionsListener() {
+  if (liveSessionsRef && liveListenerStarted) liveSessionsRef.off("value");
+  liveListenerStarted = false;
+  liveSessionsCache = [];
+}
+
+function startLiveSessionsListener() {
+  if (!isTeacher || liveListenerStarted || !liveSessionsRef) return;
+  liveListenerStarted = true;
+  els.liveInfo.textContent = "Đang tải trạng thái lớp...";
+  liveSessionsRef.on("value", snapshot => {
+    const items = [];
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val === "object") items.push({ ...val, _key: child.key });
+    });
+    liveSessionsCache = items;
+    updateClassFilter([...leaderboardCache, ...items]);
+    renderLiveSessions(items);
+  }, error => {
+    console.error("Live sessions read error:", error);
+    els.liveInfo.textContent = "Không đọc được trạng thái trực tiếp. Kiểm tra Firebase Rules";
+    els.liveList.innerHTML = '<li class="empty">Firebase từ chối đọc danh sách đang thực hiện.</li>';
+  });
+}
+
+function renderLiveSessions(items) {
+  if (!isTeacher) return;
+  const selectedClass = els.leaderboardClassFilter.value;
+  const staleBefore = Date.now() - 30000;
+  let filtered = items.filter(item => item && item.name && Number(item.updatedAt || 0) >= staleBefore);
+  if (selectedClass !== "all") filtered = filtered.filter(item => item.className === selectedClass);
+  filtered.sort((a, b) => String(a.className).localeCompare(String(b.className), "vi", { numeric:true }) || Number(a.studentNo) - Number(b.studentNo));
+
+  els.liveCount.textContent = String(filtered.length);
+  els.liveInfo.textContent = filtered.length
+    ? `${filtered.length} học sinh đang hoạt động${selectedClass !== "all" ? ` · lớp ${selectedClass}` : ""}. Tốc độ cập nhật khoảng 1–2 giây.`
+    : `Chưa có học sinh đang hoạt động${selectedClass !== "all" ? ` ở lớp ${selectedClass}` : ""}.`;
+
+  if (!filtered.length) {
+    els.liveList.innerHTML = '<li class="empty">Chưa có học sinh đang luyện tập.</li>';
+    return;
+  }
+
+  els.liveList.innerHTML = filtered.map(item => `
+    <li class="live-item">
+      <div>
+        <div class="live-name">${escapeHTML(item.name)}</div>
+        <div class="player-meta">${escapeHTML(item.className || "")} · STT ${Number(item.studentNo || 0)} · ${escapeHTML(item.lessonTitle || "")}</div>
+        <div class="live-progress"><span style="width:${Math.max(0, Math.min(100, Number(item.progress || 0)))}%"></span></div>
+      </div>
+      <div class="live-stats">
+        <div class="live-wpm">${Number(item.netWpm || 0)} WPM</div>
+        <div class="player-meta">${Number(item.accuracy || 0)}% · ${Number(item.progress || 0)}% · ${Number(item.elapsed || 0).toFixed(0)}s</div>
+      </div>
+    </li>`).join("");
+}
 
 let leaderboardCache = [];
 
@@ -747,8 +948,15 @@ function renderLeaderboard(items) {
   filtered.sort((a, b) => Number(b.netWpm) - Number(a.netWpm) || Number(b.accuracy) - Number(a.accuracy) || Number(a.studentNo) - Number(b.studentNo));
   filtered = filtered.slice(0, 10);
 
+  if (els.leaderboardInfo) {
+    const total = items.filter(item => item && item.name).length;
+    els.leaderboardInfo.textContent = total > 0
+      ? `Đã nhận ${total} thành tích từ Firebase${selectedClass !== "all" ? ` · đang lọc lớp ${selectedClass}` : ""}.`
+      : "Chưa có thành tích đã hoàn thành trong buổi học này.";
+  }
+
   if (!filtered.length) {
-    els.leaderboard.innerHTML = '<li class="empty">Chưa có thành tích phù hợp.</li>';
+    els.leaderboard.innerHTML = '<li class="empty">Chưa có học sinh hoàn thành bài để xếp hạng.</li>';
     return;
   }
 
@@ -778,7 +986,7 @@ function updateClassFilter(items) {
   if (current === "all" || classes.includes(current)) els.leaderboardClassFilter.value = current;
 }
 
-els.leaderboardClassFilter.addEventListener("change", () => renderLeaderboard(leaderboardCache));
+els.leaderboardClassFilter.addEventListener("change", () => { renderLeaderboard(leaderboardCache); renderLiveSessions(liveSessionsCache); });
 
 function stopLeaderboardListener() {
   if (sessionScoresRef && leaderboardListenerStarted) sessionScoresRef.off("value");
@@ -799,13 +1007,15 @@ function startLeaderboardListener() {
       if (val && typeof val === "object") items.push({ ...val, _key: child.key });
     });
     leaderboardCache = items;
-    updateClassFilter(items);
+    if (els.leaderboardInfo) els.leaderboardInfo.textContent = `Firebase đã tải ${items.length} bản ghi.`;
+    updateClassFilter([...items, ...liveSessionsCache]);
     renderLeaderboard(items);
   }, error => {
     console.error("Leaderboard read error:", error);
     leaderboardCache = [];
     const code = String(error?.code || "").toLowerCase();
     if (code.includes("permission")) {
+      if (els.leaderboardInfo) els.leaderboardInfo.textContent = 'Lỗi quyền đọc Firebase.';
       els.leaderboard.innerHTML = '<li class="empty">Firebase từ chối đọc BXH. Kiểm tra Anonymous Auth và rule .read = auth != null.</li>';
       setFirebaseStatus("Đã đăng nhập nhưng Firebase từ chối quyền đọc BXH.", "error");
     } else {
@@ -885,10 +1095,20 @@ async function clearSessionLeaderboard() {
   }
 }
 
+
+els.btnToggleLeaderboard.addEventListener("click", () => {
+  if (!isTeacher) return;
+  const willShow = els.leaderboardWrap.classList.contains("hidden");
+  els.leaderboardWrap.classList.toggle("hidden", !willShow);
+  els.btnToggleLeaderboard.textContent = willShow ? "Ẩn bảng xếp hạng" : "Xem bảng xếp hạng";
+});
+
 els.btnClearLeaderboard.addEventListener("click", clearSessionLeaderboard);
 
 els.studentNoInput.addEventListener("keydown", event => { if (event.key === "Enter") els.nameInput.focus(); });
 els.nameInput.addEventListener("keydown", event => { if (event.key === "Enter") els.btnStart.click(); });
+
+window.addEventListener("pagehide", () => { stopLiveHeartbeat(); const ref = currentLiveRef(); if (ref) ref.remove().catch(() => {}); });
 
 initFirebase();
 </script>
