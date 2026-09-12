@@ -83,15 +83,47 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
 .result-grid div { background: #f5f5f5; border-radius: 8px; padding: 10px; }
 .error-list { text-align: left; max-height: 140px; overflow: auto; background: #fafafa; border: 1px solid #eeeeee; border-radius: 8px; padding: 10px; margin-top: 10px; }
 .small { font-size: 0.82rem; color: var(--muted); }
- .teacher-tools { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eceff1; }
+.teacher-tools { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eceff1; }
 .teacher-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .teacher-status { flex:1; min-width:180px; font-size:.82rem; color:var(--muted); }
 .teacher-status.active { color:#1b5e20; font-weight:700; }
 .teacher-login-form { display:grid; gap:10px; margin-top:12px; text-align:left; }
 .teacher-login-form input { width:100%; padding:11px 12px; border:1.5px solid #b0bec5; border-radius:8px; }
 .teacher-login-error { min-height:1.2em; color:#b71c1c; font-size:.84rem; }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 10px 10px 0; } .header h1 { font-size: 1.65rem; } .form-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); gap: 6px; } .poem { font-size: 1.02rem; height: 135px; min-height: 135px; max-height: 135px; } textarea { height: 90px; } .live-list { max-height:260px; } }
+
+/* CSS TUỲ CHỈNH CHO CHẾ ĐỘ GIÁO VIÊN */
+body.teacher-mode .grid { grid-template-columns: 1fr; }
+body.teacher-mode main.card { display: none; }
+#teacher-monitor-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+#teacher-monitor-content.split-view {
+  grid-template-columns: 1fr 1fr;
+}
+body.teacher-mode .live-list, 
+body.teacher-mode .leaderboard-list {
+  max-height: 65vh; 
+}
+
+@media (max-width: 900px) { 
+  .grid { grid-template-columns: 1fr; } 
+  .stats { grid-template-columns: repeat(3, 1fr); } 
+  #teacher-monitor-content.split-view { grid-template-columns: 1fr; } 
+}
+@media (max-width: 620px) { 
+  .app { width: 100%; margin: 0; } 
+  .card { border-radius: 0; box-shadow: none; padding: 14px; } 
+  .header { padding: 10px 10px 0; } 
+  .header h1 { font-size: 1.65rem; } 
+  .form-grid { grid-template-columns: 1fr; } 
+  .stats { grid-template-columns: repeat(3, 1fr); gap: 6px; } 
+  .poem { font-size: 1.02rem; height: 135px; min-height: 135px; max-height: 135px; } 
+  textarea { height: 90px; } 
+  body:not(.teacher-mode) .live-list { max-height:260px; } 
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -173,29 +205,32 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
       <div id="student-side-note" class="teacher-only-note">Giáo viên đăng nhập để xem học sinh đang luyện tập và bảng xếp hạng.</div>
 
       <div id="teacher-monitor" class="hidden">
-        <div class="leaderboard-head">
-          <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
-        </div>
-
-        <section class="live-panel">
-          <div class="live-head">
-            <h3>● Đang thực hiện</h3>
-            <span id="live-count" class="live-count">0</span>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+          <div class="leaderboard-head" style="margin-bottom: 0; flex: 1; max-width: 300px;">
+            <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
           </div>
-          <div id="live-info" class="small" style="margin-bottom:7px">Đang tải trạng thái lớp...</div>
-          <ul id="live-list" class="live-list"><li class="empty">Chưa có học sinh đang luyện tập.</li></ul>
-        </section>
-
-        <div class="teacher-view-actions">
-          <button class="btn secondary" id="btn-toggle-leaderboard" type="button">Xem bảng xếp hạng</button>
+          <div class="teacher-view-actions" style="margin: 0;">
+            <button class="btn secondary" id="btn-toggle-leaderboard" type="button">Xem bảng xếp hạng</button>
+          </div>
         </div>
 
-        <section id="leaderboard-wrap" class="leaderboard-wrap hidden">
-          <h3 style="margin:0 0 8px;color:#c62828">🏆 Bảng xếp hạng</h3>
-          <div id="leaderboard-info" class="small" style="margin:0 0 8px">Đang kiểm tra dữ liệu BXH...</div>
-          <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
-          <p class="small">Chỉ lưu kết quả tốt nhất sau khi học sinh hoàn thành bài.</p>
-        </section>
+        <div id="teacher-monitor-content">
+          <section class="live-panel">
+            <div class="live-head">
+              <h3>● Đang thực hiện</h3>
+              <span id="live-count" class="live-count">0</span>
+            </div>
+            <div id="live-info" class="small" style="margin-bottom:7px">Đang tải trạng thái lớp...</div>
+            <ul id="live-list" class="live-list"><li class="empty">Chưa có học sinh đang luyện tập.</li></ul>
+          </section>
+
+          <section id="leaderboard-wrap" class="leaderboard-wrap hidden" style="border-top: none; padding-top: 0; margin-top: 0;">
+            <h3 style="margin:0 0 8px;color:#c62828">🏆 Bảng xếp hạng</h3>
+            <div id="leaderboard-info" class="small" style="margin:0 0 8px">Đang kiểm tra dữ liệu BXH...</div>
+            <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
+            <p class="small">Chỉ lưu kết quả tốt nhất sau khi học sinh hoàn thành bài.</p>
+          </section>
+        </div>
       </div>
 
       <div class="teacher-tools">
@@ -209,7 +244,6 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
     </aside>
   </div>
 </div>
-
 
 <div class="modal hidden" id="result-modal">
   <div class="modal-card">
@@ -268,7 +302,6 @@ const firebaseConfig = {
 let database = null, sessionScoresRef = null, liveSessionsRef = null, firebaseReady = false, firebaseUser = null, firebaseAuth = null, leaderboardListenerStarted = false, liveListenerStarted = false, isTeacher = false;
 let authStateUnsubscribe = null, liveHeartbeatId = null, lastLiveWriteAt = 0;
 
-// ĐỮ LIỆU THƠ GIỮ NGUYÊN MẪU
 const lessons = [
   { id: "ai-english-basic", title: "AI and English Learning", text: `Artificial intelligence is helping students learn English faster and easier. Smart applications can correct typing mistakes and pronounce difficult words correctly. AI can also answer tricky questions and create fun quizzes for extra practice. By using these clever digital tools wisely every day, you can study much better and prepare well for the future. Remember to practice typing regularly to improve your speed and accuracy!` },
   { id: "tu-ay", title: "Từ ấy", text: `Từ ấy trong tôi bừng nắng hạ\nMặt trời chân lý chói qua tim\nHồn tôi là một vườn hoa lá\nRất đậm hương và rộn tiếng chim\n\nTôi buộc lòng tôi với mọi người\nĐể tình trang trải với muôn nơi\nĐể hồn tôi với bao hồn khổ\nGần gũi nhau thêm mạnh khối đời\n\nTôi đã là con của vạn nhà\nLà em của vạn kiếp phôi pha\nLà anh của vạn đầu em nhỏ\nKhông áo cơm, cù bất cù bơ...\nTháng 7-1938 Máu lửa` },
@@ -313,7 +346,6 @@ async function initFirebase() {
     sessionScoresRef = database.ref("typing_session_scores_v1");
     liveSessionsRef = database.ref("typing_live_sessions_v1");
 
-    // Chỉ khởi tạo một bộ theo dõi auth duy nhất. Mọi thay đổi anonymous/GV đều đi qua đây.
     authStateUnsubscribe = firebaseAuth.onAuthStateChanged(async user => {
       try {
         if (!user) {
@@ -353,7 +385,6 @@ async function initFirebase() {
       setFirebaseStatus("Lỗi xác thực Firebase.", "error");
     });
 
-    // Nếu chưa có người dùng, tạo anonymous. Rules hiện tại yêu cầu auth != null để đọc BXH.
     if (!firebaseAuth.currentUser) {
       try {
         await firebaseAuth.signInAnonymously();
@@ -361,7 +392,7 @@ async function initFirebase() {
         const code = String(error?.code || "");
         console.error("Không đăng nhập ẩn danh được:", error);
         if (code.includes("operation-not-allowed")) {
-          setFirebaseStatus("Firebase chưa bật Anonymous Authentication. Hãy bật Anonymous trong Authentication → Sign-in method.", "error");
+          setFirebaseStatus("Firebase chưa bật Anonymous Authentication.", "error");
           els.leaderboard.innerHTML = '<li class="empty">Không thể tải BXH: Anonymous Authentication chưa được bật.</li>';
         } else {
           setFirebaseStatus("Không thể tạo phiên đăng nhập học sinh.", "error");
@@ -394,19 +425,29 @@ function setFirebaseStatus(message, type) {
 
 function updateTeacherUI() {
   const signedInTeacher = Boolean(firebaseUser && isTeacher);
+  
+  // Tự động ẩn học sinh và giãn rộng bảng giám sát khi ở chế độ Giáo Viên
+  document.body.classList.toggle("teacher-mode", signedInTeacher);
+
   els.btnTeacherLogin.classList.toggle("hidden", signedInTeacher);
   els.btnTeacherLogout.classList.toggle("hidden", !signedInTeacher);
   els.btnClearLeaderboard.classList.toggle("hidden", !signedInTeacher);
   els.teacherMonitor.classList.toggle("hidden", !signedInTeacher);
   els.studentSideNote.classList.toggle("hidden", signedInTeacher);
+  
   els.teacherStatus.textContent = signedInTeacher
     ? `Giáo viên · ${firebaseUser.email || "UID đã xác thực"}`
     : "Chế độ học sinh";
   els.teacherStatus.classList.toggle("active", signedInTeacher);
+  
   if (!signedInTeacher) {
     els.leaderboardWrap.classList.add("hidden");
     els.btnToggleLeaderboard.textContent = "Xem bảng xếp hạng";
+    // Xoá chế độ xem chia cột nếu đăng xuất
+    const monitorContent = document.getElementById("teacher-monitor-content");
+    if (monitorContent) monitorContent.classList.remove("split-view");
   }
+  
   if (Array.isArray(leaderboardCache)) renderLeaderboard(leaderboardCache);
 }
 
@@ -447,8 +488,6 @@ async function loginTeacher(email, password) {
     await firebaseAuth.signInAnonymously();
     throw new Error("Tài khoản này chưa được cấp quyền giáo viên.");
   }
-
-  // onAuthStateChanged sẽ đồng bộ firebaseUser/isTeacher và bật lại listener.
   setFirebaseStatus("Đã đăng nhập giáo viên · Đang đồng bộ quyền...", "ok");
 }
 
@@ -526,14 +565,10 @@ els.btnStart.addEventListener("click", async () => {
 
 function chooseLessonIndex() {
   if (lessons.length === 1) return 0;
-
-  // Lần luyện đầu tiên ưu tiên bài tiếng Anh cơ bản để học sinh làm quen
-  // với bàn phím mà chưa phải xử lý dấu tiếng Việt.
   if (state.currentLessonIndex === -1 && state.previousLessonIndex === -1) {
     const basicEnglishIndex = lessons.findIndex(item => item.id === "ai-english-basic");
     if (basicEnglishIndex >= 0) return basicEnglishIndex;
   }
-
   let index;
   do {
     index = Math.floor(Math.random() * lessons.length);
@@ -571,8 +606,6 @@ function enableTyping() { els.input.disabled = false; els.input.focus(); }
 els.input.addEventListener("paste", e => { e.preventDefault(); alert("Không được dán văn bản."); });
 els.input.addEventListener("drop", e => { e.preventDefault(); alert("Không được thả văn bản vào ô nhập."); });
 els.input.addEventListener("beforeinput", e => { if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") e.preventDefault(); });
-
-// Quan trọng với bộ gõ tiếng Việt: không chấm các trạng thái trung gian khi IME đang ghép dấu.
 els.input.addEventListener("compositionstart", () => { state.isComposing = true; });
 els.input.addEventListener("compositionend", () => {
   state.isComposing = false;
@@ -616,11 +649,7 @@ function levenshteinDistance(a, b) {
     curr[0] = i;
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(
-        prev[j] + 1,       // thiếu/thừa một ký tự
-        curr[j - 1] + 1,
-        prev[j - 1] + cost // thay sai một ký tự
-      );
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
     }
     [prev, curr] = [curr, prev];
   }
@@ -632,8 +661,6 @@ function compareTyping(value, target) {
   const expected = Array.from(target);
   if (!typed.length) return { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
 
-  // So khớp với một vài độ dài prefix lân cận để 1 ký tự thiếu/thừa
-  // không làm hàng loạt ký tự phía sau bị tính sai oan.
   const radius = 3;
   const from = Math.max(0, typed.length - radius);
   const to = Math.min(expected.length, typed.length + radius);
@@ -712,9 +739,7 @@ function calculateStats(valueOverride = null) {
   const comparison = lesson ? compareTyping(value, lesson.text) : { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
   const minutes = elapsed / 60;
   const rawWpm = minutes > 0 ? (comparison.typedLength / 5) / minutes : 0;
-  // Net WPM dựa trên ký tự ĐÚNG hiện tại, không trừ mỗi lỗi như một từ hoàn chỉnh.
   const netWpm = minutes > 0 ? (comparison.correct / 5) / minutes : 0;
-  // Học sinh sửa đúng thì lỗi hiện tại biến mất và độ chính xác phục hồi.
   const accuracy = comparison.typedLength > 0 ? (comparison.correct / comparison.typedLength) * 100 : 100;
   const progress = lesson ? Math.min(100, (comparison.alignedTargetLength / Array.from(lesson.text).length) * 100) : 0;
   return { elapsed, rawWpm: Math.round(rawWpm), netWpm: Math.round(netWpm), accuracy: Math.round(accuracy), errors: comparison.errors, progress: Math.round(progress) };
@@ -759,14 +784,9 @@ function showResult(stats) {
   els.resultErrors.textContent = stats.errors;
   els.resultTime.textContent = stats.elapsed.toFixed(1);
   els.resultBadge.textContent = getBadge(stats.netWpm, stats.accuracy);
-  renderMistakeDetails();
-  els.resultModal.classList.remove("hidden");
-}
-
-function renderMistakeDetails() {
-  // Bài chỉ hoàn thành khi văn bản khớp hoàn toàn, nên không hiển thị lịch sử lỗi đã được học sinh sửa.
   els.resultErrorsDetail.classList.add("hidden");
   els.resultErrorsDetail.innerHTML = "";
+  els.resultModal.classList.remove("hidden");
 }
 
 async function saveBestScore(stats) {
@@ -780,8 +800,6 @@ async function saveBestScore(stats) {
   const payload = { ownerUid: firebaseUser.uid, name: state.student.name, className: state.student.className, studentNo: state.student.studentNo, netWpm: stats.netWpm, rawWpm: stats.rawWpm, accuracy: stats.accuracy, errors: stats.errors, elapsed: Number(stats.elapsed.toFixed(1)), lessonId: lesson.id, lessonTitle: lesson.title, updatedAt: firebase.database.ServerValue.TIMESTAMP };
 
   try {
-    // Với rule ownerUid hiện tại, cùng Lớp + STT đã được một UID khác ghi thì UID mới không thể chiếm lại.
-    // Báo rõ nguyên nhân thay vì nhầm là "điểm chưa cao hơn".
     const existingSnap = await ref.once("value");
     const existing = existingSnap.val();
     if (existing && existing.ownerUid && existing.ownerUid !== firebaseUser.uid) {
@@ -1024,7 +1042,6 @@ function startLeaderboardListener() {
   });
 }
 
-
 async function deleteStudentScore(studentKey) {
   if (!firebaseReady || !sessionScoresRef) {
     alert("Firebase chưa sẵn sàng.");
@@ -1095,16 +1112,21 @@ async function clearSessionLeaderboard() {
   }
 }
 
-
+// Bật/tắt Bảng xếp hạng và tự động chia 2 cột nếu hiển thị
 els.btnToggleLeaderboard.addEventListener("click", () => {
   if (!isTeacher) return;
   const willShow = els.leaderboardWrap.classList.contains("hidden");
   els.leaderboardWrap.classList.toggle("hidden", !willShow);
   els.btnToggleLeaderboard.textContent = willShow ? "Ẩn bảng xếp hạng" : "Xem bảng xếp hạng";
+  
+  // Xử lý chia 2 cột khi bảng xếp hạng mở
+  const monitorContent = document.getElementById("teacher-monitor-content");
+  if (monitorContent) {
+    monitorContent.classList.toggle("split-view", willShow);
+  }
 });
 
 els.btnClearLeaderboard.addEventListener("click", clearSessionLeaderboard);
-
 els.studentNoInput.addEventListener("keydown", event => { if (event.key === "Enter") els.nameInput.focus(); });
 els.nameInput.addEventListener("keydown", event => { if (event.key === "Enter") els.btnStart.click(); });
 
