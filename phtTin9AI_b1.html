@@ -315,7 +315,6 @@ th{background:#edf5ff}
     <div class="topbar" style="justify-content:space-between">
       <div>
         <h2 style="margin:0">Màn hình kết quả dành cho giáo viên</h2>
-        <div id="teacherAccountInfo" class="small"></div>
       </div>
       <button class="btn light" id="teacherBackBtn">Đăng xuất giáo viên</button>
     </div>
@@ -342,7 +341,7 @@ th{background:#edf5ff}
         <thead>
           <tr>
             <th>Lớp</th><th>STT</th><th>Họ tên</th><th>Tiến độ</th>
-            <th>HĐ đã xong</th><th>Cập nhật</th><th>UID</th><th>Chi tiết</th>
+            <th>HĐ đã xong</th><th>Cập nhật</th><th>Chi tiết</th>
           </tr>
         </thead>
         <tbody id="teacherBody"></tbody>
@@ -849,7 +848,7 @@ function startTeacherListener(){
   const errorHandler=err=>{
     console.error("Teacher Firebase read error:",err);
     document.getElementById("teacherBody").innerHTML=
-      '<tr><td colspan="8">Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules.</td></tr>';
+      '<tr><td colspan="7">Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules.</td></tr>';
   };
 
   resultsRef.on("value",handler,errorHandler);
@@ -1216,9 +1215,6 @@ document.getElementById("teacherLoginBtn").onclick=async()=>{
     document.getElementById("studentScreen").classList.add("hidden");
     document.getElementById("teacherScreen").classList.remove("hidden");
 
-    document.getElementById("teacherAccountInfo").innerHTML=
-      `Đã đăng nhập: <b>${esc(user.email||"")}</b> · <span class="uid-text">${esc(user.uid)}</span>`;
-
     startTeacherListener();
     renderTeacher();
   }catch(err){
@@ -1240,86 +1236,127 @@ document.getElementById("teacherBackBtn").onclick=async()=>{
   await logoutTeacherAndRestoreStudent();
 };
 
+function formatTeacherDate(value){
+  const ts=Number(value);
+  if(!Number.isFinite(ts) || ts<=0) return "-";
+  try{
+    return new Date(ts).toLocaleString("vi-VN");
+  }catch(e){
+    return "-";
+  }
+}
+
+function normalizeTeacherRecord(uid,r){
+  if(!r || typeof r!=="object") return null;
+
+  const className=String(r.className??"").trim();
+  const studentNo=Number(r.studentNo);
+  if(!className || !Number.isFinite(studentNo) || studentNo<=0) return null;
+
+  return {
+    ...r,
+    uid:String(uid),
+    className,
+    studentNo,
+    name:String(r.name??"").trim() || "(Chưa có tên)",
+    done:Array.isArray(r.done)?r.done:[],
+    updatedAt:Number(r.updatedAt)||0
+  };
+}
+
 function renderTeacher(){
+  const body=document.getElementById("teacherBody");
+  if(!body)return;
+
   if(!teacherMode){
-    document.getElementById("teacherBody").innerHTML=
-      '<tr><td colspan="8">Chưa đăng nhập giáo viên.</td></tr>';
+    body.innerHTML='<tr><td colspan="7">Chưa đăng nhập giáo viên.</td></tr>';
     return;
   }
 
-  const entries=Object.entries(firebaseRecords||{})
-    .filter(([,r])=>r&&r.className&&r.studentNo)
-    .map(([uid,r])=>({uid,...r}))
-    .sort((a,b)=>
-      String(a.className).localeCompare(String(b.className),"vi",{numeric:true})||
-      Number(a.studentNo)-Number(b.studentNo)||
-      Number(b.updatedAt||0)-Number(a.updatedAt||0)
+  try{
+    const entries=Object.entries(firebaseRecords||{})
+      .map(([uid,r])=>normalizeTeacherRecord(uid,r))
+      .filter(Boolean)
+      .sort((a,b)=>
+        a.className.localeCompare(b.className,"vi",{numeric:true})||
+        a.studentNo-b.studentNo||
+        b.updatedAt-a.updatedAt
+      );
+
+    const duplicateMap={};
+    entries.forEach(r=>{
+      const k=studentKey(r.className,r.studentNo);
+      duplicateMap[k]=(duplicateMap[k]||0)+1;
+    });
+
+    const filter=document.getElementById("teacherClassFilter");
+    const previousFilter=String(filter?.value||"all");
+    const classes=[...new Set(entries.map(r=>r.className))]
+      .sort((a,b)=>a.localeCompare(b,"vi",{numeric:true}));
+
+    if(filter){
+      filter.innerHTML='<option value="all">Tất cả lớp</option>'+classes
+        .map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      filter.value=classes.includes(previousFilter)?previousFilter:"all";
+    }
+
+    const selectedClass=String(filter?.value||"all");
+    const view=selectedClass==="all"
+      ? entries
+      : entries.filter(r=>r.className===selectedClass);
+
+    teacherCurrentView=view.map(r=>r.uid);
+
+    document.getElementById("kpiStudents").textContent=view.length;
+    document.getElementById("kpiCompleted").textContent=
+      view.filter(r=>r.done.filter(Boolean).length===activities.length).length;
+
+    const avg=view.length
+      ? Math.round(view.reduce((sum,r)=>
+          sum+(r.done.filter(Boolean).length/activities.length*100),0
+        )/view.length)
+      : 0;
+
+    document.getElementById("kpiAvg").textContent=avg+"%";
+
+    const latest=view.reduce((max,r)=>Math.max(max,r.updatedAt||0),0);
+    document.getElementById("kpiRecent").textContent=formatTeacherDate(latest);
+
+    if(!view.length){
+      body.innerHTML='<tr><td colspan="7" class="small">Chưa có dữ liệu của lớp đã chọn.</td></tr>';
+      return;
+    }
+
+    body.innerHTML=view.map(r=>{
+      const n=r.done.filter(Boolean).length;
+      const dup=duplicateMap[studentKey(r.className,r.studentNo)]>1;
+      const hasReview=Boolean(teacherReviews && teacherReviews[r.uid]);
+
+      return `<tr class="${dup?"duplicate":""}">
+        <td>${esc(r.className)}</td>
+        <td>${r.studentNo}</td>
+        <td>${esc(r.name)}${hasReview?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${dup?'<div class="small">⚠ Trùng Lớp + STT</div>':""}</td>
+        <td><span class="score-pill">${Math.round(n/activities.length*100)}%</span></td>
+        <td>${n}/${activities.length}</td>
+        <td>${formatTeacherDate(r.updatedAt)}</td>
+        <td>
+          <button class="btn light" data-detail="${esc(r.uid)}">Xem</button>
+          <button class="btn danger" data-delete="${esc(r.uid)}" style="margin-left:5px">Xóa</button>
+        </td>
+      </tr>`;
+    }).join("");
+
+    body.querySelectorAll("[data-detail]").forEach(
+      b=>b.onclick=()=>showDetail(b.dataset.detail)
     );
 
-  const duplicateMap={};
-  entries.forEach(r=>{
-    const k=studentKey(r.className,r.studentNo);
-    duplicateMap[k]=(duplicateMap[k]||0)+1;
-  });
-
-  const classes=[...new Set(entries.map(r=>r.className))];
-  const filter=document.getElementById("teacherClassFilter"),cur=filter.value;
-
-  filter.innerHTML='<option value="all">Tất cả lớp</option>'+
-    classes.map(c=>`<option>${esc(c)}</option>`).join("");
-
-  if(cur==="all"||classes.includes(cur)) filter.value=cur;
-
-  const view=filter.value==="all"
-    ? entries
-    : entries.filter(r=>r.className===filter.value);
-
-  // Lưu đúng thứ tự danh sách hiện đang được giáo viên xem/lọc.
-  // Các nút Học sinh trước / kế tiếp sẽ dựa trên mảng này.
-  teacherCurrentView=view.map(r=>r.uid);
-
-  document.getElementById("kpiStudents").textContent=view.length;
-  document.getElementById("kpiCompleted").textContent=
-    view.filter(r=>Array.isArray(r.done)&&r.done.filter(Boolean).length===activities.length).length;
-
-  const avg=view.length
-    ? Math.round(view.reduce(
-        (s,r)=>s+((r.done||[]).filter(Boolean).length/activities.length*100),0
-      )/view.length)
-    : 0;
-
-  document.getElementById("kpiAvg").textContent=avg+"%";
-  document.getElementById("kpiRecent").textContent=
-    view.length
-      ? new Date(Math.max(...view.map(r=>Number(r.updatedAt)||0))).toLocaleString("vi-VN")
-      : "-";
-
-  document.getElementById("teacherBody").innerHTML=view.map(r=>{
-    const n=(r.done||[]).filter(Boolean).length;
-    const dup=duplicateMap[studentKey(r.className,r.studentNo)]>1;
-
-    return `<tr class="${dup?"duplicate":""}">
-      <td>${esc(r.className)}</td>
-      <td>${Number(r.studentNo)}</td>
-      <td>${esc(r.name)}${teacherReviews?.[r.uid]?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${dup?'<div class="small">⚠ Trùng Lớp + STT</div>':""}</td>
-      <td><span class="score-pill">${Math.round(n/activities.length*100)}%</span></td>
-      <td>${n}/${activities.length}</td>
-      <td>${new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN")}</td>
-      <td><span class="uid-text">${esc(r.uid)}</span></td>
-      <td>
-        <button class="btn light" data-detail="${esc(r.uid)}">Xem</button>
-        <button class="btn danger" data-delete="${esc(r.uid)}" style="margin-left:5px">Xóa</button>
-      </td>
-    </tr>`;
-  }).join("")||'<tr><td colspan="8" class="small">Chưa có dữ liệu.</td></tr>';
-
-  document.querySelectorAll("[data-detail]").forEach(
-    b=>b.onclick=()=>showDetail(b.dataset.detail)
-  );
-
-  document.querySelectorAll("[data-delete]").forEach(
-    b=>b.onclick=()=>deleteStudentResult(b.dataset.delete)
-  );
+    body.querySelectorAll("[data-delete]").forEach(
+      b=>b.onclick=()=>deleteStudentResult(b.dataset.delete)
+    );
+  }catch(err){
+    console.error("renderTeacher error:",err);
+    body.innerHTML='<tr><td colspan="7" class="small" style="color:#b71c1c">Không thể hiển thị danh sách học sinh. Hãy tải lại trang hoặc kiểm tra Console.</td></tr>';
+  }
 }
 document.getElementById("teacherClassFilter").onchange=()=>{
   currentReviewUid=null;
@@ -1748,8 +1785,8 @@ document.getElementById("exportJsonBtn").onclick=()=>{
 };
 document.getElementById("exportCsvBtn").onclick=()=>{
   if(!teacherMode){alert("Chỉ giáo viên được xuất toàn bộ kết quả.");return;} const recs=Object.entries(firebaseRecords).map(([uid,r])=>({uid,...r}));
-  const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Cập nhật","UID"]];
-  recs.forEach(r=>rows.push([r.className,r.studentNo,r.name,(r.done||[]).filter(Boolean).length,Math.round((r.done||[]).filter(Boolean).length/activities.length*100),new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN"),r.uid]));
+  const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Cập nhật"]];
+  recs.forEach(r=>rows.push([r.className,r.studentNo,r.name,(r.done||[]).filter(Boolean).length,Math.round((r.done||[]).filter(Boolean).length/activities.length*100),new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN")]));
   const csv="\uFEFF"+rows.map(row=>row.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
   download("ket_qua_tin9_ai_bai1.csv",csv,"text/csv;charset=utf-8");
 };
