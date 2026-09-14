@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phiếu học tập số - Tin học 9 - Bài 1: Thế giới kĩ thuật số</title>
+<title>Phiếu học tập Tin học 9 - Bài 1: Thế giới kĩ thuật số</title>
 <style>
 :root{
   --primary:#1565c0;--primary2:#0d47a1;--accent:#ff8f00;--success:#2e7d32;
@@ -182,7 +182,7 @@ th{background:#edf5ff}
 <div class="app">
   <div class="header">
     <h1>PHIẾU HỌC TẬP SỐ - TIN HỌC 9</h1>
-    <p>Bài 1: Thế giới kĩ thuật số · 7 hoạt động</p>
+    <p>Bài 1: Thế giới kĩ thuật số · 7 hoạt động · Bản đồng bộ v4</p>
   </div>
 
   <section id="loginScreen" class="card">
@@ -260,8 +260,8 @@ th{background:#edf5ff}
       </div>
     </div>
     <div class="notice">
-      Tiến độ được lưu tạm trên máy và đồng bộ vào vùng dữ liệu riêng của tài khoản ẩn danh trên máy này.
-      Học sinh khác không thể đọc hoặc ghi bài của em qua Firebase.
+      Bài làm được tự động lưu trên máy và đồng bộ Firebase. Khi chuyển hoạt động, hệ thống sẽ lưu ngay trước khi mở hoạt động mới.
+      Máy tính có thể dùng lần lượt cho nhiều học sinh trong cùng buổi học; mỗi học sinh được tách thành một phiên dữ liệu riêng.
     </div>
     <div class="firebase-status" id="firebaseStatus">Đang kết nối Firebase...</div>
     <div id="browserWarning" class="browser-warning hidden">
@@ -335,7 +335,7 @@ th{background:#edf5ff}
     </div>
     <div class="kpi">
       <div><strong id="kpiStudents">0</strong>Học sinh</div>
-      <div><strong id="kpiCompleted">0</strong>Hoàn thành 7/7</div>
+      <div><strong id="kpiCompleted">0</strong>Hoàn thành tất cả HĐ</div>
       <div><strong id="kpiAvg">0%</strong>Tiến độ TB</div>
       <div><strong id="kpiRecent">-</strong>Cập nhật gần nhất</div>
     </div>
@@ -363,7 +363,9 @@ th{background:#edf5ff}
 <script>
 "use strict";
 
-const STORAGE_KEY = "tin9_bai1_phieu_so_secure_v3";
+const WORKSHEET_ID = "tin9_bai1";
+const STORAGE_KEY = `worksheet_${WORKSHEET_ID}_local_v4`;
+const SESSION_KEY = `worksheet_${WORKSHEET_ID}_active_student_v1`;
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
@@ -375,10 +377,9 @@ const firebaseConfig = {
   appId: "1:79498233127:web:a6c2e2bab71ba737ca9502"
 };
 
-const SECURE_ROOT = "tin9_bai1_secure";
-const RESULTS_PATH = `${SECURE_ROOT}/results`;
-const TEACHERS_PATH = `${SECURE_ROOT}/teachers`;
-const REVIEWS_PATH = `${SECURE_ROOT}/reviews`;
+const TEACHERS_PATH = "app_secure/teachers";
+const RESULTS_PATH = `worksheets/${WORKSHEET_ID}/results`;
+const REVIEWS_PATH = `worksheets/${WORKSHEET_ID}/reviews`;
 
 let database = null;
 let resultsRef = null;
@@ -616,6 +617,43 @@ function setFirebaseStatus(message,type=""){
   el.className="firebase-status"+(type?` ${type}`:"");
 }
 
+async function setAnonymousContext(user){
+  firebaseUser=user;
+  database=firebase.database();
+  ownResultRef=database.ref(`${RESULTS_PATH}/${firebaseUser.uid}`);
+  ownReviewRef=database.ref(`${REVIEWS_PATH}/${firebaseUser.uid}`);
+  resultsRef=null;
+  reviewsRef=null;
+  teacherMode=false;
+  firebaseReady=true;
+
+  setFirebaseStatus(
+    "CSDL bảo mật đã bật · Dữ liệu của mỗi học sinh được tách riêng theo phiên đăng nhập.",
+    "ok"
+  );
+  return firebaseUser;
+}
+
+function readStudentSession(){
+  try{
+    return JSON.parse(sessionStorage.getItem(SESSION_KEY)||"null");
+  }catch(e){
+    return null;
+  }
+}
+
+function writeStudentSession(cls,no,uid){
+  sessionStorage.setItem(SESSION_KEY,JSON.stringify({
+    className:String(cls),
+    studentNo:Number(no),
+    uid:String(uid)
+  }));
+}
+
+function clearStudentSession(){
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
 async function ensureAnonymousStudent(){
   if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth=firebase.auth();
@@ -626,25 +664,84 @@ async function ensureAnonymousStudent(){
 
   if(!auth.currentUser){
     const result=await auth.signInAnonymously();
-    firebaseUser=result.user;
-  }else{
-    firebaseUser=auth.currentUser;
+    return setAnonymousContext(result.user);
   }
 
-  database=firebase.database();
-  ownResultRef=database.ref(`${RESULTS_PATH}/${firebaseUser.uid}`);
-  ownReviewRef=database.ref(`${REVIEWS_PATH}/${firebaseUser.uid}`);
-  resultsRef=null;
-  reviewsRef=null;
-  teacherMode=false;
-  firebaseReady=true;
+  return setAnonymousContext(auth.currentUser);
+}
 
-  setFirebaseStatus(
-    "CSDL bảo mật đã bật · Học sinh chỉ truy cập bài của chính mình.",
-    "ok"
-  );
-  console.log("Student anonymous UID:",firebaseUser.uid);
-  return firebaseUser;
+/*
+  Dùng chung máy trong một buổi học:
+  - Cùng Lớp + STT sau khi tải lại trang: giữ UID hiện tại để tiếp tục bài.
+  - Chọn học sinh khác: đăng xuất UID ẩn danh cũ và tạo UID mới.
+  Nhờ vậy dữ liệu học sinh trước không chặn học sinh sau trên cùng máy.
+*/
+async function prepareStudentSession(cls,no){
+  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth=firebase.auth();
+  const wantedClass=String(cls);
+  const wantedNo=Number(no);
+  const session=readStudentSession();
+
+  const canReuse=
+    auth.currentUser &&
+    auth.currentUser.isAnonymous &&
+    session &&
+    session.uid===auth.currentUser.uid &&
+    session.className===wantedClass &&
+    Number(session.studentNo)===wantedNo;
+
+  if(canReuse){
+    return setAnonymousContext(auth.currentUser);
+  }
+
+  if(auth.currentUser){
+    await auth.signOut();
+  }
+
+  clearStudentSession();
+
+  const result=await auth.signInAnonymously();
+  await setAnonymousContext(result.user);
+  writeStudentSession(wantedClass,wantedNo,result.user.uid);
+  return result.user;
+}
+
+async function endStudentSession(){
+  clearTimeout(saveTimer);
+  clearTimeout(remoteSaveTimer);
+
+  try{
+    if(currentRecord && !demoMode && !teacherMode){
+      await persistCurrent(true);
+    }
+  }catch(e){
+    console.warn("Không thể hoàn tất đồng bộ trước khi đổi học sinh:",e);
+  }
+
+  try{
+    const auth=firebase.auth();
+    if(auth.currentUser && auth.currentUser.isAnonymous){
+      await auth.signOut();
+    }
+  }catch(e){
+    console.warn("Student sign-out error:",e);
+  }
+
+  clearStudentSession();
+  firebaseUser=null;
+  firebaseReady=false;
+  ownResultRef=null;
+  ownReviewRef=null;
+  currentKey=null;
+  currentRecord=null;
+
+  try{
+    await ensureAnonymousStudent();
+  }catch(e){
+    console.error(e);
+    setFirebaseStatus("Không thể tạo phiên học sinh mới. Hãy tải lại trang.","error");
+  }
 }
 
 async function initFirebase(){
@@ -653,7 +750,7 @@ async function initFirebase(){
     await ensureAnonymousStudent();
   }catch(err){
     firebaseReady=false;
-    setFirebaseStatus("Không thể kết nối CSDL GV· Vẫn lưu tạm trên máy.","error");
+    setFirebaseStatus("Không thể kết nối CSDL · Vẫn có thể lưu tạm trên máy.","error");
     console.error("CSDL init error:",err);
   }
 }
@@ -662,9 +759,18 @@ async function syncCurrentToFirebase(){
   if(demoMode||!firebaseReady||teacherMode||!ownResultRef||!firebaseUser||!currentRecord)return false;
 
   const payload={
-    ...currentRecord,
+    className:String(currentRecord.className),
+    studentNo:Number(currentRecord.studentNo),
+    name:String(currentRecord.name),
+    answers:currentRecord.answers||{},
+    done:Array.isArray(currentRecord.done)?currentRecord.done:[],
     ownerUid:firebaseUser.uid,
-    updatedAt:firebase.database.ServerValue.TIMESTAMP
+    createdAt:Number(currentRecord.createdAt)||Date.now(),
+    updatedAt:firebase.database.ServerValue.TIMESTAMP,
+    meta:{
+      worksheetId:WORKSHEET_ID,
+      version:"4"
+    }
   };
 
   try{
@@ -672,6 +778,8 @@ async function syncCurrentToFirebase(){
     return true;
   }catch(err){
     console.error("Firebase save error:",err);
+    const el=document.getElementById("saveStatus");
+    if(el)el.textContent="Đã lưu trên máy · Chưa đồng bộ";
     return false;
   }
 }
@@ -730,6 +838,7 @@ async function logoutTeacherAndRestoreStudent(){
   resultsRef=null;
   reviewsRef=null;
   teacherReviews={};
+  clearStudentSession();
 
   await ensureAnonymousStudent();
 }
@@ -786,7 +895,9 @@ function defaultRecord(cls,no,name){
     answers:{},
     done:[false,false,false,false,false,false,false],
     ownerUid:firebaseUser?.uid||"",
-    updatedAt:Date.now()
+    createdAt:Date.now(),
+    updatedAt:Date.now(),
+    meta:{worksheetId:WORKSHEET_ID,version:"4"}
   };
 }
 
@@ -817,7 +928,13 @@ function multiCheck(k,opts,r){
 function renderNav(){
   const nav=document.getElementById("activityNav");
   nav.innerHTML=activities.map((a,i)=>`<button class="act-btn ${i===currentActivity?"active":""} ${currentRecord.done[i]?"done":""}" data-act="${i}">HĐ ${i+1}</button>`).join("");
-  nav.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{currentActivity=Number(b.dataset.act);renderActivity()});
+  nav.querySelectorAll("[data-act]").forEach(b=>b.onclick=async()=>{
+    const next=Number(b.dataset.act);
+    if(next===currentActivity)return;
+    await saveBeforeActivityChange();
+    currentActivity=next;
+    renderActivity();
+  });
 }
 function renderActivity(){
   renderNav();
@@ -831,12 +948,30 @@ function renderActivity(){
       </div>
     </div>`;
   bindAnswerEvents(card);
-  document.getElementById("prevAct").onclick=()=>{if(currentActivity>0){currentActivity--;renderActivity()}};
-  document.getElementById("nextAct").onclick=()=>{if(currentActivity<6){currentActivity++;renderActivity()}};
-  document.getElementById("completeAct").onclick=()=>{
-    if(!activityHasSomeWork(currentActivity,currentRecord)){alert("Hãy thực hiện ít nhất một nhiệm vụ trước khi đánh dấu hoàn thành.");return}
-    currentRecord.done[currentActivity]=true;persistCurrent();renderActivity();updateProgress();
+
+  document.getElementById("prevAct").onclick=async()=>{
+    if(currentActivity>0){
+      await saveBeforeActivityChange();
+      currentActivity--;
+      renderActivity();
+    }
   };
+
+  document.getElementById("nextAct").onclick=async()=>{
+    if(currentActivity<activities.length-1){
+      await saveBeforeActivityChange();
+      currentActivity++;
+      renderActivity();
+    }
+  };
+
+  document.getElementById("completeAct").onclick=async()=>{
+    currentRecord.done[currentActivity]=true;
+    await persistCurrent(true);
+    renderActivity();
+    updateProgress();
+  };
+
   updateProgress();
 }
 function bindAnswerEvents(root){
@@ -853,44 +988,75 @@ function capture(e){
   }else{
     currentRecord.answers[k]=el.value;
   }
+
   currentRecord.updatedAt=Date.now();
-  document.getElementById("saveStatus").textContent="Đang lưu...";
+
+  const status=document.getElementById("saveStatus");
+  if(status)status.textContent="Đang lưu...";
+
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{persistCurrent();document.getElementById("saveStatus").textContent="Đã lưu";},300);
+  saveTimer=setTimeout(()=>persistCurrent(false),250);
 }
-function persistCurrent(){
-  if(!currentRecord)return;
+
+async function persistCurrent(forceRemote=false){
+  if(!currentRecord)return false;
 
   if(demoMode){
     currentRecord.updatedAt=Date.now();
     const el=document.getElementById("saveStatus");
-    if(el) el.textContent="DEMO · Không lưu";
-    return;
+    if(el)el.textContent="DEMO · Không lưu";
+    return true;
   }
 
-  if(!currentKey)return;
+  if(!currentKey)return false;
 
   currentRecord.updatedAt=Date.now();
   currentRecord.ownerUid=firebaseUser?.uid||currentRecord.ownerUid||"";
+  currentRecord.answers=currentRecord.answers||{};
+  currentRecord.done=Array.isArray(currentRecord.done)?currentRecord.done:[false,false,false,false,false,false,false];
+  currentRecord.meta={
+    ...(currentRecord.meta||{}),
+    worksheetId:WORKSHEET_ID,
+    version:"4"
+  };
 
   const d=allData();
   d[currentKey]=currentRecord;
   saveAll(d);
 
   clearTimeout(remoteSaveTimer);
-  remoteSaveTimer=setTimeout(async()=>{
+
+  const doRemoteSave=async()=>{
     const ok=await syncCurrentToFirebase();
     const el=document.getElementById("saveStatus");
-    if(el) el.textContent=ok?"Đã lưu · Đã đồng bộ":"Đã lưu trên máy";
-  },500);
+    if(el)el.textContent=ok?"Đã lưu · Đã đồng bộ":"Đã lưu trên máy";
+    return ok;
+  };
+
+  if(forceRemote){
+    return await doRemoteSave();
+  }
+
+  remoteSaveTimer=setTimeout(doRemoteSave,350);
+  const el=document.getElementById("saveStatus");
+  if(el)el.textContent="Đã lưu trên máy · Đang đồng bộ...";
+  return true;
 }
-function activityHasSomeWork(index,r){
-  const prefixes=[["a1_"],["a2_"],["a3_"],["a4_"],["a5_"],["a6_"],["a7_"]][index];
-  return Object.entries(r.answers||{}).some(([k,v])=>prefixes.some(p=>k.startsWith(p))&&(Array.isArray(v)?v.length>0:String(v).trim()!==""))
+
+async function saveBeforeActivityChange(){
+  clearTimeout(saveTimer);
+  clearTimeout(remoteSaveTimer);
+
+  const el=document.getElementById("saveStatus");
+  if(el)el.textContent="Đang lưu hoạt động...";
+
+  await persistCurrent(true);
 }
 function updateProgress(){
-  const n=currentRecord.done.filter(Boolean).length;
-  document.getElementById("progressBar").style.width=`${n/7*100}%`;
+  const done=Array.isArray(currentRecord?.done)?currentRecord.done:[];
+  const n=done.filter(Boolean).length;
+  const total=activities.length||1;
+  document.getElementById("progressBar").style.width=`${n/total*100}%`;
 }
 async function enterStudent(){
   demoMode=false;
@@ -900,68 +1066,90 @@ async function enterStudent(){
   const cls=document.getElementById("studentClass").value;
   const no=document.getElementById("studentNo").value;
   const name=document.getElementById("studentName").value.trim().replace(/\s+/g," ");
+
   if(!cls){alert("Vui lòng chọn lớp.");return}
   if(!no){alert("Vui lòng chọn STT.");return}
-  if(teacherMode || !firebaseUser?.isAnonymous){
-    try{
+  if(!name){alert("Vui lòng nhập họ và tên.");return}
+
+  const startBtn=document.getElementById("startBtn");
+  startBtn.disabled=true;
+  startBtn.textContent="Đang mở phiếu...";
+
+  try{
+    if(teacherMode || (firebase.auth().currentUser && !firebase.auth().currentUser.isAnonymous)){
       await logoutTeacherAndRestoreStudent();
-    }catch(e){
-      console.error(e);
-      alert("Không thể khởi tạo phiên học sinh.");
-      return;
     }
+
+    await prepareStudentSession(cls,no);
+
+    const key=studentKey(cls,no);
+    const d=allData();
+    const local=d[key]||null;
+    const remote=await loadOwnRemoteRecord();
+
+    const remoteMatches=remote &&
+      remote.className===cls &&
+      Number(remote.studentNo)===Number(no);
+
+    let chosen=null;
+
+    if(remoteMatches && local){
+      chosen=(Number(remote.updatedAt)||0)>=(Number(local.updatedAt)||0)?remote:local;
+    }else if(remoteMatches){
+      chosen=remote;
+    }else if(local){
+      // Máy dùng chung: có thể lấy bản lưu cục bộ của đúng Lớp + STT,
+      // rồi gắn vào UID ẩn danh mới của phiên hiện tại.
+      chosen=local;
+    }
+
+    if(chosen){
+      currentRecord={
+        ...chosen,
+        className:cls,
+        studentNo:Number(no),
+        name:name,
+        answers:chosen.answers||{},
+        done:Array.isArray(chosen.done)?chosen.done:[false,false,false,false,false,false,false],
+        ownerUid:firebaseUser.uid,
+        createdAt:Number(chosen.createdAt)||Date.now(),
+        updatedAt:Date.now(),
+        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"4"}
+      };
+    }else{
+      currentRecord=defaultRecord(cls,no,name);
+    }
+
+    currentKey=key;
+
+    // Ép lưu ngay khi vào phiếu để tạo bản ghi đúng UID của học sinh hiện tại.
+    await persistCurrent(true);
+
+    currentActivity=currentRecord.done.findIndex(x=>!x);
+    if(currentActivity<0)currentActivity=activities.length-1;
+
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("teacherScreen").classList.add("hidden");
+    document.getElementById("studentScreen").classList.remove("hidden");
+    document.getElementById("studentBadge").textContent=
+      `${currentRecord.className} · STT ${currentRecord.studentNo} · ${currentRecord.name}`;
+
+    renderActivity();
+    await renderStudentTeacherReview();
+
+  }catch(e){
+    console.error("Không thể mở phiếu học sinh:",e);
+    alert("Không thể mở phiếu học tập. Hãy kiểm tra kết nối mạng hoặc tải lại trang.");
+  }finally{
+    startBtn.disabled=false;
+    startBtn.textContent="Bắt đầu / Tiếp tục";
   }
-
-  const key=studentKey(cls,no),d=allData();
-  const remote=await loadOwnRemoteRecord();
-  const local=d[key]||null;
-
-  const remoteMatches=remote &&
-    remote.className===cls &&
-    Number(remote.studentNo)===Number(no);
-
-  if(remote && !remoteMatches){
-    alert(
-      "Trình duyệt này đã có dữ liệu của học sinh khác ("+
-      remote.className+" - STT "+remote.studentNo+").\n\n"+
-      "Để bảo vệ dữ liệu, một UID ẩn danh chỉ gắn với một học sinh."
-    );
-    return;
-  }
-
-  const chosen=remoteMatches && local
-    ? ((Number(remote.updatedAt)||0)>=(Number(local.updatedAt)||0)?remote:local)
-    : (remoteMatches?remote:local);
-
-  if(chosen){
-    currentRecord=chosen;
-    if(!remoteMatches && name) currentRecord.name=name;
-  }else{
-    if(!name){alert("Vui lòng nhập họ và tên.");return}
-    currentRecord=defaultRecord(cls,no,name);
-  }
-
-  currentRecord.ownerUid=firebaseUser.uid;
-  currentKey=key;
-  persistCurrent();
-
-  currentActivity=currentRecord.done.findIndex(x=>!x);
-  if(currentActivity<0)currentActivity=6;
-  document.getElementById("loginScreen").classList.add("hidden");
-  document.getElementById("teacherScreen").classList.add("hidden");
-  document.getElementById("studentScreen").classList.remove("hidden");
-  document.getElementById("studentBadge").textContent=`${currentRecord.className} · STT ${currentRecord.studentNo} · ${currentRecord.name}`;
-  renderActivity();
-  await renderStudentTeacherReview();
 }
 document.getElementById("startBtn").onclick=enterStudent;
 
-document.getElementById("backLoginBtn").onclick=()=>{
-  if(!demoMode) persistCurrent();
-
-  document.getElementById("studentScreen").classList.add("hidden");
-
+document.getElementById("backLoginBtn").onclick=async()=>{
   if(demoMode && teacherMode){
+    document.getElementById("studentScreen").classList.add("hidden");
     demoMode=false;
     currentKey=null;
     currentRecord=null;
@@ -969,9 +1157,22 @@ document.getElementById("backLoginBtn").onclick=()=>{
     document.getElementById("studentScreen").classList.remove("demo-mode");
     document.getElementById("teacherScreen").classList.remove("hidden");
     renderTeacher();
-  }else{
-    document.getElementById("loginScreen").classList.remove("hidden");
+    return;
   }
+
+  const btn=document.getElementById("backLoginBtn");
+  btn.disabled=true;
+  const oldText=btn.textContent;
+  btn.textContent="Đang lưu...";
+
+  await endStudentSession();
+
+  document.getElementById("studentScreen").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("saveStatus").textContent="Đã lưu";
+
+  btn.disabled=false;
+  btn.textContent=oldText;
 };
 
 function teacherOpen(){
@@ -1070,11 +1271,11 @@ function renderTeacher(){
 
   document.getElementById("kpiStudents").textContent=view.length;
   document.getElementById("kpiCompleted").textContent=
-    view.filter(r=>Array.isArray(r.done)&&r.done.filter(Boolean).length===7).length;
+    view.filter(r=>Array.isArray(r.done)&&r.done.filter(Boolean).length===activities.length).length;
 
   const avg=view.length
     ? Math.round(view.reduce(
-        (s,r)=>s+((r.done||[]).filter(Boolean).length/7*100),0
+        (s,r)=>s+((r.done||[]).filter(Boolean).length/activities.length*100),0
       )/view.length)
     : 0;
 
@@ -1092,8 +1293,8 @@ function renderTeacher(){
       <td>${esc(r.className)}</td>
       <td>${Number(r.studentNo)}</td>
       <td>${esc(r.name)}${teacherReviews?.[r.uid]?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${dup?'<div class="small">⚠ Trùng Lớp + STT</div>':""}</td>
-      <td><span class="score-pill">${Math.round(n/7*100)}%</span></td>
-      <td>${n}/7</td>
+      <td><span class="score-pill">${Math.round(n/activities.length*100)}%</span></td>
+      <td>${n}/${activities.length}</td>
       <td>${new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN")}</td>
       <td><span class="uid-text">${esc(r.uid)}</span></td>
       <td>
@@ -1191,7 +1392,9 @@ function startTeacherDemo(){
     answers:{},
     done:[false,false,false,false,false,false,false],
     ownerUid:"",
-    updatedAt:Date.now()
+    createdAt:Date.now(),
+    updatedAt:Date.now(),
+    meta:{worksheetId:WORKSHEET_ID,version:"4"}
   };
 
   document.getElementById("teacherScreen").classList.add("hidden");
@@ -1417,7 +1620,7 @@ function showDetail(uid){
       <div class="review-header">
         <div>
           <h2 style="margin:0;color:var(--primary2)">${esc(r.name)}</h2>
-          <div class="small">Lớp ${esc(r.className)} · STT ${Number(r.studentNo)} · ${doneCount}/7 hoạt động</div>
+          <div class="small">Lớp ${esc(r.className)} · STT ${Number(r.studentNo)} · ${doneCount}/${activities.length} hoạt động</div>
         </div>
         <button class="btn light" id="closeReviewBtn">Đóng chi tiết</button>
       </div>
@@ -1540,17 +1743,28 @@ function download(name,text,type){
 }
 document.getElementById("exportJsonBtn").onclick=()=>{
   if(!teacherMode){alert("Chỉ giáo viên được xuất toàn bộ kết quả.");return}
-  download("ket_qua_tin9_bai1_secure.json",JSON.stringify(firebaseRecords,null,2),"application/json");
+  download("ket_qua_tin9_bai1.json",JSON.stringify(firebaseRecords,null,2),"application/json");
 };
 document.getElementById("exportCsvBtn").onclick=()=>{
   if(!teacherMode){alert("Chỉ giáo viên được xuất toàn bộ kết quả.");return;} const recs=Object.entries(firebaseRecords).map(([uid,r])=>({uid,...r}));
   const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Cập nhật","UID"]];
-  recs.forEach(r=>rows.push([r.className,r.studentNo,r.name,(r.done||[]).filter(Boolean).length,Math.round((r.done||[]).filter(Boolean).length/7*100),new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN"),r.uid]));
+  recs.forEach(r=>rows.push([r.className,r.studentNo,r.name,(r.done||[]).filter(Boolean).length,Math.round((r.done||[]).filter(Boolean).length/activities.length*100),new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN"),r.uid]));
   const csv="\uFEFF"+rows.map(row=>row.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
   download("ket_qua_tin9_bai1.csv",csv,"text/csv;charset=utf-8");
 };
 document.getElementById("teacherPassword").addEventListener("keydown",e=>{
   if(e.key==="Enter") document.getElementById("teacherLoginBtn").click();
+});
+
+// Luôn giữ một bản cục bộ mới nhất nếu học sinh đóng/tải lại trang đột ngột.
+window.addEventListener("beforeunload",()=>{
+  if(!currentRecord || demoMode || teacherMode || !currentKey)return;
+  try{
+    currentRecord.updatedAt=Date.now();
+    const d=allData();
+    d[currentKey]=currentRecord;
+    saveAll(d);
+  }catch(e){}
 });
 
 initFirebase();
