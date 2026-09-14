@@ -1652,7 +1652,10 @@ function showDetail(uid){
       <div class="review-nav-center">
         ${currentIndex>=0?`Học sinh ${currentIndex+1}/${teacherCurrentView.length} · `:""}${esc(r.className)} · STT ${Number(r.studentNo)}
       </div>
-      <button class="btn light" id="nextStudentBtn" ${hasNext?"":"disabled"}>Học sinh kế tiếp →</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn light" id="closeReviewBtn">Đóng chi tiết</button>
+        <button class="btn light" id="nextStudentBtn" ${hasNext?"":"disabled"}>Học sinh kế tiếp →</button>
+      </div>
     </div>
     <div class="card review-sheet">
       <div class="review-header">
@@ -1660,7 +1663,6 @@ function showDetail(uid){
           <h2 style="margin:0;color:var(--primary2)">${esc(r.name)}</h2>
           <div class="small">Lớp ${esc(r.className)} · STT ${Number(r.studentNo)} · ${doneCount}/${activities.length} hoạt động</div>
         </div>
-        <button class="btn light" id="closeReviewBtn">Đóng chi tiết</button>
       </div>
 
       <div class="review-summary-grid">
