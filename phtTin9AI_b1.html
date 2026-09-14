@@ -436,9 +436,9 @@ const activities = [
         <div class="grid2">
           ${selectField("a1_comm_mobile","Điện thoại di động (Motorola DynaTAC 8000X)",["","1","2","3","4","5"],r)}
           ${selectField("a1_comm_pigeon","Chim bồ câu đưa thư",["","1","2","3","4","5"],r)}
-          ${selectField("a1_comm_email","Thư điện tử / Email (1971)",["","1","2","3","4","5"],r)}
-          ${selectField("a1_comm_morse","Điện tín / Mã Morse (1830s)",["","1","2","3","4","5"],r)}
-          ${selectField("a1_comm_phone","Điện thoại cố định (1876)",["","1","2","3","4","5"],r)}
+          ${selectField("a1_comm_email","Thư điện tử / Email",["","1","2","3","4","5"],r)}
+          ${selectField("a1_comm_morse","Điện tín / Mã Morse",["","1","2","3","4","5"],r)}
+          ${selectField("a1_comm_phone","Điện thoại cố định",["","1","2","3","4","5"],r)}
         </div>
         <div class="notice">
           Dựa vào các mốc thời gian đã cho để sắp xếp từ xưa nhất đến hiện đại nhất.
@@ -462,7 +462,7 @@ const activities = [
     render:r=>`
       <h2>Tiết 1 · Hoạt động 2: Khái niệm “Sinh tồn thời AI”</h2>
       <div class="subtask">
-        <h3>Tình huống 2030 · Chọn đúng 3 năng lực cốt lõi</h3>
+        <h3>Hãy chọn đúng 3 năng lực cốt lõi để thích nghi với AI</h3>
         ${multiCheck("a2_core",[
           ["typing","Kỹ năng gõ phím 10 ngón nhanh"],
           ["prompt","Kỹ năng ra lệnh cho AI (Prompting)"],
@@ -503,7 +503,7 @@ const activities = [
       </div>
       <p>Ghép nhóm công cụ AI với nhiệm vụ học tập bằng cách chọn A, B, C hoặc D.</p>
       <div class="notice">
-        A. Tạo slide tự động, sơ đồ tư duy Napkin AI ·
+        A. Tạo slide tự động, sơ đồ tư duy·
         B. Đóng vai người kèm học cá nhân hóa ·
         C. Hỏi đáp kiến thức chung, tóm tắt bài học ·
         D. Tìm tài liệu có trích dẫn nguồn, đọc PDF.
@@ -572,7 +572,7 @@ const activities = [
       return `
       <h2>Tiết 2 · Thu hoạch năng lực cá nhân</h2>
       <div class="notice">
-        Phần thực hành Excel và tạo biểu đồ Radar được tách khỏi phiếu trình duyệt theo yêu cầu. Trang này chỉ cộng điểm 4 nhóm từ 12 phát biểu có trong nguồn để hỗ trợ học sinh tự nhìn lại kết quả.
+        Trang cộng điểm 4 nhóm từ 12 phát biểu ở HĐ5 giúp học sinh tự nhìn lại kết quả.
       </div>
       <div class="kpi" style="margin-top:12px">${scoreHtml}</div>
       ${complete?`<div class="result-box"><b>Gợi ý từ kết quả:</b> Nhóm điểm cao nhất: <b>${esc(top)}</b>. Nhóm điểm thấp nhất: <b>${esc(low)}</b>.</div>`:`<div class="warn-box">Hãy hoàn thành đủ 12 phát biểu ở Hoạt động 6 để xem tổng điểm từng nhóm.</div>`}
