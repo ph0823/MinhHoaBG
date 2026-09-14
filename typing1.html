@@ -64,6 +64,19 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
 .leaderboard-wrap { border-top:1px solid #eceff1; padding-top:12px; margin-top:10px; }
 .teacher-only-note { padding:12px; border-radius:8px; background:#f5f7f8; color:var(--muted); font-size:.86rem; }
 
+
+/* ===== CHẾ ĐỘ HỌC SINH: ẨN TOÀN BỘ KHUNG THEO DÕI LỚP ===== */
+body:not(.teacher-mode) .grid {
+  grid-template-columns: 1fr;
+}
+body:not(.teacher-mode) aside.card {
+  display: none !important;
+}
+body:not(.teacher-mode) main.card {
+  width: min(900px, 100%);
+  margin: 0 auto;
+}
+
 /* ===== CHẾ ĐỘ GIÁO VIÊN: CHỈ HIỂN THỊ THEO DÕI + XẾP HẠNG ===== */
 body.teacher-mode .grid { grid-template-columns: 1fr; }
 body.teacher-mode main.card { display: none; }
