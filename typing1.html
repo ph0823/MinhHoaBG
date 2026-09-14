@@ -64,6 +64,53 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
 .leaderboard-wrap { border-top:1px solid #eceff1; padding-top:12px; margin-top:10px; }
 .teacher-only-note { padding:12px; border-radius:8px; background:#f5f7f8; color:var(--muted); font-size:.86rem; }
 
+/* ===== CHẾ ĐỘ GIÁO VIÊN: CHỈ HIỂN THỊ THEO DÕI + XẾP HẠNG ===== */
+body.teacher-mode .grid { grid-template-columns: 1fr; }
+body.teacher-mode main.card { display: none; }
+body.teacher-mode aside.card {
+  width: min(900px, 100%);
+  margin: 0 auto;
+}
+.teacher-panel {
+  border: 1px solid #e3e8ec;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.teacher-panel + .teacher-panel { margin-top: 12px; }
+.teacher-panel-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  background:#f7f9fa;
+  border-bottom:1px solid #e8ecef;
+}
+.teacher-panel-title h3 {
+  margin:0;
+  font-size:1.05rem;
+  color:#1565c0;
+}
+.teacher-panel-body { padding:12px 14px; }
+.teacher-panel-actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.teacher-account-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #eceff1;
+}
+.teacher-account-bar .teacher-status { flex:1; min-width:220px; }
+
 .leaderboard-head { display: flex; gap: 8px; margin-bottom: 12px; }
 .leaderboard-head select { flex: 1; padding: 8px; border: 1px solid #b0bec5; border-radius: 7px; }
 .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 330px; overflow-y: auto; min-height: 72px; }
@@ -90,6 +137,36 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
 .teacher-login-form { display:grid; gap:10px; margin-top:12px; text-align:left; }
 .teacher-login-form input { width:100%; padding:11px 12px; border:1.5px solid #b0bec5; border-radius:8px; }
 .teacher-login-error { min-height:1.2em; color:#b71c1c; font-size:.84rem; }
+
+/* ===== GIAO DIỆN TINH GỌN ===== */
+.setup-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+.setup-actions .btn{
+  margin:0;
+  padding:9px 14px;
+}
+body:not(.teacher-mode) #student-side-note,
+body:not(.teacher-mode) #teacher-status,
+body:not(.teacher-mode) #firebase-status{
+  display:none !important;
+}
+#setup-screen > .small{
+  display:none !important;
+}
+.teacher-tools{
+  margin-top:8px;
+  padding-top:8px;
+}
+.teacher-account-bar{
+  margin-top:0;
+  padding-top:0;
+  border-top:0;
+}
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 620px) { .app { width: 100%; margin: 0; } .card { border-radius: 0; box-shadow: none; padding: 14px; } .header { padding: 10px 10px 0; } .header h1 { font-size: 1.65rem; } .form-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); gap: 6px; } .poem { font-size: 1.02rem; height: 135px; min-height: 135px; max-height: 135px; } textarea { height: 90px; } .live-list { max-height:260px; } }
 </style>
@@ -131,12 +208,11 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
           </div>
         </div>
 
-        <p class="small" style="margin:12px 0 0">Kết quả tốt nhất sau khi hoàn thành bài sẽ được lưu.</p>
-
-        <div class="actions">
+        <div class="setup-actions">
           <button class="btn success" id="btn-start" type="button">Bắt đầu</button>
+          <button class="btn secondary" id="btn-teacher-login" type="button">Giáo viên</button>
         </div>
-        <div class="firebase-status" id="firebase-status">Đang kết nối Firebase...</div>
+        <div class="firebase-status hidden" id="firebase-status"></div>
       </section>
 
       <section id="game-screen" class="hidden">
@@ -168,42 +244,60 @@ textarea { width: 100%; height: clamp(88px, 13vh, 110px); resize: none; margin-t
     </main>
 
     <aside class="card">
-      <h2 class="section-title">Theo dõi lớp</h2>
+      <h2 class="section-title" id="side-title">Theo dõi lớp</h2>
 
-      <div id="student-side-note" class="teacher-only-note">Giáo viên đăng nhập để xem học sinh đang luyện tập và bảng xếp hạng.</div>
+      <div id="student-side-note" class="teacher-only-note">
+        Giáo viên đăng nhập để xem học sinh đang luyện tập và bảng xếp hạng.
+      </div>
 
       <div id="teacher-monitor" class="hidden">
         <div class="leaderboard-head">
-          <select id="leaderboard-class-filter"><option value="all">Tất cả lớp</option></select>
+          <select id="leaderboard-class-filter">
+            <option value="all">Tất cả lớp</option>
+          </select>
         </div>
 
-        <section class="live-panel">
-          <div class="live-head">
-            <h3>● Đang thực hiện</h3>
+        <!-- BẢNG 1: THEO DÕI -->
+        <section class="teacher-panel" id="monitor-panel">
+          <div class="teacher-panel-title">
+            <h3>● Theo dõi</h3>
             <span id="live-count" class="live-count">0</span>
           </div>
-          <div id="live-info" class="small" style="margin-bottom:7px">Đang tải trạng thái lớp...</div>
-          <ul id="live-list" class="live-list"><li class="empty">Chưa có học sinh đang luyện tập.</li></ul>
+          <div class="teacher-panel-body">
+            <div id="live-info" class="small" style="margin-bottom:7px">Đang tải trạng thái lớp...</div>
+            <ul id="live-list" class="live-list">
+              <li class="empty">Chưa có học sinh đang luyện tập.</li>
+            </ul>
+            <div class="teacher-panel-actions" style="margin-top:10px">
+              <button class="btn secondary" id="btn-toggle-leaderboard" type="button">Xem bảng xếp hạng</button>
+            </div>
+          </div>
         </section>
 
-        <div class="teacher-view-actions">
-          <button class="btn secondary" id="btn-toggle-leaderboard" type="button">Xem bảng xếp hạng</button>
-        </div>
-
-        <section id="leaderboard-wrap" class="leaderboard-wrap hidden">
-          <h3 style="margin:0 0 8px;color:#c62828">🏆 Bảng xếp hạng</h3>
-          <div id="leaderboard-info" class="small" style="margin:0 0 8px">Đang kiểm tra dữ liệu BXH...</div>
-          <ol class="leaderboard-list" id="leaderboard"><li class="empty">Đang tải bảng xếp hạng...</li></ol>
-          <p class="small">Chỉ lưu kết quả tốt nhất sau khi học sinh hoàn thành bài.</p>
+        <!-- BẢNG 2: XẾP HẠNG - MẶC ĐỊNH ẨN -->
+        <section id="leaderboard-wrap" class="teacher-panel leaderboard-wrap hidden">
+          <div class="teacher-panel-title">
+            <h3>🏆 Xếp hạng</h3>
+            <div class="teacher-panel-actions">
+              <button class="btn warning" id="btn-clear-leaderboard" type="button">Xoá BXH buổi học</button>
+            </div>
+          </div>
+          <div class="teacher-panel-body">
+            <div id="leaderboard-info" class="small" style="margin:0 0 8px">Đang kiểm tra dữ liệu BXH...</div>
+            <ol class="leaderboard-list" id="leaderboard">
+              <li class="empty">Đang tải bảng xếp hạng...</li>
+            </ol>
+            <p class="small">Chỉ lưu kết quả tốt nhất sau khi học sinh hoàn thành bài.</p>
+          </div>
         </section>
       </div>
 
       <div class="teacher-tools">
-        <div class="teacher-row">
+        <div class="teacher-account-bar">
           <span id="teacher-status" class="teacher-status">Chế độ học sinh</span>
-          <button class="btn secondary" id="btn-teacher-login" type="button">Đăng nhập giáo viên</button>
-          <button class="btn secondary hidden" id="btn-teacher-logout" type="button">Đăng xuất GV</button>
-          <button class="btn warning hidden" id="btn-clear-leaderboard" type="button">Xoá BXH buổi học</button>
+          <div class="teacher-panel-actions">
+            <button class="btn secondary hidden" id="btn-teacher-logout" type="button">Đăng xuất GV</button>
+          </div>
         </div>
       </div>
     </aside>
@@ -443,19 +537,29 @@ function setFirebaseStatus(message, type) {
 
 function updateTeacherUI() {
   const signedInTeacher = Boolean(firebaseUser && isTeacher);
+
+  document.body.classList.toggle("teacher-mode", signedInTeacher);
+
   els.btnTeacherLogin.classList.toggle("hidden", signedInTeacher);
   els.btnTeacherLogout.classList.toggle("hidden", !signedInTeacher);
-  els.btnClearLeaderboard.classList.toggle("hidden", !signedInTeacher);
   els.teacherMonitor.classList.toggle("hidden", !signedInTeacher);
   els.studentSideNote.classList.toggle("hidden", signedInTeacher);
+
+  const sideTitle = document.getElementById("side-title");
+  if (sideTitle) sideTitle.textContent = signedInTeacher ? "Quản lý luyện gõ" : "Theo dõi lớp";
+
   els.teacherStatus.textContent = signedInTeacher
     ? `Giáo viên · ${firebaseUser.email || "UID đã xác thực"}`
-    : "Chế độ học sinh";
+    : "";
   els.teacherStatus.classList.toggle("active", signedInTeacher);
+
+  // Bảng Xếp hạng luôn trở về trạng thái ẩn khi không ở chế độ giáo viên.
+  // Khi đăng nhập mới, HTML ban đầu cũng đặt bảng này ở trạng thái hidden.
   if (!signedInTeacher) {
     els.leaderboardWrap.classList.add("hidden");
     els.btnToggleLeaderboard.textContent = "Xem bảng xếp hạng";
   }
+
   if (Array.isArray(leaderboardCache)) renderLeaderboard(leaderboardCache);
 }
 
