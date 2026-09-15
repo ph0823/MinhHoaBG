@@ -382,6 +382,7 @@ let firebaseRecords = {};
 let teacherMode = false;
 let teacherListener = null;
 let teacherCurrentView = [];
+let teacherCurrentGroups = [];
 let currentReviewUid = null;
 let reviewsRef = null;
 let ownReviewRef = null;
@@ -627,21 +628,28 @@ async function setAnonymousContext(user){
 
 function readStudentSession(){
   try{
-    return JSON.parse(sessionStorage.getItem(SESSION_KEY)||"null");
+    // Dùng localStorage để phiên học sinh vẫn còn khi lỡ đóng tab/trình duyệt.
+    // Đồng thời đọc dự phòng sessionStorage của các phiên bản cũ.
+    const raw=localStorage.getItem(SESSION_KEY)||sessionStorage.getItem(SESSION_KEY)||"null";
+    return JSON.parse(raw);
   }catch(e){
     return null;
   }
 }
 
 function writeStudentSession(cls,no,uid){
-  sessionStorage.setItem(SESSION_KEY,JSON.stringify({
+  const value=JSON.stringify({
     className:String(cls),
     studentNo:Number(no),
-    uid:String(uid)
-  }));
+    uid:String(uid),
+    updatedAt:Date.now()
+  });
+  localStorage.setItem(SESSION_KEY,value);
+  sessionStorage.removeItem(SESSION_KEY);
 }
 
 function clearStudentSession(){
+  localStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
 }
 
@@ -670,23 +678,59 @@ async function ensureAnonymousStudent(){
 async function prepareStudentSession(cls,no){
   if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth=firebase.auth();
+  database=firebase.database();
+
   const wantedClass=String(cls);
   const wantedNo=Number(no);
+  const wantedKey=studentKey(wantedClass,wantedNo);
   const session=readStudentSession();
+  const localRecord=allData()[wantedKey]||null;
 
-  const canReuse=
-    auth.currentUser &&
-    auth.currentUser.isAnonymous &&
-    session &&
-    session.uid===auth.currentUser.uid &&
-    session.className===wantedClass &&
-    Number(session.studentNo)===wantedNo;
-
-  if(canReuse){
-    return setAnonymousContext(auth.currentUser);
+  // Nếu đang có tài khoản giáo viên thì thoát trước khi vào vai học sinh.
+  if(auth.currentUser && !auth.currentUser.isAnonymous){
+    await auth.signOut();
   }
 
-  if(auth.currentUser){
+  if(auth.currentUser && auth.currentUser.isAnonymous){
+    const uid=auth.currentUser.uid;
+
+    // 1) Khớp phiên đã ghi nhớ trên máy.
+    const sessionMatches=Boolean(
+      session &&
+      session.uid===uid &&
+      session.className===wantedClass &&
+      Number(session.studentNo)===wantedNo
+    );
+
+    // 2) Khớp bản lưu cục bộ của đúng Lớp + STT.
+    const localMatches=Boolean(
+      localRecord &&
+      String(localRecord.ownerUid||"")===uid
+    );
+
+    // 3) Khớp bản ghi Firebase của chính UID ẩn danh hiện tại.
+    // Cách này giúp học sinh đóng tab/trình duyệt rồi mở lại vẫn dùng đúng UID,
+    // không sinh thêm một bản ghi trùng Lớp + STT.
+    let remoteMatches=false;
+    try{
+      const snap=await database.ref(`${RESULTS_PATH}/${uid}`).once("value");
+      const remote=snap.val();
+      remoteMatches=Boolean(
+        remote &&
+        String(remote.className)===wantedClass &&
+        Number(remote.studentNo)===wantedNo
+      );
+    }catch(e){
+      console.warn("Không kiểm tra được phiên Firebase hiện tại:",e);
+    }
+
+    if(sessionMatches || localMatches || remoteMatches){
+      await setAnonymousContext(auth.currentUser);
+      writeStudentSession(wantedClass,wantedNo,uid);
+      return auth.currentUser;
+    }
+
+    // Đây là học sinh khác trên cùng máy: tạo UID ẩn danh mới để tách dữ liệu.
     await auth.signOut();
   }
 
@@ -760,7 +804,7 @@ async function syncCurrentToFirebase(){
     updatedAt:firebase.database.ServerValue.TIMESTAMP,
     meta:{
       worksheetId:WORKSHEET_ID,
-      version:"4"
+      version:"5"
     }
   };
 
@@ -888,7 +932,7 @@ function defaultRecord(cls,no,name){
     ownerUid:firebaseUser?.uid||"",
     createdAt:Date.now(),
     updatedAt:Date.now(),
-    meta:{worksheetId:WORKSHEET_ID,version:"4"}
+    meta:{worksheetId:WORKSHEET_ID,version:"5"}
   };
 }
 
@@ -1008,7 +1052,7 @@ async function persistCurrent(forceRemote=false){
   currentRecord.meta={
     ...(currentRecord.meta||{}),
     worksheetId:WORKSHEET_ID,
-    version:"4"
+    version:"5"
   };
 
   const d=allData();
@@ -1043,6 +1087,23 @@ async function saveBeforeActivityChange(){
 
   await persistCurrent(true);
 }
+
+function saveCurrentLocalImmediately(){
+  if(!currentRecord||!currentKey||demoMode||teacherMode)return;
+  try{
+    currentRecord.updatedAt=Date.now();
+    currentRecord.ownerUid=firebaseUser?.uid||currentRecord.ownerUid||"";
+    const d=allData();
+    d[currentKey]=currentRecord;
+    saveAll(d);
+  }catch(e){
+    console.warn("Không thể lưu khẩn cấp trên máy:",e);
+  }
+}
+
+// Bảo vệ bài đang làm khi học sinh lỡ đóng tab, tải lại trang hoặc đóng trình duyệt.
+window.addEventListener("pagehide",saveCurrentLocalImmediately);
+window.addEventListener("beforeunload",saveCurrentLocalImmediately);
 function updateProgress(){
   const done=Array.isArray(currentRecord?.done)?currentRecord.done:[];
   const n=done.filter(Boolean).length;
@@ -1106,7 +1167,7 @@ async function enterStudent(){
         ownerUid:firebaseUser.uid,
         createdAt:Number(chosen.createdAt)||Date.now(),
         updatedAt:Date.now(),
-        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"4"}
+        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"5"}
       };
     }else{
       currentRecord=defaultRecord(cls,no,name);
@@ -1264,6 +1325,46 @@ function normalizeTeacherRecord(uid,r){
   };
 }
 
+function buildTeacherGroups(entries){
+  const map=new Map();
+
+  entries.forEach(r=>{
+    const key=studentKey(r.className,r.studentNo);
+    if(!map.has(key)){
+      map.set(key,{key,className:r.className,studentNo:r.studentNo,records:[]});
+    }
+    map.get(key).records.push(r);
+  });
+
+  return [...map.values()].map(g=>{
+    const records=[...g.records].sort((a,b)=>{
+      const da=(a.done||[]).filter(Boolean).length;
+      const db=(b.done||[]).filter(Boolean).length;
+      return db-da || (b.updatedAt||0)-(a.updatedAt||0);
+    });
+
+    const representative=records[0];
+    const mergedDone=Array.from({length:activities.length},(_,i)=>
+      records.some(r=>Boolean((r.done||[])[i]))
+    );
+    const latestRecord=[...records].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0]||representative;
+
+    return {
+      ...g,
+      records,
+      representative,
+      mergedDone,
+      doneCount:mergedDone.filter(Boolean).length,
+      updatedAt:Math.max(...records.map(r=>Number(r.updatedAt)||0),0),
+      name:String(latestRecord?.name||representative?.name||"(Chưa có tên)"),
+      hasReview:records.some(r=>Boolean(teacherReviews && teacherReviews[r.uid]))
+    };
+  }).sort((a,b)=>
+    a.className.localeCompare(b.className,"vi",{numeric:true})||
+    a.studentNo-b.studentNo
+  );
+}
+
 function renderTeacher(){
   const body=document.getElementById("teacherBody");
   if(!body)return;
@@ -1276,22 +1377,13 @@ function renderTeacher(){
   try{
     const entries=Object.entries(firebaseRecords||{})
       .map(([uid,r])=>normalizeTeacherRecord(uid,r))
-      .filter(Boolean)
-      .sort((a,b)=>
-        a.className.localeCompare(b.className,"vi",{numeric:true})||
-        a.studentNo-b.studentNo||
-        b.updatedAt-a.updatedAt
-      );
+      .filter(Boolean);
 
-    const duplicateMap={};
-    entries.forEach(r=>{
-      const k=studentKey(r.className,r.studentNo);
-      duplicateMap[k]=(duplicateMap[k]||0)+1;
-    });
+    const groups=buildTeacherGroups(entries);
 
     const filter=document.getElementById("teacherClassFilter");
     const previousFilter=String(filter?.value||"all");
-    const classes=[...new Set(entries.map(r=>r.className))]
+    const classes=[...new Set(groups.map(g=>g.className))]
       .sort((a,b)=>a.localeCompare(b,"vi",{numeric:true}));
 
     if(filter){
@@ -1302,24 +1394,26 @@ function renderTeacher(){
 
     const selectedClass=String(filter?.value||"all");
     const view=selectedClass==="all"
-      ? entries
-      : entries.filter(r=>r.className===selectedClass);
+      ? groups
+      : groups.filter(g=>g.className===selectedClass);
 
-    teacherCurrentView=view.map(r=>r.uid);
+    teacherCurrentGroups=view;
+    teacherCurrentView=view.map(g=>g.representative.uid);
 
+    // Mỗi Lớp + STT chỉ được tính là 1 học sinh, dù có nhiều UID/phiên cũ.
     document.getElementById("kpiStudents").textContent=view.length;
     document.getElementById("kpiCompleted").textContent=
-      view.filter(r=>r.done.filter(Boolean).length===activities.length).length;
+      view.filter(g=>g.doneCount===activities.length).length;
 
     const avg=view.length
-      ? Math.round(view.reduce((sum,r)=>
-          sum+(r.done.filter(Boolean).length/activities.length*100),0
+      ? Math.round(view.reduce((sum,g)=>
+          sum+(g.doneCount/activities.length*100),0
         )/view.length)
       : 0;
 
     document.getElementById("kpiAvg").textContent=avg+"%";
 
-    const latest=view.reduce((max,r)=>Math.max(max,r.updatedAt||0),0);
+    const latest=view.reduce((max,g)=>Math.max(max,g.updatedAt||0),0);
     document.getElementById("kpiRecent").textContent=formatTeacherDate(latest);
 
     if(!view.length){
@@ -1327,21 +1421,20 @@ function renderTeacher(){
       return;
     }
 
-    body.innerHTML=view.map(r=>{
-      const n=r.done.filter(Boolean).length;
-      const dup=duplicateMap[studentKey(r.className,r.studentNo)]>1;
-      const hasReview=Boolean(teacherReviews && teacherReviews[r.uid]);
+    body.innerHTML=view.map(g=>{
+      const r=g.representative;
+      const multi=g.records.length>1;
 
-      return `<tr class="${dup?"duplicate":""}">
-        <td>${esc(r.className)}</td>
-        <td>${r.studentNo}</td>
-        <td>${esc(r.name)}${hasReview?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${dup?'<div class="small">⚠ Trùng Lớp + STT</div>':""}</td>
-        <td><span class="score-pill">${Math.round(n/activities.length*100)}%</span></td>
-        <td>${n}/${activities.length}</td>
-        <td>${formatTeacherDate(r.updatedAt)}</td>
+      return `<tr class="${multi?"duplicate":""}">
+        <td>${esc(g.className)}</td>
+        <td>${g.studentNo}</td>
+        <td>${esc(g.name)}${g.hasReview?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${multi?`<div class="small">Đã gộp ${g.records.length} phiên theo cùng Lớp + STT</div>`:""}</td>
+        <td><span class="score-pill">${Math.round(g.doneCount/activities.length*100)}%</span></td>
+        <td>${g.doneCount}/${activities.length}</td>
+        <td>${formatTeacherDate(g.updatedAt)}</td>
         <td>
           <button class="btn light" data-detail="${esc(r.uid)}">Xem</button>
-          <button class="btn danger" data-delete="${esc(r.uid)}" style="margin-left:5px">Xóa</button>
+          <button class="btn danger" data-delete-group="${esc(g.key)}" style="margin-left:5px">Xóa</button>
         </td>
       </tr>`;
     }).join("");
@@ -1350,8 +1443,8 @@ function renderTeacher(){
       b=>b.onclick=()=>showDetail(b.dataset.detail)
     );
 
-    body.querySelectorAll("[data-delete]").forEach(
-      b=>b.onclick=()=>deleteStudentResult(b.dataset.delete)
+    body.querySelectorAll("[data-delete-group]").forEach(
+      b=>b.onclick=()=>deleteStudentGroup(b.dataset.deleteGroup)
     );
   }catch(err){
     console.error("renderTeacher error:",err);
@@ -1381,42 +1474,51 @@ function removeLocalStudentRecord(className,studentNo){
   }
 }
 
-async function deleteStudentResult(uid){
+async function deleteStudentGroup(groupKey){
   if(!teacherMode||!firebaseUser||!database){
     alert("Chỉ giáo viên đã đăng nhập mới được xóa dữ liệu.");
     return;
   }
 
-  const record=(firebaseRecords||{})[uid];
-  if(!record){
+  const records=Object.entries(firebaseRecords||{})
+    .map(([uid,r])=>normalizeTeacherRecord(uid,r))
+    .filter(Boolean)
+    .filter(r=>studentKey(r.className,r.studentNo)===groupKey);
+
+  if(!records.length){
     alert("Không tìm thấy dữ liệu học sinh.");
     return;
   }
 
-  const label=`${record.className} · STT ${record.studentNo} · ${record.name}`;
+  const newest=[...records].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];
+  const label=`${newest.className} · STT ${newest.studentNo} · ${newest.name}`;
+  const extra=records.length>1?`\nHệ thống sẽ xóa ${records.length} phiên trùng của học sinh này.`:"";
 
   const ok=confirm(
-    "XÓA TOÀN BỘ DỮ LIỆU HỌC SINH?\\n\\n"+
-    label+"\\n\\n"+
-    "Toàn bộ câu trả lời và tiến độ của bản ghi này sẽ bị xóa.\\n"+
+    "XÓA TOÀN BỘ DỮ LIỆU HỌC SINH?\n\n"+
+    label+extra+"\n\n"+
+    "Toàn bộ câu trả lời và tiến độ của học sinh này sẽ bị xóa.\n"+
     "Giáo viên không thể hoàn tác thao tác này."
   );
 
   if(!ok)return;
 
   try{
-    await database.ref(`${RESULTS_PATH}/${uid}`).remove();
+    await Promise.all(records.map(r=>database.ref(`${RESULTS_PATH}/${r.uid}`).remove()));
 
-    // Nếu giáo viên từng demo bằng đúng Lớp + STT trên máy này,
-    // dọn cả dữ liệu cục bộ để tránh đồng bộ trở lại.
-    removeLocalStudentRecord(record.className,record.studentNo);
+    // Xóa luôn nhận xét gắn với các UID cũ nếu có.
+    await Promise.all(records.map(r=>
+      database.ref(`${REVIEWS_PATH}/${r.uid}`).remove().catch(()=>null)
+    ));
+
+    removeLocalStudentRecord(newest.className,newest.studentNo);
 
     document.getElementById("teacherDetail").innerHTML="";
-    alert(`Đã xóa dữ liệu:\\n${label}`);
+    alert(`Đã xóa dữ liệu:\n${label}`);
   }catch(error){
-    console.error("Delete student result error:",error);
+    console.error("Delete student group error:",error);
     alert(
-      "Không thể xóa dữ liệu.\\n"+
+      "Không thể xóa dữ liệu.\n"+
       "Hãy kiểm tra tài khoản giáo viên và Firebase Rules."
     );
   }
@@ -1786,9 +1888,17 @@ document.getElementById("exportJsonBtn").onclick=()=>{
   download("ket_qua_tin9_ai_bai1.json",JSON.stringify(firebaseRecords,null,2),"application/json");
 };
 document.getElementById("exportCsvBtn").onclick=()=>{
-  if(!teacherMode){alert("Chỉ giáo viên được xuất toàn bộ kết quả.");return;} const recs=Object.entries(firebaseRecords).map(([uid,r])=>({uid,...r}));
-  const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Cập nhật"]];
-  recs.forEach(r=>rows.push([r.className,r.studentNo,r.name,(r.done||[]).filter(Boolean).length,Math.round((r.done||[]).filter(Boolean).length/activities.length*100),new Date(Number(r.updatedAt)||0).toLocaleString("vi-VN")]));
+  if(!teacherMode){alert("Chỉ giáo viên được xuất toàn bộ kết quả.");return;}
+  const entries=Object.entries(firebaseRecords||{})
+    .map(([uid,r])=>normalizeTeacherRecord(uid,r))
+    .filter(Boolean);
+  const groups=buildTeacherGroups(entries);
+  const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Số phiên","Cập nhật"]];
+  groups.forEach(g=>rows.push([
+    g.className,g.studentNo,g.name,g.doneCount,
+    Math.round(g.doneCount/activities.length*100),g.records.length,
+    new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")
+  ]));
   const csv="\uFEFF"+rows.map(row=>row.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
   download("ket_qua_tin9_ai_bai1.csv",csv,"text/csv;charset=utf-8");
 };
