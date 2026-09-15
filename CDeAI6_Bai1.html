@@ -1,7 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="vi">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI quanh em – Đâu là AI? | Canva source</title>
+<head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>AI quanh em – Đâu là AI? | Bài giảng HTML tương tác lớp 6</title>
 <style>
 :root{
   --ink:#12304A;--muted:#557086;--blue:#4B7BFF;--cyan:#21C7C7;--violet:#7A64F6;
@@ -40,258 +41,355 @@ h1{font-size:48px;line-height:1.03;margin:0 0 12px;font-weight:900;letter-spacin
 .exit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.exit{padding:22px}.exit span{display:flex;width:52px;height:52px;border-radius:18px;background:var(--soft);align-items:center;justify-content:center;color:var(--blue);font-weight:900;font-size:22px}.exit p{font-size:18px;line-height:1.45}.answer-strip{margin-top:20px;background:#E7FAF2;border:1px solid #BCEBD9;border-radius:16px;padding:14px 18px;color:#197856;font-size:16px}
 .mind{height:410px;position:relative}.mind-center{position:absolute;left:470px;top:145px;width:220px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:900;box-shadow:0 18px 35px rgba(75,123,255,.24)}.mind-node{position:absolute;width:250px;background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(28,83,120,.08)}.mind-node b{font-size:17px}.mind-node small{display:block;color:var(--muted);font-size:14px;margin-top:6px}.n1{left:55px;top:45px}.n2{right:55px;top:45px}.n3{left:55px;bottom:35px}.n4{right:55px;bottom:35px}
 @media print{body{background:white}.page{page-break-after:always}}
+
+/* ===== CHẾ ĐỘ BÀI GIẢNG TƯƠNG TÁC ===== */
+html,body{width:100%;height:100%;overflow:hidden;background:#DDECF6}
+body{user-select:none}
+#app{width:100%;height:100vh;display:grid;grid-template-rows:6px minmax(0,1fr) 58px;background:#DDECF6}
+#progress{height:6px;background:#C9DDEB;overflow:hidden;z-index:50}#progressBar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));transition:width .28s ease}
+#stage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px;transition:padding-right .25s ease}
+body.notes-open #stage{padding-right:390px}
+#slideCanvas{position:relative;width:1280px;height:720px;flex:0 0 1280px;transform-origin:center center;will-change:transform}
+.page{position:absolute;inset:0;display:none;margin:0;opacity:0;transform:translateY(12px) scale(.995);pointer-events:none}
+.page.active{display:block;opacity:1;transform:none;pointer-events:auto;animation:pageIn .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(15px) scale(.992)}to{opacity:1;transform:none}}
+.fragment{transition:opacity .32s ease,transform .32s ease,filter .32s ease}.fragment.fragment-hidden{opacity:0;transform:translateY(16px);filter:blur(2px);pointer-events:none}.fragment.fragment-show{animation:fragmentIn .38s cubic-bezier(.2,.85,.25,1)}
+@keyframes fragmentIn{from{opacity:0;transform:translateY(15px) scale(.98)}to{opacity:1;transform:none}}
+.toolbar{height:58px;display:flex;align-items:center;gap:7px;padding:7px 12px;background:rgba(255,255,255,.94);border-top:1px solid #CBDDE9;box-shadow:0 -8px 28px rgba(18,48,74,.08);z-index:80;backdrop-filter:blur(14px)}
+.tool-btn{height:42px;min-width:44px;border:1px solid #D3E2EC;border-radius:13px;background:white;color:var(--ink);font-weight:850;cursor:pointer;box-shadow:0 4px 12px rgba(18,48,74,.06);transition:.15s}.tool-btn:hover{border-color:var(--blue);transform:translateY(-1px)}.tool-btn.on{color:white;background:var(--blue);border-color:var(--blue)}.tool-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}.timer-btn{min-width:104px;font-variant-numeric:tabular-nums}.timer-btn.running{border-color:var(--green);color:#17815C}.timer-btn.warning{border-color:#E9B83C;color:#8C6815}.timer-btn.danger{border-color:var(--coral);color:#B34850}
+#slideTitle{margin-left:5px;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:800;color:#587287}#counter{margin-left:auto;font-size:13px;font-weight:900;color:#6B8395}
+#notesDrawer{position:fixed;right:0;top:0;bottom:58px;width:380px;background:rgba(250,253,255,.98);border-left:1px solid #C9DDEB;box-shadow:-18px 0 40px rgba(18,48,74,.12);z-index:120;transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column}body.notes-open #notesDrawer{transform:none}.notes-head{padding:15px 16px;border-bottom:1px solid #D8E7F0;display:flex;gap:10px;align-items:center;background:white}.notes-head>div{font-weight:900;font-size:16px;line-height:1.25}.notes-close{margin-left:auto;width:36px;height:36px;border:1px solid #D5E3EC;border-radius:11px;background:white;font-size:22px;cursor:pointer;color:#557086}.notes-body{padding:14px 16px 24px;overflow:auto;font-size:14px;line-height:1.5;color:#3D586D}.note-section{background:white;border:1px solid #DCE9F1;border-radius:14px;padding:11px 12px;margin-bottom:9px}.note-section b{color:var(--blue)}
+#overviewOverlay{position:fixed;inset:0;z-index:160;background:rgba(18,48,74,.45);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:28px}#overviewOverlay.show{display:flex}.overview-card{width:min(1080px,95vw);max-height:88vh;background:#F8FCFF;border-radius:24px;border:1px solid #D3E3ED;box-shadow:0 30px 80px rgba(18,48,74,.25);overflow:hidden}.overview-head{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid #D6E5EE}.overview-head h2{font-size:23px;margin:0}.overview-grid{padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-height:72vh;overflow:auto}.overview-item{border:1px solid #D5E5EE;background:white;border-radius:15px;padding:12px;cursor:pointer;text-align:left;color:var(--ink);transition:.15s}.overview-item:hover,.overview-item.current{border-color:var(--blue);box-shadow:0 8px 20px rgba(75,123,255,.10)}.overview-item strong{display:block;font-size:13px;color:var(--blue);margin-bottom:4px}.overview-item span{font-size:14px;font-weight:800;line-height:1.25}
+#laserDot{position:fixed;width:16px;height:16px;border-radius:50%;background:#ff3048;box-shadow:0 0 18px 7px rgba(255,48,72,.52);pointer-events:none;z-index:999;display:none;transform:translate(-50%,-50%)}
+#toast{position:fixed;left:50%;bottom:75px;transform:translate(-50%,20px);padding:10px 16px;border-radius:999px;background:#173A55;color:white;font-weight:800;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:.2s}#toast.show{opacity:1;transform:translate(-50%,0)}
+.choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}.mini-choice{border:1px solid #D6E5EE;border-radius:9px;background:#F8FBFD;color:#486276;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer;transition:.12s}.mini-choice:hover{border-color:var(--blue)}.mini-choice.selected{background:#EAF1FF;border-color:var(--blue);color:#315FD3}.mini-choice.good{background:#E7FAF2;border-color:#7DDBB6;color:#197856}.mini-choice.bad{background:#FFF0F1;border-color:#F3AAB0;color:#B34850}.answer-label{margin-top:7px!important}.card-feedback{display:none;margin-top:7px;padding:7px 8px;border-radius:9px;background:#F4F9FC;color:#5A7284;font-size:11px;line-height:1.35}.card-feedback.show{display:block}.interaction-bar{margin-top:12px;display:flex;gap:8px;align-items:center;justify-content:flex-end;position:relative;z-index:4}.interaction-status{margin-right:auto;font-size:13px;font-weight:850;color:#60798C}.action-btn{border:1px solid #CFE0EA;border-radius:12px;background:white;color:var(--ink);padding:9px 13px;font-weight:850;cursor:pointer;transition:.15s}.action-btn:hover{border-color:var(--blue);transform:translateY(-1px)}.action-btn.primary{background:linear-gradient(135deg,var(--blue),var(--violet));color:white;border-color:transparent}
+.quiz-option{display:inline-block;margin:9px 8px 0 0;padding:9px 12px;border-radius:12px;background:#F3F7FA;border:1px solid #E1EBF1;color:var(--muted);font-size:14px;cursor:pointer;transition:.14s}.quiz-option:hover{border-color:var(--blue)}.quiz-option.good{background:#E7FAF2;border-color:#8BDFBF;color:#197856;font-weight:800}.quiz-option.bad{background:#FFF0F1;border-color:#F2B0B5;color:#B34850}.quiz-feedback{font-size:13px;margin-top:9px;color:#5E778A;min-height:18px}.quiz-feedback.ok{color:#197856}.quiz-feedback.err{color:#B34850}
+.tf{grid-template-columns:54px 1fr 200px!important}.tf-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.tf-btn{border:1px solid #D8E6EE;border-radius:11px;background:#F8FBFD;padding:10px;font-weight:850;color:#557086;cursor:pointer}.tf-btn.good{background:#E7FAF2;border-color:#8BDFBF;color:#197856}.tf-btn.bad{background:#FFF0F1;border-color:#F2B0B5;color:#B34850}.tf-feedback{grid-column:2/4;font-size:12px;color:#5E778A;margin-top:-8px;min-height:16px}
+.hunt-input{width:100%;border:1px solid #CFE0EA;border-radius:11px;background:white;padding:10px 11px;color:var(--ink);font:inherit;user-select:text}.hunt-input:focus{outline:2px solid rgba(75,123,255,.2);border-color:var(--blue)}textarea.hunt-input{resize:none}.hunt-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.hunt-list{margin-top:10px;display:flex;gap:8px;overflow-x:auto;padding-bottom:3px}.hunt-item{min-width:255px;max-width:300px;background:white;border:1px solid #D8E7F0;border-radius:14px;padding:10px;font-size:12px}.hunt-item b{font-size:13px}.hunt-item small{display:block;color:#61798B;margin-top:4px;line-height:1.35}.empty-state{font-size:12px;color:#7890A2;padding:8px}.manual-hidden{display:none!important}.manual-hidden.revealed{display:block!important;animation:fragmentIn .35s ease}
+.page .scenario,.page .goal,.page .signal,.page .feature-card,.page .compare-card,.page .meter,.page .note-card,.page .exit,.page .quiz-card{transition:transform .18s ease,box-shadow .18s ease}.page .scenario:hover,.page .feature-card:hover,.page .signal:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(28,83,120,.13)}
+@media(max-width:850px){#slideTitle{display:none}.overview-grid{grid-template-columns:1fr 1fr}.toolbar{gap:4px;padding:7px}.tool-btn{min-width:39px}.timer-btn{min-width:88px;font-size:12px}body.notes-open #stage{padding-right:0}#notesDrawer{width:min(92vw,380px)}}
+@media print{html,body{overflow:visible!important;background:white}.toolbar,#progress,#notesDrawer,#overviewOverlay,#laserDot,#toast{display:none!important}#app{display:block;height:auto}.page{position:relative!important;display:block!important;opacity:1!important;transform:none!important;page-break-after:always}.fragment.fragment-hidden{opacity:1!important;transform:none!important;filter:none!important}.answer-label,.card-feedback{display:block!important}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style></head>
-<body>
+<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức và khởi động tư duy: hiện đại/tự động/thông minh chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV nêu câu hỏi, cho HS giơ 1 ngón = Có, 2 ngón = Không, 3 ngón = Chưa chắc; chưa chốt ngay. Câu hỏi gợi mở: Em dựa vào dấu hiệu nào? Đáp án/chốt: Không thể kết luận chỉ theo vẻ ngoài, cảm biến, tự động hay chữ smart; phải xem tính năng cụ thể. Lưu ý: Không yêu cầu HS định nghĩa AI ở slide này. Chuyển ý: Hôm nay chúng ta làm thám tử AI — tìm căn cứ thay vì đoán." id="slide-1">
+<div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
+<h1>AI QUANH EM<br/>ĐÂU LÀ AI?</h1>
+<div class="subtitle">Quan sát • phân loại • giải thích — và biết nói <b>“chưa đủ thông tin”</b> khi chưa có căn cứ.</div>
+<div class="hero-grid">
+<div class="hero-card question-card">
+<div class="eyebrow">CÂU HỎI DẪN NHẬP</div>
+<div class="big-q">Có phải cứ thiết bị hiện đại, tự động hoặc được gọi là “thông minh” thì đều có AI?</div>
+<div class="answer-chip fragment">Không. Phải xem <b>tính năng cụ thể</b>.</div>
+</div>
+<div class="visual visual-hero">
+<div class="lens">⌕</div><div class="robot-head">AI</div>
+<div class="spark s1">✦</div><div class="spark s2">✦</div>
+</div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 15</div>
+</section><section class="page" data-document-role="page" data-index="1" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: Công khai yêu cầu cần đạt để HS biết đích đến của tiết học. Thời lượng: 1 phút. Cách tổ chức: GV đọc nhanh 4 động từ Phân biệt – Kể tên – Mô tả – Có căn cứ; HS không cần chép. Câu hỏi gợi mở: Trong 4 mục tiêu, mục nào giúp em tránh đoán sai nhất? Chốt: Học sinh không chỉ gọi tên AI mà phải nói được chức năng và biết dừng lại khi chưa đủ thông tin. Lưu ý: Không đi sâu thuật toán/học máy." id="slide-2">
+<div class="label">BẢN ĐỒ ĐÍCH ĐẾN</div>
+<h1>HỌC XONG, EM CÓ THỂ…</h1>
+<div class="subtitle">Bốn mục tiêu ngắn gọn, dễ nhớ.</div>
+<div class="goal-grid">
+<div class="goal fragment"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Công cụ/tính năng có AI và không có AI qua ví dụ gần gũi.</p></div>
+<div class="goal fragment"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Nêu được một số công cụ AI thông dụng quanh em.</p></div>
+<div class="goal fragment"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng chính của ít nhất 3 tính năng AI.</p></div>
+<div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">02 / 15</div>
+</section><section class="page" data-document-role="page" data-index="2" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện quan niệm sai 'tự động = AI' và luyện phân loại dựa trên chức năng. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn từng thẻ trên màn hình; chưa bấm 'Chấm' cho đến khi lớp đã tranh luận. Đáp án: Máy tính bỏ túi – Không AI; gợi ý tuyến theo giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn cảm biến – Chưa đủ thông tin. Câu hỏi gợi mở: Vì sao đèn cảm biến không nên vội gọi là AI? Chốt: cảm biến/tự động/remote chưa đủ để kết luận. Lưu ý: Ưu tiên nghe lí do hơn điểm số." id="slide-3">
+<div class="label">KHỞI ĐỘNG • TRÒ CHƠI 5 PHÚT</div>
+<h1>AI HAY KHÔNG AI?</h1>
+<div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div>
+<div class="scenario-grid">
+<div class="scenario"><div class="mini-vis">🧮 <span>→</span> 3000</div><b>Máy tính bỏ túi</b><small>Tính 125 × 24 theo quy tắc.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính nhanh theo quy tắc cố định chưa phải bằng chứng AI.</div></div>
+<div class="scenario"><div class="mini-vis">🚗📍 <span>→</span> 🗺</div><b>Gợi ý tuyến theo giao thông</b><small>Dự đoán thời gian và đề xuất tuyến.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Dự đoán/gợi ý dựa trên dữ liệu là dấu hiệu mạnh của tính năng AI.</div></div>
+<div class="scenario"><div class="mini-vis">🔘 <span>→</span> 🌀</div><b>Quạt nhận lệnh remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Điều khiển trực tiếp theo nút bấm không phải bằng chứng AI.</div></div>
+<div class="scenario"><div class="mini-vis">📷 <span>→</span> 🙂</div><b>Mở khóa bằng khuôn mặt</b><small>Phân tích khuôn mặt để xác minh.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận diện khuôn mặt là ví dụ rõ về tính năng AI.</div></div>
+<div class="scenario"><div class="mini-vis">🎙 <span>→</span> 💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận dạng lời nói và xử lí ngôn ngữ là tính năng AI.</div></div>
+<div class="scenario"><div class="mini-vis">🚶 <span>→</span> 💡</div><b>Đèn tự sáng khi có người</b><small>Chỉ biết có cảm biến chuyển động.</small><div class="tag unk answer-label" style="display:none">CHƯA ĐỦ TT</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến và tự động chưa đủ để kết luận có AI.</div></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 15</div>
+<div class="interaction-bar"><span class="interaction-status" id="warmStatus">Đã chọn 0/6</span><button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button><button class="action-btn" id="warmReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="3" data-label="MÁY TÍNH BỎ TÚI CÓ PHẢI AI?" data-speaker-notes="Mục tiêu: Hình thành tiêu chí nhận diện từ cách công cụ làm việc, không từ tốc độ. Thời lượng: 3 phút. Cách tổ chức: GV cho HS dự đoán trước; nhấn Space để hiện lần lượt Gợi ý → Suy luận → Kết luận. Câu hỏi: Nếu máy tính nhanh hơn em rất nhiều, vì sao vẫn chưa gọi là AI? Dự kiến: vì nó thực hiện phép tính theo quy tắc/công thức đã lập trình. Đáp án/chốt: Máy tính bỏ túi thông thường không phải ví dụ AI chỉ vì tính nhanh. Lưu ý: dùng cụm 'thông thường' để tránh khẳng định tuyệt đối về mọi thiết bị." id="slide-4">
+<div class="label">SUY LUẬN TỪ CĂN CỨ</div>
+<h1>MÁY TÍNH BỎ TÚI CÓ PHẢI AI?</h1>
+<div class="subtitle">Làm nhanh không đồng nghĩa với “có trí tuệ nhân tạo”.</div>
+<div class="steps">
+<div class="step"><span>1</span><div><b>Gợi ý</b><p>Tách “làm nhanh” khỏi “cách công cụ thực hiện nhiệm vụ”.</p></div></div>
+<div class="step fragment"><span>2</span><div><b>Suy luận</b><p>Máy tính bỏ túi thông thường thực hiện phép tính theo quy tắc/công thức đã thiết kế sẵn.</p></div></div>
+<div class="step answer fragment"><span>✓</span><div><b>Kết luận</b><p><b>Không.</b> Tốc độ nhanh hay tự động chưa đủ để gọi là AI.</p></div></div>
+</div>
+<div class="side-visual calc"><div class="calc-screen">125 × 24<br/><strong>3000</strong></div><div class="keys">7 8 9<br/>4 5 6<br/>1 2 3</div></div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 15</div>
+</section><section class="page" data-document-role="page" data-index="4" data-label="KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI" data-speaker-notes="Mục tiêu: So sánh trực quan quy tắc cố định với một tính năng AI xử lí ngôn ngữ. Thời lượng: 4 phút. Cách tổ chức: Cho HS mô tả đầu vào – cách làm – đầu ra của hai bên. Câu hỏi: Hai công cụ đều cho kết quả nhanh; điểm khác nằm ở đâu? Dự kiến: ứng dụng dịch phải nhận dạng lời nói/ngôn ngữ và tạo bản dịch phù hợp. Chốt: tên hoặc vẻ ngoài thiết bị chưa đủ; cần xem chức năng cụ thể. Lưu ý: Không giải thích machine learning chi tiết ở bài này." id="slide-5">
+<div class="label">HÌNH THÀNH KIẾN THỨC</div>
+<h1>KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI</h1>
+<div class="subtitle">So sánh hai cách làm việc khác nhau.</div>
+<div class="compare-grid">
+<div class="compare-card">
+<div class="diagram"><div class="device-box">🧮</div><div class="arrow">→</div><div class="output">3000</div></div>
+<h3>Máy tính bỏ túi thông thường</h3>
+<ul><li>Đầu vào: số và phép tính</li><li>Làm theo quy tắc/công thức cố định</li><li>Không dùng tốc độ tính để suy ra AI</li></ul>
+</div>
+<div class="vs">VS</div>
+<div class="compare-card accent fragment">
+<div class="diagram"><div class="device-box">🎙</div><div class="arrow">→</div><div class="output">💬🌐</div></div>
+<h3>Ứng dụng dịch giọng nói dùng AI</h3>
+<ul><li>Đầu vào: lời nói hoặc văn bản</li><li>Nhận dạng lời nói + xử lí ngôn ngữ</li><li>Ví dụ rõ về tính năng AI</li></ul>
+</div>
+</div>
+<div class="rule fragment">Tên hoặc vẻ ngoài thiết bị <b>chưa đủ</b> để kết luận.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">05 / 15</div>
+</section><section class="page" data-document-role="page" data-index="5" data-label="4 DẤU HIỆU GỢI Ý CÓ AI" data-speaker-notes="Mục tiêu: Tạo 'bộ kính quan sát' gồm 4 nhóm dấu hiệu AI gần gũi. Thời lượng: 4 phút. Cách tổ chức: Nhấn Space để hiện từng nhóm; sau mỗi nhóm yêu cầu HS nêu 1 ví dụ. Bốn nhóm: nhận dạng; xử lí ngôn ngữ; dự đoán/gợi ý; tạo nội dung. Câu hỏi gợi mở: Một hệ thống có một trong các dấu hiệu này đã chắc chắn là AI chưa? Chốt: Đây là dấu hiệu gợi ý, không phải công thức kết luận tuyệt đối. Lưu ý: Nếu HS hỏi 'AI học thế nào?', chỉ nói ngắn gọn rằng nhiều hệ thống tìm mẫu từ dữ liệu và sẽ học sâu ở bài sau." id="slide-6">
+<div class="label">THÁM TỬ AI</div>
+<h1>4 DẤU HIỆU GỢI Ý CÓ AI</h1>
+<div class="subtitle">Đây là dấu hiệu <b>gợi ý</b>, không phải công thức kết luận tuyệt đối.</div>
+<div class="signal-grid">
+<div class="signal fragment"><div class="sig-icon">📷→🙂</div><h3>Nhận dạng</h3><p>Hình ảnh, khuôn mặt, vật thể, giọng nói, chữ viết.</p></div>
+<div class="signal fragment"><div class="sig-icon">🎙💬→🌐</div><h3>Xử lí ngôn ngữ</h3><p>Hiểu câu hỏi, dịch, trả lời, tóm tắt, xử lí lời nói.</p></div>
+<div class="signal fragment"><div class="sig-icon">📊→🎯</div><h3>Dự đoán / gợi ý</h3><p>Giao thông, video, sản phẩm, lộ trình, từ tiếp theo.</p></div>
+<div class="signal fragment"><div class="sig-icon">✍🖼🎵</div><h3>Tạo nội dung</h3><p>Văn bản, hình ảnh, âm thanh theo yêu cầu.</p></div>
+</div>
+<div class="rule fragment">Muốn kết luận về một sản phẩm cụ thể, vẫn cần biết rõ tính năng/công nghệ của nó.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">06 / 15</div>
+</section><section class="page" data-document-role="page" data-index="6" data-label="MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA" data-speaker-notes="Mục tiêu: Mở rộng các ví dụ AI trong đời sống nhưng vẫn gọi đúng tên tính năng. Thời lượng: 5 phút. Cách tổ chức: GV chỉ vào từng thẻ, HS nói theo mẫu 'Tính năng … dùng AI để hỗ trợ con người …'. Câu hỏi gợi mở: Vì sao không nên nói 'bản đồ là AI' hoặc 'camera là AI'? Dự kiến: vì chỉ một số tính năng của ứng dụng/thiết bị có thể dùng AI. Chốt: nói về tính năng cụ thể: dự đoán giao thông, nhận diện khuôn mặt, dịch giọng nói, chatbot, gợi ý nội dung. Lưu ý: Khi HS nêu ví dụ mới, yêu cầu mô tả chức năng trước khi phân loại." id="slide-7">
+<div class="label">KHÁM PHÁ</div>
+<h1>MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA</h1>
+<div class="subtitle">Nói về <b>tính năng cụ thể</b>, không gắn nhãn AI cho cả thiết bị.</div>
+<div class="feature-grid">
+<div class="feature-card"><div class="feat-vis">🚗📍→🗺</div><b>Dự đoán giao thông</b><small>Ước tính thời gian và gợi ý tuyến.</small></div>
+<div class="feature-card"><div class="feat-vis">🎙→💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small></div>
+<div class="feature-card"><div class="feat-vis">📷→🙂</div><b>Nhận diện khuôn mặt</b><small>Xác định hoặc xác minh khuôn mặt.</small></div>
+<div class="feature-card fragment"><div class="feat-vis">🎙→✅</div><b>Trợ lí giọng nói</b><small>Hiểu yêu cầu và phản hồi/thực hiện.</small></div>
+<div class="feature-card fragment"><div class="feat-vis">❓→💬</div><b>Chatbot AI</b><small>Hiểu câu hỏi và tạo câu trả lời.</small></div>
+<div class="feature-card fragment"><div class="feat-vis">▶▶→⭐</div><b>Gợi ý nội dung</b><small>Đề xuất nội dung có khả năng phù hợp.</small></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">07 / 15</div>
+</section><section class="page" data-document-role="page" data-index="7" data-label="THÁM TỬ AI — 8 TÌNH HUỐNG" data-speaker-notes="Mục tiêu: Luyện phân loại và lập luận theo nhóm. Thời lượng: 7 phút. Cách tổ chức: Nhóm 3–4 HS chọn đủ 8 thẻ, sau đó GV bấm 'Chấm 8 tình huống'. Đáp án: Báo thức – Không AI; Robot hút bụi thiếu mô tả – Chưa đủ TT; Quạt remote – Không AI; Camera nhận diện mặt – Có AI; Máy tính bỏ túi – Không AI; Dịch giọng nói – Có AI; Đèn cảm ứng – Chưa đủ TT; Gợi ý video – Có AI. Câu hỏi gợi mở: Nhóm cần biết thêm gì về robot hút bụi/đèn để kết luận? Chốt: Khi mô tả thiếu, lựa chọn 'Chưa đủ thông tin' là thái độ khoa học. Lưu ý: Không biến điểm thành mục tiêu chính." id="slide-8">
+<div class="label">LUYỆN TẬP • THỬ THÁCH NHÓM</div>
+<h1>THÁM TỬ AI — 8 TÌNH HUỐNG</h1>
+<div class="subtitle">Phân loại bằng căn cứ: Có AI • Không AI • Chưa đủ thông tin.</div>
+<div class="detect-grid">
+<div><b>⏰ Báo thức theo giờ</b><small>Đúng giờ cài sẵn thì chuông reo.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Báo thức hoạt động theo thời gian/quy tắc cố định.</div></div>
+<div><b>🤖 Robot hút bụi</b><small>Không mô tả cách điều hướng.</small><span class="pill-unk answer-label" style="display:none">Chưa đủ TT</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Chỉ biết tên “robot hút bụi” chưa đủ để biết cách điều hướng có dùng AI hay không.</div></div>
+<div><b>🔘 Quạt remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Bấm nút nào, quạt thực hiện lệnh tương ứng — không phải bằng chứng AI.</div></div>
+<div><b>📷 Camera nhận diện mặt</b><small>Xác minh khuôn mặt trong hình.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận diện/xác minh khuôn mặt là tính năng AI.</div></div>
+<div><b>🧮 Máy tính bỏ túi</b><small>Tính theo công thức đã lập trình.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính toán theo công thức đã lập trình không phải bằng chứng AI.</div></div>
+<div><b>🎙 Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận lời nói và tạo bản dịch là xử lí ngôn ngữ bằng AI.</div></div>
+<div><b>💡 Đèn cảm ứng</b><small>Chỉ biết sáng khi phát hiện chuyển động.</small><span class="pill-unk answer-label" style="display:none">Chưa đủ TT</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến chuyển động và tự bật đèn chưa đủ để kết luận có AI.</div></div>
+<div><b>▶ Gợi ý video</b><small>Đề xuất theo tín hiệu sử dụng.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Gợi ý nội dung dựa trên tín hiệu sử dụng là dấu hiệu mạnh của AI.</div></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">08 / 15</div>
+<div class="interaction-bar"><span class="interaction-status" id="detStatus">Đã chọn 0/8</span><button class="action-btn primary" id="detCheck" type="button">Chấm 8 tình huống</button><button class="action-btn" id="detReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="8" data-label="MỨC ĐỘ BẰNG CHỨNG VỀ AI" data-speaker-notes="Mục tiêu: Hiểu rằng bằng chứng nhận diện AI có mức độ mạnh/yếu khác nhau. Thời lượng: 3 phút. Cách tổ chức: Nhấn Space để hiện từng cột; gọi HS đặt ví dụ vào cột phù hợp. Hỏi nhanh: remote quạt ở đâu? nhận diện khuôn mặt ở đâu? chỉ biết tên robot hút bụi ở đâu? Đáp án: lần lượt Bằng chứng yếu – Gợi ý mạnh – Chưa đủ thông tin. Chốt: đây chỉ là suy luận ban đầu, không phải 'máy kiểm định AI'. Lưu ý: Khi cần kết luận thật, xem tài liệu/mô tả chính thức của sản phẩm." id="slide-9">
+<div class="label">MÔ PHỎNG NHẬN DIỆN</div>
+<h1>MỨC ĐỘ BẰNG CHỨNG VỀ AI</h1>
+<div class="subtitle">Không phải mọi dấu hiệu đều mạnh như nhau.</div>
+<div class="meter-grid">
+<div class="meter weak fragment"><div class="meter-icon">⏲</div><h3>Bằng chứng yếu</h3><p>Hẹn giờ • nút bấm • quy tắc cố định.</p><div class="meter-bar"><i style="width:28%"></i></div></div>
+<div class="meter strong fragment"><div class="meter-icon">🧠</div><h3>Gợi ý mạnh</h3><p>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung.</p><div class="meter-bar"><i style="width:82%"></i></div></div>
+<div class="meter unknown fragment"><div class="meter-icon">?</div><h3>Chưa đủ thông tin</h3><p>Chỉ biết tên thiết bị hoặc mô tả quá chung.</p><div class="meter-bar"><i style="width:50%"></i></div></div>
+</div>
+<div class="rule fragment">Đây là cách suy luận ban đầu, không phải “máy kiểm định AI”.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">09 / 15</div>
+</section><section class="page" data-document-role="page" data-index="9" data-label="CHỌN ĐÁP ÁN ĐÚNG NHẤT" data-speaker-notes="Mục tiêu: Kiểm tra nhanh hai ngộ nhận trọng tâm. Thời lượng: 3 phút. Cách tổ chức: Cho HS bấm từng phương án; hệ thống phản hồi ngay. Câu 1 đáp án C vì hẹn giờ có thể chỉ là quy tắc cố định. Câu 2 đáp án B vì chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên. Câu hỏi sau đáp án: Em dùng từ khóa nào để giải thích? Chốt: phải dựa vào chức năng cụ thể. Lưu ý: Nếu HS chọn sai, cho giải thích trước khi GV chốt." id="slide-10">
+<div class="label">TRẮC NGHIỆM TƯƠNG TÁC</div>
+<h1>CHỌN ĐÁP ÁN ĐÚNG NHẤT</h1>
+<div class="subtitle">Giải thích bằng “chức năng cụ thể”.</div>
+<div class="quiz-card">
+<div class="qnum">1</div><div class="qtext"><b>Dấu hiệu nào tự nó chưa đủ để khẳng định thiết bị có AI?</b>
+<button class="quiz-option" data-correct="0" type="button">A. Nhận diện khuôn mặt từ hình ảnh</button><button class="quiz-option" data-correct="0" type="button">B. Nhận giọng nói và tạo bản dịch</button><button class="quiz-option" data-correct="1" type="button">C. Tự bật/tắt theo thời gian đã hẹn</button><div class="quiz-feedback" data-bad="Nhận diện khuôn mặt và dịch giọng nói là các dấu hiệu AI rõ hơn trong bối cảnh bài học." data-ok="Tự bật/tắt theo giờ hẹn có thể chỉ là quy tắc cố định; tự động chưa đủ để khẳng định AI.">Chọn một đáp án.</div></div>
+</div>
+<div class="quiz-card">
+<div class="qnum">2</div><div class="qtext"><b>Trường hợp nào là ví dụ rõ nhất về tính năng AI?</b>
+<button class="quiz-option" data-correct="0" type="button">A. Đồng hồ reo đúng giờ đã đặt</button><button class="quiz-option" data-correct="1" type="button">B. Chatbot hiểu câu hỏi và tạo câu trả lời</button><button class="quiz-option" data-correct="0" type="button">C. Máy tính bỏ túi thực hiện phép cộng</button><div class="quiz-feedback" data-bad="Đồng hồ báo thức và máy tính bỏ túi thông thường có thể hoạt động theo quy tắc cố định." data-ok="Chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên là ví dụ rõ về AI xử lí ngôn ngữ.">Chọn một đáp án.</div></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">10 / 15</div>
+</section><section class="page" data-document-role="page" data-index="10" data-label="KIỂM TRA 3 MỆNH ĐỀ" data-speaker-notes="Mục tiêu: Củng cố 3 kết luận cốt lõi bằng Đúng/Sai. Thời lượng: 2 phút. Cách tổ chức: HS bấm Đúng/Sai; sau câu sai yêu cầu sửa lại thành mệnh đề đúng. Đáp án: 1 Sai; 2 Đúng; 3 Đúng. Sửa câu 1: 'Thiết bị có cảm biến chưa chắc có AI'. Chốt: cảm biến là nguồn tín hiệu; AI hay không còn phụ thuộc cách hệ thống xử lí. Lưu ý: Câu 2 rèn thói quen không kết luận khi thiếu bằng chứng." id="slide-11">
+<div class="label">ĐÚNG / SAI NHANH</div>
+<h1>KIỂM TRA 3 MỆNH ĐỀ</h1>
+<div class="subtitle">Sai thì sửa lại cho đúng.</div>
+<div class="tf-grid">
+<div class="tf"><span class="num">1</span><p>Mọi thiết bị có cảm biến đều là AI.</p><div class="tf-actions"><button class="tf-btn" data-correct="0" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="1" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Cảm biến chỉ thu nhận tín hiệu; nhiều thiết bị có cảm biến nhưng chỉ hoạt động theo quy tắc đơn giản."></div></div>
+<div class="tf"><span class="num">2</span><p>Thiếu thông tin về robot hút bụi thì có thể chọn “Chưa đủ thông tin”.</p><div class="tf-actions"><button class="tf-btn" data-correct="1" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="0" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Khi thiếu mô tả chức năng/công nghệ, “Chưa đủ thông tin” là lựa chọn hợp lí."></div></div>
+<div class="tf"><span class="num">3</span><p>Ứng dụng nhận giọng nói và tạo bản dịch là ví dụ rõ về AI xử lí ngôn ngữ.</p><div class="tf-actions"><button class="tf-btn" data-correct="1" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="0" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Nhận giọng nói và tạo bản dịch là ví dụ rõ về AI xử lí ngôn ngữ."></div></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">11 / 15</div>
+</section><section class="page" data-document-role="page" data-index="11" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: Vận dụng vào môi trường sống của HS và luyện cách nêu căn cứ. Thời lượng: 4 phút. Cách tổ chức: HS/nhóm nhập tên tính năng, chức năng quan sát được, phân loại, lí do; bấm Lưu ví dụ. GV mở 2–3 ví dụ đã lưu để chữa. Câu hỏi gợi mở: Em đang mô tả thiết bị hay đang mô tả tính năng? Chốt: chỉ viết 'TV/camera/máy lạnh' là chưa đủ; phải nói tính năng cụ thể. Lưu ý: Không nhập họ tên/dữ liệu cá nhân; dữ liệu chỉ lưu trên trình duyệt máy đang dùng." id="slide-12">
+<div class="label">VẬN DỤNG</div>
+<h1>SĂN AI QUANH EM</h1>
+<div class="subtitle">Ghi lại một ví dụ của chính em bằng <b>tính năng + căn cứ</b>.</div>
+<div class="worksheet"><div class="field"><b>Tên tính năng / công cụ</b><input class="hunt-input" id="huntName" placeholder="Ví dụ: mở khóa bằng khuôn mặt trên điện thoại" type="text"/></div><div class="field"><b>Chức năng em quan sát được</b><textarea class="hunt-input" id="huntFunc" placeholder="Ví dụ: camera quét khuôn mặt để xác minh người dùng" rows="2"></textarea></div><div class="field"><b>Em phân loại</b><select class="hunt-input" id="huntClass"><option value="Có AI">Có AI</option><option value="Không AI">Không AI</option><option value="Chưa đủ thông tin">Chưa đủ thông tin</option></select></div><div class="field"><b>Lí do / căn cứ</b><input class="hunt-input" id="huntWhy" placeholder="Em dựa vào tính năng..." type="text"/></div></div>
+<div class="tip">Nếu chỉ viết “TV”, “camera”, “máy lạnh”… thì <b>chưa đủ</b>. Hãy nêu tính năng cụ thể.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">12 / 15</div>
+<div class="hunt-actions"><button class="action-btn primary" id="huntSave" type="button">Lưu ví dụ</button><button class="action-btn" id="huntClear" type="button">Xóa ô nhập</button></div><div class="hunt-list" id="huntList"><div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div></div></section><section class="page" data-document-role="page" data-index="12" data-label="4 Ý CỐT LÕI GHI VỞ" data-speaker-notes="Mục tiêu: Chuẩn hóa phần kiến thức HS cần ghi nhớ. Thời lượng: 2 phút. Cách tổ chức: Nhấn Space hiện lần lượt 4 ý; HS ghi ngắn gọn. Từ khóa cần gạch chân: tính năng; không phải mọi thiết bị tự động đều có AI; nhận dạng/ngôn ngữ/dự đoán/tạo nội dung; chưa đủ thông tin. Chốt: 4 ý này là chuẩn để HS ôn lại bài. Lưu ý: Không đọc dài dòng; dành thời gian cho HS ghi." id="slide-13">
+<div class="label">CHỐT KIẾN THỨC</div>
+<h1>4 Ý CỐT LÕI GHI VỞ</h1>
+<div class="subtitle">Ngắn gọn, đúng bản chất, dễ nhớ.</div>
+<div class="note-grid">
+<div class="note-card fragment"><span>1</span><p>AI xuất hiện trong nhiều <b>tính năng</b>: dịch ngôn ngữ, nhận diện, gợi ý, dự đoán giao thông, chatbot…</p></div>
+<div class="note-card fragment"><span>2</span><p>Không phải mọi thiết bị điện tử, tự động, có cảm biến hoặc “thông minh” đều có AI.</p></div>
+<div class="note-card fragment"><span>3</span><p>Một số tính năng AI hỗ trợ <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>.</p></div>
+<div class="note-card fragment"><span>4</span><p>Khi chưa đủ thông tin, cần <b>tìm hiểu thêm</b> thay vì đoán theo vẻ ngoài.</p></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">13 / 15</div>
+</section><section class="page" data-document-role="page" data-index="13" data-label="TRƯỚC KHI RA VỀ…" data-speaker-notes="Mục tiêu: Đánh giá cuối tiết. Thời lượng: 2 phút. Cách tổ chức: HS trả lời 3 câu vào giấy/miệng; GV chỉ hiện gợi ý câu 3 sau khi HS đã trả lời. Câu 1–2 kiểm tra nhận diện và mô tả chức năng. Câu 3 đáp án: Không; máy tính bỏ túi thông thường tính theo quy tắc/công thức đã lập trình, tính nhanh chưa đủ chứng minh AI. Lưu ý: Nếu nhiều HS sai câu 3, quay lại slide so sánh trước khi kết thúc." id="slide-14">
+<div class="label">EXIT TICKET • 3 CÂU</div>
+<h1>TRƯỚC KHI RA VỀ…</h1>
+<div class="subtitle">Ba câu kiểm tra xem em đã nắm được cách nhận diện AI chưa.</div>
+<div class="exit-grid">
+<div class="exit"><span>1</span><p>Kể tên một công cụ hoặc tính năng AI em từng gặp.</p></div>
+<div class="exit"><span>2</span><p>Tính năng đó hỗ trợ con người làm gì?</p></div>
+<div class="exit"><span>3</span><p>Một máy tính bỏ túi thông thường tính rất nhanh. Điều đó có đủ để khẳng định nó là AI không? Vì sao?</p></div>
+</div>
+<button class="action-btn primary" id="exitReveal" type="button">Hiện gợi ý câu 3</button><div class="answer-strip manual-hidden" id="exitAnswer"><b>Gợi ý câu 3:</b> Không. Tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh có AI.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">14 / 15</div>
+</section><section class="page" data-document-role="page" data-index="14" data-label="BẢN ĐỒ “THÁM TỬ AI”" data-speaker-notes="Mục tiêu: Đóng bài bằng quy trình hành động dễ nhớ. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space để hiện lần lượt các nút mindmap; mời 2 HS hoàn thành câu 'Sau bài này, khi gặp một thiết bị lạ em sẽ…'. Chốt quy trình: Quan sát → Xem chức năng → Tìm căn cứ → Nếu chưa rõ, nói 'Chưa đủ thông tin'. Dặn dò: Tìm ở nhà 1 tính năng có AI và 1 trường hợp chưa chắc có AI; ghi tên – chức năng – lí do. Lưu ý: Đây là thông điệp cuối, nên đọc chậm và nhấn mạnh 'không đoán theo vẻ ngoài'." id="slide-15">
+<div class="label">MINDMAP • CUỐI BÀI</div>
+<h1>BẢN ĐỒ “THÁM TỬ AI”</h1>
+<div class="subtitle">Một quy trình 3 bước để không bị đánh lừa bởi vẻ ngoài.</div>
+<div class="mind">
+<div class="mind-center">ĐÂU LÀ<br/>AI?</div>
+<div class="mind-node n1 fragment"><b>1. QUAN SÁT</b><small>Tên/hình dạng chưa đủ</small></div>
+<div class="mind-node n2 fragment"><b>2. XEM CHỨC NĂNG</b><small>Công cụ đang làm gì?</small></div>
+<div class="mind-node n3 fragment"><b>3. TÌM CĂN CỨ</b><small>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung</small></div>
+<div class="mind-node n4 fragment"><b>NẾU CHƯA RÕ</b><small>Nói “Chưa đủ thông tin”</small></div>
+</div>
+<div class="final-message fragment">Không đoán AI theo vẻ ngoài. Hãy xem <b>tính năng cụ thể</b>, tìm căn cứ và sẵn sàng nói “chưa đủ thông tin”.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">15 / 15</div>
+</section></div></main><nav aria-label="Điều khiển bài giảng" class="toolbar"><button class="tool-btn" id="prevBtn" title="Slide trước" type="button">←</button><button class="tool-btn" id="nextBtn" title="Slide sau" type="button">→</button><button class="tool-btn" id="revealBtn" title="Hiện nội dung tiếp theo" type="button">✦</button><button class="tool-btn" id="notesBtn" title="Ghi chú giáo viên" type="button">GV</button><button class="tool-btn" id="overviewBtn" title="Tổng quan slide" type="button">▦</button><button class="tool-btn" id="laserBtn" title="Laser Pointer" type="button">●</button><button class="tool-btn" id="fullBtn" title="Toàn màn hình" type="button">⛶</button><button class="tool-btn" id="resetSlideBtn" title="Làm lại slide hiện tại" type="button">↺</button><button class="tool-btn timer-btn" id="timerBtn" title="Bấm: chạy/tạm dừng • Nhấp đúp: đặt lại 45 phút" type="button">⏱ 45:00</button><div id="slideTitle"></div><div id="counter"></div></nav></div><aside id="notesDrawer"><div class="notes-head"><div id="notesSlideTitle"></div><button class="notes-close" id="notesClose" type="button">×</button></div><div class="notes-body" id="notesBody"></div></aside><div id="overviewOverlay"><div class="overview-card"><div class="overview-head"><h2>Tổng quan bài giảng</h2><button class="notes-close" id="overviewClose" type="button">×</button></div><div class="overview-grid" id="overviewGrid"></div></div></div><div id="laserDot"></div><div id="toast"></div><script>
+(function(){
+  'use strict';
+  const slides=[...document.querySelectorAll('.page')];
+  const canvas=document.getElementById('slideCanvas'),stage=document.getElementById('stage');
+  const progressBar=document.getElementById('progressBar'),counter=document.getElementById('counter'),slideTitle=document.getElementById('slideTitle');
+  const notesBody=document.getElementById('notesBody'),notesSlideTitle=document.getElementById('notesSlideTitle');
+  const overview=document.getElementById('overviewOverlay'),overviewGrid=document.getElementById('overviewGrid');
+  let idx=0,laserOn=false,timerSeconds=45*60,timerId=null,timerRunning=false,toastId=null;
 
-<section class="page" data-document-role="page" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: tạo mâu thuẫn nhận thức, không yêu cầu HS định nghĩa AI. Thời lượng: 2 phút. Cách tổ chức: cho HS giơ tay chọn Có/Không/Chưa chắc, chưa chốt ngay. Chốt: hiện đại, tự động, có cảm biến hay chữ “smart” đều chưa đủ; phải xem tính năng cụ thể. Chuyển ý: hôm nay cả lớp sẽ làm “thám tử AI”, tìm căn cứ thay vì đoán theo vẻ ngoài.">
-  <div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
-  <h1>AI QUANH EM<br>ĐÂU LÀ AI?</h1>
-  <div class="subtitle">Quan sát • phân loại • giải thích — và biết nói <b>“chưa đủ thông tin”</b> khi chưa có căn cứ.</div>
-  
-        <div class="hero-grid">
-          <div class="hero-card question-card">
-            <div class="eyebrow">CÂU HỎI DẪN NHẬP</div>
-            <div class="big-q">Có phải cứ thiết bị hiện đại, tự động hoặc được gọi là “thông minh” thì đều có AI?</div>
-            <div class="answer-chip">Không. Phải xem <b>tính năng cụ thể</b>.</div>
-          </div>
-          <div class="visual visual-hero">
-            <div class="lens">⌕</div><div class="robot-head">AI</div>
-            <div class="spark s1">✦</div><div class="spark s2">✦</div>
-          </div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 15</div>
-</section>
+  const $=id=>document.getElementById(id);
+  function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastId);toastId=setTimeout(()=>t.classList.remove('show'),1700)}
+  function scaleStage(){
+    const reserve=document.body.classList.contains('notes-open')&&window.innerWidth>850?390:0;
+    const w=Math.max(320,stage.clientWidth-reserve-20),h=Math.max(220,stage.clientHeight-20);
+    const s=Math.min(w/1280,h/720);
+    canvas.style.transform=`scale(${s})`;
+  }
+  window.addEventListener('resize',scaleStage);
 
-<section class="page" data-document-role="page" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: công khai yêu cầu cần đạt để HS biết mình phải làm được gì. Thời lượng: 1 phút. Cách tổ chức: GV đọc nhanh 4 động từ Phân biệt – Kể tên – Mô tả – Có căn cứ. Không yêu cầu HS chép. Lưu ý: trọng tâm bài là nhận diện ở mức ban đầu, không dạy định nghĩa kỹ thuật hoặc thuật toán AI.">
-  <div class="label">BẢN ĐỒ ĐÍCH ĐẾN</div>
-  <h1>HỌC XONG, EM CÓ THỂ…</h1>
-  <div class="subtitle">Bốn mục tiêu ngắn gọn, dễ nhớ.</div>
-  
-        <div class="goal-grid">
-          <div class="goal"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Công cụ/tính năng có AI và không có AI qua ví dụ gần gũi.</p></div>
-          <div class="goal"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Nêu được một số công cụ AI thông dụng quanh em.</p></div>
-          <div class="goal"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng chính của ít nhất 3 tính năng AI.</p></div>
-          <div class="goal"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">02 / 15</div>
-</section>
+  function initFragments(){document.querySelectorAll('.fragment').forEach(x=>x.classList.add('fragment-hidden'))}
+  function revealNext(){
+    const hidden=[...slides[idx].querySelectorAll('.fragment.fragment-hidden')];
+    if(hidden.length){const x=hidden[0];x.classList.remove('fragment-hidden');x.classList.add('fragment-show');setTimeout(()=>x.classList.remove('fragment-show'),450);return true}
+    return false;
+  }
+  function updateNav(){
+    $('prevBtn').disabled=idx===0;$('nextBtn').disabled=idx===slides.length-1;
+    const hidden=slides[idx].querySelector('.fragment.fragment-hidden');$('revealBtn').classList.toggle('on',!!hidden);
+  }
+  function show(i){
+    idx=Math.max(0,Math.min(slides.length-1,i));
+    slides.forEach((s,n)=>s.classList.toggle('active',n===idx));
+    progressBar.style.width=((idx+1)/slides.length*100)+'%';
+    counter.textContent=`${idx+1} / ${slides.length}`;
+    slideTitle.textContent=slides[idx].dataset.label||'';
+    updateNotes();updateNav();highlightOverview();
+  }
+  function next(){if(!revealNext())show(idx+1)} function prev(){show(idx-1)}
 
-<section class="page" data-document-role="page" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: phát hiện quan niệm sai “tự động = AI”. Thời lượng: 5 phút. Cách tổ chức: che phần nhãn đáp án nếu trình chiếu; cho HS chọn nhanh từng thẻ và giải thích một câu. Đáp án: máy tính – Không AI; gợi ý tuyến – Có AI; quạt remote – Không AI; nhận diện khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn cảm biến – Chưa đủ thông tin. Điểm cần nhấn: cảm biến và tự động chưa đủ để kết luận AI.">
-  <div class="label">KHỞI ĐỘNG • TRÒ CHƠI 5 PHÚT</div>
-  <h1>AI HAY KHÔNG AI?</h1>
-  <div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div>
-  
-        <div class="scenario-grid">
-          <div class="scenario"><div class="mini-vis">🧮 <span>→</span> 3000</div><b>Máy tính bỏ túi</b><small>Tính 125 × 24 theo quy tắc.</small><div class="tag no">KHÔNG AI</div></div>
-          <div class="scenario"><div class="mini-vis">🚗📍 <span>→</span> 🗺</div><b>Gợi ý tuyến theo giao thông</b><small>Dự đoán thời gian và đề xuất tuyến.</small><div class="tag ai">CÓ AI</div></div>
-          <div class="scenario"><div class="mini-vis">🔘 <span>→</span> 🌀</div><b>Quạt nhận lệnh remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><div class="tag no">KHÔNG AI</div></div>
-          <div class="scenario"><div class="mini-vis">📷 <span>→</span> 🙂</div><b>Mở khóa bằng khuôn mặt</b><small>Phân tích khuôn mặt để xác minh.</small><div class="tag ai">CÓ AI</div></div>
-          <div class="scenario"><div class="mini-vis">🎙 <span>→</span> 💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><div class="tag ai">CÓ AI</div></div>
-          <div class="scenario"><div class="mini-vis">🚶 <span>→</span> 💡</div><b>Đèn tự sáng khi có người</b><small>Chỉ biết có cảm biến chuyển động.</small><div class="tag unk">CHƯA ĐỦ TT</div></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 15</div>
-</section>
+  function formatNotes(text){
+    const labels=['Mục tiêu','Thời lượng','Cách tổ chức','Câu hỏi gợi mở','Câu hỏi','Dự kiến','Đáp án/chốt','Đáp án','Chốt','Lưu ý','Chuyển ý','Dặn dò','Hỏi nhanh','Sửa câu 1'];
+    let out=text;
+    labels.forEach(k=>{out=out.replace(new RegExp(k.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+':','g'),'§'+k+':')});
+    return out.split('§').filter(Boolean).map(part=>{
+      const pos=part.indexOf(':');
+      if(pos>0){return `<div class="note-section"><b>${part.slice(0,pos)}:</b>${part.slice(pos+1)}</div>`}
+      return `<div class="note-section">${part}</div>`;
+    }).join('');
+  }
+  function updateNotes(){
+    const s=slides[idx];notesSlideTitle.textContent=`${idx+1}. ${s.dataset.label||'Slide'}`;
+    notesBody.innerHTML=formatNotes(s.dataset.speakerNotes||'Chưa có ghi chú.');
+  }
+  function toggleNotes(force){const on=force!==undefined?force:!document.body.classList.contains('notes-open');document.body.classList.toggle('notes-open',on);$('notesBtn').classList.toggle('on',on);setTimeout(scaleStage,260)}
 
-<section class="page" data-document-role="page" data-label="MÁY TÍNH BỎ TÚI CÓ PHẢI AI?" data-speaker-notes="Mục tiêu: hình thành tiêu chí nhận diện dựa trên cách thực hiện nhiệm vụ. Thời lượng: 3 phút. Hỏi: “Nếu máy tính tính nhanh hơn em rất nhiều, vì sao vẫn chưa gọi là AI?” Dự kiến: vì nó làm theo quy tắc/công thức đã lập trình. Chốt chính xác với cụm “máy tính bỏ túi thông thường”, tránh khẳng định tuyệt đối về mọi thiết bị có hình dạng máy tính.">
-  <div class="label">SUY LUẬN TỪ CĂN CỨ</div>
-  <h1>MÁY TÍNH BỎ TÚI CÓ PHẢI AI?</h1>
-  <div class="subtitle">Làm nhanh không đồng nghĩa với “có trí tuệ nhân tạo”.</div>
-  
-        <div class="steps">
-          <div class="step"><span>1</span><div><b>Gợi ý</b><p>Tách “làm nhanh” khỏi “cách công cụ thực hiện nhiệm vụ”.</p></div></div>
-          <div class="step"><span>2</span><div><b>Suy luận</b><p>Máy tính bỏ túi thông thường thực hiện phép tính theo quy tắc/công thức đã thiết kế sẵn.</p></div></div>
-          <div class="step answer"><span>✓</span><div><b>Kết luận</b><p><b>Không.</b> Tốc độ nhanh hay tự động chưa đủ để gọi là AI.</p></div></div>
-        </div>
-        <div class="side-visual calc"><div class="calc-screen">125 × 24<br><strong>3000</strong></div><div class="keys">7 8 9<br>4 5 6<br>1 2 3</div></div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 15</div>
-</section>
+  function buildOverview(){
+    overviewGrid.innerHTML='';slides.forEach((s,i)=>{const b=document.createElement('button');b.className='overview-item';b.innerHTML=`<strong>SLIDE ${String(i+1).padStart(2,'0')}</strong><span>${s.dataset.label||''}</span>`;b.addEventListener('click',()=>{show(i);overview.classList.remove('show')});overviewGrid.appendChild(b)});
+  }
+  function highlightOverview(){[...overviewGrid.children].forEach((x,i)=>x.classList.toggle('current',i===idx))}
 
-<section class="page" data-document-role="page" data-label="KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI" data-speaker-notes="Mục tiêu: so sánh trực quan quy tắc cố định với xử lí ngôn ngữ. Thời lượng: 4 phút. Cách hỏi: “Hai công cụ đều cho ra kết quả rất nhanh; điểm khác nằm ở đâu?” Dự kiến: bên dịch phải nhận lời nói/ngôn ngữ và tạo bản dịch phù hợp. Lưu ý: không đi sâu vào machine learning; chỉ cần HS hiểu “xem chức năng cụ thể”.">
-  <div class="label">HÌNH THÀNH KIẾN THỨC</div>
-  <h1>KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI</h1>
-  <div class="subtitle">So sánh hai cách làm việc khác nhau.</div>
-  
-        <div class="compare-grid">
-          <div class="compare-card">
-            <div class="diagram"><div class="device-box">🧮</div><div class="arrow">→</div><div class="output">3000</div></div>
-            <h3>Máy tính bỏ túi thông thường</h3>
-            <ul><li>Đầu vào: số và phép tính</li><li>Làm theo quy tắc/công thức cố định</li><li>Không dùng tốc độ tính để suy ra AI</li></ul>
-          </div>
-          <div class="vs">VS</div>
-          <div class="compare-card accent">
-            <div class="diagram"><div class="device-box">🎙</div><div class="arrow">→</div><div class="output">💬🌐</div></div>
-            <h3>Ứng dụng dịch giọng nói dùng AI</h3>
-            <ul><li>Đầu vào: lời nói hoặc văn bản</li><li>Nhận dạng lời nói + xử lí ngôn ngữ</li><li>Ví dụ rõ về tính năng AI</li></ul>
-          </div>
-        </div>
-        <div class="rule">Tên hoặc vẻ ngoài thiết bị <b>chưa đủ</b> để kết luận.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">05 / 15</div>
-</section>
+  function formatTime(sec){sec=Math.max(0,sec);return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
+  function timerUI(){const b=$('timerBtn');b.textContent='⏱ '+formatTime(timerSeconds);b.classList.toggle('running',timerRunning&&timerSeconds>300);b.classList.toggle('warning',timerSeconds<=300&&timerSeconds>60);b.classList.toggle('danger',timerSeconds<=60)}
+  function pauseTimer(){timerRunning=false;if(timerId){clearInterval(timerId);timerId=null}timerUI()}
+  function resetTimer(){pauseTimer();timerSeconds=45*60;timerUI();toast('Đã đặt lại đồng hồ 45 phút')}
+  function toggleTimer(){if(timerRunning){pauseTimer();toast('Đã tạm dừng đồng hồ');return}timerRunning=true;timerUI();timerId=setInterval(()=>{timerSeconds--;if(timerSeconds<=0){timerSeconds=0;pauseTimer();toast('Hết 45 phút')}timerUI()},1000)}
 
-<section class="page" data-document-role="page" data-label="4 DẤU HIỆU GỢI Ý CÓ AI" data-speaker-notes="Mục tiêu: tạo “bộ kính” quan sát AI ở mức lớp 6. Thời lượng: 4 phút. Cho HS đọc 4 nhóm rồi nêu mỗi nhóm 1 ví dụ. Không biến 4 nhóm thành định nghĩa cứng. Có thể nói đơn giản: nhiều hệ thống AI được xây dựng để nhận ra mẫu từ dữ liệu, nhưng bài này chưa học sâu cách huấn luyện.">
-  <div class="label">THÁM TỬ AI</div>
-  <h1>4 DẤU HIỆU GỢI Ý CÓ AI</h1>
-  <div class="subtitle">Đây là dấu hiệu <b>gợi ý</b>, không phải công thức kết luận tuyệt đối.</div>
-  
-        <div class="signal-grid">
-          <div class="signal"><div class="sig-icon">📷→🙂</div><h3>Nhận dạng</h3><p>Hình ảnh, khuôn mặt, vật thể, giọng nói, chữ viết.</p></div>
-          <div class="signal"><div class="sig-icon">🎙💬→🌐</div><h3>Xử lí ngôn ngữ</h3><p>Hiểu câu hỏi, dịch, trả lời, tóm tắt, xử lí lời nói.</p></div>
-          <div class="signal"><div class="sig-icon">📊→🎯</div><h3>Dự đoán / gợi ý</h3><p>Giao thông, video, sản phẩm, lộ trình, từ tiếp theo.</p></div>
-          <div class="signal"><div class="sig-icon">✍🖼🎵</div><h3>Tạo nội dung</h3><p>Văn bản, hình ảnh, âm thanh theo yêu cầu.</p></div>
-        </div>
-        <div class="rule">Muốn kết luận về một sản phẩm cụ thể, vẫn cần biết rõ tính năng/công nghệ của nó.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">06 / 15</div>
-</section>
+  function resetSlide(){
+    const s=slides[idx];s.querySelectorAll('.fragment').forEach(x=>{x.classList.add('fragment-hidden');x.classList.remove('fragment-show')});
+    s.querySelectorAll('.mini-choice,.quiz-option,.tf-btn').forEach(x=>x.classList.remove('selected','good','bad'));
+    s.querySelectorAll('.answer-label').forEach(x=>x.style.display='none');s.querySelectorAll('.card-feedback').forEach(x=>x.classList.remove('show'));
+    s.querySelectorAll('.quiz-feedback').forEach(x=>{x.textContent='Chọn một đáp án.';x.classList.remove('ok','err')});s.querySelectorAll('.tf-feedback').forEach(x=>x.textContent='');
+    if(s.id==='slide-3'){warmSelections.clear();updateWarmStatus()}
+    if(s.id==='slide-8'){detSelections.clear();updateDetStatus()}
+    if(s.id==='slide-14'){$('exitAnswer')?.classList.add('manual-hidden');$('exitAnswer')?.classList.remove('revealed')}
+    updateNav();toast('Đã làm lại slide hiện tại');
+  }
 
-<section class="page" data-document-role="page" data-label="MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA" data-speaker-notes="Mục tiêu: mở rộng ví dụ thực tế. Thời lượng: 5 phút. Yêu cầu HS nói theo mẫu “Tính năng ... sử dụng AI để hỗ trợ con người ...”. Tránh nói “bản đồ là AI”, “camera là AI”; hãy nói “tính năng dự đoán giao thông”, “tính năng nhận diện khuôn mặt”. Nếu HS nêu ví dụ mới, yêu cầu mô tả chức năng trước khi phân loại.">
-  <div class="label">KHÁM PHÁ</div>
-  <h1>MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA</h1>
-  <div class="subtitle">Nói về <b>tính năng cụ thể</b>, không gắn nhãn AI cho cả thiết bị.</div>
-  
-        <div class="feature-grid">
-          <div class="feature-card"><div class="feat-vis">🚗📍→🗺</div><b>Dự đoán giao thông</b><small>Ước tính thời gian và gợi ý tuyến.</small></div>
-          <div class="feature-card"><div class="feat-vis">🎙→💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small></div>
-          <div class="feature-card"><div class="feat-vis">📷→🙂</div><b>Nhận diện khuôn mặt</b><small>Xác định hoặc xác minh khuôn mặt.</small></div>
-          <div class="feature-card"><div class="feat-vis">🎙→✅</div><b>Trợ lí giọng nói</b><small>Hiểu yêu cầu và phản hồi/thực hiện.</small></div>
-          <div class="feature-card"><div class="feat-vis">❓→💬</div><b>Chatbot AI</b><small>Hiểu câu hỏi và tạo câu trả lời.</small></div>
-          <div class="feature-card"><div class="feat-vis">▶▶→⭐</div><b>Gợi ý nội dung</b><small>Đề xuất nội dung có khả năng phù hợp.</small></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">07 / 15</div>
-</section>
+  // Laser
+  document.addEventListener('pointermove',e=>{if(laserOn){const d=$('laserDot');d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'}});
+  $('laserBtn').addEventListener('click',()=>{laserOn=!laserOn;$('laserDot').style.display=laserOn?'block':'none';$('laserBtn').classList.toggle('on',laserOn)});
 
-<section class="page" data-document-role="page" data-label="THÁM TỬ AI — 8 TÌNH HUỐNG" data-speaker-notes="Mục tiêu: luyện phân loại và lập luận. Thời lượng: 7 phút. Cách tổ chức: nhóm 3–4 HS, mỗi nhóm ghi 8 đáp án trước khi GV hiện nhãn. Đáp án như trên. Yêu cầu mỗi nhóm giải thích ít nhất 1 trường hợp “Chưa đủ thông tin”: robot hút bụi và đèn cảm ứng đều cần biết thêm công nghệ/tính năng. Không chấm chỉ theo điểm; ưu tiên cách nêu căn cứ.">
-  <div class="label">LUYỆN TẬP • THỬ THÁCH NHÓM</div>
-  <h1>THÁM TỬ AI — 8 TÌNH HUỐNG</h1>
-  <div class="subtitle">Phân loại bằng căn cứ: Có AI • Không AI • Chưa đủ thông tin.</div>
-  
-        <div class="detect-grid">
-          <div><b>⏰ Báo thức theo giờ</b><small>Đúng giờ cài sẵn thì chuông reo.</small><span class="pill-no">Không AI</span></div>
-          <div><b>🤖 Robot hút bụi</b><small>Không mô tả cách điều hướng.</small><span class="pill-unk">Chưa đủ TT</span></div>
-          <div><b>🔘 Quạt remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><span class="pill-no">Không AI</span></div>
-          <div><b>📷 Camera nhận diện mặt</b><small>Xác minh khuôn mặt trong hình.</small><span class="pill-ai">Có AI</span></div>
-          <div><b>🧮 Máy tính bỏ túi</b><small>Tính theo công thức đã lập trình.</small><span class="pill-no">Không AI</span></div>
-          <div><b>🎙 Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><span class="pill-ai">Có AI</span></div>
-          <div><b>💡 Đèn cảm ứng</b><small>Chỉ biết sáng khi phát hiện chuyển động.</small><span class="pill-unk">Chưa đủ TT</span></div>
-          <div><b>▶ Gợi ý video</b><small>Đề xuất theo tín hiệu sử dụng.</small><span class="pill-ai">Có AI</span></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">08 / 15</div>
-</section>
+  // Toolbar
+  $('prevBtn').addEventListener('click',prev);$('nextBtn').addEventListener('click',next);$('revealBtn').addEventListener('click',()=>{if(!revealNext())toast('Slide này không còn nội dung ẩn')});
+  $('notesBtn').addEventListener('click',()=>toggleNotes());$('notesClose').addEventListener('click',()=>toggleNotes(false));
+  $('overviewBtn').addEventListener('click',()=>{overview.classList.add('show');highlightOverview()});$('overviewClose').addEventListener('click',()=>overview.classList.remove('show'));overview.addEventListener('click',e=>{if(e.target===overview)overview.classList.remove('show')});
+  $('fullBtn').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()});
+  $('resetSlideBtn').addEventListener('click',resetSlide);$('timerBtn').addEventListener('click',toggleTimer);$('timerBtn').addEventListener('dblclick',e=>{e.preventDefault();resetTimer()});
 
-<section class="page" data-document-role="page" data-label="MỨC ĐỘ BẰNG CHỨNG VỀ AI" data-speaker-notes="Mục tiêu: giúp HS hiểu mức độ bằng chứng, tránh suy luận máy móc. Thời lượng: 3 phút. Hỏi nhanh: “Remote điều khiển quạt thuộc cột nào?”, “nhận diện khuôn mặt thuộc cột nào?”, “robot hút bụi chỉ có tên sản phẩm thuộc cột nào?”. Chốt: nếu thông tin yếu hoặc thiếu, phải tìm thêm nguồn mô tả chính thức.">
-  <div class="label">MÔ PHỎNG NHẬN DIỆN</div>
-  <h1>MỨC ĐỘ BẰNG CHỨNG VỀ AI</h1>
-  <div class="subtitle">Không phải mọi dấu hiệu đều mạnh như nhau.</div>
-  
-        <div class="meter-grid">
-          <div class="meter weak"><div class="meter-icon">⏲</div><h3>Bằng chứng yếu</h3><p>Hẹn giờ • nút bấm • quy tắc cố định.</p><div class="meter-bar"><i style="width:28%"></i></div></div>
-          <div class="meter strong"><div class="meter-icon">🧠</div><h3>Gợi ý mạnh</h3><p>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung.</p><div class="meter-bar"><i style="width:82%"></i></div></div>
-          <div class="meter unknown"><div class="meter-icon">?</div><h3>Chưa đủ thông tin</h3><p>Chỉ biết tên thiết bị hoặc mô tả quá chung.</p><div class="meter-bar"><i style="width:50%"></i></div></div>
-        </div>
-        <div class="rule">Đây là cách suy luận ban đầu, không phải “máy kiểm định AI”.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">09 / 15</div>
-</section>
+  // Warmup
+  const warmSelections=new Map();
+  function updateWarmStatus(){const e=$('warmStatus');if(e)e.textContent=`Đã chọn ${warmSelections.size}/6`}
+  document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');warmSelections.set(i,btn.dataset.value);updateWarmStatus()}))});
+  $('warmCheck')?.addEventListener('click',()=>{let score=0;document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{const label=card.querySelector('.answer-label');const correct=label.classList.contains('ai')?'ai':label.classList.contains('no')?'no':'unk';const chosen=warmSelections.get(i);const btn=chosen?card.querySelector(`.mini-choice[data-value="${chosen}"]`):null;if(btn){btn.classList.add(chosen===correct?'good':'bad');if(chosen===correct)score++}label.style.display='inline-block';card.querySelector('.card-feedback').classList.add('show')});$('warmStatus').textContent=`Kết quả ${score}/6 • Ưu tiên giải thích bằng căn cứ`;toast('Đã hiện đáp án khởi động')});
+  $('warmReset')?.addEventListener('click',()=>{warmSelections.clear();document.querySelectorAll('#slide-3 .scenario').forEach(card=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));card.querySelector('.answer-label').style.display='none';card.querySelector('.card-feedback').classList.remove('show')});updateWarmStatus()});
 
-<section class="page" data-document-role="page" data-label="CHỌN ĐÁP ÁN ĐÚNG NHẤT" data-speaker-notes="Mục tiêu: kiểm tra nhanh hai ngộ nhận trọng tâm. Thời lượng: 3 phút. Câu 1 đáp án C vì hẹn giờ có thể chỉ là quy tắc cố định. Câu 2 đáp án B vì chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên. Sau mỗi câu, yêu cầu 1 HS giải thích; không chỉ đọc chữ cái.">
-  <div class="label">TRẮC NGHIỆM TƯƠNG TÁC</div>
-  <h1>CHỌN ĐÁP ÁN ĐÚNG NHẤT</h1>
-  <div class="subtitle">Giải thích bằng “chức năng cụ thể”.</div>
-  
-        <div class="quiz-card">
-          <div class="qnum">1</div><div class="qtext"><b>Dấu hiệu nào tự nó chưa đủ để khẳng định thiết bị có AI?</b>
-          <div class="option">A. Nhận diện khuôn mặt từ hình ảnh</div><div class="option">B. Nhận giọng nói và tạo bản dịch</div><div class="option correct">C. Tự bật/tắt theo thời gian đã hẹn ✓</div></div>
-        </div>
-        <div class="quiz-card">
-          <div class="qnum">2</div><div class="qtext"><b>Trường hợp nào là ví dụ rõ nhất về tính năng AI?</b>
-          <div class="option">A. Đồng hồ reo đúng giờ đã đặt</div><div class="option correct">B. Chatbot hiểu câu hỏi và tạo câu trả lời ✓</div><div class="option">C. Máy tính bỏ túi thực hiện phép cộng</div></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">10 / 15</div>
-</section>
+  // Detective
+  const detSelections=new Map();
+  function updateDetStatus(){const e=$('detStatus');if(e)e.textContent=`Đã chọn ${detSelections.size}/8`}
+  document.querySelectorAll('#slide-8 .detect-grid > div').forEach((card,i)=>{card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');detSelections.set(i,btn.dataset.value);updateDetStatus()}))});
+  $('detCheck')?.addEventListener('click',()=>{if(detSelections.size<8){toast(`Còn ${8-detSelections.size} tình huống chưa chọn`);return}let score=0;document.querySelectorAll('#slide-8 .detect-grid > div').forEach((card,i)=>{const label=card.querySelector('.answer-label');const correct=label.classList.contains('pill-ai')?'ai':label.classList.contains('pill-no')?'no':'unk';const chosen=detSelections.get(i);const btn=card.querySelector(`.mini-choice[data-value="${chosen}"]`);btn.classList.add(chosen===correct?'good':'bad');if(chosen===correct)score++;label.style.display='inline-block';card.querySelector('.card-feedback').classList.add('show')});$('detStatus').textContent=`Kết quả ${score}/8 • Hãy giải thích ít nhất 1 trường hợp`;toast('Đã chấm 8 tình huống')});
+  $('detReset')?.addEventListener('click',()=>{detSelections.clear();document.querySelectorAll('#slide-8 .detect-grid > div').forEach(card=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));card.querySelector('.answer-label').style.display='none';card.querySelector('.card-feedback').classList.remove('show')});updateDetStatus()});
 
-<section class="page" data-document-role="page" data-label="KIỂM TRA 3 MỆNH ĐỀ" data-speaker-notes="Mục tiêu: củng cố 3 kết luận cốt lõi. Thời lượng: 2 phút. Với câu 1, yêu cầu HS sửa thành câu đúng: “Thiết bị có cảm biến chưa chắc có AI” hoặc “Một số hệ thống AI có thể dùng cảm biến”. Câu 2 nhấn mạnh thái độ khoa học: chưa đủ bằng chứng thì chưa kết luận. Câu 3 liên hệ lại slide xử lí ngôn ngữ.">
-  <div class="label">ĐÚNG / SAI NHANH</div>
-  <h1>KIỂM TRA 3 MỆNH ĐỀ</h1>
-  <div class="subtitle">Sai thì sửa lại cho đúng.</div>
-  
-        <div class="tf-grid">
-          <div class="tf"><span class="num">1</span><p>Mọi thiết bị có cảm biến đều là AI.</p><b class="false">SAI</b></div>
-          <div class="tf"><span class="num">2</span><p>Thiếu thông tin về robot hút bụi thì có thể chọn “Chưa đủ thông tin”.</p><b class="true">ĐÚNG</b></div>
-          <div class="tf"><span class="num">3</span><p>Ứng dụng nhận giọng nói và tạo bản dịch là ví dụ rõ về AI xử lí ngôn ngữ.</p><b class="true">ĐÚNG</b></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">11 / 15</div>
-</section>
+  // Quiz
+  document.querySelectorAll('.quiz-card').forEach(card=>{card.querySelectorAll('.quiz-option').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.quiz-option').forEach(b=>b.classList.remove('good','bad'));const ok=btn.dataset.correct==='1';btn.classList.add(ok?'good':'bad');const fb=card.querySelector('.quiz-feedback');fb.textContent=ok?fb.dataset.ok:fb.dataset.bad;fb.classList.toggle('ok',ok);fb.classList.toggle('err',!ok)}))});
 
-<section class="page" data-document-role="page" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: chuyển kiến thức sang môi trường sống của HS. Thời lượng: 4 phút. Cho HS tự nêu 1 ví dụ, không bắt buộc giống mẫu. Nếu HS chỉ nêu tên thiết bị, hỏi “Thiết bị đó đang làm gì?” rồi mới phân loại. Không yêu cầu nhập thông tin cá nhân. Có thể thu 2–3 ví dụ để chữa chung.">
-  <div class="label">VẬN DỤNG</div>
-  <h1>SĂN AI QUANH EM</h1>
-  <div class="subtitle">Ghi lại một ví dụ của chính em bằng <b>tính năng + căn cứ</b>.</div>
-  
-        <div class="worksheet">
-          <div class="field"><b>1. Tên tính năng / công cụ</b><span>Mở khóa bằng khuôn mặt trên điện thoại</span></div>
-          <div class="field"><b>2. Chức năng em quan sát được</b><span>Camera quét khuôn mặt để xác minh người dùng</span></div>
-          <div class="field two"><b>3. Em phân loại</b><span class="pill-ai">Có AI</span></div>
-          <div class="field"><b>4. Lí do / căn cứ</b><span>Em dựa vào tính năng nhận diện khuôn mặt</span></div>
-        </div>
-        <div class="tip">Nếu chỉ viết “TV”, “camera”, “máy lạnh”… thì <b>chưa đủ</b>. Hãy nêu tính năng cụ thể.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">12 / 15</div>
-</section>
+  // True / False
+  document.querySelectorAll('.tf').forEach(row=>{row.querySelectorAll('.tf-btn').forEach(btn=>btn.addEventListener('click',()=>{row.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('good','bad'));const ok=btn.dataset.correct==='1';btn.classList.add(ok?'good':'bad');row.querySelector('.tf-feedback').textContent=(ok?'✓ Chính xác. ':'✗ Chưa đúng. ')+row.querySelector('.tf-feedback').dataset.explain}))});
 
-<section class="page" data-document-role="page" data-label="4 Ý CỐT LÕI GHI VỞ" data-speaker-notes="Mục tiêu: chuẩn hóa phần HS ghi vở. Thời lượng: 2 phút. Cho HS ghi 4 ý; gạch chân ba cụm “tính năng cụ thể”, “không phải mọi thiết bị tự động đều có AI”, “chưa đủ thông tin”. Có thể dùng slide này thay cho việc đọc lại toàn bộ bài.">
-  <div class="label">CHỐT KIẾN THỨC</div>
-  <h1>4 Ý CỐT LÕI GHI VỞ</h1>
-  <div class="subtitle">Ngắn gọn, đúng bản chất, dễ nhớ.</div>
-  
-        <div class="note-grid">
-          <div class="note-card"><span>1</span><p>AI xuất hiện trong nhiều <b>tính năng</b>: dịch ngôn ngữ, nhận diện, gợi ý, dự đoán giao thông, chatbot…</p></div>
-          <div class="note-card"><span>2</span><p>Không phải mọi thiết bị điện tử, tự động, có cảm biến hoặc “thông minh” đều có AI.</p></div>
-          <div class="note-card"><span>3</span><p>Một số tính năng AI hỗ trợ <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>.</p></div>
-          <div class="note-card"><span>4</span><p>Khi chưa đủ thông tin, cần <b>tìm hiểu thêm</b> thay vì đoán theo vẻ ngoài.</p></div>
-        </div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">13 / 15</div>
-</section>
+  // Hunt AI - local only
+  const huntKey='ai6_canva_interactive_hunts_v1';
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function loadHunts(){try{return JSON.parse(localStorage.getItem(huntKey)||'[]')}catch(e){return[]}}
+  function renderHunts(){const box=$('huntList'),arr=loadHunts();box.innerHTML=arr.length?arr.map(x=>`<div class="hunt-item"><b>${escapeHtml(x.name)}</b> — ${escapeHtml(x.cls)}<small>${escapeHtml(x.func)}<br><b>Căn cứ:</b> ${escapeHtml(x.why)}</small></div>`).join(''):'<div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div>'}
+  function clearHunt(){['huntName','huntFunc','huntWhy'].forEach(id=>$(id).value='');$('huntClass').selectedIndex=0}
+  $('huntSave')?.addEventListener('click',()=>{const name=$('huntName').value.trim(),func=$('huntFunc').value.trim(),cls=$('huntClass').value,why=$('huntWhy').value.trim();if(!name||!func||!why){toast('Hãy nhập đủ tên, chức năng và căn cứ');return}const arr=loadHunts();arr.unshift({name,func,cls,why});localStorage.setItem(huntKey,JSON.stringify(arr.slice(0,8)));renderHunts();clearHunt();toast('Đã lưu ví dụ trên máy này')});$('huntClear')?.addEventListener('click',clearHunt);renderHunts();
 
-<section class="page" data-document-role="page" data-label="TRƯỚC KHI RA VỀ…" data-speaker-notes="Mục tiêu: đánh giá cuối tiết. Thời lượng: 2 phút. Câu 1–2 kiểm tra nhận diện và mô tả chức năng; câu 3 kiểm tra ngộ nhận “nhanh/tự động = AI”. Có thể cho HS viết ra giấy nhỏ hoặc trả lời miệng ngẫu nhiên 3 em. Nếu nhiều HS sai câu 3, quay lại slide so sánh máy tính – dịch giọng nói.">
-  <div class="label">EXIT TICKET • 3 CÂU</div>
-  <h1>TRƯỚC KHI RA VỀ…</h1>
-  <div class="subtitle">Ba câu kiểm tra xem em đã nắm được cách nhận diện AI chưa.</div>
-  
-        <div class="exit-grid">
-          <div class="exit"><span>1</span><p>Kể tên một công cụ hoặc tính năng AI em từng gặp.</p></div>
-          <div class="exit"><span>2</span><p>Tính năng đó hỗ trợ con người làm gì?</p></div>
-          <div class="exit"><span>3</span><p>Một máy tính bỏ túi thông thường tính rất nhanh. Điều đó có đủ để khẳng định nó là AI không? Vì sao?</p></div>
-        </div>
-        <div class="answer-strip"><b>Gợi ý câu 3:</b> Không. Tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh có AI.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">14 / 15</div>
-</section>
+  // Exit ticket
+  $('exitReveal')?.addEventListener('click',()=>{const a=$('exitAnswer');a.classList.remove('manual-hidden');a.classList.add('revealed')});
 
-<section class="page" data-document-role="page" data-label="BẢN ĐỒ “THÁM TỬ AI”" data-speaker-notes="Mục tiêu: đóng bài bằng một quy trình hành động. Thời lượng: 1 phút. Mời 2 HS hoàn thành câu “Sau bài này, khi gặp một thiết bị lạ em sẽ…”. Dặn dò: tìm ở nhà 1 tính năng có AI và 1 thiết bị/tính năng chưa chắc có AI; ghi tên – chức năng – lí do. Đây là thông điệp cuối cần HS nhớ.">
-  <div class="label">MINDMAP • CUỐI BÀI</div>
-  <h1>BẢN ĐỒ “THÁM TỬ AI”</h1>
-  <div class="subtitle">Một quy trình 3 bước để không bị đánh lừa bởi vẻ ngoài.</div>
-  
-        <div class="mind">
-          <div class="mind-center">ĐÂU LÀ<br>AI?</div>
-          <div class="mind-node n1"><b>1. QUAN SÁT</b><small>Tên/hình dạng chưa đủ</small></div>
-          <div class="mind-node n2"><b>2. XEM CHỨC NĂNG</b><small>Công cụ đang làm gì?</small></div>
-          <div class="mind-node n3"><b>3. TÌM CĂN CỨ</b><small>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung</small></div>
-          <div class="mind-node n4"><b>NẾU CHƯA RÕ</b><small>Nói “Chưa đủ thông tin”</small></div>
-        </div>
-        <div class="final-message">Không đoán AI theo vẻ ngoài. Hãy xem <b>tính năng cụ thể</b>, tìm căn cứ và sẵn sàng nói “chưa đủ thông tin”.</div>
-        
-  <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">15 / 15</div>
-</section>
+  // Keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;
+    if(overview.classList.contains('show')){if(e.key==='Escape')overview.classList.remove('show');return}
+    if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();next();return}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();return}
+    if(e.code==='Space'){e.preventDefault();if(!revealNext())show(idx+1);return}
+    if(e.key==='Home'){show(0);return}if(e.key==='End'){show(slides.length-1);return}
+    if(e.key.toLowerCase()==='g'){toggleNotes();return}if(e.key.toLowerCase()==='o'){overview.classList.add('show');return}
+    if(e.key.toLowerCase()==='l'){$('laserBtn').click();return}if(e.key.toLowerCase()==='r'){resetSlide();return}
+    if(e.key.toLowerCase()==='f'){$('fullBtn').click();return}if(e.key==='Escape'&&document.body.classList.contains('notes-open'))toggleNotes(false);
+  });
 
-</body></html>
+  buildOverview();initFragments();timerUI();show(0);scaleStage();
+})();
+</script></body></html>
