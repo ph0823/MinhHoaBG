@@ -90,8 +90,39 @@ body.notes-open #stage{padding-right:390px}
 .detective-step{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;min-height:180px;box-shadow:0 12px 26px rgba(28,83,120,.08)}
 .detective-step .num{display:flex;width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--blue));align-items:center;justify-content:center;color:white;font-size:22px;font-weight:900;margin-bottom:10px}
 .detective-step h3{font-size:20px;margin:0 0 7px}.detective-step p{font-size:16px;line-height:1.42;color:var(--muted);margin:0}
+
+/* ===== SLIDE 1: ẢNH THIẾT BỊ DẪN NHẬP ===== */
+.intro-device-gallery{
+  height:340px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;
+}
+.intro-device-card{
+  position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:20px;
+  box-shadow:0 12px 28px rgba(28,83,120,.12);min-width:0;
+}
+.intro-device-card.wide{grid-column:1 / -1}
+.intro-device-photo{
+  position:absolute;inset:0 0 36px 0;width:100%;height:calc(100% - 36px);object-fit:contain;
+  background:linear-gradient(180deg,#fff,#f5f9fc);padding:7px;z-index:2;
+}
+.intro-device-fallback{
+  position:absolute;inset:0 0 36px 0;display:flex;align-items:center;justify-content:center;
+  font-size:54px;background:linear-gradient(135deg,#F4FAFF,#EAF5FC);z-index:1;
+}
+.intro-device-label{
+  position:absolute;left:0;right:0;bottom:0;height:36px;display:flex;align-items:center;justify-content:center;
+  padding:0 8px;background:#fff;color:var(--ink);font-size:13px;font-weight:900;border-top:1px solid #E2EDF3;z-index:3;
+}
+.intro-device-card:after{
+  content:"?";position:absolute;top:8px;right:8px;width:27px;height:27px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(75,123,255,.92);color:#fff;
+  font-size:16px;font-weight:900;z-index:4;box-shadow:0 5px 12px rgba(75,123,255,.22);
+}
+.intro-device-gallery-caption{
+  position:absolute;right:76px;bottom:34px;font-size:12px;font-weight:800;color:#60798C;z-index:5;
+  background:rgba(255,255,255,.88);padding:5px 9px;border-radius:999px;border:1px solid #DCE9F1;
+}
 </style></head>
-<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức và khởi động tư duy: hiện đại/tự động/thông minh chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV nêu câu hỏi, cho HS giơ 1 ngón = Có, 2 ngón = Không, 3 ngón = Chưa chắc; chưa chốt ngay. Câu hỏi gợi mở: Em dựa vào dấu hiệu nào? Đáp án/chốt: Không thể kết luận chỉ theo vẻ ngoài, cảm biến, tự động hay chữ smart; phải xem tính năng cụ thể. Lưu ý: Không yêu cầu HS định nghĩa AI ở slide này. Chuyển ý: Hôm nay chúng ta làm thám tử AI — tìm căn cứ thay vì đoán." id="slide-1">
+<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức và khởi động tư duy: hiện đại/tự động/thông minh chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV cho HS quan sát 3 hình máy giặt, máy điều hoà và đèn cảm biến chuyển động; hỏi nhanh “Thiết bị nào có AI? Vì sao?”. Cho HS giơ 1 ngón = Có, 2 ngón = Không, 3 ngón = Chưa chắc; chưa chốt theo tên thiết bị. Câu hỏi gợi mở: Chỉ nhìn hình ảnh này, em đã đủ thông tin để kết luận chưa? Một chiếc máy giặt hoặc máy điều hoà có thể có phiên bản thông thường và phiên bản có tính năng AI không? Đáp án/chốt: Không thể kết luận chỉ theo vẻ ngoài, cảm biến, tự động hay chữ smart; phải xem tính năng cụ thể của từng phiên bản. Riêng đèn cảm biến chuyển động, việc tự bật khi phát hiện chuyển động chưa đủ để gọi là AI. Lưu ý: Không yêu cầu HS định nghĩa AI ở slide này; mục tiêu là tạo thói quen hỏi “thiết bị đang làm gì?”. Chuyển ý: Hôm nay chúng ta làm thám tử AI — tìm căn cứ thay vì đoán." id="slide-1">
 <div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
 <h1>AI QUANH EM<br/>ĐÂU LÀ AI?</h1>
 <div class="subtitle">Quan sát • phân loại • giải thích — và biết nói <b>“chưa đủ thông tin”</b> khi chưa có căn cứ.</div>
@@ -101,9 +132,22 @@ body.notes-open #stage{padding-right:390px}
 <div class="big-q">Có phải cứ thiết bị hiện đại, tự động hoặc được gọi là “thông minh” thì đều có AI?</div>
 <div class="answer-chip fragment">Không. Phải xem <b>tính năng cụ thể</b>.</div>
 </div>
-<div class="visual visual-hero">
-<div class="lens">⌕</div><div class="robot-head">AI</div>
-<div class="spark s1">✦</div><div class="spark s2">✦</div>
+<div class="visual intro-device-gallery" aria-label="Ba thiết bị quen thuộc để học sinh quan sát và suy nghĩ xem có phải AI hay không">
+  <div class="intro-device-card">
+    <div class="intro-device-fallback" aria-hidden="true">🧺</div>
+    <img class="intro-device-photo" src="https://www.lg.com/in/images/washing-machines/md07540887/gallery/FHM1408BDL-Washing-Machines-Right-View-MZ-04-v1.jpg" alt="Máy giặt cửa trước" loading="eager" onerror="this.style.display='none'"/>
+    <div class="intro-device-label">Máy giặt</div>
+  </div>
+  <div class="intro-device-card">
+    <div class="intro-device-fallback" aria-hidden="true">❄️</div>
+    <img class="intro-device-photo" src="https://ts4.mm.bing.net/th?id=OIP.Gz953AP4pbcRt1sdbVwkdQHaG7&amp;pid=15.1&amp;o=7&amp;rm=3" alt="Máy điều hoà treo tường" loading="eager" onerror="this.style.display='none'"/>
+    <div class="intro-device-label">Máy điều hoà</div>
+  </div>
+  <div class="intro-device-card wide">
+    <div class="intro-device-fallback" aria-hidden="true">💡</div>
+    <img class="intro-device-photo" src="https://m.media-amazon.com/images/I/719IkcfFzpL.jpg" alt="Đèn cảm biến chuyển động" loading="eager" onerror="this.style.display='none'"/>
+    <div class="intro-device-label">Đèn cảm biến chuyển động</div>
+  </div>
 </div>
 </div>
 <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 19</div>
