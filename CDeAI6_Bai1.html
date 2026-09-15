@@ -162,6 +162,97 @@ body.notes-open #stage{padding-right:390px}
   .ai-badge{width:80px;height:80px;font-size:31px}
 }
 
+
+/* ===== TỐI ƯU SLIDE 4: AI HAY KHÔNG AI ===== */
+#slide-3 .subtitle{margin-bottom:10px}
+#slide-3 .interaction-bar{
+  position:relative;
+  margin:0 0 10px;
+  min-height:40px;
+  padding:5px 8px 5px 12px;
+  border:1px solid #D8E7F0;
+  border-radius:14px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 7px 20px rgba(28,83,120,.07);
+  justify-content:flex-end;
+}
+#slide-3 .interaction-status{
+  font-size:12.5px;
+  color:#557086;
+}
+#slide-3 .action-btn{
+  padding:7px 11px;
+  border-radius:10px;
+  font-size:12.5px;
+  white-space:nowrap;
+}
+#slide-3 .scenario-grid{
+  gap:10px 12px;
+}
+#slide-3 .scenario{
+  padding:10px 11px;
+  min-height:0;
+  border-radius:19px;
+}
+#slide-3 .mini-vis{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:23px;
+  padding:6px 8px;
+  margin-bottom:6px;
+  border-radius:12px;
+}
+#slide-3 .scenario>b{
+  font-size:15.5px;
+  line-height:1.18;
+}
+#slide-3 .scenario small{
+  font-size:12.2px;
+  line-height:1.25;
+  margin:3px 0 5px;
+  min-height:30px;
+}
+#slide-3 .answer-label{
+  padding:4px 7px;
+  font-size:9.5px;
+  margin:0 0 2px;
+}
+#slide-3 .choice-row{
+  gap:4px;
+  margin-top:5px;
+}
+#slide-3 .mini-choice{
+  padding:5px 2px;
+  border-radius:8px;
+  font-size:9.8px;
+  min-height:28px;
+}
+#slide-3 .card-feedback{
+  margin-top:4px;
+  padding:5px 7px;
+  border-radius:8px;
+  font-size:9.6px;
+  line-height:1.2;
+}
+#slide-3 .scenario.graded{
+  border-color:#C9DDEB;
+  box-shadow:0 9px 22px rgba(28,83,120,.08);
+}
+#slide-3 .scenario.graded .mini-vis{
+  background:#F2F8FC;
+}
+#slide-3 .warm-help{
+  font-size:11.5px;
+  color:#6A8295;
+  margin-left:8px;
+  white-space:nowrap;
+}
+@media(max-width:850px){
+  #slide-3 .warm-help{display:none}
+}
+
 </style></head>
 <body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức và khởi động tư duy: hiện đại/tự động/thông minh chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV cho HS quan sát 3 hình máy giặt, máy điều hoà và đèn cảm biến chuyển động; hỏi nhanh “Thiết bị nào có AI? Vì sao?”. Cho HS giơ 1 ngón = Có, 2 ngón = Không, 3 ngón = Chưa chắc; chưa chốt theo tên thiết bị. Câu hỏi gợi mở: Chỉ nhìn hình ảnh này, em đã đủ thông tin để kết luận chưa? Đáp án/chốt: Không thể kết luận chỉ theo vẻ ngoài, cảm biến, tự động hay chữ smart; phải xem tính năng cụ thể của từng phiên bản. Lưu ý: Chưa yêu cầu HS giải thích AI là gì ở slide này. Chuyển ý: Trước khi làm thám tử AI, chúng ta cần một câu trả lời thật đơn giản cho câu hỏi “AI là gì?”." id="slide-1">
 <div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
@@ -251,10 +342,10 @@ body.notes-open #stage{padding-right:390px}
 <div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
 </div>
 <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 20</div>
-</section><section class="page" data-document-role="page" data-index="3" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện quan niệm sai 'tự động = AI' và luyện phân loại dựa trên chức năng. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn từng thẻ trên màn hình; chưa bấm 'Chấm' cho đến khi lớp đã tranh luận. Đáp án: Máy tính bỏ túi – Không AI; gợi ý tuyến theo giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn cảm biến – Chưa đủ thông tin. Câu hỏi gợi mở: Vì sao đèn cảm biến không nên vội gọi là AI? Chốt: cảm biến/tự động/remote chưa đủ để kết luận. Lưu ý: Ưu tiên nghe lí do hơn điểm số." id="slide-3">
+</section><section class="page" data-document-role="page" data-index="3" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện quan niệm sai “tự động = AI” và luyện phân loại dựa trên chức năng. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn đủ 6 thẻ. Thanh điều khiển nằm cố định ngay dưới câu hướng dẫn; GV chỉ bấm “Chấm / Hiện đáp án” sau khi lớp đã thống nhất. Sau khi chấm, nhãn đáp án và giải thích xuất hiện ngay trong từng thẻ nhưng nút điều khiển vẫn giữ nguyên vị trí. Đáp án: Máy tính bỏ túi – Không AI; gợi ý tuyến theo giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn cảm biến – Chưa đủ thông tin. Câu hỏi gợi mở: Vì sao đèn cảm biến không nên vội gọi là AI? Chốt: cảm biến, tự động hoặc điều khiển từ xa chưa đủ để kết luận có AI. Lưu ý: Nếu muốn cho lớp làm lại, bấm “Làm lại”; ưu tiên nghe lí do hơn điểm số." id="slide-3">
 <div class="label">KHỞI ĐỘNG • TRÒ CHƠI 5 PHÚT</div>
 <h1>AI HAY KHÔNG AI?</h1>
-<div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div>
+<div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div><div class="interaction-bar"><span class="interaction-status" id="warmStatus">Đã chọn 0/6</span><span class="warm-help">Chọn đủ 6 thẻ rồi chấm</span><button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button><button class="action-btn" id="warmReset" type="button">Làm lại</button></div>
 <div class="scenario-grid">
 <div class="scenario"><div class="mini-vis">🧮 <span>→</span> 3000</div><b>Máy tính bỏ túi</b><small>Tính 125 × 24 theo quy tắc.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính nhanh theo quy tắc cố định chưa phải bằng chứng AI.</div></div>
 <div class="scenario"><div class="mini-vis">🚗📍 <span>→</span> 🗺</div><b>Gợi ý tuyến theo giao thông</b><small>Dự đoán thời gian và đề xuất tuyến.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Dự đoán/gợi ý dựa trên dữ liệu là dấu hiệu mạnh của tính năng AI.</div></div>
@@ -264,7 +355,7 @@ body.notes-open #stage{padding-right:390px}
 <div class="scenario"><div class="mini-vis">🚶 <span>→</span> 💡</div><b>Đèn tự sáng khi có người</b><small>Chỉ biết có cảm biến chuyển động.</small><div class="tag unk answer-label" style="display:none">CHƯA ĐỦ TT</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến và tự động chưa đủ để kết luận có AI.</div></div>
 </div>
 <div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 20</div>
-<div class="interaction-bar"><span class="interaction-status" id="warmStatus">Đã chọn 0/6</span><button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button><button class="action-btn" id="warmReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="4" data-label="CHỐT SAU KHỞI ĐỘNG • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt kết luận của Hoạt động 1 để HS có câu ghi vở ngay sau khởi động. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space hiện 3 ý, sau đó hiện khung HS ghi vở. Không yêu cầu chép cả 3 thẻ; chỉ chép nội dung trong khung vàng. Câu hỏi gợi mở: Vì sao quạt remote hoặc đèn cảm biến chưa đủ để kết luận là AI? Chốt: không suy luận từ vẻ ngoài, tự động hay cảm biến; phải xem tính năng cụ thể. Chuyển ý: Bây giờ ta tìm hiểu sâu hơn cách phân biệt công cụ theo quy tắc cố định với tính năng AI." id="slide-chot-khoi-dong">
+</section><section class="page" data-document-role="page" data-index="4" data-label="CHỐT SAU KHỞI ĐỘNG • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt kết luận của Hoạt động 1 để HS có câu ghi vở ngay sau khởi động. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space hiện 3 ý, sau đó hiện khung HS ghi vở. Không yêu cầu chép cả 3 thẻ; chỉ chép nội dung trong khung vàng. Câu hỏi gợi mở: Vì sao quạt remote hoặc đèn cảm biến chưa đủ để kết luận là AI? Chốt: không suy luận từ vẻ ngoài, tự động hay cảm biến; phải xem tính năng cụ thể. Chuyển ý: Bây giờ ta tìm hiểu sâu hơn cách phân biệt công cụ theo quy tắc cố định với tính năng AI." id="slide-chot-khoi-dong">
 <div class="label">CHỐT SAU KHỞI ĐỘNG • GHI VỞ</div>
 <h1>ĐỪNG ĐOÁN AI THEO VẺ NGOÀI</h1>
 <div class="subtitle">Dừng 45 giây để chốt điều quan trọng nhất vừa phát hiện.</div>
@@ -535,7 +626,7 @@ body.notes-open #stage{padding-right:390px}
     s.querySelectorAll('.mini-choice,.quiz-option,.tf-btn').forEach(x=>x.classList.remove('selected','good','bad'));
     s.querySelectorAll('.answer-label').forEach(x=>x.style.display='none');s.querySelectorAll('.card-feedback').forEach(x=>x.classList.remove('show'));
     s.querySelectorAll('.quiz-feedback').forEach(x=>{x.textContent='Chọn một đáp án.';x.classList.remove('ok','err')});s.querySelectorAll('.tf-feedback').forEach(x=>x.textContent='');
-    if(s.id==='slide-3'){warmSelections.clear();updateWarmStatus()}
+    if(s.id==='slide-3'){warmSelections.clear();s.querySelectorAll('.scenario').forEach(x=>x.classList.remove('graded'));if($('warmCheck'))$('warmCheck').textContent='Chấm / Hiện đáp án';updateWarmStatus()}
     if(s.id==='slide-8'){detSelections.clear();updateDetStatus()}
     if(s.id==='slide-14'){$('exitAnswer')?.classList.add('manual-hidden');$('exitAnswer')?.classList.remove('revealed')}
     updateNav();toast('Đã làm lại slide hiện tại');
@@ -556,8 +647,41 @@ body.notes-open #stage{padding-right:390px}
   const warmSelections=new Map();
   function updateWarmStatus(){const e=$('warmStatus');if(e)e.textContent=`Đã chọn ${warmSelections.size}/6`}
   document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');warmSelections.set(i,btn.dataset.value);updateWarmStatus()}))});
-  $('warmCheck')?.addEventListener('click',()=>{let score=0;document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{const label=card.querySelector('.answer-label');const correct=label.classList.contains('ai')?'ai':label.classList.contains('no')?'no':'unk';const chosen=warmSelections.get(i);const btn=chosen?card.querySelector(`.mini-choice[data-value="${chosen}"]`):null;if(btn){btn.classList.add(chosen===correct?'good':'bad');if(chosen===correct)score++}label.style.display='inline-block';card.querySelector('.card-feedback').classList.add('show')});$('warmStatus').textContent=`Kết quả ${score}/6 • Ưu tiên giải thích bằng căn cứ`;toast('Đã hiện đáp án khởi động')});
-  $('warmReset')?.addEventListener('click',()=>{warmSelections.clear();document.querySelectorAll('#slide-3 .scenario').forEach(card=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));card.querySelector('.answer-label').style.display='none';card.querySelector('.card-feedback').classList.remove('show')});updateWarmStatus()});
+  $('warmCheck')?.addEventListener('click',()=>{
+    if(warmSelections.size<6){
+      toast(`Còn ${6-warmSelections.size} thẻ chưa chọn`);
+      return;
+    }
+    let score=0;
+    document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{
+      const label=card.querySelector('.answer-label');
+      const correct=label.classList.contains('ai')?'ai':label.classList.contains('no')?'no':'unk';
+      const chosen=warmSelections.get(i);
+      const btn=card.querySelector(`.mini-choice[data-value="${chosen}"]`);
+      card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('good','bad'));
+      if(btn){
+        btn.classList.add(chosen===correct?'good':'bad');
+        if(chosen===correct)score++;
+      }
+      label.style.display='inline-block';
+      card.querySelector('.card-feedback').classList.add('show');
+      card.classList.add('graded');
+    });
+    $('warmStatus').textContent=`Kết quả ${score}/6 • Giải thích bằng căn cứ`;
+    $('warmCheck').textContent='Chấm lại / Hiện đáp án';
+    toast(`Kết quả ${score}/6`);
+  });
+  $('warmReset')?.addEventListener('click',()=>{
+    warmSelections.clear();
+    document.querySelectorAll('#slide-3 .scenario').forEach(card=>{
+      card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));
+      card.querySelector('.answer-label').style.display='none';
+      card.querySelector('.card-feedback').classList.remove('show');
+      card.classList.remove('graded');
+    });
+    $('warmCheck').textContent='Chấm / Hiện đáp án';
+    updateWarmStatus();
+  });
 
   // Detective
   const detSelections=new Map();
