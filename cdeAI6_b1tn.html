@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Trắc nghiệm Tin học</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f7fc;color:#1f2937;min-height:100vh}.app{width:100%;max-width:920px;margin:0 auto;padding:20px}.screen{display:none}.screen.active{display:block}.card{background:#fff;border-radius:18px;padding:28px;box-shadow:0 6px 24px rgba(0,0,0,.08)}.start-card{margin-top:24px}.start-header{text-align:center}.start-icon{font-size:50px;margin-bottom:8px}.main-title{margin:0;color:#1d4ed8;font-size:30px;line-height:1.35}.subtitle{margin-top:10px;font-size:17px;color:#64748b}.memory-toggle-wrap{text-align:center;margin-top:22px}.btn-memory{background:#eef4ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:12px 22px;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer}.btn-memory:hover{background:#dbeafe}.knowledge-box{display:none;margin-top:16px;padding:22px;background:#f8fbff;border:1px solid #cbd5e1;border-radius:14px;line-height:1.65}.knowledge-box.show{display:block;animation:fadeSlide .22s ease}@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}.knowledge-box h2,.knowledge-box h3,.knowledge-box h4{color:#1d4ed8}.knowledge-box h2{text-align:center;font-size:22px}.knowledge-box ul{padding-left:22px}.start-action{text-align:center;margin:26px 0 18px}.info-box{margin-top:18px;padding:15px 18px;background:#f8fafc;border:1px dashed #94a3b8;border-radius:12px;line-height:1.7;color:#475569}.info-box strong{color:#1d4ed8}button{border:none;outline:none;font-family:inherit;transition:.2s ease}.btn-primary,.btn-next,.btn-retry{cursor:pointer;color:#fff;font-weight:bold;border-radius:12px}.btn-primary{background:#2563eb;padding:14px 34px;font-size:18px;min-width:180px}.btn-primary:hover{background:#1d4ed8}.btn-next{display:none;margin-top:20px;padding:13px 26px;background:#16a34a;font-size:17px}.btn-next:hover{background:#15803d}.btn-retry{margin-top:20px;padding:14px 28px;background:#2563eb;font-size:17px}.quiz-header{margin-bottom:15px}.quiz-title{text-align:center;margin:0 0 18px;color:#1d4ed8;font-size:24px;line-height:1.4}.quiz-status{display:flex;justify-content:space-between;gap:10px;font-size:15px;font-weight:bold;color:#475569}.progress-bar{width:100%;height:10px;margin-top:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}.progress-fill{height:100%;width:0;background:#2563eb;border-radius:999px;transition:width .35s ease}.question-card{margin-top:15px}.level-badge{display:inline-block;margin-bottom:12px;padding:5px 11px;border-radius:999px;font-size:13px;font-weight:bold}.level-nb{color:#166534;background:#dcfce7}.level-th{color:#92400e;background:#fef3c7}.level-vd{color:#991b1b;background:#fee2e2}.question-text{margin:0 0 20px;font-size:20px;line-height:1.55;font-weight:bold;color:#1e293b}.answers{display:flex;flex-direction:column;gap:11px}.answer-btn{width:100%;display:flex;align-items:flex-start;text-align:left;padding:14px 16px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;color:#334155;font-size:16px;line-height:1.45;cursor:pointer}.answer-btn:hover:not(:disabled){background:#eff6ff;border-color:#93c5fd}.answer-letter{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin-right:12px;border-radius:50%;background:#e2e8f0;font-weight:bold}.answer-content{padding-top:3px}.answer-btn.correct{background:#dcfce7;border-color:#22c55e;color:#166534}.answer-btn.correct .answer-letter{background:#22c55e;color:#fff}.answer-btn.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b}.answer-btn.wrong .answer-letter{background:#ef4444;color:#fff}.feedback{display:none;margin-top:18px;padding:13px 15px;border-radius:11px;font-size:16px;font-weight:bold;line-height:1.5}.feedback.show{display:block}.correct-feedback{color:#166534;background:#dcfce7;border:1px solid #86efac}.wrong-feedback{color:#991b1b;background:#fee2e2;border:1px solid #fca5a5}.result-card{text-align:center;margin-top:55px}.result-icon{font-size:64px;margin-bottom:10px}.result-title{margin:0;font-size:28px;color:#1d4ed8}.score-circle{width:150px;height:150px;margin:25px auto 18px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#eff6ff;border:8px solid #3b82f6}.score-number{font-size:42px;font-weight:bold;color:#1d4ed8}.score-unit{margin-top:7px;color:#64748b;font-size:14px}.result-message{margin-top:12px;font-size:18px;line-height:1.6;font-weight:bold}.result-detail{margin-top:8px;color:#64748b;line-height:1.6}.data-error{margin:30px auto;max-width:900px;padding:18px;border-radius:12px;background:#fff1f2;border:1px solid #fda4af;color:#9f1239;line-height:1.6;display:none}@media(max-width:600px){.app{padding:10px}.card{padding:18px 14px;border-radius:14px}.start-card,.result-card{margin-top:10px}.main-title{font-size:22px}.subtitle{font-size:15px}.btn-memory{width:100%}.knowledge-box{padding:16px}.quiz-title{font-size:19px}.question-text{font-size:18px}.answer-btn{padding:12px;font-size:15px}.quiz-status{font-size:14px}}
+  .login-card{margin-top:24px}.login-title{text-align:center;margin:0;color:#1d4ed8;font-size:26px}.login-subtitle{text-align:center;color:#64748b;margin:8px 0 22px}.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.login-field{display:flex;flex-direction:column;gap:7px}.login-field.full{grid-column:1/-1}.login-field label{font-weight:bold;color:#334155}.login-field input,.login-field select{width:100%;padding:12px 13px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;font-size:16px}.login-field input:focus,.login-field select:focus{outline:2px solid rgba(37,99,235,.12);border-color:#2563eb}.student-bar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:11px 13px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px}.student-badge{font-weight:bold;color:#1d4ed8}.btn-light{cursor:pointer;background:#e2e8f0;color:#334155;padding:9px 13px;border-radius:9px;font-weight:bold}.save-status{margin-top:14px;padding:11px 13px;border-radius:10px;background:#f8fafc;border:1px solid #cbd5e1;color:#475569;line-height:1.45}.save-status.ok{background:#f0fdf4;border-color:#86efac;color:#166534}.save-status.error{background:#fff1f2;border-color:#fda4af;color:#9f1239}.previous-result{margin-top:12px;padding:12px 14px;border-radius:10px;background:#f8fafc;border:1px dashed #94a3b8;color:#475569}.hidden{display:none!important}@media(max-width:600px){.login-grid{grid-template-columns:1fr}.login-field.full{grid-column:auto}}</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div id="dataError" class="data-error"></div>
+<div class="app" id="app">
+  <section id="loginScreen" class="screen active">
+    <div class="card login-card">
+      <h1 class="login-title">Thông tin học sinh</h1>
+      <p class="login-subtitle">Nhập đúng lớp, STT và họ tên trước khi làm bài.</p>
+      <div class="login-grid">
+        <div class="login-field"><label for="studentClass">Lớp</label>
+          <select id="studentClass"><option value="">-- Chọn lớp --</option>
+            <option>6.8</option><option>6.9</option><option>6.10</option><option>6.11</option><option>6.12</option><option>6.13</option><option>6.14</option><option>6.15</option><option>6.16</option></select></div>
+        <div class="login-field"><label for="studentNo">STT</label><select id="studentNo"><option value="">-- Chọn STT --</option></select></div>
+        <div class="login-field full"><label for="studentName">Họ và tên</label><input id="studentName" maxlength="50" autocomplete="name" placeholder="Nhập họ và tên học sinh"></div>
+      </div>
+      <div class="start-action"><button id="studentLoginBtn" class="btn-primary" type="button">Vào làm bài</button></div>
+      <div id="studentLoginStatus" class="save-status hidden"></div>
+    </div>
+  </section>
+  <section id="startScreen" class="screen">
+    <div class="student-bar"><div id="studentBadge" class="student-badge"></div><button id="changeStudentBtn" type="button" class="btn-light">Đổi học sinh</button></div>
+    <div class="card start-card">
+      <div class="start-header">
+        <div class="start-icon">💡</div>
+        <h1 id="mainTitle" class="main-title"></h1>
+        <p id="subtitle" class="subtitle"></p>
+      </div>
+      <div id="memoryToggleWrap" class="memory-toggle-wrap">
+        <button id="memoryToggleButton" class="btn-memory" type="button" onclick="toggleKnowledge()" aria-expanded="false" aria-controls="knowledgeBox">📘 Hiện nội dung cần nhớ</button>
+      </div>
+      <div id="knowledgeBox" class="knowledge-box"></div>
+      <div class="start-action"><button class="btn-primary" onclick="startQuiz()">Bắt đầu</button></div>
+      <div class="info-box">
+        <strong>Hướng dẫn làm bài:</strong><br>
+        • Thứ tự câu hỏi và đáp án được trộn ngẫu nhiên.<br>
+        • Mỗi lần chỉ hiển thị một câu.<br>
+        • Chọn đúng mới được chuyển sang câu tiếp theo.<br>
+        • Nếu chọn sai, em có thể tiếp tục chọn đáp án khác.<br>
+        • Điểm chỉ tính theo <strong>lựa chọn đầu tiên</strong> của mỗi câu.<br>
+        • Mỗi câu đúng ngay lần đầu được tính 1 điểm.<br>
+        • Nếu chưa đạt điểm tối đa, em có thể làm lại.
+      </div>
+    </div>
+  </section>
+
+  <section id="quizScreen" class="screen">
+    <div class="quiz-header">
+      <h2 id="quizTitle" class="quiz-title"></h2>
+      <div class="quiz-status"><span id="questionCounter"></span><span id="currentScore"></span></div>
+      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+    </div>
+    <div class="card question-card">
+      <div id="levelBadge" class="level-badge"></div>
+      <div id="questionText" class="question-text"></div>
+      <div id="answers" class="answers"></div>
+      <div id="feedback" class="feedback"></div>
+      <button id="nextButton" class="btn-next" onclick="nextQuestion()">Câu tiếp →</button>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="screen">
+    <div class="card result-card">
+      <div id="resultIcon" class="result-icon">🎯</div>
+      <h2 class="result-title">Kết quả</h2>
+      <div class="score-circle"><div id="finalScore" class="score-number">0</div><div id="scoreUnit" class="score-unit">điểm</div></div>
+      <div id="resultMessage" class="result-message"></div>
+      <div id="resultDetail" class="result-detail"></div><div id="saveResultStatus" class="save-status">Chưa lưu kết quả.</div><div id="previousResult" class="previous-result hidden"></div>
+      <button id="retryButton" class="btn-retry" onclick="restartQuiz()">↻ Làm lại</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =====================================================================
+   CHỈ CẦN THAY 2 BIẾN DƯỚI ĐÂY ĐỂ TẠO BÀI MỚI
+   ===================================================================== */
+
+const KIEN_THUC_TRONG_TAM = {
+  tieuDeTrang: "Trắc nghiệm - AI quanh em - Đâu là AI?",
+  phuDe: "Chuyên đề AI cốt lõi – Lớp 6 – Bài 1",
+  noiDungHTML: `<h2>BÀI 1. AI QUANH EM - ĐÂU LÀ AI?</h2>
+    <h3>1. Trí tuệ nhân tạo - AI là gì?</h3>
+    <ol>
+      <li>Là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người.</li>
+      <li>AI không nhất thiết là robot, có thể là một tính năng của ứng dụng hay thiết bị.</li>
+      
+    </ol>
+    <h3>2. Nhận diện AI quanh em</h3>
+    <ul>
+      <li>AI xuất hiện trong nhiều công cụ và tính năng quen thuộc như dịch ngôn ngữ, nhận diện hình ảnh, nhận dạng giọng nói, gợi ý nội dung, bản đồ và chatbot.</li>
+      <li>Không phải mọi thiết bị điện tử, thiết bị tự động hoặc thiết bị được gọi là “thông minh” đều có AI.</li>
+      <li>Một số tính năng AI quen thuộc có thể hỗ trợ nhận dạng, dự đoán, gợi ý, xử lí ngôn ngữ hoặc tạo nội dung.</li>
+      <li>Khi chưa đủ thông tin để xác định một thiết bị hoặc tính năng có AI hay không, cần tìm hiểu thêm thay vì đoán.</li>
+    </ul>
+
+    
+
+    <p><strong>Ghi nhớ:</strong> Không dùng một dấu hiệu đơn lẻ như “hiện đại”, “tự động”, “có cảm biến” hay “có điều khiển từ xa” để kết luận thiết bị có AI.</p>`
+};
+
+/* Nếu không có kiến thức trọng tâm, dùng:
+const KIEN_THUC_TRONG_TAM = null;
+*/
+
+const APP_CONFIG = {
+  worksheetId: "tin6_ai_bai1_tn",
+  title: "Tin 6 - AI quanh em - Đâu là AI?",
+  grade: "6",
+  semester: "HK1",
+  type: "quiz",
+  version: "1.0.0",
+  totalActivities: 0,
+  totalQuestions: 20
+};
+const WORKSHEET_ID = APP_CONFIG.worksheetId;
+const RESULTS_PATH = `worksheets/${WORKSHEET_ID}/results`;
+const SESSION_KEY = `worksheet_${WORKSHEET_ID}_active_student_v1`;
+const LOCAL_RESULT_KEY = `worksheet_${WORKSHEET_ID}_local_result_v1`;
+const firebaseConfig = {apiKey:"AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",authDomain:"luyen-go.firebaseapp.com",databaseURL:"https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"luyen-go",storageBucket:"luyen-go.firebasestorage.app",messagingSenderId:"79498233127",appId:"1:79498233127:web:a6c2e2bab71ba737ca9502"};
+
+const BO_CAU_HOI = [
+  {
+    "level": "Nhận biết",
+    "question": "Thiết bị nào sau đây là ví dụ rõ ràng có ứng dụng AI?",
+    "answers": [
+      "Camera có chức năng nhận diện khuôn mặt người dùng",
+      "Đồng hồ báo thức chỉ reo đúng vào thời gian đã được cài sẵn",
+      "Quạt điện chỉ thay đổi tốc độ theo nút bấm điều khiển",
+      "Máy tính bỏ túi chỉ thực hiện phép tính theo công thức"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Thiết bị nào sau đây là ví dụ rõ ràng không dùng AI?",
+    "answers": [
+      "Máy tính bỏ túi thông thường chỉ tính theo công thức",
+      "Ứng dụng dịch giọng nói có thể xử lí câu người dùng nói",
+      "Camera an ninh có chức năng nhận diện khuôn mặt người",
+      "Ứng dụng video có chức năng gợi ý nội dung cho người xem"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Tính năng nào sau đây thường là dấu hiệu gợi ý có ứng dụng AI?",
+    "answers": [
+      "Nhận dạng giọng nói để hiểu lời người dùng",
+      "Bật quạt đúng mức tốc độ theo nút người dùng chọn",
+      "Phát chuông đúng giờ theo thời gian người dùng cài",
+      "Bật đèn khi công tắc điện được người dùng nhấn xuống"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Trường hợp nào sau đây chưa đủ thông tin để kết luận thiết bị có AI?",
+    "answers": [
+      "Robot hút bụi chỉ được mô tả là hoạt động tự động",
+      "Camera được nêu rõ có chức năng nhận diện khuôn mặt",
+      "Ứng dụng được nêu rõ có chức năng dịch giọng nói giữa hai ngôn ngữ",
+      "Trang video được nêu rõ có chức năng gợi ý nội dung"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Thiết bị nào sau đây không nên được xem là AI chỉ vì có điều khiển từ xa?",
+    "answers": [
+      "Quạt điện chỉ nhận lệnh từ chiếc điều khiển từ xa",
+      "Camera có thể nhận diện khuôn mặt của người đi qua",
+      "Ứng dụng bản đồ có thể gợi ý lộ trình phù hợp cho người dùng",
+      "Chatbot có thể hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Công cụ nào sau đây có chức năng xử lí ngôn ngữ?",
+    "answers": [
+      "Ứng dụng dịch có thể chuyển câu tiếng Việt sang tiếng Anh",
+      "Đồng hồ báo thức chỉ phát âm báo đúng vào thời gian đã được cài sẵn",
+      "Máy tính bỏ túi chỉ thực hiện phép tính số học theo quy tắc",
+      "Quạt điều khiển từ xa chỉ thay đổi tốc độ theo các lệnh bấm đã chọn"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Tính năng nào sau đây là ví dụ về gợi ý nội dung bằng AI?",
+    "answers": [
+      "Ứng dụng video đề xuất clip phù hợp với người xem",
+      "Đồng hồ điện tử hiển thị giờ theo thời gian hiện tại",
+      "Đèn bàn bật sáng khi người dùng nhấn công tắc điện",
+      "Máy tính bỏ túi hiển thị kết quả sau khi người dùng nhập phép tính"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Nhận biết",
+    "question": "Phát biểu nào phù hợp nhất với bài học về AI quanh em?",
+    "answers": [
+      "Không phải mọi thiết bị tự động hoặc thông minh đều có AI",
+      "Mọi thiết bị điện tử có bộ xử lí đều được xem là thiết bị AI",
+      "Mọi thiết bị có cảm biến đều sử dụng AI để đưa ra quyết định",
+      "Mọi thiết bị kết nối mạng đều dùng AI để xử lí và phân tích dữ liệu"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Một đèn tự bật khi trời tối nhờ cảm biến ánh sáng. Nên kết luận thế nào?",
+    "answers": [
+      "Chưa đủ thông tin để khẳng định đèn có ứng dụng AI",
+      "Chắc chắn có AI vì đèn có thể tự động bật khi trời tối",
+      "Chắc chắn có AI vì thiết bị đã sử dụng một loại cảm biến",
+      "Chắc chắn không có AI vì đèn chỉ dùng để chiếu sáng"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Vì sao máy tính bỏ túi thông thường không được dùng làm ví dụ đại diện cho AI?",
+    "answers": [
+      "Nó chủ yếu thực hiện phép tính theo quy tắc đã thiết kế",
+      "Nó có thể cho kết quả nhanh hơn con người trong nhiều phép tính",
+      "Nó có màn hình điện tử và các phím để người dùng nhập dữ liệu",
+      "Nó có thể lưu một số kết quả tính toán trong bộ nhớ tạm thời"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Một camera có chức năng phát hiện và nhận diện khuôn mặt. Cách phân loại hợp lí là gì?",
+    "answers": [
+      "Có AI vì có chức năng nhận diện khuôn mặt",
+      "Không AI vì camera chỉ là thiết bị dùng để ghi hình",
+      "Chưa đủ thông tin vì mọi camera đều hoạt động giống nhau",
+      "Không AI vì thiết bị không trực tiếp trò chuyện với người dùng"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Một ứng dụng bản đồ tự đề xuất tuyến đường dựa trên tình trạng giao thông. Cách phân loại phù hợp là gì?",
+    "answers": [
+      "Có AI vì ứng dụng có chức năng gợi ý lộ trình phù hợp",
+      "Không AI vì bản đồ chỉ có nhiệm vụ hiển thị vị trí và đường đi",
+      "Chưa đủ thông tin vì mọi ứng dụng bản đồ đều không dùng AI",
+      "Không AI vì người dùng vẫn phải tự quyết định tuyến đường cuối cùng"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Một chiếc quạt được quảng cáo là “quạt thông minh” nhưng chỉ biết có điều khiển từ xa. Nên làm gì?",
+    "answers": [
+      "Tìm thêm thông tin về tính năng trước khi kết luận có AI",
+      "Khẳng định có AI vì sản phẩm đã được gọi là quạt thông minh",
+      "Khẳng định có AI vì quạt nhận được tín hiệu từ điều khiển từ xa",
+      "Khẳng định không AI vì mọi loại quạt đều không thể sử dụng AI"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Thông hiểu",
+    "question": "Vì sao nói “có cảm biến” chưa đủ để kết luận một thiết bị có AI?",
+    "answers": [
+      "Cảm biến chỉ là một dấu hiệu, cần xem thiết bị xử lí thế nào",
+      "Cảm biến luôn chỉ dùng cho thiết bị không có khả năng xử lí dữ liệu",
+      "Cảm biến chỉ xuất hiện trong thiết bị hoạt động bằng cơ khí hoàn toàn",
+      "Cảm biến luôn hoạt động độc lập và không liên quan đến chức năng thiết bị"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Một robot hút bụi được mô tả chỉ là “tự chạy quanh phòng”. Em nên phân loại thế nào?",
+    "answers": [
+      "Chưa đủ thông tin vì cần biết robot xử lí môi trường ra sao",
+      "Có AI vì robot có thể di chuyển mà không cần người đẩy trực tiếp",
+      "Có AI vì mọi robot hiện đại ngày nay đều phải dùng trí tuệ nhân tạo",
+      "Không AI vì thiết bị chỉ dùng để hút bụi nên không thể có trí tuệ nhân tạo"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Một điện thoại mở khóa bằng cách nhận diện khuôn mặt chủ máy. Tính năng này nên được xếp vào nhóm nào?",
+    "answers": [
+      "Có AI vì tính năng thực hiện nhận diện khuôn mặt",
+      "Không AI vì điện thoại chỉ dùng camera để chụp hình người dùng",
+      "Chưa đủ thông tin vì điện thoại nào cũng có camera ở mặt trước",
+      "Không AI vì mở khóa chỉ là chức năng bảo mật của thiết bị"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Một ứng dụng nghe lời nói của em rồi chuyển thành văn bản. Căn cứ nào giúp nhận diện AI?",
+    "answers": [
+      "Ứng dụng có chức năng nhận dạng và xử lí giọng nói",
+      "Ứng dụng được cài đặt trên một thiết bị điện tử hiện đại",
+      "Ứng dụng cần dùng micro để thu âm lời nói của người sử dụng",
+      "Ứng dụng có nút bấm để người dùng bắt đầu và kết thúc ghi âm"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Một tivi tự tắt sau 30 phút đúng theo thời gian người dùng đã hẹn. Nên phân loại thế nào?",
+    "answers": [
+      "Không AI vì tivi chỉ thực hiện quy tắc hẹn giờ cố định",
+      "Có AI vì tivi có thể tự tắt mà không cần người dùng bấm nút",
+      "Có AI vì tivi là thiết bị điện tử hiện đại có nhiều chức năng",
+      "Chưa đủ thông tin vì mọi chức năng hẹn giờ đều có thể là AI"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Một trang học tập đề xuất bài luyện khác nhau dựa trên kết quả trước đó của học sinh. Dấu hiệu nào đáng chú ý nhất?",
+    "answers": [
+      "Hệ thống gợi ý nội dung dựa trên thông tin của người học",
+      "Hệ thống có màn hình đẹp và nhiều nút chức năng để lựa chọn",
+      "Hệ thống hoạt động trên Internet và cần trình duyệt để truy cập",
+      "Hệ thống lưu lại tên bài học đã được giáo viên nhập từ trước"
+    ],
+    "correct": 0
+  },
+  {
+    "level": "Vận dụng",
+    "question": "Khi gặp một thiết bị mới được quảng cáo là “siêu thông minh”, cách suy nghĩ phù hợp nhất là gì?",
+    "answers": [
+      "Xem chức năng cụ thể rồi mới kết luận có AI hay không",
+      "Tin rằng thiết bị có AI vì nhà sản xuất dùng từ siêu thông minh",
+      "Cho rằng thiết bị có AI nếu nó có màn hình hoặc kết nối Internet",
+      "Cho rằng thiết bị không có AI nếu chưa từng thấy nó trong bài học"
+    ],
+    "correct": 0
+  }
+];
+
+/* =====================================================================
+   TỪ ĐÂY TRỞ XUỐNG KHÔNG CẦN SỬA
+   ===================================================================== */
+
+const DEFAULT_TITLE = "Trắc nghiệm củng cố bài học";
+const DEFAULT_SUBTITLE = "Tin học";
+let questions = [];
+let currentQuestion = 0;
+let score = 0;
+let firstAttemptAnswered = false;
+let questionCompleted = false;
+let currentStudent=null,firebaseUser=null,database=null,ownResultRef=null,previousRemoteResult=null,resultSavedThisAttempt=false;
+
+function buildStudentNoOptions(){const el=document.getElementById("studentNo");for(let i=1;i<=55;i++){const op=document.createElement("option");op.value=String(i);op.textContent=String(i);el.appendChild(op)}}
+function setStudentLoginStatus(message,type=""){const el=document.getElementById("studentLoginStatus");if(!message){el.textContent="";el.className="save-status hidden";return}el.textContent=message;el.className=`save-status ${type}`.trim()}
+function readSession(){try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||"null")}catch{return null}}
+function writeSession(student,uid){sessionStorage.setItem(SESSION_KEY,JSON.stringify({className:student.className,studentNo:student.studentNo,uid:String(uid)}))}
+function clearSession(){sessionStorage.removeItem(SESSION_KEY)}
+async function setAnonymousContext(user){firebaseUser=user;database=firebase.database();ownResultRef=database.ref(`${RESULTS_PATH}/${user.uid}`);return user}
+async function prepareStudentFirebase(student){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),session=readSession();const canReuse=auth.currentUser&&auth.currentUser.isAnonymous&&session&&session.uid===auth.currentUser.uid&&session.className===student.className&&Number(session.studentNo)===student.studentNo;if(canReuse)return setAnonymousContext(auth.currentUser);if(auth.currentUser)await auth.signOut();clearSession();const cred=await auth.signInAnonymously();await setAnonymousContext(cred.user);writeSession(student,cred.user.uid);return cred.user}
+async function loadPreviousResult(){previousRemoteResult=null;if(!ownResultRef)return null;try{const snap=await ownResultRef.once("value");previousRemoteResult=snap.val()||null;return previousRemoteResult}catch(err){console.warn("Không tải được kết quả cũ:",err);return null}}
+function renderPreviousResult(){const box=document.getElementById("previousResult"),r=previousRemoteResult;if(!box)return;if(!r){box.classList.add("hidden");box.textContent="";return}const first=Number.isFinite(Number(r.firstScore))?Number(r.firstScore):null,best=Number.isFinite(Number(r.bestScore))?Number(r.bestScore):null,total=Number(r.total)||APP_CONFIG.totalQuestions,attempts=Number(r.attemptCount)||1;box.innerHTML=`Kết quả đã lưu: lần đầu <strong>${first??"-"}/${total}</strong> · cao nhất <strong>${best??"-"}/${total}</strong> · số lần hoàn thành <strong>${attempts}</strong>.`;box.classList.remove("hidden")}
+async function enterStudent(){const cls=document.getElementById("studentClass").value,no=Number(document.getElementById("studentNo").value),name=document.getElementById("studentName").value.trim().replace(/\s+/g," ");if(!cls){setStudentLoginStatus("Vui lòng chọn lớp.","error");return}if(!Number.isFinite(no)||no<=0){setStudentLoginStatus("Vui lòng chọn STT.","error");return}if(!name){setStudentLoginStatus("Vui lòng nhập họ và tên.","error");return}const btn=document.getElementById("studentLoginBtn");btn.disabled=true;btn.textContent="Đang mở bài...";setStudentLoginStatus("Đang kết nối Firebase...");try{currentStudent={className:cls,studentNo:no,name};await prepareStudentFirebase(currentStudent);await loadPreviousResult();document.getElementById("studentBadge").textContent=`${cls} · STT ${no} · ${name}`;showScreen("startScreen");setStudentLoginStatus("")}catch(err){console.error(err);currentStudent=null;setStudentLoginStatus("Không thể tạo phiên học sinh. Hãy kiểm tra mạng/Firebase Authentication.","error")}finally{btn.disabled=false;btn.textContent="Vào làm bài"}}
+async function changeStudent(){try{const auth=firebase.auth();if(auth.currentUser&&auth.currentUser.isAnonymous)await auth.signOut()}catch(e){console.warn(e)}clearSession();currentStudent=null;firebaseUser=null;database=null;ownResultRef=null;previousRemoteResult=null;document.getElementById("studentName").value="";showScreen("loginScreen")}
+function saveLocalResult(payload){try{localStorage.setItem(LOCAL_RESULT_KEY,JSON.stringify(payload))}catch(e){console.warn(e)}}
+async function saveQuizResult(){if(resultSavedThisAttempt)return;resultSavedThisAttempt=true;const status=document.getElementById("saveResultStatus"),total=questions.length||BO_CAU_HOI.length,old=previousRemoteResult||{},oldFirst=Number(old.firstScore),oldBest=Number(old.bestScore),oldAttempts=Number(old.attemptCount)||0,firstScore=Number.isFinite(oldFirst)?oldFirst:score,bestScore=Number.isFinite(oldBest)?Math.max(oldBest,score):score;const payload={className:currentStudent.className,studentNo:Number(currentStudent.studentNo),name:currentStudent.name,ownerUid:firebaseUser?.uid||"",score,firstScore,bestScore,total,percent:Math.round(score/total*100),attemptCount:oldAttempts+1,completed:true,createdAt:Number(old.createdAt)||Date.now(),updatedAt:firebase.database.ServerValue.TIMESTAMP,meta:{worksheetId:APP_CONFIG.worksheetId,title:APP_CONFIG.title,grade:APP_CONFIG.grade,semester:APP_CONFIG.semester,type:APP_CONFIG.type,version:APP_CONFIG.version}};saveLocalResult({...payload,updatedAt:Date.now()});status.textContent="Đang lưu kết quả...";status.className="save-status";try{if(!ownResultRef||!firebaseUser)throw new Error("Chưa có phiên Firebase");await ownResultRef.set(payload);previousRemoteResult={...payload,updatedAt:Date.now()};status.textContent=`Đã lưu Firebase · Lần đầu ${firstScore}/${total} · Cao nhất ${bestScore}/${total}.`;status.className="save-status ok";renderPreviousResult()}catch(err){console.error("Lỗi lưu kết quả:",err);resultSavedThisAttempt=false;status.textContent="Chưa đồng bộ được Firebase. Kết quả đã lưu tạm trên máy.";status.className="save-status error"}}
+function getLevelClass(level){const text=String(level||"").trim().toLowerCase();if(["nhận biết","nhan biet","biết","biet"].includes(text))return"level-nb";if(["thông hiểu","thong hieu","hiểu","hieu"].includes(text))return"level-th";return"level-vd"}
+function getTitle(){return KIEN_THUC_TRONG_TAM?.tieuDeTrang?.trim()||DEFAULT_TITLE}
+function getSubtitle(){return KIEN_THUC_TRONG_TAM?.phuDe?.trim()||DEFAULT_SUBTITLE}
+function hasKnowledge(){return Boolean(KIEN_THUC_TRONG_TAM&&typeof KIEN_THUC_TRONG_TAM.noiDungHTML==="string"&&KIEN_THUC_TRONG_TAM.noiDungHTML.trim())}
+function showDataError(message){document.getElementById("app").style.display="none";const box=document.getElementById("dataError");box.style.display="block";box.innerHTML="<strong>Lỗi dữ liệu bài trắc nghiệm:</strong><br>"+message}
+
+function validateQuestionBank(){if(!Array.isArray(BO_CAU_HOI))throw new Error("BO_CAU_HOI phải là một mảng.");if(BO_CAU_HOI.length===0)throw new Error("BO_CAU_HOI chưa có câu hỏi.");BO_CAU_HOI.forEach((q,index)=>{if(!q||typeof q!=="object")throw new Error(`Câu ${index+1} không phải object hợp lệ.`);if(!q.question||typeof q.question!=="string")throw new Error(`Câu ${index+1} chưa có nội dung question.`);if(!Array.isArray(q.answers)||q.answers.length<2)throw new Error(`Câu ${index+1} phải có ít nhất 2 đáp án.`);if(!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.answers.length)throw new Error(`Câu ${index+1} có correct không hợp lệ.`);q.answers.forEach((answer,answerIndex)=>{if(typeof answer!=="string"||!answer.trim())throw new Error(`Đáp án ${answerIndex+1} của câu ${index+1} không hợp lệ.`)})})}
+
+function initializePage(){validateQuestionBank();APP_CONFIG.totalQuestions=BO_CAU_HOI.length;const title=getTitle(),subtitle=getSubtitle();document.title=title;document.getElementById("mainTitle").textContent=title;document.getElementById("quizTitle").textContent=title;document.getElementById("subtitle").textContent=subtitle;if(hasKnowledge()){document.getElementById("knowledgeBox").innerHTML=KIEN_THUC_TRONG_TAM.noiDungHTML}else{document.getElementById("memoryToggleWrap").style.display="none";document.getElementById("knowledgeBox").style.display="none"}hideKnowledge();buildStudentNoOptions();document.getElementById("studentLoginBtn").onclick=enterStudent;document.getElementById("changeStudentBtn").onclick=changeStudent;document.getElementById("studentName").addEventListener("keydown",e=>{if(e.key==="Enter")enterStudent()});if(!firebase.apps.length)firebase.initializeApp(firebaseConfig)}
+function toggleKnowledge(){if(!hasKnowledge())return;const box=document.getElementById("knowledgeBox"),button=document.getElementById("memoryToggleButton");if(box.classList.contains("show")){hideKnowledge()}else{box.classList.add("show");button.innerHTML="▲ Ẩn nội dung cần nhớ";button.setAttribute("aria-expanded","true")}}
+function hideKnowledge(){const box=document.getElementById("knowledgeBox"),button=document.getElementById("memoryToggleButton");box.classList.remove("show");button.innerHTML="📘 Hiện nội dung cần nhớ";button.setAttribute("aria-expanded","false")}
+function shuffleArray(array){const arr=[...array];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function shuffleAnswers(question){const answerObjects=question.answers.map((text,index)=>({text,isCorrect:index===question.correct}));const shuffled=shuffleArray(answerObjects);return{level:question.level||"Nhận biết",question:question.question,answers:shuffled.map(item=>item.text),correct:shuffled.findIndex(item=>item.isCorrect)}}
+function createNewQuiz(){return shuffleArray(BO_CAU_HOI.map(question=>shuffleAnswers(question)))}
+function showScreen(screenId){document.querySelectorAll(".screen").forEach(screen=>screen.classList.remove("active"));document.getElementById(screenId).classList.add("active")}
+function startQuiz(){if(!currentStudent){showScreen("loginScreen");return}questions=createNewQuiz();currentQuestion=0;score=0;firstAttemptAnswered=false;questionCompleted=false;resultSavedThisAttempt=false;hideKnowledge();showScreen("quizScreen");renderQuestion();window.scrollTo({top:0,behavior:"smooth"})}
+function renderQuestion(){const q=questions[currentQuestion];document.getElementById("questionCounter").textContent=`Câu ${currentQuestion+1} / ${questions.length}`;document.getElementById("currentScore").textContent=`Điểm hiện tại: ${score}/${questions.length}`;document.getElementById("progressFill").style.width=((currentQuestion+1)/questions.length*100)+"%";const levelBadge=document.getElementById("levelBadge");levelBadge.textContent=q.level||"";levelBadge.className=`level-badge ${getLevelClass(q.level)}`;document.getElementById("questionText").textContent=`Câu ${currentQuestion+1}. ${q.question}`;const answersContainer=document.getElementById("answers");answersContainer.innerHTML="";q.answers.forEach((answer,index)=>{const button=document.createElement("button");button.type="button";button.className="answer-btn";button.innerHTML=`<span class="answer-letter">${String.fromCharCode(65+index)}</span><span class="answer-content"></span>`;button.querySelector(".answer-content").textContent=answer;button.onclick=function(){selectAnswer(index,button)};answersContainer.appendChild(button)});firstAttemptAnswered=false;questionCompleted=false;const feedback=document.getElementById("feedback");feedback.className="feedback";feedback.textContent="";document.getElementById("nextButton").style.display="none"}
+function selectAnswer(selectedIndex,selectedButton){if(questionCompleted)return;const q=questions[currentQuestion],feedback=document.getElementById("feedback");if(!firstAttemptAnswered){firstAttemptAnswered=true;if(selectedIndex===q.correct)score++}if(selectedIndex===q.correct){questionCompleted=true;selectedButton.classList.add("correct");document.querySelectorAll(".answer-btn").forEach(button=>button.disabled=true);feedback.textContent="✓ Chính xác! Em có thể chuyển sang câu tiếp theo.";feedback.className="feedback show correct-feedback";document.getElementById("nextButton").style.display="inline-block";document.getElementById("currentScore").textContent=`Điểm hiện tại: ${score}/${questions.length}`;return}selectedButton.classList.add("wrong");selectedButton.disabled=true;feedback.textContent="✗ Chưa đúng. Em hãy thử chọn một đáp án khác.";feedback.className="feedback show wrong-feedback"}
+function nextQuestion(){if(!questionCompleted)return;currentQuestion++;if(currentQuestion<questions.length){renderQuestion();window.scrollTo({top:0,behavior:"smooth"})}else{showResult()}}
+function showResult(){showScreen("resultScreen");const total=questions.length;document.getElementById("finalScore").textContent=score;document.getElementById("scoreUnit").textContent=`/ ${total} điểm`;const message=document.getElementById("resultMessage"),detail=document.getElementById("resultDetail"),icon=document.getElementById("resultIcon"),retryButton=document.getElementById("retryButton"),ratio=score/total;if(score===total){icon.textContent="🏆";message.textContent="Xuất sắc! Em đã trả lời đúng ngay lần đầu tất cả các câu.";detail.textContent=`Kết quả: ${score}/${total} điểm.`;retryButton.style.display="none"}else if(ratio>=.8){icon.textContent="⭐";message.textContent="Rất tốt! Em đã nắm khá chắc nội dung bài học.";detail.textContent=`Em trả lời đúng ngay lần đầu ${score}/${total} câu. Hãy làm lại để đạt điểm tối đa.`;retryButton.style.display="inline-block"}else if(ratio>=.5){icon.textContent="👍";message.textContent="Em đã hiểu những kiến thức cơ bản.";detail.textContent=`Em trả lời đúng ngay lần đầu ${score}/${total} câu. Hãy xem lại bài và thử làm lại.`;retryButton.style.display="inline-block"}else{icon.textContent="📖";message.textContent="Em cần ôn lại bài trước khi thử lại.";detail.textContent=`Em trả lời đúng ngay lần đầu ${score}/${total} câu. Hãy xem lại nội dung cần nhớ rồi làm lại.`;retryButton.style.display="inline-block"}document.getElementById("saveResultStatus").textContent="Đang chuẩn bị lưu kết quả...";document.getElementById("saveResultStatus").className="save-status";renderPreviousResult();saveQuizResult();window.scrollTo({top:0,behavior:"smooth"})}
+function restartQuiz(){questions=createNewQuiz();currentQuestion=0;score=0;firstAttemptAnswered=false;questionCompleted=false;resultSavedThisAttempt=false;showScreen("quizScreen");renderQuestion();window.scrollTo({top:0,behavior:"smooth"})}
+try{initializePage()}catch(error){console.error(error);showDataError(error.message)}
+</script>
+</body>
+</html>
