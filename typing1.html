@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thử Tài Gõ Phím V8 - Theo dõi lớp + đã hoàn thành</title>
+<title>Thử Tài Gõ Phím V9 - Sửa hoàn thành + chống NaN</title>
 <style>
 :root { --primary: #c62828; --accent: #1565c0; --success: #2e7d32; --warning: #ef6c00; --bg: #f4f7f6; --text: #263238; --muted: #607d8b; }
 * { box-sizing: border-box; }
@@ -39,6 +39,9 @@ button { cursor: pointer; }
 .progress-head { display: flex; justify-content: space-between; font-size: 0.86rem; color: var(--muted); margin-bottom: 5px; }
 .progress-bar { height: 9px; background: #eceff1; border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; width: 0%; background: var(--success); transition: width 0.15s linear; }
+.typing-message { min-height: 1.25em; margin: 6px 0 8px; font-size: .86rem; font-weight: 700; color: var(--muted); }
+.typing-message.warn { color: #b45309; }
+.typing-message.ok { color: #1b5e20; }
 .poem { height: clamp(125px, 20vh, 165px); min-height: 125px; max-height: 165px; overflow-y: auto; padding: 12px 16px; border-left: 5px solid #ffa000; border-radius: 8px; background: #fff8e1; text-align: left; white-space: pre-wrap; user-select: none; font-family: "Courier New", monospace; font-size: 1.18rem; line-height: 1.75; }
 .char-correct { color: #1b5e20; background: #c8e6c9; }
 .char-incorrect { color: #b71c1c; background: #ffcdd2; }
@@ -274,6 +277,7 @@ body:not(.teacher-mode) #firebase-status{
           <div class="progress-head"><span>Tiến độ</span><span id="progress-text">0%</span></div>
           <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
         </div>
+        <div id="typing-message" class="typing-message" aria-live="polite"></div>
         <div class="poem" id="poem-display"></div>
         <textarea id="input-field" placeholder="Gõ chính xác nội dung phía trên..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled></textarea>
 
@@ -441,7 +445,7 @@ const els = {
   studentDisplay: document.getElementById("student-display"), modeDisplay: document.getElementById("mode-display"), lessonTitle: document.getElementById("lesson-title"),
   poemDisplay: document.getElementById("poem-display"), input: document.getElementById("input-field"), timer: document.getElementById("timer"),
   rawWpm: document.getElementById("raw-wpm"), netWpm: document.getElementById("net-wpm"), accuracy: document.getElementById("accuracy"), errorCount: document.getElementById("error-count"),
-  progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
+  progressText: document.getElementById("progress-text"), progressFill: document.getElementById("progress-fill"), typingMessage: document.getElementById("typing-message"), btnNext: document.getElementById("btn-next"), btnExit: document.getElementById("btn-exit"),
   leaderboard: document.getElementById("leaderboard"), leaderboardInfo: document.getElementById("leaderboard-info"), leaderboardClassFilter: document.getElementById("leaderboard-class-filter"), btnClearLeaderboard: document.getElementById("btn-clear-leaderboard"), firebaseStatus: document.getElementById("firebase-status"),
   liveList: document.getElementById("live-list"), liveInfo: document.getElementById("live-info"), liveCount: document.getElementById("live-count"), completedList: document.getElementById("completed-list"), completedInfo: document.getElementById("completed-info"), completedCount: document.getElementById("completed-count"), teacherMonitor: document.getElementById("teacher-monitor"), studentSideNote: document.getElementById("student-side-note"), btnToggleLeaderboard: document.getElementById("btn-toggle-leaderboard"), leaderboardWrap: document.getElementById("leaderboard-wrap"),
   teacherStatus: document.getElementById("teacher-status"), btnTeacherLogin: document.getElementById("btn-teacher-login"), btnTeacherLogout: document.getElementById("btn-teacher-logout"),
@@ -459,6 +463,10 @@ const state = {
 };
 
 function normalizeText(text) { return String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").normalize("NFC").trim(); }
+function finiteNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 function normalizeClassName(value) { return String(value || "").trim().replace(/\s+/g, "").toUpperCase(); }
 function sanitizeKey(value) { return String(value).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "unknown"; }
 function escapeHTML(str) { return String(str).replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch])); }
@@ -617,6 +625,7 @@ function updateTeacherUI() {
   if (!signedInTeacher) {
     els.leaderboardWrap.classList.add("hidden");
     els.btnToggleLeaderboard.textContent = "Xem bảng xếp hạng";
+    if (els.leaderboardClassFilter) delete els.leaderboardClassFilter.dataset.manual;
   }
 
   if (Array.isArray(leaderboardCache)) renderLeaderboard(leaderboardCache);
@@ -772,8 +781,10 @@ function loadNewLesson() {
   state.startTime = 0; state.isComposing = false; state.lastStats = null;
   state.previousTypedValue = ""; state.lastCurrentErrors = 0; state.totalInserted = 0; state.cumulativeMistakes = 0; state.lastComparison = null;
   els.input.value = ""; els.input.disabled = true; els.poemDisplay.scrollTop = 0;
+  if (els.typingMessage) { els.typingMessage.textContent = ""; els.typingMessage.className = "typing-message"; }
+  els.resultSaveStatus.textContent = "";
   renderLesson();
-  renderStats({ elapsed: 0, rawWpm: 0, netWpm: 0, accuracy: 100, errors: 0, progress: 0 });
+  renderStats({ elapsed: 0, rawWpm: 0, netWpm: 0, accuracy: 100, errors: 0, currentErrors: 0, progress: 0, exact: false, typedLength: 0 });
 }
 
 function renderLesson() {
@@ -824,9 +835,10 @@ function processTypingInput() {
   updateCharacterRendering(normalizedValue, lessonText, comparison);
   const stats = calculateStats(normalizedValue, comparison);
   renderStats(stats);
+  updateTypingMessage(normalizedValue, lessonText, comparison, stats);
   updateLivePresence(stats);
 
-  if (normalizedValue === lessonText) finishGame();
+  if (stats.exact) finishGame();
 }
 
 function updateTypingHistory(value, comparison) {
@@ -837,10 +849,12 @@ function updateTypingHistory(value, comparison) {
   let suffix = 0;
   while (suffix < oldValue.length - prefix && suffix < newValue.length - prefix && oldValue[oldValue.length - 1 - suffix] === newValue[newValue.length - 1 - suffix]) suffix++;
   const inserted = Math.max(0, newValue.length - prefix - suffix);
-  state.totalInserted += inserted;
-  const errorIncrease = Math.max(0, Number(comparison.errors || 0) - Number(state.lastCurrentErrors || 0));
-  state.cumulativeMistakes += errorIncrease;
-  state.lastCurrentErrors = Number(comparison.errors || 0);
+  state.totalInserted = finiteNumber(state.totalInserted, 0) + inserted;
+  const currentErrors = Math.max(0, finiteNumber(comparison && comparison.errors, 0));
+  const previousErrors = Math.max(0, finiteNumber(state.lastCurrentErrors, 0));
+  const errorIncrease = Math.max(0, currentErrors - previousErrors);
+  state.cumulativeMistakes = Math.max(0, finiteNumber(state.cumulativeMistakes, 0)) + errorIncrease;
+  state.lastCurrentErrors = currentErrors;
   state.previousTypedValue = value;
 }
 
@@ -952,38 +966,108 @@ function stopTimer() { if (state.rafId !== null) { cancelAnimationFrame(state.ra
 
 function calculateStats(valueOverride = null, comparisonOverride = null) {
   const now = performance.now();
-  const elapsed = state.started ? Math.max((now - state.startTime) / 1000, 0.001) : 0;
-  const value = valueOverride === null ? normalizeTypedValue(els.input.value) : valueOverride;
+  const elapsed = state.started ? Math.max((now - finiteNumber(state.startTime, now)) / 1000, 0.001) : 0;
+  const value = valueOverride === null ? normalizeTypedValue(els.input.value) : normalizeTypedValue(valueOverride);
   const lesson = lessons[state.currentLessonIndex];
-  const comparison = comparisonOverride || state.lastComparison || (lesson ? compareTyping(value, lesson.text) : { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 });
+  let comparison = comparisonOverride || state.lastComparison;
+  if (!comparison) {
+    comparison = lesson ? compareTyping(value, lesson.text) : { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
+  }
+
+  const typedLength = Math.max(0, finiteNumber(comparison && comparison.typedLength, Array.from(value).length));
+  const alignedTargetLength = Math.max(0, finiteNumber(comparison && comparison.alignedTargetLength, typedLength));
+  const currentErrors = Math.max(0, finiteNumber(comparison && comparison.errors, 0));
+  const totalInserted = Math.max(Math.max(0, finiteNumber(state.totalInserted, 0)), typedLength);
+  const cumulativeMistakes = Math.max(0, finiteNumber(state.cumulativeMistakes, 0));
+  const validKeystrokes = Math.max(0, totalInserted - cumulativeMistakes);
   const minutes = elapsed / 60;
-  const totalInserted = Math.max(state.totalInserted, comparison.typedLength);
-  const validKeystrokes = Math.max(0, totalInserted - state.cumulativeMistakes);
+
   const rawWpm = minutes > 0 ? (totalInserted / 5) / minutes : 0;
   const netWpm = minutes > 0 ? (validKeystrokes / 5) / minutes : 0;
-  const accuracy = totalInserted > 0 ? (validKeystrokes / totalInserted) * 100 : 100;
-  const progress = lesson ? Math.min(100, (comparison.alignedTargetLength / Array.from(lesson.text).length) * 100) : 0;
-  return { elapsed, rawWpm: Math.round(rawWpm), netWpm: Math.round(netWpm), accuracy: Math.round(accuracy), errors: state.cumulativeMistakes, currentErrors: comparison.errors, progress: Math.round(progress) };
+  const accuracy = totalInserted > 0 ? Math.max(0, Math.min(100, (validKeystrokes / totalInserted) * 100)) : 100;
+
+  const exact = Boolean(lesson && value === lesson.text);
+  const rawProgress = lesson && Array.from(lesson.text).length
+    ? (alignedTargetLength / Array.from(lesson.text).length) * 100
+    : 0;
+  // Không hiển thị 100% khi văn bản chưa khớp hoàn toàn.
+  // Điều này tránh học sinh tưởng đã xong dù vẫn còn lỗi/thừa ký tự.
+  const progress = exact ? 100 : Math.min(99, Math.max(0, Math.round(rawProgress)));
+
+  return {
+    elapsed: finiteNumber(elapsed, 0),
+    rawWpm: Math.max(0, Math.round(finiteNumber(rawWpm, 0))),
+    netWpm: Math.max(0, Math.round(finiteNumber(netWpm, 0))),
+    accuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(accuracy, 100)))),
+    errors: Math.max(0, Math.round(cumulativeMistakes)),
+    currentErrors: Math.max(0, Math.round(currentErrors)),
+    progress,
+    exact,
+    typedLength
+  };
 }
 
 function renderStats(stats) {
-  els.timer.textContent = stats.elapsed.toFixed(1);
-  els.rawWpm.textContent = stats.rawWpm;
-  els.netWpm.textContent = stats.netWpm;
-  els.accuracy.textContent = stats.accuracy;
-  els.errorCount.textContent = stats.errors;
-  els.progressText.textContent = `${stats.progress}%`;
-  els.progressFill.style.width = `${stats.progress}%`;
+  const safe = stats || {};
+  const elapsed = Math.max(0, finiteNumber(safe.elapsed, 0));
+  const rawWpm = Math.max(0, Math.round(finiteNumber(safe.rawWpm, 0)));
+  const netWpm = Math.max(0, Math.round(finiteNumber(safe.netWpm, 0)));
+  const accuracy = Math.max(0, Math.min(100, Math.round(finiteNumber(safe.accuracy, 100))));
+  const errors = Math.max(0, Math.round(finiteNumber(safe.errors, 0)));
+  const progress = Math.max(0, Math.min(100, Math.round(finiteNumber(safe.progress, 0))));
+
+  els.timer.textContent = elapsed.toFixed(1);
+  els.rawWpm.textContent = rawWpm;
+  els.netWpm.textContent = netWpm;
+  els.accuracy.textContent = accuracy;
+  els.errorCount.textContent = errors;
+  els.progressText.textContent = `${progress}%`;
+  els.progressFill.style.width = `${progress}%`;
 }
+
+function updateTypingMessage(value, lessonText, comparison, stats) {
+  if (!els.typingMessage) return;
+  els.typingMessage.className = "typing-message";
+
+  if (stats && stats.exact) {
+    els.typingMessage.textContent = "Đã gõ chính xác toàn bộ nội dung.";
+    els.typingMessage.classList.add("ok");
+    return;
+  }
+
+  const typedLength = Array.from(value || "").length;
+  const targetLength = Array.from(lessonText || "").length;
+  const currentErrors = Math.max(0, Math.round(finiteNumber(comparison && comparison.errors, 0)));
+
+  if (typedLength >= targetLength) {
+    els.typingMessage.classList.add("warn");
+    els.typingMessage.textContent = currentErrors > 0
+      ? `Đã gõ đến cuối nhưng còn ${currentErrors} lỗi. Hãy sửa các ký tự màu đỏ để hoàn thành.`
+      : "Đã gõ đến cuối nhưng nội dung vẫn chưa khớp hoàn toàn. Kiểm tra ký tự thừa hoặc thiếu.";
+  } else {
+    els.typingMessage.textContent = "";
+  }
+}
+
 
 async function finishGame() {
   if (state.completed) return;
   const finalStats = calculateStats();
-  state.completed = true; state.lastStats = finalStats;
-  stopTimer(); els.input.disabled = true;
-  renderStats(finalStats); showResult(finalStats);
+  if (!finalStats.exact) return;
+
+  state.completed = true;
+  state.lastStats = finalStats;
+  stopTimer();
+  els.input.disabled = true;
+  renderStats(finalStats);
+  if (els.typingMessage) {
+    els.typingMessage.textContent = "Hoàn thành! Đang ghi nhận kết quả...";
+    els.typingMessage.className = "typing-message ok";
+  }
+  els.resultSaveStatus.textContent = "Hoàn thành bài gõ · Đang lưu kết quả...";
+  showResult(finalStats);
+
   await endLivePresence();
-  els.resultSaveStatus.textContent = "Đang lưu thành tích tốt nhất...";
   const result = await saveBestScore(finalStats);
   els.resultSaveStatus.textContent = result.message;
 }
@@ -999,7 +1083,7 @@ function getBadge(netWpm, accuracy) {
 
 function showResult(stats) {
   const lesson = lessons[state.currentLessonIndex];
-  els.resultTitle.textContent = `Hoàn thành · ${lesson.title}`;
+  els.resultTitle.textContent = `✓ Hoàn thành · ${lesson.title}`;
   els.resultNetWpm.textContent = stats.netWpm;
   els.resultAccuracy.textContent = stats.accuracy;
   els.resultErrors.textContent = stats.errors;
@@ -1016,8 +1100,16 @@ function renderMistakeDetails() {
 }
 
 async function saveBestScore(stats) {
-  if (!firebaseReady || !firebaseUser || !ownResultRef || !state.student) return { saved: false, message: "Firebase chưa sẵn sàng; kết quả chưa được lưu." };
-  if (stats.netWpm > 250 || stats.rawWpm > 300) return { saved: false, message: "Kết quả vượt ngưỡng hợp lệ và không được lưu." };
+  if (!firebaseReady || !firebaseUser || !ownResultRef || !state.student) return { saved: false, message: "Đã hoàn thành nhưng Firebase chưa sẵn sàng; kết quả chưa được lưu." };
+
+  const safeStats = {
+    netWpm: Math.max(0, Math.round(finiteNumber(stats && stats.netWpm, 0))),
+    rawWpm: Math.max(0, Math.round(finiteNumber(stats && stats.rawWpm, 0))),
+    accuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.accuracy, 100)))),
+    errors: Math.max(0, Math.round(finiteNumber(stats && stats.errors, 0))),
+    elapsed: Math.max(0, finiteNumber(stats && stats.elapsed, 0))
+  };
+  if (safeStats.netWpm > 250 || safeStats.rawWpm > 300) return { saved: false, message: "Đã hoàn thành nhưng kết quả vượt ngưỡng hợp lệ nên không được lưu." };
 
   const lesson = lessons[state.currentLessonIndex];
   try {
@@ -1026,24 +1118,24 @@ async function saveBestScore(stats) {
         className: state.student.className, studentNo: state.student.studentNo, name: state.student.name,
         answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "", liveActive: false, liveNetWpm: 0, liveRawWpm: 0, liveAccuracy: 100, liveErrors: 0, liveElapsed: 0, liveProgress: 0, liveLessonId: "", liveLessonTitle: "" },
         done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: Date.now(), updatedAt: Date.now(),
-        meta: { appVersion: "8", status: "idle" }
+        meta: { appVersion: "9", status: "idle" }
       };
       if (!sameStudentIdentity(base, state.student) || base.ownerUid !== firebaseUser.uid) return;
       const a = base.answers || {};
       const oldWpm = Number(a.bestNetWpm || 0), oldAccuracy = Number(a.bestAccuracy || 0);
-      const better = stats.netWpm > oldWpm || (stats.netWpm === oldWpm && stats.accuracy > oldAccuracy);
+      const better = safeStats.netWpm > oldWpm || (safeStats.netWpm === oldWpm && safeStats.accuracy > oldAccuracy);
       if (better) {
-        a.bestNetWpm = stats.netWpm; a.bestRawWpm = stats.rawWpm; a.bestAccuracy = stats.accuracy; a.bestErrors = stats.errors;
-        a.bestElapsed = Number(stats.elapsed.toFixed(1)); a.bestLessonId = lesson.id; a.bestLessonTitle = lesson.title;
+        a.bestNetWpm = safeStats.netWpm; a.bestRawWpm = safeStats.rawWpm; a.bestAccuracy = safeStats.accuracy; a.bestErrors = safeStats.errors;
+        a.bestElapsed = Number(safeStats.elapsed.toFixed(1)); a.bestLessonId = lesson.id; a.bestLessonTitle = lesson.title;
       }
       a.liveActive = false; a.liveProgress = 100;
-      base.answers = a; base.done = { "0": true }; base.updatedAt = Date.now(); base.meta = { ...(base.meta || {}), appVersion: "8", status: "completed" };
+      base.answers = a; base.done = { "0": true }; base.updatedAt = Date.now(); base.meta = { ...(base.meta || {}), appVersion: "9", status: "completed" };
       return base;
     });
     if (!tx.committed) return { saved: false, message: "Không thể cập nhật thành tích của phiên này." };
     const saved = tx.snapshot.val()?.answers || {};
-    const isBest = Number(saved.bestNetWpm || 0) === stats.netWpm && Number(saved.bestAccuracy || 0) === stats.accuracy;
-    return { saved: isBest, message: isBest ? "Đã lưu thành tích tốt nhất của em." : "Đã hoàn thành; thành tích tốt nhất trước đó vẫn cao hơn." };
+    const isBest = Number(saved.bestNetWpm || 0) === safeStats.netWpm && Number(saved.bestAccuracy || 0) === safeStats.accuracy;
+    return { saved: true, isBest, message: isBest ? "Hoàn thành! Kết quả đã được ghi nhận và lưu thành tích tốt nhất." : "Hoàn thành! Kết quả đã được ghi nhận; thành tích tốt nhất trước đó vẫn cao hơn." };
   } catch (error) {
     console.error("saveBestScore:", error);
     return { saved: false, message: "Không thể lưu thành tích lên Firebase." };
@@ -1081,9 +1173,9 @@ function buildStudentRecord(stats, active) {
   return {
     className: state.student.className, studentNo: state.student.studentNo, name: state.student.name,
     answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "",
-      liveActive: Boolean(active), liveNetWpm: Number(stats.netWpm || 0), liveRawWpm: Number(stats.rawWpm || 0), liveAccuracy: Number(stats.accuracy || 100), liveErrors: Number(stats.errors || 0), liveElapsed: Number((stats.elapsed || 0).toFixed(1)), liveProgress: Number(stats.progress || 0), liveLessonId: lesson?.id || "", liveLessonTitle: lesson?.title || "" },
+      liveActive: Boolean(active), liveNetWpm: Math.max(0, Math.round(finiteNumber(stats && stats.netWpm, 0))), liveRawWpm: Math.max(0, Math.round(finiteNumber(stats && stats.rawWpm, 0))), liveAccuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.accuracy, 100)))), liveErrors: Math.max(0, Math.round(finiteNumber(stats && stats.errors, 0))), liveElapsed: Number(Math.max(0, finiteNumber(stats && stats.elapsed, 0)).toFixed(1)), liveProgress: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.progress, 0)))), liveLessonId: lesson?.id || "", liveLessonTitle: lesson?.title || "" },
     done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: Date.now(), updatedAt: Date.now(),
-    meta: { appVersion: "8", status: active ? "active" : "idle" }
+    meta: { appVersion: "9", status: active ? "active" : "idle" }
   };
 }
 
@@ -1105,21 +1197,45 @@ async function updateLivePresence(stats, force = false) {
   const now = Date.now(); if (!force && now - lastLiveWriteAt < 1500) return; lastLiveWriteAt = now;
   try {
     await ref.transaction(current => {
+      // Có thể còn một transaction live đang bay đúng lúc học sinh vừa hoàn thành.
+      // Kiểm tra lại tại thời điểm transaction chạy để không ghi đè trạng thái completed.
+      if (state.completed) return;
       const base = current || buildStudentRecord(stats, true);
       if (!sameStudentIdentity(base, state.student) || base.ownerUid !== firebaseUser.uid) return;
       const a = base.answers || {};
-      Object.assign(a, { liveActive:true, liveNetWpm:stats.netWpm, liveRawWpm:stats.rawWpm, liveAccuracy:stats.accuracy, liveErrors:stats.errors, liveElapsed:Number(stats.elapsed.toFixed(1)), liveProgress:stats.progress, liveLessonId:lessons[state.currentLessonIndex]?.id || "", liveLessonTitle:lessons[state.currentLessonIndex]?.title || "" });
+      Object.assign(a, {
+        liveActive: true,
+        liveNetWpm: Math.max(0, Math.round(finiteNumber(stats && stats.netWpm, 0))),
+        liveRawWpm: Math.max(0, Math.round(finiteNumber(stats && stats.rawWpm, 0))),
+        liveAccuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.accuracy, 100)))),
+        liveErrors: Math.max(0, Math.round(finiteNumber(stats && stats.errors, 0))),
+        liveElapsed: Number(Math.max(0, finiteNumber(stats && stats.elapsed, 0)).toFixed(1)),
+        liveProgress: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.progress, 0)))),
+        liveLessonId: lessons[state.currentLessonIndex]?.id || "",
+        liveLessonTitle: lessons[state.currentLessonIndex]?.title || ""
+      });
       if (a.bestNetWpm === undefined) Object.assign(a,{bestNetWpm:0,bestRawWpm:0,bestAccuracy:0,bestErrors:0,bestElapsed:0,bestLessonId:"",bestLessonTitle:""});
-      base.answers=a; base.done=base.done || {"0":false}; base.updatedAt=Date.now(); base.meta={...(base.meta||{}),appVersion:"8",status:"active"}; return base;
+      base.answers=a; base.done=base.done || {"0":false}; base.updatedAt=Date.now(); base.meta={...(base.meta||{}),appVersion:"9",status:"active"}; return base;
     });
   } catch (error) { console.warn("Không cập nhật được trạng thái trực tiếp:", error); }
 }
 
 async function endLivePresence() {
   stopLiveHeartbeat();
-  const ref = currentLiveRef(); if (!ref || !state.student) return;
-  try { await ref.update({ "answers/liveActive": false, "meta/status": "idle", updatedAt: firebase.database.ServerValue.TIMESTAMP }); }
-  catch (error) { console.warn("Không kết thúc được trạng thái trực tiếp:", error); }
+  const ref = currentLiveRef();
+  if (!ref || !state.student) return;
+  try {
+    await ref.transaction(current => {
+      if (!current || !sameStudentIdentity(current, state.student)) return current;
+      const done = current?.done?.["0"] === true;
+      current.answers = { ...(current.answers || {}), liveActive: false };
+      current.meta = { ...(current.meta || {}), appVersion: "9", status: done ? "completed" : "idle" };
+      current.updatedAt = Date.now();
+      return current;
+    });
+  } catch (error) {
+    console.warn("Không kết thúc được trạng thái trực tiếp:", error);
+  }
 }
 
 function stopTeacherResultsListener() {
@@ -1134,27 +1250,59 @@ function startTeacherResultsListener() {
     const all=[]; snapshot.forEach(child=>{ const val=child.val(); if(val&&typeof val==="object") all.push({...val,_key:child.key}); });
     liveSessionsCache=all; leaderboardCache=all; updateClassFilter(all); autoSelectActiveClass(all); renderLiveSessions(all); renderCompletedStudents(all); renderLeaderboard(all);
   };
-  resultsRef.on("value", teacherResultsHandler, error=>{ console.error(error); els.liveInfo.textContent="Không đọc được dữ liệu. Kiểm tra Firebase Rules."; });
+  resultsRef.on("value", teacherResultsHandler, error => {
+    console.error(error);
+    const message = "Không đọc được dữ liệu lớp. Kiểm tra quyền giáo viên và Firebase Rules.";
+    els.liveInfo.textContent = message;
+    els.completedInfo.textContent = message;
+    els.completedCount.textContent = "0";
+    els.completedList.innerHTML = '<li class="empty">Không tải được danh sách hoàn thành.</li>';
+    if (els.leaderboardInfo) els.leaderboardInfo.textContent = message;
+    if (els.leaderboard) els.leaderboard.innerHTML = '<li class="empty">Không tải được bảng xếp hạng.</li>';
+  });
+}
+
+function bestLiveRecordPerStudent(items) {
+  const staleBefore = Date.now() - 30000;
+  const map = new Map();
+  (items || []).forEach(item => {
+    if (!item || item?.answers?.liveActive !== true || finiteNumber(item.updatedAt, 0) < staleBefore) return;
+    const key = `${normalizeClassName(item.className)}_${Number(item.studentNo || 0)}`;
+    const old = map.get(key);
+    if (!old || finiteNumber(item.updatedAt, 0) > finiteNumber(old.updatedAt, 0)) map.set(key, item);
+  });
+  return [...map.values()];
 }
 
 function renderLiveSessions(items) {
   if (!isTeacher) return;
-  const selectedClass=els.leaderboardClassFilter.value, staleBefore=Date.now()-30000;
-  let filtered=items.filter(item=>item?.answers?.liveActive===true && Number(item.updatedAt||0)>=staleBefore);
-  if(selectedClass!=="all") filtered=filtered.filter(item=>item.className===selectedClass);
-  filtered.sort((a,b)=>String(a.className).localeCompare(String(b.className),"vi",{numeric:true})||Number(a.studentNo)-Number(b.studentNo));
-  els.liveCount.textContent=String(filtered.length);
-  els.liveInfo.textContent=filtered.length?`${filtered.length} học sinh đang hoạt động${selectedClass!=="all"?` · lớp ${selectedClass}`:""}.`:`Chưa có học sinh đang hoạt động${selectedClass!=="all"?` ở lớp ${selectedClass}`:""}.`;
-  els.liveList.innerHTML=filtered.length?filtered.map(item=>{const a=item.answers||{};return `<li class="live-item"><div><div class="live-name">${escapeHTML(item.name)}</div><div class="player-meta">${escapeHTML(item.className||"")} · STT ${Number(item.studentNo||0)} · ${escapeHTML(a.liveLessonTitle||"")}</div><div class="live-progress"><span style="width:${Math.max(0,Math.min(100,Number(a.liveProgress||0)))}%"></span></div></div><div class="live-stats"><div class="live-wpm">${Number(a.liveNetWpm||0)} WPM</div><div class="player-meta">${Number(a.liveAccuracy||0)}% · ${Number(a.liveProgress||0)}% · ${Number(a.liveElapsed||0).toFixed(0)}s</div></div></li>`}).join(""):'<li class="empty">Chưa có học sinh đang luyện tập.</li>';
+  const selectedClass = els.leaderboardClassFilter.value;
+  let filtered = bestLiveRecordPerStudent(items);
+  if (selectedClass !== "all") {
+    filtered = filtered.filter(item => normalizeClassName(item.className) === normalizeClassName(selectedClass));
+  }
+  filtered.sort((a,b) => String(a.className).localeCompare(String(b.className), "vi", {numeric:true}) || Number(a.studentNo)-Number(b.studentNo));
+
+  els.liveCount.textContent = String(filtered.length);
+  els.liveInfo.textContent = filtered.length
+    ? `${filtered.length} học sinh đang hoạt động${selectedClass !== "all" ? ` · lớp ${selectedClass}` : ""}.`
+    : `Chưa có học sinh đang hoạt động${selectedClass !== "all" ? ` ở lớp ${selectedClass}` : ""}.`;
+
+  els.liveList.innerHTML = filtered.length ? filtered.map(item => {
+    const a = item.answers || {};
+    const liveNetWpm = Math.max(0, Math.round(finiteNumber(a.liveNetWpm, 0)));
+    const liveAccuracy = Math.max(0, Math.min(100, Math.round(finiteNumber(a.liveAccuracy, 0))));
+    const liveProgress = Math.max(0, Math.min(100, Math.round(finiteNumber(a.liveProgress, 0))));
+    const liveElapsed = Math.max(0, Math.round(finiteNumber(a.liveElapsed, 0)));
+    return `<li class="live-item"><div><div class="live-name">${escapeHTML(item.name || "")}</div><div class="player-meta">${escapeHTML(item.className||"")} · STT ${Number(item.studentNo||0)} · ${escapeHTML(a.liveLessonTitle||"")}</div><div class="live-progress"><span style="width:${liveProgress}%"></span></div></div><div class="live-stats"><div class="live-wpm">${liveNetWpm} WPM</div><div class="player-meta">${liveAccuracy}% · ${liveProgress}% · ${liveElapsed}s</div></div></li>`;
+  }).join("") : '<li class="empty">Chưa có học sinh đang luyện tập.</li>';
 }
 
 function autoSelectActiveClass(items) {
   // Nếu GV chưa chủ động chọn lớp và hiện chỉ có một lớp đang hoạt động,
   // tự chuyển bộ lọc sang lớp đó để bảng theo dõi + danh sách hoàn thành đồng bộ.
   if (!els.leaderboardClassFilter || els.leaderboardClassFilter.dataset.manual === "1") return;
-  const staleBefore = Date.now() - 30000;
-  const activeClasses = [...new Set(items
-    .filter(item => item?.answers?.liveActive === true && Number(item.updatedAt || 0) >= staleBefore)
+  const activeClasses = [...new Set(bestLiveRecordPerStudent(items)
     .map(item => item?.className)
     .filter(Boolean))];
   if (activeClasses.length === 1 && els.leaderboardClassFilter.value !== activeClasses[0]) {
@@ -1166,7 +1314,7 @@ function renderCompletedStudents(items) {
   if (!isTeacher || !els.completedList) return;
   const selectedClass = els.leaderboardClassFilter.value;
   let filtered = bestRecordPerStudent(items);
-  if (selectedClass !== "all") filtered = filtered.filter(item => item.className === selectedClass);
+  if (selectedClass !== "all") filtered = filtered.filter(item => normalizeClassName(item.className) === normalizeClassName(selectedClass));
   filtered.sort((a,b) => Number(a.studentNo||0)-Number(b.studentNo||0) || String(a.name||"").localeCompare(String(b.name||""), "vi"));
 
   els.completedCount.textContent = String(filtered.length);
@@ -1193,21 +1341,25 @@ function renderCompletedStudents(items) {
         <div class="player-meta">${escapeHTML(item.className||"")} · ${escapeHTML(a.bestLessonTitle||"Đã hoàn thành")}</div>
       </div>
       <div class="completed-score">
-        <strong>${Number(a.bestNetWpm||0)} WPM</strong>
-        <div class="player-meta">${Number(a.bestAccuracy||0)}% · ${Number(a.bestErrors||0)} lỗi</div>
+        <strong>${Math.max(0, Math.round(finiteNumber(a.bestNetWpm, 0)))} WPM</strong>
+        <div class="player-meta">${Math.max(0, Math.min(100, Math.round(finiteNumber(a.bestAccuracy, 0))))}% · ${Math.max(0, Math.round(finiteNumber(a.bestErrors, 0)))} lỗi</div>
       </div>
     </li>`;
   }).join("");
 }
 
+function isCompletedRecord(item) {
+  return Boolean(item && (item?.done?.["0"] === true || item?.meta?.status === "completed"));
+}
+
 function bestRecordPerStudent(items) {
   const map = new Map();
   items.forEach(item => {
-    if (!item?.name || item?.done?.["0"] !== true) return;
+    if (!item?.name || !isCompletedRecord(item)) return;
 
     const a = item.answers || {};
-    const wpm = Number(a.bestNetWpm || 0);
-    const key = `${String(item.className)}_${Number(item.studentNo)}`;
+    const wpm = Math.max(0, finiteNumber(a.bestNetWpm, 0));
+    const key = `${normalizeClassName(item.className)}_${Number(item.studentNo)}`;
     const old = map.get(key);
 
     if (!old) {
@@ -1216,11 +1368,11 @@ function bestRecordPerStudent(items) {
     }
 
     const oa = old.answers || {};
-    const oldWpm = Number(oa.bestNetWpm || 0);
+    const oldWpm = Math.max(0, finiteNumber(oa.bestNetWpm, 0));
     const better = wpm > oldWpm ||
-      (wpm === oldWpm && Number(a.bestAccuracy || 0) > Number(oa.bestAccuracy || 0)) ||
-      (wpm === oldWpm && Number(a.bestAccuracy || 0) === Number(oa.bestAccuracy || 0) &&
-       Number(item.updatedAt || 0) > Number(old.updatedAt || 0));
+      (wpm === oldWpm && finiteNumber(a.bestAccuracy, 0) > finiteNumber(oa.bestAccuracy, 0)) ||
+      (wpm === oldWpm && finiteNumber(a.bestAccuracy, 0) === finiteNumber(oa.bestAccuracy, 0) &&
+       finiteNumber(item.updatedAt, 0) > finiteNumber(old.updatedAt, 0));
 
     if (better) map.set(key, item);
   });
@@ -1230,8 +1382,8 @@ function bestRecordPerStudent(items) {
 function renderLeaderboard(items) {
   const selectedClass = els.leaderboardClassFilter.value;
   let filtered = bestRecordPerStudent(items);
-  if (selectedClass !== "all") filtered = filtered.filter(item => item.className === selectedClass);
-  filtered.sort((a,b) => Number(b.answers?.bestNetWpm||0)-Number(a.answers?.bestNetWpm||0) || Number(b.answers?.bestAccuracy||0)-Number(a.answers?.bestAccuracy||0) || Number(a.studentNo)-Number(b.studentNo));
+  if (selectedClass !== "all") filtered = filtered.filter(item => normalizeClassName(item.className) === normalizeClassName(selectedClass));
+  filtered.sort((a,b) => finiteNumber(b.answers?.bestNetWpm,0)-finiteNumber(a.answers?.bestNetWpm,0) || finiteNumber(b.answers?.bestAccuracy,0)-finiteNumber(a.answers?.bestAccuracy,0) || Number(a.studentNo)-Number(b.studentNo));
   if (els.leaderboardInfo) {
     const totalAll = bestRecordPerStudent(items).length;
     const totalShown = filtered.length;
@@ -1248,7 +1400,7 @@ function renderLeaderboard(items) {
   els.leaderboard.innerHTML = filtered.map((item,index) => {
     const a=item.answers||{};
     const deleteButton = isTeacher ? `<button type="button" class="delete-score-btn" data-student-key="${escapeHTML(item._key||"")}" title="Xoá bản ghi này">🗑</button>` : "";
-    return `<li class="leaderboard-item"><span>#${index+1}</span><span>${escapeHTML(item.name)}<div class="player-meta">${escapeHTML(item.className||"")} · STT ${Number(item.studentNo||0)} · Đã hoàn thành</div></span><span><strong>${Number(a.bestNetWpm||0)} WPM</strong><div class="player-meta">${Number(a.bestAccuracy||0)}% · ${Number(a.bestErrors||0)} lỗi</div></span>${deleteButton}</li>`;
+    return `<li class="leaderboard-item"><span>#${index+1}</span><span>${escapeHTML(item.name)}<div class="player-meta">${escapeHTML(item.className||"")} · STT ${Number(item.studentNo||0)} · Đã hoàn thành</div></span><span><strong>${Math.max(0, Math.round(finiteNumber(a.bestNetWpm, 0)))} WPM</strong><div class="player-meta">${Math.max(0, Math.min(100, Math.round(finiteNumber(a.bestAccuracy, 0))))}% · ${Math.max(0, Math.round(finiteNumber(a.bestErrors, 0)))} lỗi</div></span>${deleteButton}</li>`;
   }).join("");
 }
 
@@ -1270,10 +1422,24 @@ async function deleteStudentScore(uid) {
   if (!firebaseReady || !resultsRef || !isTeacher) { alert("Chỉ giáo viên đã đăng nhập mới được xoá dữ liệu."); return; }
   const item = leaderboardCache.find(row => row?._key === uid);
   if (!item) { alert("Không tìm thấy bản ghi này."); return; }
-  const a=item.answers||{};
-  if (!confirm(`Xoá bản ghi này?\n\n${item.className} · STT ${item.studentNo} · ${item.name}\n${Number(a.bestNetWpm||0)} WPM · Chính xác ${Number(a.bestAccuracy||0)}%`)) return;
-  try { await resultsRef.child(uid).remove(); }
-  catch (error) { console.error(error); alert("Không thể xoá dữ liệu. Hãy kiểm tra Firebase Rules."); }
+
+  const className = normalizeClassName(item.className);
+  const studentNo = Number(item.studentNo);
+  const sameStudentRows = leaderboardCache.filter(row =>
+    normalizeClassName(row?.className) === className && Number(row?.studentNo) === studentNo
+  );
+  const a = item.answers || {};
+  const bestWpm = Math.max(0, Math.round(finiteNumber(a.bestNetWpm, 0)));
+  const bestAccuracy = Math.max(0, Math.min(100, Math.round(finiteNumber(a.bestAccuracy, 0))));
+
+  if (!confirm(`Xoá toàn bộ dữ liệu của học sinh này?\n\n${item.className} · STT ${item.studentNo} · ${item.name}\n${bestWpm} WPM · Chính xác ${bestAccuracy}%\nSố bản ghi sẽ xoá: ${sameStudentRows.length}`)) return;
+
+  try {
+    await Promise.all(sameStudentRows.map(row => resultsRef.child(row._key).remove()));
+  } catch (error) {
+    console.error(error);
+    alert("Không thể xoá dữ liệu. Hãy kiểm tra Firebase Rules.");
+  }
 }
 
 els.leaderboard.addEventListener("click", event => {
@@ -1307,7 +1473,10 @@ els.btnClearLeaderboard.addEventListener("click", clearSessionLeaderboard);
 els.studentNoInput.addEventListener("keydown", event => { if (event.key === "Enter") els.nameInput.focus(); });
 els.nameInput.addEventListener("keydown", event => { if (event.key === "Enter") els.btnStart.click(); });
 
-window.addEventListener("pagehide", () => { stopLiveHeartbeat(); const ref = currentLiveRef(); if (ref) ref.update({"answers/liveActive":false,"meta/status":"idle",updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{}); });
+window.addEventListener("pagehide", () => {
+  stopLiveHeartbeat();
+  endLivePresence().catch(() => {});
+});
 
 initFirebase();
 </script>
