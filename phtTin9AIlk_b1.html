@@ -180,6 +180,21 @@ th{background:#edf5ff}
   .match-table select{min-width:140px}
 }
 
+
+/* ===== ĐIỂM PHT TỰ ĐỘNG ===== */
+.score-card{
+  margin-top:12px;border:2px solid #bbdefb;background:linear-gradient(135deg,#f7fbff,#eef8ff);
+  border-radius:14px;padding:14px 16px
+}
+.score-card.hidden{display:none!important}
+.score-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.score-number{font-size:2rem;font-weight:900;color:var(--primary2)}
+.score-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.score-breakdown>div{background:#fff;border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center}
+.score-breakdown strong{display:block;color:var(--primary2);font-size:1.15rem}
+.score-note{margin-top:9px;font-size:.9rem;color:var(--muted);line-height:1.45}
+@media(max-width:650px){.score-breakdown{grid-template-columns:1fr}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -220,7 +235,7 @@ th{background:#edf5ff}
 <div class="app">
   <div class="header">
     <h1>PHIẾU HỌC TẬP SỐ - TIN HỌC 9</h1>
-    <p>Chuyên đề: Kỹ năng sinh tồn thời AI · 3 tiết · 9 hoạt động · Bám KHBD mới</p>
+    <p>Chuyên đề: Kỹ năng sinh tồn thời AI · 3 tiết · 9 hoạt động · Có chấm điểm tự động 10 điểm</p>
   </div>
 
   <section id="loginScreen" class="card">
@@ -342,6 +357,25 @@ th{background:#edf5ff}
       <div class="progress-shell"><div class="progress-bar" id="progressBar"></div></div>
       <div class="activity-nav" id="activityNav"></div>
       <div id="studentReviewCard" class="student-review hidden"></div>
+      <div id="studentScoreCard" class="score-card hidden">
+        <div class="score-head">
+          <div>
+            <div class="small">KẾT QUẢ PHIẾU HỌC TẬP</div>
+            <div><span id="studentScoreNumber" class="score-number">0.0/10</span></div>
+          </div>
+          <span id="studentScoreStatus" class="badge">Chưa hoàn thành</span>
+        </div>
+        <div class="score-breakdown">
+          <div><strong id="scoreObjective">0.0/8.0</strong>Câu khách quan</div>
+          <div><strong id="scoreProduct">0.0/2.0</strong>Sản phẩm mở</div>
+          <div><strong id="scoreActivities">0/9</strong>Hoạt động hoàn thành</div>
+        </div>
+        <div class="score-note">
+          Điểm PHT gồm <b>8 điểm câu khách quan</b> (trắc nghiệm, nối cột, Đúng/Sai)
+          và <b>2 điểm mức độ hoàn thành sản phẩm mở</b> (điền khuyết, lí do, chỉnh sửa gợi ý AI, kế hoạch 4 tuần).
+          Hệ thống không tự đánh giá chất lượng diễn đạt của câu mở; giáo viên có thể nhận xét và điều chỉnh khi cần.
+        </div>
+      </div>
     </div>
 
     <div class="card activity" id="activityCard"></div>
@@ -376,7 +410,7 @@ th{background:#edf5ff}
       <table class="teacher-table">
         <thead>
           <tr>
-            <th>Lớp</th><th>STT</th><th>Họ tên</th><th>Tiến độ</th>
+            <th>Lớp</th><th>STT</th><th>Họ tên</th><th>Điểm PHT</th><th>Tiến độ</th>
             <th>HĐ đã xong</th><th>Cập nhật</th><th>Chi tiết</th>
           </tr>
         </thead>
@@ -392,7 +426,7 @@ th{background:#edf5ff}
 "use strict";
 
 const WORKSHEET_ID = "tin9_ai_bai1";
-const STORAGE_KEY = `worksheet_${WORKSHEET_ID}_local_v6`;
+const STORAGE_KEY = `worksheet_${WORKSHEET_ID}_local_v7`;
 const SESSION_KEY = `worksheet_${WORKSHEET_ID}_active_student_v1`;
 
 const firebaseConfig = {
@@ -741,6 +775,132 @@ const activities = [
 ];
 
 
+
+// ===== THANG ĐIỂM PHT 10 ĐIỂM =====
+// 8 điểm khách quan + 2 điểm hoàn thành sản phẩm mở.
+const AUTO_SCORE_OBJECTIVE = [
+  // Tiết 1 = 2,75 điểm
+  {key:"a1_mcq",correct:"B",points:0.50},
+  {key:"a2_match_summary",correct:"AI hỗ trợ tốt",points:0.20},
+  {key:"a2_match_schedule",correct:"AI hỗ trợ nhưng cần kiểm tra",points:0.20},
+  {key:"a2_match_notice",correct:"AI hỗ trợ tốt",points:0.20},
+  {key:"a2_match_emotion",correct:"Không nên giao hoàn toàn cho AI",points:0.20},
+  {key:"a2_mcq",correct:"C",points:0.45},
+  {key:"a3_tool_explain",correct:"A",points:0.25},
+  {key:"a3_tool_doc",correct:"B",points:0.25},
+  {key:"a3_tool_search",correct:"C",points:0.25},
+  {key:"a3_tool_media",correct:"D",points:0.25},
+
+  // Tiết 2 = 2,50 điểm
+  {key:"a4_g1",correct:"Nhận thức",points:0.15},
+  {key:"a4_g2",correct:"Tự thân",points:0.15},
+  {key:"a4_g3",correct:"Cảm xúc - xã hội",points:0.15},
+  {key:"a4_g4",correct:"Nhận thức",points:0.15},
+  {key:"a4_g5",correct:"Tự thân",points:0.15},
+  {key:"a4_g6",correct:"Công nghệ",points:0.15},
+  {key:"a4_g7",correct:"Cảm xúc - xã hội",points:0.15},
+  {key:"a4_g8",correct:"Tự thân",points:0.15},
+  {key:"a4_g9",correct:"Công nghệ",points:0.15},
+  {key:"a5_high",correct:"B",points:0.40},
+  {key:"a5_low",correct:"A",points:0.40},
+  {key:"a5_tf",correct:"F",points:0.35},
+
+  // Tiết 3 = 2,75 điểm
+  {key:"a7_p1",correct:"A",points:0.25},
+  {key:"a7_p2",correct:"B",points:0.25},
+  {key:"a7_p3",correct:"C",points:0.25},
+  {key:"a7_p4",correct:"D",points:0.25},
+  {key:"a8_mcq",correct:"C",points:0.50},
+  {key:"a8_m1",correct:"Quá chung chung, khó đo",points:0.25},
+  {key:"a8_m2",correct:"Không cần thiết/tốn chi phí",points:0.25},
+  {key:"a8_m3",correct:"Quá dài so với điều kiện thực tế",points:0.25},
+  {key:"a9_mcq",correct:"B",points:0.50}
+];
+
+const AUTO_SCORE_PRODUCT = [
+  {name:"HĐ1 · Điền khuyết",points:0.25,keys:["a1_fill_check","a1_fill_decide"]},
+  {name:"HĐ3 · Quy trình kiểm tra",points:0.25,keys:["a3_fill_verify"]},
+  {name:"HĐ6 · 3 kỹ năng ưu tiên",points:0.25,keys:["a6_skill1","a6_skill2","a6_skill3","a6_reason"]},
+  {name:"HĐ7 · Điền khuyết prompt",points:0.25,keys:["a7_fill_info","a7_fill_output"]},
+  {name:"HĐ8 · Viết lại gợi ý AI",points:0.50,keys:["a8_rewrite"]},
+  {name:"HĐ9 · Kế hoạch 4 tuần",points:0.50,keys:[
+    "a9_w1_skill","a9_w1_action","a9_w1_time","a9_w1_check",
+    "a9_w2_skill","a9_w2_action","a9_w2_time","a9_w2_check",
+    "a9_w3_skill","a9_w3_action","a9_w3_time","a9_w3_check",
+    "a9_w4_skill","a9_w4_action","a9_w4_time","a9_w4_check",
+    "a9_commit"
+  ]}
+];
+
+function isFilledAnswer(v){
+  if(Array.isArray(v)) return v.length>0;
+  return String(v??"").trim().length>0;
+}
+
+function calculateAutoScore(record){
+  const a=record?.answers||{};
+  let objectiveEarned=0, objectiveAnswered=0, objectiveCorrect=0;
+  AUTO_SCORE_OBJECTIVE.forEach(item=>{
+    if(isFilledAnswer(a[item.key])){
+      objectiveAnswered++;
+      if(String(a[item.key])===String(item.correct)){
+        objectiveCorrect++;
+        objectiveEarned+=Number(item.points)||0;
+      }
+    }
+  });
+
+  let productEarned=0, productDone=0;
+  AUTO_SCORE_PRODUCT.forEach(group=>{
+    const ok=group.keys.every(k=>isFilledAnswer(a[k]));
+    if(ok){
+      productDone++;
+      productEarned+=Number(group.points)||0;
+    }
+  });
+
+  const total=Math.min(10,objectiveEarned+productEarned);
+  const doneCount=(record?.done||[]).filter(Boolean).length;
+  return {
+    total:Number(total.toFixed(2)),
+    objective:Number(objectiveEarned.toFixed(2)),
+    objectiveMax:8,
+    product:Number(productEarned.toFixed(2)),
+    productMax:2,
+    objectiveAnswered,
+    objectiveCorrect,
+    productDone,
+    productTotal:AUTO_SCORE_PRODUCT.length,
+    doneCount,
+    activityTotal:activities.length,
+    completed:doneCount===activities.length
+  };
+}
+
+function renderStudentAutoScore(){
+  const box=document.getElementById("studentScoreCard");
+  if(!box||!currentRecord){ if(box) box.classList.add("hidden"); return; }
+  const s=calculateAutoScore(currentRecord);
+
+  document.getElementById("studentScoreNumber").textContent=s.total.toFixed(1)+"/10";
+  document.getElementById("scoreObjective").textContent=s.objective.toFixed(1)+"/8.0";
+  document.getElementById("scoreProduct").textContent=s.product.toFixed(1)+"/2.0";
+  document.getElementById("scoreActivities").textContent=s.doneCount+"/"+s.activityTotal;
+
+  const status=document.getElementById("studentScoreStatus");
+  if(s.completed){
+    status.textContent="Đã hoàn thành phiếu";
+    status.style.background="#e8f5e9";
+    status.style.color="#1b5e20";
+    box.classList.remove("hidden");
+  }else{
+    status.textContent=`Đang làm · ${s.doneCount}/${s.activityTotal} HĐ`;
+    status.style.background="#fff8e1";
+    status.style.color="#7a4a00";
+    box.classList.add("hidden");
+  }
+}
+
 function allData(){
   try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}catch{return {}}
 }
@@ -953,9 +1113,10 @@ async function syncCurrentToFirebase(){
     ownerUid:firebaseUser.uid,
     createdAt:Number(currentRecord.createdAt)||Date.now(),
     updatedAt:firebase.database.ServerValue.TIMESTAMP,
+    score:calculateAutoScore(currentRecord),
     meta:{
       worksheetId:WORKSHEET_ID,
-      version:"6"
+      version:"7"
     }
   };
 
@@ -1043,7 +1204,7 @@ function startTeacherListener(){
   const errorHandler=err=>{
     console.error("Teacher Firebase read error:",err);
     document.getElementById("teacherBody").innerHTML=
-      '<tr><td colspan="7">Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules.</td></tr>';
+      '<tr><td colspan="8">Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules.</td></tr>';
   };
 
   resultsRef.on("value",handler,errorHandler);
@@ -1083,7 +1244,7 @@ function defaultRecord(cls,no,name){
     ownerUid:firebaseUser?.uid||"",
     createdAt:Date.now(),
     updatedAt:Date.now(),
-    meta:{worksheetId:WORKSHEET_ID,version:"6"}
+    meta:{worksheetId:WORKSHEET_ID,version:"7"}
   };
 }
 
@@ -1153,12 +1314,26 @@ function renderActivity(){
 
   document.getElementById("completeAct").onclick=async()=>{
     currentRecord.done[currentActivity]=true;
+    currentRecord.score=calculateAutoScore(currentRecord);
     await persistCurrent(true);
     renderActivity();
     updateProgress();
+    renderStudentAutoScore();
+
+    if(currentRecord.done.every(Boolean)){
+      const s=calculateAutoScore(currentRecord);
+      setTimeout(()=>alert(
+        "Em đã hoàn thành phiếu học tập.\n\n"+
+        "Điểm PHT: "+s.total.toFixed(1)+"/10\n"+
+        "- Câu khách quan: "+s.objective.toFixed(1)+"/8,0\n"+
+        "- Sản phẩm mở hoàn thành: "+s.product.toFixed(1)+"/2,0\n\n"+
+        "Kết quả cũng được hiển thị ở đầu phiếu."
+      ),100);
+    }
   };
 
   updateProgress();
+  renderStudentAutoScore();
 }
 function bindAnswerEvents(root){
   root.querySelectorAll("[data-key]").forEach(el=>{
@@ -1176,6 +1351,8 @@ function capture(e){
   }
 
   currentRecord.updatedAt=Date.now();
+  currentRecord.score=calculateAutoScore(currentRecord);
+  renderStudentAutoScore();
 
   const status=document.getElementById("saveStatus");
   if(status)status.textContent="Đang lưu...";
@@ -1200,10 +1377,11 @@ async function persistCurrent(forceRemote=false){
   currentRecord.ownerUid=firebaseUser?.uid||currentRecord.ownerUid||"";
   currentRecord.answers=currentRecord.answers||{};
   currentRecord.done=Array.from({length:activities.length},(_,i)=>Boolean(Array.isArray(currentRecord.done)?currentRecord.done[i]:false));
+  currentRecord.score=calculateAutoScore(currentRecord);
   currentRecord.meta={
     ...(currentRecord.meta||{}),
     worksheetId:WORKSHEET_ID,
-    version:"6"
+    version:"7"
   };
 
   const d=allData();
@@ -1318,7 +1496,7 @@ async function enterStudent(){
         ownerUid:firebaseUser.uid,
         createdAt:Number(chosen.createdAt)||Date.now(),
         updatedAt:Date.now(),
-        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"6"}
+        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"7"}
       };
     }else{
       currentRecord=defaultRecord(cls,no,name);
@@ -1472,7 +1650,8 @@ function normalizeTeacherRecord(uid,r){
     studentNo,
     name:String(r.name??"").trim() || "(Chưa có tên)",
     done:Array.isArray(r.done)?r.done:[],
-    updatedAt:Number(r.updatedAt)||0
+    updatedAt:Number(r.updatedAt)||0,
+    score:(r.score&&typeof r.score==="object")?r.score:calculateAutoScore(r)
   };
 }
 
@@ -1521,7 +1700,7 @@ function renderTeacher(){
   if(!body)return;
 
   if(!teacherMode){
-    body.innerHTML='<tr><td colspan="7">Chưa đăng nhập giáo viên.</td></tr>';
+    body.innerHTML='<tr><td colspan="8">Chưa đăng nhập giáo viên.</td></tr>';
     return;
   }
 
@@ -1568,7 +1747,7 @@ function renderTeacher(){
     document.getElementById("kpiRecent").textContent=formatTeacherDate(latest);
 
     if(!view.length){
-      body.innerHTML='<tr><td colspan="7" class="small">Chưa có dữ liệu của lớp đã chọn.</td></tr>';
+      body.innerHTML='<tr><td colspan="8" class="small">Chưa có dữ liệu của lớp đã chọn.</td></tr>';
       return;
     }
 
@@ -1580,6 +1759,7 @@ function renderTeacher(){
         <td>${esc(g.className)}</td>
         <td>${g.studentNo}</td>
         <td>${esc(g.name)}${g.hasReview?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${multi?`<div class="small">Đã gộp ${g.records.length} phiên theo cùng Lớp + STT</div>`:""}</td>
+        <td><span class="score-pill">${calculateAutoScore(g.representative).total.toFixed(1)}/10</span></td>
         <td><span class="score-pill">${Math.round(g.doneCount/activities.length*100)}%</span></td>
         <td>${g.doneCount}/${activities.length}</td>
         <td>${formatTeacherDate(g.updatedAt)}</td>
@@ -1599,7 +1779,7 @@ function renderTeacher(){
     );
   }catch(err){
     console.error("renderTeacher error:",err);
-    body.innerHTML='<tr><td colspan="7" class="small" style="color:#b71c1c">Không thể hiển thị danh sách học sinh. Hãy tải lại trang hoặc kiểm tra Console.</td></tr>';
+    body.innerHTML='<tr><td colspan="8" class="small" style="color:#b71c1c">Không thể hiển thị danh sách học sinh. Hãy tải lại trang hoặc kiểm tra Console.</td></tr>';
   }
 }
 document.getElementById("teacherClassFilter").onchange=()=>{
@@ -1950,6 +2130,15 @@ function showDetail(uid){
         </div>
       </div>
 
+      <div class="result-box" style="margin:10px 0">
+        <b>Điểm PHT tự động:</b>
+        <span style="font-size:1.45rem;font-weight:900;color:var(--primary2)">${calculateAutoScore(r).total.toFixed(1)}/10</span>
+        <div class="small" style="margin-top:4px">
+          Khách quan: ${calculateAutoScore(r).objective.toFixed(1)}/8,0 ·
+          Sản phẩm mở hoàn thành: ${calculateAutoScore(r).product.toFixed(1)}/2,0.
+        </div>
+      </div>
+
       <div class="review-summary-grid">
         <div><strong>${stats.correct}</strong>Câu khách quan đúng</div>
         <div><strong>${stats.wrong}</strong>Cần xem lại</div>
@@ -1958,7 +2147,7 @@ function showDetail(uid){
       </div>
 
       <div class="notice" style="margin:10px 0">
-        Hệ thống chỉ đối chiếu các câu khách quan (trắc nghiệm, nối cột, Đúng/Sai). Các câu điền khuyết mở, lí do, phản biện và kế hoạch 4 tuần do giáo viên đọc và nhận xét.
+        Điểm PHT tự động gồm 8 điểm câu khách quan và 2 điểm hoàn thành sản phẩm mở. Phần mở chỉ được tính mức độ hoàn thành; giáo viên vẫn đọc nội dung để nhận xét chất lượng.
       </div>
 
       ${renderReviewQuestions(r)}
@@ -2076,7 +2265,7 @@ document.getElementById("exportCsvBtn").onclick=()=>{
     .map(([uid,r])=>normalizeTeacherRecord(uid,r))
     .filter(Boolean);
   const groups=buildTeacherGroups(entries);
-  const rows=[["Lớp","STT","Họ tên","Số HĐ hoàn thành","Tiến độ %","Số phiên","Cập nhật"]];
+  const rows=[["Lớp","STT","Họ tên","Điểm PHT","Điểm khách quan","Điểm sản phẩm","Số HĐ hoàn thành","Tiến độ %","Số phiên","Cập nhật"]];
   groups.forEach(g=>rows.push([
     g.className,g.studentNo,g.name,g.doneCount,
     Math.round(g.doneCount/activities.length*100),g.records.length,

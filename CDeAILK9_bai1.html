@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>Kỹ năng sinh tồn thời AI - Bài giảng lớp 9</title>
 <style>
 :root{
@@ -230,643 +231,935 @@ input[type=range]{width:100%}
 .live-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#fff8df;border:1px solid #f0d88b;color:#886100;font-size:13px;font-weight:850}
 @media(max-width:760px){.quiz-options{grid-template-columns:1fr}.tf-row{grid-template-columns:1fr}}
 
+
+
+/* ===== GHI CHÚ GIÁO VIÊN CHI TIẾT ===== */
+.teacher-note{
+  font-size:15px;line-height:1.5;
+  border:1px dashed #76a7c9;background:#f7fbff;color:#2f536f
+}
+.teacher-note .tn-title{
+  display:flex;align-items:center;gap:8px;font-weight:900;color:#155b9d;
+  margin-bottom:8px;font-size:16px
+}
+.teacher-note .tn-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin-top:8px
+}
+.teacher-note .tn-item{
+  padding:8px 10px;border-radius:9px;background:white;border:1px solid #d8e7f3
+}
+.teacher-note .tn-item b{color:#244f73}
+.teacher-note ul{margin:5px 0 0 18px;padding:0}
+.teacher-note li{margin:3px 0}
+.teacher-note .tn-chot{
+  margin-top:8px;padding:8px 10px;border-left:4px solid #27ae60;background:#eefaf3;border-radius:0 9px 9px 0
+}
+.teacher-note .tn-warn{
+  margin-top:8px;padding:8px 10px;border-left:4px solid #f2a900;background:#fff8df;border-radius:0 9px 9px 0
+}
+@media(max-width:800px){.teacher-note .tn-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="progress"><div></div></div>
-  <main id="deck">
-
+<div id="progress"><div></div></div>
+<main id="deck">
 <!-- ==================== TIẾT 1 ==================== -->
 <section class="slide active" data-period="1" data-title="Mở đầu">
-  <div class="period-marker">TIẾT 1 • SLIDE 1/8</div>
-  <div class="kicker">CHUYÊN ĐỀ AI 9 • 3 TIẾT</div>
-  <div class="grid2">
-    <div>
-      <h1>KỸ NĂNG<br/>SINH TỒN<br/>THỜI AI</h1>
-      <p class="lead">Biết <strong>dùng AI đúng việc</strong>, biết <strong>kiểm tra kết quả</strong> và vẫn là người <strong>ra quyết định cuối cùng</strong>.</p>
-      <span class="tag">AI hỗ trợ</span><span class="tag">Con người kiểm tra</span><span class="tag">Con người quyết định</span>
-    </div>
-    <div class="card" style="padding:28px">
-      <div class="bigicon">🤖 + 🧠</div>
-      <h3>Câu hỏi mở đầu</h3>
-      <p>Nếu AI trả lời rất nhanh, tại sao chúng ta vẫn phải học cách kiểm tra và tự quyết định?</p>
-      <button class="choice" id="introReveal">Xem gợi ý</button>
-      <div class="reveal answer explain-box" id="introAnswer"><strong>Gợi ý:</strong> Vì AI có thể sai, thiếu bối cảnh hoặc đưa ra gợi ý không phù hợp. Người dùng phải hiểu nhiệm vụ, kiểm tra kết quả và chịu trách nhiệm với cách mình sử dụng AI.</div>
-    </div>
-  </div>
-  <div class="teacher-note">Mục tiêu của bài không phải “học thật nhiều tên công cụ AI”, mà là hình thành cách dùng AI có mục đích, có kiểm tra và có trách nhiệm.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 1/11</div>
+<div class="kicker">CHUYÊN ĐỀ AI 9 • 3 TIẾT</div>
+<div class="grid2">
+<div>
+<h1>KỸ NĂNG<br/>SINH TỒN<br/>THỜI AI</h1>
+<p class="lead">Biết <strong>dùng AI đúng việc</strong>, biết <strong>kiểm tra kết quả</strong> và vẫn là người <strong>ra quyết định cuối cùng</strong>.</p>
+<span class="tag">AI hỗ trợ</span><span class="tag">Con người kiểm tra</span><span class="tag">Con người quyết định</span>
+</div>
+<div class="card" style="padding:28px">
+<div class="bigicon">🤖 + 🧠</div>
+<h3>Câu hỏi mở đầu</h3>
+<p>Nếu AI trả lời rất nhanh, tại sao chúng ta vẫn phải học cách kiểm tra và tự quyết định?</p>
+<button class="choice" id="introReveal">Xem gợi ý</button>
+<div class="reveal answer explain-box" id="introAnswer"><strong>Gợi ý:</strong> Vì AI có thể sai, thiếu bối cảnh hoặc đưa ra gợi ý không phù hợp. Người dùng phải hiểu nhiệm vụ, kiểm tra kết quả và chịu trách nhiệm với cách mình sử dụng AI.</div>
+</div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">👩‍🏫 GHI CHÚ GV · CÁCH DÙNG TOÀN BỘ BÀI GIẢNG</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Mục đích slide:</b> Tạo tâm thế và giới thiệu thông điệp xuyên suốt: AI là công cụ hỗ trợ, con người vẫn kiểm tra và quyết định.</div>
+<div class="tn-item"><b>Thời gian:</b> 1–2 phút, không tách thành hoạt động riêng trong KHBD.</div>
+<div class="tn-item"><b>Điều khiển:</b> ←/→ chuyển slide; Space hiện nội dung ẩn rồi chuyển slide; nút <b>GV</b> bật/tắt ghi chú; ● bật laser; ⛶ toàn màn hình; đồng hồ 45:00 bấm để chạy/tạm dừng, nhấp đúp để đặt lại.</div>
+<div class="tn-item"><b>Cách dùng:</b> Mỗi tiết chọn đúng tiết trong hộp chọn. Không bắt buộc trình chiếu toàn bộ slide tương tác nếu thiếu thời gian; các slide trắc nghiệm/Đúng-Sai là công cụ kiểm tra nhanh, có thể dùng thay hỏi đáp miệng.</div>
+</div>
+<div class="tn-warn"><b>Lưu ý thời lượng:</b> KHBD đã đủ 45 phút/tiết. Các slide tương tác thêm không phải hoạt động mới bắt buộc; GV dùng linh hoạt 2–3 phút hoặc giao HS tự ôn.</div>
+<div class="tn-chot"><b>Lời dẫn gợi ý:</b> “Bài học này không yêu cầu các em nhớ thật nhiều công cụ AI. Điều quan trọng là biết dùng AI đúng việc, biết kiểm tra và biết tự chịu trách nhiệm.”</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="Yêu cầu cần đạt tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 1/11</div>
-  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
-  <h2>Cuối tiết 1, em cần làm được gì?</h2>
-  <div class="lesson-goal">
-    <h3>🎯 4 yêu cầu cần đạt</h3>
-    <ul>
-      <li>Nói được bằng lời của mình “sinh tồn trong thời AI” là gì.</li>
-      <li>Phân biệt việc AI hỗ trợ tốt với việc vẫn cần con người kiểm tra hoặc chịu trách nhiệm.</li>
-      <li>Chọn được nhóm công cụ phù hợp cho một nhiệm vụ học tập.</li>
-      <li>Nhớ nguyên tắc: <strong>AI hỗ trợ → con người kiểm tra → con người quyết định.</strong></li>
-    </ul>
-  </div>
-  <div class="goal-strip">
-    <div class="goal"><b>1. Hiểu</b>Sinh tồn thời AI</div>
-    <div class="goal"><b>2. Phân loại</b>AI làm gì tốt?</div>
-    <div class="goal"><b>3. Lựa chọn</b>Chọn công cụ đúng việc</div>
-    <div class="goal"><b>4. Kiểm tra</b>Không chép máy móc</div>
-  </div>
-  <div class="teacher-note">GV có thể nói nguyên văn: “Cuối tiết, các em phải trả lời được 3 câu: AI giúp em việc gì? Việc gì không nên giao hoàn toàn cho AI? Khi dùng AI, em phải kiểm tra điều gì?”</div>
+<div class="period-marker">TIẾT 1 • SLIDE 2/11</div>
+<div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+<h2>Cuối tiết 1, em cần làm được gì?</h2>
+<div class="lesson-goal">
+<h3>🎯 4 yêu cầu cần đạt</h3>
+<ul>
+<li>Nói được bằng lời của mình “sinh tồn trong thời AI” là gì.</li>
+<li>Phân biệt việc AI hỗ trợ tốt với việc vẫn cần con người kiểm tra hoặc chịu trách nhiệm.</li>
+<li>Chọn được nhóm công cụ phù hợp cho một nhiệm vụ học tập.</li>
+<li>Nhớ nguyên tắc: <strong>AI hỗ trợ → con người kiểm tra → con người quyết định.</strong></li>
+</ul>
+</div>
+<div class="goal-strip">
+<div class="goal"><b>1. Hiểu</b>Sinh tồn thời AI</div>
+<div class="goal"><b>2. Phân loại</b>AI làm gì tốt?</div>
+<div class="goal"><b>3. Lựa chọn</b>Chọn công cụ đúng việc</div>
+<div class="goal"><b>4. Kiểm tra</b>Không chép máy móc</div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🎯 GHI CHÚ GV · CHỐT ĐÍCH ĐẾN TIẾT 1</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Thời gian:</b> 1 phút đầu tiết.</div>
+<div class="tn-item"><b>Cách tổ chức:</b> Không đọc dài. GV chỉ vào 4 yêu cầu, cho HS đọc thầm 20–30 giây.</div>
+<div class="tn-item"><b>Câu hỏi định hướng:</b> “Cuối tiết, em phải trả lời được: AI giúp em việc gì? Việc gì không nên giao hoàn toàn cho AI? Khi dùng AI, em phải kiểm tra điều gì?”</div>
+<div class="tn-item"><b>Minh chứng cuối tiết:</b> Bảng phân loại nhiệm vụ; bảng chọn công cụ; exit ticket 3 câu.</div>
+</div>
+<div class="tn-chot"><b>GV cần nắm:</b> Tiết 1 ưu tiên thao tác và phân tích, không biến thành tiết giới thiệu tên công cụ.</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="Khởi động - AI làm được đến đâu?">
-  <div class="period-marker">TIẾT 1 • SLIDE 2/11</div>
-  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
-  <h2>AI làm được đến đâu?</h2>
-  <div class="grid2">
-    <div class="card">
-      <h3>📖 Đoạn văn ngắn</h3>
-      <p style="font-size:18px">“Trong một buổi học, Minh dùng AI để tóm tắt một bài đọc dài. Chỉ sau vài giây, AI đưa ra bản tóm tắt ngắn gọn và đề xuất thêm ba câu hỏi ôn tập. Minh thấy rất tiện nên định chép nguyên câu trả lời vào vở. Tuy nhiên, khi đối chiếu với SGK, Minh phát hiện AI đã ghi sai một mốc thời gian. Minh sửa lại thông tin và dùng các câu hỏi của AI để tự luyện tập.”</p>
-    </div>
-    <div>
-      <div class="prompt-box"><strong>Prompt:</strong><br/>“Tóm tắt đoạn văn trên trong 2 câu, dùng từ dễ hiểu với học sinh THCS. Không bổ sung thông tin ngoài đoạn văn.”</div>
-      <button class="choice" id="sampleReveal">Xem sản phẩm dự kiến</button>
-      <div class="reveal answer expected" id="sampleAnswer">
-        <h3>✅ Sản phẩm dự kiến</h3>
-        <p>“AI có thể giúp học sinh tóm tắt tài liệu và tạo câu hỏi ôn tập nhanh. Tuy nhiên, người học cần kiểm tra lại thông tin trước khi sử dụng vì AI có thể đưa ra nội dung chưa chính xác.”</p>
-      </div>
-    </div>
-  </div>
-  <div class="teacher-note">GV cho HS làm theo cặp. Sau khi AI trả lời, yêu cầu HS chỉ ra 1 điểm AI làm tốt và 1 điều cần kiểm tra.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 3/11</div>
+<div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+<h2>AI làm được đến đâu?</h2>
+<div class="grid2">
+<div class="card">
+<h3>📖 Đoạn văn ngắn</h3>
+<p style="font-size:18px">“Trong một buổi học, Minh dùng AI để tóm tắt một bài đọc dài. Chỉ sau vài giây, AI đưa ra bản tóm tắt ngắn gọn và đề xuất thêm ba câu hỏi ôn tập. Minh thấy rất tiện nên định chép nguyên câu trả lời vào vở. Tuy nhiên, khi đối chiếu với SGK, Minh phát hiện AI đã ghi sai một mốc thời gian. Minh sửa lại thông tin và dùng các câu hỏi của AI để tự luyện tập.”</p>
+</div>
+<div>
+<div class="prompt-box"><strong>Prompt:</strong><br/>“Tóm tắt đoạn văn trên trong 2 câu, dùng từ dễ hiểu với học sinh THCS. Không bổ sung thông tin ngoài đoạn văn.”</div>
+<button class="choice" id="sampleReveal">Xem sản phẩm dự kiến</button>
+<div class="reveal answer expected" id="sampleAnswer">
+<h3>✅ Sản phẩm dự kiến</h3>
+<p>“AI có thể giúp học sinh tóm tắt tài liệu và tạo câu hỏi ôn tập nhanh. Tuy nhiên, người học cần kiểm tra lại thông tin trước khi sử dụng vì AI có thể đưa ra nội dung chưa chính xác.”</p>
+</div>
+</div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">⏱️ HĐ1 · AI LÀM ĐƯỢC ĐẾN ĐÂU? · 5 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1 – Chuyển giao:</b> Cho HS làm theo cặp. HS nhập đúng prompt trên slide vào một AI được nhà trường cho phép.</div>
+<div class="tn-item"><b>B2 – Thực hiện:</b> HS đọc đầu ra, ghi 1 điểm AI làm tốt và 1 điều cần kiểm tra.</div>
+<div class="tn-item"><b>B3 – Báo cáo:</b> Mời 2 cặp trả lời nhanh; ưu tiên câu “AI tóm tắt nhanh nhưng có thể sai dữ kiện”.</div>
+<div class="tn-item"><b>B4 – Chốt:</b> Cho hiện sản phẩm dự kiến. Nhấn mạnh: AI nhanh ≠ luôn đúng.</div>
+</div>
+<div class="tn-warn"><b>Dự phòng mất mạng:</b> Dùng ngay “Sản phẩm dự kiến” trên slide như một đầu ra AI mẫu để HS vẫn phân tích được.</div>
+<div class="tn-chot"><b>Sản phẩm cần đạt:</b> 01 câu nhận xét có đủ “điểm mạnh của AI” + “điều con người phải kiểm tra”.</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="Sinh tồn thời AI">
-  <div class="period-marker">TIẾT 1 • SLIDE 3/11</div>
-  <div class="kicker">KHÁM PHÁ</div>
-  <h2>“Sinh tồn trong thời AI” nghĩa là gì?</h2>
-  <div class="grid2">
-    <div class="card">
-      <div class="bigicon">🌐</div>
-      <h3>Không chỉ là biết dùng AI</h3>
-      <p>Em còn cần biết <strong>thích nghi</strong>, <strong>tiếp tục học</strong>, <strong>kiểm tra thông tin</strong> và <strong>bảo vệ bản thân</strong> trong môi trường số.</p>
-    </div>
-    <div class="card">
-      <div class="bigicon">🛡️</div>
-      <h3>Những tình huống cần cảnh giác</h3>
-      <p>Tin giả • deepfake • lừa đảo • mất dữ liệu • AI trả lời sai • công việc thay đổi.</p>
-    </div>
-  </div>
-  <div class="callout"><strong>Khái niệm chốt:</strong> Sinh tồn trong thời AI là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</div>
-  <div class="teacher-note">Dùng đúng khái niệm này để thống nhất với KHBD mới.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 4/11</div>
+<div class="kicker">KHÁM PHÁ</div>
+<h2>“Sinh tồn trong thời AI” nghĩa là gì?</h2>
+<div class="grid2">
+<div class="card">
+<div class="bigicon">🌐</div>
+<h3>Không chỉ là biết dùng AI</h3>
+<p>Em còn cần biết <strong>thích nghi</strong>, <strong>tiếp tục học</strong>, <strong>kiểm tra thông tin</strong> và <strong>bảo vệ bản thân</strong> trong môi trường số.</p>
+</div>
+<div class="card">
+<div class="bigicon">🛡️</div>
+<h3>Những tình huống cần cảnh giác</h3>
+<p>Tin giả • deepfake • lừa đảo • mất dữ liệu • AI trả lời sai • công việc thay đổi.</p>
+</div>
+</div>
+<div class="callout"><strong>Khái niệm chốt:</strong> Sinh tồn trong thời AI là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</div>
+<div class="teacher-note">
+<div class="tn-title">🧭 CHỐT KHÁI NIỆM · NẰM TRONG HĐ2</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Mục đích:</b> Từ tình huống ở HĐ1, dẫn HS đến khái niệm “sinh tồn thời AI”.</div>
+<div class="tn-item"><b>Cách hỏi:</b> “Nếu AI giúp rất nhanh nhưng có thể sai, con người cần thêm những năng lực gì để học và sống an toàn?”</div>
+<div class="tn-item"><b>Dự kiến HS:</b> biết kiểm tra, biết học thêm, biết bảo vệ dữ liệu, không tin máy móc.</div>
+<div class="tn-item"><b>Không nên:</b> Dành nhiều thời gian giảng giải khái niệm theo kiểu học thuộc lòng.</div>
+</div>
+<div class="tn-chot"><b>Khái niệm dùng thống nhất:</b> thích nghi + tiếp tục học hỏi + khai thác AI + bảo vệ bản thân + kiểm tra thông tin + chịu trách nhiệm.</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="AI đúng việc - Con người đúng vai">
-  <div class="period-marker">TIẾT 1 • SLIDE 4/11</div>
-  <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
-  <h2>AI đúng việc – Con người đúng vai</h2>
-  <table class="two-col-table">
-    <thead><tr><th>Nhiệm vụ</th><th>Em sẽ xếp vào đâu?</th></tr></thead>
-    <tbody>
-      <tr><td>Tóm tắt một đoạn văn</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
-      <tr><td>Gợi ý lịch học một buổi</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
-      <tr><td>Viết nháp thông báo cho CLB</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
-      <tr><td>Tư vấn khi một bạn buồn và bị cô lập</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
-    </tbody>
-  </table>
-  <button class="choice" id="classifyReveal">Xem đáp án tham khảo</button>
-  <div class="reveal answer" id="classifyAnswer">
-    <table class="two-col-table">
-      <thead><tr><th>Nhiệm vụ</th><th>Phân loại tham khảo</th><th>Lí do</th></tr></thead>
-      <tbody>
-        <tr><td>Tóm tắt đoạn văn</td><td>AI hỗ trợ tốt</td><td>Xử lí văn bản nhanh; HS vẫn kiểm tra ý chính.</td></tr>
-        <tr><td>Lịch học một buổi</td><td>AI hỗ trợ nhưng cần kiểm tra</td><td>AI không biết hết lịch cá nhân, sức khỏe và ưu tiên thực tế.</td></tr>
-        <tr><td>Thông báo CLB</td><td>AI hỗ trợ tốt</td><td>Tạo bản nháp nhanh; người dùng sửa thời gian, địa điểm, giọng điệu.</td></tr>
-        <tr><td>Bạn buồn và bị cô lập</td><td>Không nên giao hoàn toàn cho AI</td><td>Cần người thật lắng nghe, hiểu bối cảnh và chịu trách nhiệm.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="teacher-note">Không dùng cách nói tuyệt đối “AI không thể”. Nên dùng “không nên giao hoàn toàn cho AI” khi nhiệm vụ cần trách nhiệm của con người.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 5/11</div>
+<div class="kicker">THỰC HÀNH • 15 PHÚT</div>
+<h2>AI đúng việc – Con người đúng vai</h2>
+<table class="two-col-table">
+<thead><tr><th>Nhiệm vụ</th><th>Em sẽ xếp vào đâu?</th></tr></thead>
+<tbody>
+<tr><td>Tóm tắt một đoạn văn</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+<tr><td>Gợi ý lịch học một buổi</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+<tr><td>Viết nháp thông báo cho CLB</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+<tr><td>Tư vấn khi một bạn buồn và bị cô lập</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+</tbody>
+</table>
+<button class="choice" id="classifyReveal">Xem đáp án tham khảo</button>
+<div class="reveal answer" id="classifyAnswer">
+<table class="two-col-table">
+<thead><tr><th>Nhiệm vụ</th><th>Phân loại tham khảo</th><th>Lí do</th></tr></thead>
+<tbody>
+<tr><td>Tóm tắt đoạn văn</td><td>AI hỗ trợ tốt</td><td>Xử lí văn bản nhanh; HS vẫn kiểm tra ý chính.</td></tr>
+<tr><td>Lịch học một buổi</td><td>AI hỗ trợ nhưng cần kiểm tra</td><td>AI không biết hết lịch cá nhân, sức khỏe và ưu tiên thực tế.</td></tr>
+<tr><td>Thông báo CLB</td><td>AI hỗ trợ tốt</td><td>Tạo bản nháp nhanh; người dùng sửa thời gian, địa điểm, giọng điệu.</td></tr>
+<tr><td>Bạn buồn và bị cô lập</td><td>Không nên giao hoàn toàn cho AI</td><td>Cần người thật lắng nghe, hiểu bối cảnh và chịu trách nhiệm.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="teacher-note">
+<div class="tn-title">⚖️ HĐ2 · AI ĐÚNG VIỆC – CON NGƯỜI ĐÚNG VAI · 15 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Chia cặp/nhóm nhỏ. Mỗi nhóm thử 2 nhiệm vụ với AI, 2 nhiệm vụ còn lại đọc kết quả mẫu hoặc thảo luận.</div>
+<div class="tn-item"><b>B2:</b> HS phân loại theo 3 mức: AI hỗ trợ tốt / AI hỗ trợ nhưng cần kiểm tra / không nên giao hoàn toàn cho AI.</div>
+<div class="tn-item"><b>B3:</b> Yêu cầu nhóm nêu <b>lí do</b>, không chỉ chọn mức.</div>
+<div class="tn-item"><b>B4:</b> Nhấn nút/Space để hiện đáp án tham khảo, đối chiếu chứ không coi là cách diễn đạt duy nhất.</div>
+</div>
+<div class="tn-warn"><b>Ngôn ngữ cần tránh:</b> Không nói tuyệt đối “AI không thể”. Với việc liên quan cảm xúc, đạo đức, trách nhiệm, dùng “không nên giao hoàn toàn cho AI”.</div>
+<div class="tn-chot"><b>Sản phẩm:</b> Bảng 4 nhiệm vụ được phân loại có lí do. Đây là minh chứng chính của HĐ2.</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="Chọn công cụ đúng nhiệm vụ">
-  <div class="period-marker">TIẾT 1 • SLIDE 5/11</div>
-  <div class="kicker">THỰC HÀNH TRỌNG TÂM • 20 PHÚT</div>
-  <h2>Chọn công cụ đúng nhiệm vụ</h2>
-  <div class="cards">
-    <div class="card"><h3>A. Giải thích khái niệm</h3><p class="mini">Ví dụ: “Deepfake là gì?”</p><span class="tag">Trợ lí AI đa năng</span></div>
-    <div class="card"><h3>B. Làm việc với tài liệu</h3><p class="mini">Tóm tắt tài liệu GV cung cấp</p><span class="tag">AI làm việc với tài liệu</span></div>
-    <div class="card"><h3>C. Chuẩn bị thuyết trình</h3><p class="mini">Tạo dàn ý 5 slide</p><span class="tag">Trợ lí AI / tổng hợp</span></div>
-    <div class="card"><h3>D. Thiết kế poster</h3><p class="mini">“AI hỗ trợ – con người quyết định”</p><span class="tag">AI sáng tạo đa phương tiện</span></div>
-  </div>
-  <div class="callout warn" style="margin-top:16px"><strong>Bắt buộc:</strong> Sau khi AI tạo kết quả, em phải kiểm tra ít nhất 1 thông tin hoặc 1 yêu cầu bằng SGK/tài liệu GV cung cấp.</div>
-  <div class="teacher-note">Không yêu cầu HS học thuộc danh sách tên công cụ. Tập trung vào loại nhiệm vụ và cách kiểm tra đầu ra.</div>
-</section>
+<div class="period-marker">TIẾT 1 • SLIDE 6/11</div>
+<div class="kicker">THỰC HÀNH TRỌNG TÂM • 20 PHÚT</div>
+<h2>Chọn công cụ đúng nhiệm vụ</h2>
+<div class="cards">
+<div class="card"><h3>A. Giải thích khái niệm</h3><p class="mini">Ví dụ: “Deepfake là gì?”</p><span class="tag">Trợ lí AI đa năng</span></div>
+<div class="card"><h3>B. Làm việc với tài liệu</h3><p class="mini">Tóm tắt tài liệu GV cung cấp</p><span class="tag">AI làm việc với tài liệu</span></div>
+<div class="card"><h3>C. Chuẩn bị thuyết trình</h3><p class="mini">Tạo dàn ý 5 slide</p><span class="tag">Trợ lí AI / tổng hợp</span></div>
+<div class="card"><h3>D. Thiết kế poster</h3><p class="mini">“AI hỗ trợ – con người quyết định”</p><span class="tag">AI sáng tạo đa phương tiện</span></div>
+</div>
+<div class="callout warn" style="margin-top:16px"><strong>Bắt buộc:</strong> Sau khi AI tạo kết quả, em phải kiểm tra ít nhất 1 thông tin hoặc 1 yêu cầu bằng SGK/tài liệu GV cung cấp.</div>
 
+<div class="prompt-examples-khbd" style="margin-top:14px">
+<button class="choice" type="button">Nhấn Space để xem prompt gợi ý</button>
+<div class="reveal answer explain-box">
+<strong>Prompt gợi ý theo KHBD:</strong><br/>
+<b>A – Deepfake:</b> “Giải thích deepfake cho học sinh lớp 9 trong 3 gạch đầu dòng; cho 1 ví dụ; nêu 1 cách phòng tránh. Không dùng từ quá chuyên môn.”<br/><br/>
+<b>B – Tóm tắt tài liệu:</b> “Chỉ dựa vào tài liệu đã cung cấp, tóm tắt thành 5 ý. Nếu tài liệu không có thông tin thì ghi ‘không thấy trong tài liệu’.”<br/><br/>
+<b>C – Dàn ý thuyết trình:</b> “Gợi ý dàn ý 5 slide cho học sinh lớp 9 về sử dụng AI có trách nhiệm; mỗi slide tối đa 3 ý; cuối bài có 3 nguyên tắc cần nhớ.”<br/><br/>
+<b>D – Poster:</b> “Đề xuất bố cục poster dọc A4 gồm tiêu đề, 3 biểu tượng minh họa và 3 câu ngắn; ưu tiên dễ đọc khi in.”
+      </div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🧰 HĐ3 · CHỌN CÔNG CỤ ĐÚNG NHIỆM VỤ · 20 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Mỗi cặp chọn 1 trong 4 nhiệm vụ A–D. Không yêu cầu tất cả HS làm cả 4 nhiệm vụ.</div>
+<div class="tn-item"><b>B2:</b> HS xác định nhóm công cụ, viết prompt, chạy AI và lưu kết quả.</div>
+<div class="tn-item"><b>B3:</b> HS phải kiểm tra ít nhất 1 thông tin/yêu cầu bằng SGK hoặc tài liệu GV.</div>
+<div class="tn-item"><b>B4:</b> Mời 2–3 cặp trình bày theo mẫu: Nhiệm vụ → Công cụ → Prompt → Điều đã kiểm tra/sửa.</div>
+</div>
+<div class="tn-warn"><b>Không đặt nặng tên công cụ:</b> ChatGPT/Gemini/NotebookLM/Canva… chỉ là ví dụ. Chấm theo mức phù hợp với nhiệm vụ và cách kiểm tra đầu ra.</div>
+<div class="tn-chot"><b>Sản phẩm:</b> 01 bảng lựa chọn công cụ + 01 đầu ra AI đã được HS kiểm tra/chỉnh sửa.</div>
+</div>
+</section>
 <section class="slide" data-period="1" data-title="Sản phẩm dự kiến tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 6/11</div>
-  <div class="kicker">GV ĐỐI CHIẾU SẢN PHẨM</div>
-  <h2>Một sản phẩm đạt cần có gì?</h2>
-  <table class="two-col-table">
-    <thead><tr><th>Nhiệm vụ</th><th>Kết quả chính cần có</th><th>Bước kiểm tra</th></tr></thead>
-    <tbody>
-      <tr><td>Giải thích deepfake</td><td>Nêu được nội dung giả do AI tạo/chỉnh, có thể giống thật, cần kiểm tra nguồn.</td><td>Đối chiếu tài liệu/SGK.</td></tr>
-      <tr><td>Tóm tắt tài liệu</td><td>5 ý bám đúng tài liệu, không tự thêm số liệu.</td><td>Chọn 2 ý và chỉ ra đoạn làm căn cứ.</td></tr>
-      <tr><td>Dàn ý slide</td><td>Có mở đầu – lợi ích – rủi ro – cách dùng – nguyên tắc.</td><td>Kiểm tra nội dung có vượt ngoài bài học không.</td></tr>
-      <tr><td>Poster</td><td>Bố cục rõ, chữ ít, thông điệp dễ hiểu.</td><td>HS tự chỉnh, không dùng nguyên sản phẩm AI.</td></tr>
-    </tbody>
-  </table>
-  <div class="teacher-note">GV chấm theo: đúng nhiệm vụ – chọn công cụ hợp lí – có bước kiểm tra – có chỉnh sửa của HS.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 7/11</div>
+<div class="kicker">GV ĐỐI CHIẾU SẢN PHẨM</div>
+<h2>Một sản phẩm đạt cần có gì?</h2>
+<table class="two-col-table">
+<thead><tr><th>Nhiệm vụ</th><th>Kết quả chính cần có</th><th>Bước kiểm tra</th></tr></thead>
+<tbody>
+<tr><td>Giải thích deepfake</td><td>Nêu được nội dung giả do AI tạo/chỉnh, có thể giống thật, cần kiểm tra nguồn.</td><td>Đối chiếu tài liệu/SGK.</td></tr>
+<tr><td>Tóm tắt tài liệu</td><td>5 ý bám đúng tài liệu, không tự thêm số liệu.</td><td>Chọn 2 ý và chỉ ra đoạn làm căn cứ.</td></tr>
+<tr><td>Dàn ý slide</td><td>Có mở đầu – lợi ích – rủi ro – cách dùng – nguyên tắc.</td><td>Kiểm tra nội dung có vượt ngoài bài học không.</td></tr>
+<tr><td>Poster</td><td>Bố cục rõ, chữ ít, thông điệp dễ hiểu.</td><td>HS tự chỉnh, không dùng nguyên sản phẩm AI.</td></tr>
+</tbody>
+</table>
+<div class="teacher-note">
+<div class="tn-title">🔎 ĐỐI CHIẾU SẢN PHẨM · DÙNG TRONG HĐ3</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Cách dùng:</b> Chỉ mở slide này sau khi HS đã làm. Không cho xem từ đầu để tránh sao chép.</div>
+<div class="tn-item"><b>GV quan sát:</b> HS có bám đúng nhiệm vụ? Công cụ có phù hợp? Có bước kiểm tra? Có chỉnh sửa của HS?</div>
+<div class="tn-item"><b>Chấp nhận:</b> HS có thể chọn công cụ khác ví dụ trên nếu giải thích hợp lí.</div>
+<div class="tn-item"><b>Không đạt:</b> Chỉ dán nguyên câu trả lời AI, không chỉ ra bước kiểm tra.</div>
+</div>
+<div class="tn-chot"><b>Câu hỏi đối chiếu:</b> “Nếu bỏ bước kiểm tra, sản phẩm của em có rủi ro gì?”</div>
+</div>
 </section>
-
-
-
 <section class="slide" data-period="1" data-title="Trắc nghiệm tương tác - Tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 7/11</div>
-  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
-  <h2>Tiết 1 – Dùng AI đúng việc</h2>
-  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
-  
-  <div class="quiz-panel" data-mcq-set="p1">
-    <div class="quiz-q">Câu 1. Việc nào phù hợp nhất để AI hỗ trợ phần lớn?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Lắng nghe và an ủi một bạn đang khủng hoảng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Tóm tắt một đoạn tài liệu thành các ý chính</button><button class="quiz-option" data-answer="C">C. Chịu trách nhiệm cuối cùng cho một quyết định quan trọng</button><button class="quiz-option" data-answer="D">D. Quyết định thay giáo viên cách đánh giá từng học sinh</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p1">
-    <div class="quiz-q">Câu 2. Sau khi AI tóm tắt tài liệu, bước nào cần làm tiếp?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chép ngay vào vở</button><button class="quiz-option" data-answer="B">B. Gửi cho bạn và coi là đáp án chính thức</button><button class="quiz-option" data-answer="C" data-correct="1">C. Đối chiếu với tài liệu và kiểm tra thông tin quan trọng</button><button class="quiz-option" data-answer="D">D. Yêu cầu AI viết dài hơn mà không cần đọc lại</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p1">
-    <div class="quiz-q">Câu 3. Nguyên tắc nào đúng nhất?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. AI quyết định – con người làm theo</button><button class="quiz-option" data-answer="B">B. AI trả lời nhanh nên không cần kiểm tra</button><button class="quiz-option" data-answer="C" data-correct="1">C. AI hỗ trợ – con người kiểm tra – con người quyết định</button><button class="quiz-option" data-answer="D">D. Chỉ dùng AI khi không có tài liệu học tập</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-score" id="p1McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-mcq="p1">Làm lại</button></div>
-  <div class="teacher-note">Dùng sau hoạt động “Chọn công cụ đúng nhiệm vụ”. Cho HS giải thích bằng các từ khóa: dữ liệu – bối cảnh – trách nhiệm.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 8/11</div>
+<div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+<h2>Tiết 1 – Dùng AI đúng việc</h2>
+<span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+<div class="quiz-panel" data-mcq-set="p1">
+<div class="quiz-q">Câu 1. Việc nào phù hợp nhất để AI hỗ trợ phần lớn?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Lắng nghe và an ủi một bạn đang khủng hoảng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Tóm tắt một đoạn tài liệu thành các ý chính</button><button class="quiz-option" data-answer="C">C. Chịu trách nhiệm cuối cùng cho một quyết định quan trọng</button><button class="quiz-option" data-answer="D">D. Quyết định thay giáo viên cách đánh giá từng học sinh</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p1">
+<div class="quiz-q">Câu 2. Sau khi AI tóm tắt tài liệu, bước nào cần làm tiếp?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chép ngay vào vở</button><button class="quiz-option" data-answer="B">B. Gửi cho bạn và coi là đáp án chính thức</button><button class="quiz-option" data-answer="C" data-correct="1">C. Đối chiếu với tài liệu và kiểm tra thông tin quan trọng</button><button class="quiz-option" data-answer="D">D. Yêu cầu AI viết dài hơn mà không cần đọc lại</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p1">
+<div class="quiz-q">Câu 3. Nguyên tắc nào đúng nhất?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. AI quyết định – con người làm theo</button><button class="quiz-option" data-answer="B">B. AI trả lời nhanh nên không cần kiểm tra</button><button class="quiz-option" data-answer="C" data-correct="1">C. AI hỗ trợ – con người kiểm tra – con người quyết định</button><button class="quiz-option" data-answer="D">D. Chỉ dùng AI khi không có tài liệu học tập</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-score" id="p1McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+<div class="quiz-actions"><button data-reset-mcq="p1" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">📝 KIỂM TRA NHANH · TÙY CHỌN 2–3 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Thời điểm:</b> Có thể dùng cuối HĐ3 hoặc thay một phần hỏi đáp ở HĐ4.</div>
+<div class="tn-item"><b>Cách tổ chức:</b> HS giơ A/B/C/D hoặc trả lời trên màn hình; GV bấm đáp án để chấm trực tiếp.</div>
+<div class="tn-item"><b>Nếu thiếu thời gian:</b> Chỉ làm câu 2 và 3.</div>
+<div class="tn-item"><b>Mục đích:</b> Phát hiện nhanh HS còn nhầm “AI làm nhanh = không cần kiểm tra”.</div>
+</div>
+<div class="tn-chot"><b>Không cộng thêm thời gian ngoài KHBD.</b> Đây là slide hỗ trợ, không phải hoạt động bắt buộc mới.</div>
+</div>
 </section>
 <section class="slide" data-period="1" data-title="Đúng Sai trực tiếp - Tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 8/11</div>
-  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
-  <h2>Tiết 1 – Kiểm tra nhanh kiến thức</h2>
-  <div class="tf-grid" data-tf-set="p1tf">
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>1.</strong> AI có thể giúp tạo bản nháp nhanh nhưng người dùng vẫn cần kiểm tra trước khi sử dụng.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Tốc độ không bảo đảm AI luôn chính xác hoặc phù hợp bối cảnh.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>2.</strong> Khi AI trả lời rất tự tin thì có thể bỏ qua bước đối chiếu nguồn.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Cách diễn đạt tự tin không phải bằng chứng nội dung chính xác.</div>
-    </div>
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>3.</strong> Những nhiệm vụ liên quan cảm xúc, đạo đức và trách nhiệm không nên giao hoàn toàn cho AI.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Con người cần hiểu bối cảnh và chịu trách nhiệm với quyết định.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>4.</strong> Học sinh cần nhớ càng nhiều tên công cụ AI càng tốt thì mới sử dụng AI hiệu quả.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Quan trọng hơn là xác định nhiệm vụ, chọn loại công cụ phù hợp và kiểm tra đầu ra.</div>
-    </div></div>
-  <div class="quiz-score" id="p1tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-tf="p1tf">Làm lại</button></div>
-  <div class="teacher-note">Dùng ngay trước slide ghi vở để phát hiện chỗ HS còn nhầm.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 9/11</div>
+<div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+<h2>Tiết 1 – Kiểm tra nhanh kiến thức</h2>
+<div class="tf-grid" data-tf-set="p1tf">
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>1.</strong> AI có thể giúp tạo bản nháp nhanh nhưng người dùng vẫn cần kiểm tra trước khi sử dụng.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Tốc độ không bảo đảm AI luôn chính xác hoặc phù hợp bối cảnh.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>2.</strong> Khi AI trả lời rất tự tin thì có thể bỏ qua bước đối chiếu nguồn.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Cách diễn đạt tự tin không phải bằng chứng nội dung chính xác.</div>
+</div>
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>3.</strong> Những nhiệm vụ liên quan cảm xúc, đạo đức và trách nhiệm không nên giao hoàn toàn cho AI.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Con người cần hiểu bối cảnh và chịu trách nhiệm với quyết định.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>4.</strong> Học sinh cần nhớ càng nhiều tên công cụ AI càng tốt thì mới sử dụng AI hiệu quả.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Quan trọng hơn là xác định nhiệm vụ, chọn loại công cụ phù hợp và kiểm tra đầu ra.</div>
+</div></div>
+<div class="quiz-score" id="p1tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+<div class="quiz-actions"><button data-reset-tf="p1tf" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">✅ ĐÚNG/SAI · TÙY CHỌN 2 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Cách dùng:</b> Cho cả lớp ra hiệu Đ/S, sau đó GV bấm lựa chọn trên màn hình để hiện kết quả.</div>
+<div class="tn-item"><b>Câu cần nhấn:</b> Câu 3 về cảm xúc/đạo đức/trách nhiệm và câu 4 về việc không cần nhớ nhiều tên công cụ.</div>
+<div class="tn-item"><b>Nếu nhiều HS sai:</b> Quay lại slide “AI đúng việc – Con người đúng vai”.</div>
+<div class="tn-item"><b>Nếu lớp nắm tốt:</b> Bỏ qua giải thích dài, chuyển sang ghi vở/exit ticket.</div>
+</div>
+</div>
 </section>
 <section class="slide" data-period="1" data-title="Ghi vào vở - Tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 9/11</div>
-  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
-  <h2>Tiết 1 – Em cần ghi nhớ điều gì?</h2>
-  <div class="lesson-goal">
-    <h3>✍️ Nội dung ghi vào vở</h3>
-    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
-      <li><strong>Sinh tồn trong thời AI</strong> là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</li>
-      <li><strong>AI hỗ trợ tốt</strong> các nhiệm vụ như: xử lí thông tin, tóm tắt, tạo bản nháp, phân tích dữ liệu, gợi ý ý tưởng.</li>
-      <li><strong>Con người vẫn cần</strong> kiểm tra độ chính xác, xem xét bối cảnh, cảm xúc, đạo đức và chịu trách nhiệm với quyết định cuối cùng.</li>
-      <li><strong>Nguyên tắc dùng AI:</strong> Xác định nhiệm vụ → Chọn công cụ phù hợp → Đặt yêu cầu rõ → Kiểm tra kết quả → Chỉnh sửa → Tự quyết định.</li>
-    </ol>
-  </div>
-  <div class="callout ok"><strong>Câu chốt:</strong> AI hỗ trợ – Con người kiểm tra – Con người quyết định.</div>
-  <div class="teacher-note">Cho HS 3–4 phút ghi bài. GV có thể yêu cầu HS gạch chân 3 từ khóa: “thích nghi”, “kiểm tra”, “trách nhiệm”.</div>
+<div class="period-marker">TIẾT 1 • SLIDE 10/11</div>
+<div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+<h2>Tiết 1 – Em cần ghi nhớ điều gì?</h2>
+<div class="lesson-goal">
+<h3>✍️ Nội dung ghi vào vở</h3>
+<ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+<li><strong>Sinh tồn trong thời AI</strong> là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</li>
+<li><strong>AI hỗ trợ tốt</strong> các nhiệm vụ như: xử lí thông tin, tóm tắt, tạo bản nháp, phân tích dữ liệu, gợi ý ý tưởng.</li>
+<li><strong>Con người vẫn cần</strong> kiểm tra độ chính xác, xem xét bối cảnh, cảm xúc, đạo đức và chịu trách nhiệm với quyết định cuối cùng.</li>
+<li><strong>Nguyên tắc dùng AI:</strong> Xác định nhiệm vụ → Chọn công cụ phù hợp → Đặt yêu cầu rõ → Kiểm tra kết quả → Chỉnh sửa → Tự quyết định.</li>
+</ol>
+</div>
+<div class="callout ok"><strong>Câu chốt:</strong> AI hỗ trợ – Con người kiểm tra – Con người quyết định.</div>
+<div class="teacher-note">
+<div class="tn-title">✍️ GHI VỞ · 3–4 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Cách dùng:</b> Cho HS ghi 4 ý; không yêu cầu chép toàn bộ ví dụ trên các slide trước.</div>
+<div class="tn-item"><b>Từ khóa cần gạch chân:</b> thích nghi – kiểm tra – trách nhiệm.</div>
+<div class="tn-item"><b>HS viết chậm:</b> Cho phép chụp slide, hoàn thiện sau giờ; trên lớp chỉ ghi câu chốt và quy trình.</div>
+<div class="tn-item"><b>Đối chiếu mục tiêu:</b> Hỏi 1 HS đọc lại nguyên tắc “AI hỗ trợ – con người kiểm tra – con người quyết định”.</div>
+</div>
+</div>
 </section>
-
 <section class="slide" data-period="1" data-title="Chốt tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 10/11</div>
-  <div class="kicker">EXIT TICKET • 5 PHÚT</div>
-  <h2>3 câu chốt tiết 1</h2>
-  <p class="question" style="font-size:28px">1. “Sinh tồn thời AI” là gì?</p>
-  <p class="question" style="font-size:28px">2. Nêu 1 việc AI hỗ trợ tốt nhưng vẫn phải kiểm tra.</p>
-  <p class="question" style="font-size:28px">3. Nêu 1 nguyên tắc an toàn khi dùng AI.</p>
-  <button class="choice" id="exit1Reveal">Xem đáp án tham khảo</button>
-  <div class="reveal answer expected" id="exit1Answer">
-    <h3>✅ Đáp án tham khảo</h3>
-    <ul>
-      <li>Biết thích nghi, học hỏi, dùng AI hiệu quả nhưng vẫn kiểm tra thông tin và chịu trách nhiệm.</li>
-      <li>Ví dụ: tóm tắt tài liệu – cần kiểm tra xem có sai dữ kiện hay bỏ sót ý.</li>
-      <li>Không nhập thông tin cá nhân không cần thiết; kiểm tra lại thông tin; không chép nguyên văn nếu chưa hiểu.</li>
-    </ul>
-  </div>
-  <div class="callout ok"><strong>Chốt:</strong> AI hỗ trợ → Con người kiểm tra → Con người quyết định.</div>
-</section>
-
+<div class="period-marker">TIẾT 1 • SLIDE 11/11</div>
+<div class="kicker">EXIT TICKET • 5 PHÚT</div>
+<h2>3 câu chốt tiết 1</h2>
+<p class="question" style="font-size:28px">1. “Sinh tồn thời AI” là gì?</p>
+<p class="question" style="font-size:28px">2. Nêu 1 việc AI hỗ trợ tốt nhưng vẫn phải kiểm tra.</p>
+<p class="question" style="font-size:28px">3. Nêu 1 nguyên tắc an toàn khi dùng AI.</p>
+<button class="choice" id="exit1Reveal">Xem đáp án tham khảo</button>
+<div class="reveal answer expected" id="exit1Answer">
+<h3>✅ Đáp án tham khảo</h3>
+<ul>
+<li>Biết thích nghi, học hỏi, dùng AI hiệu quả nhưng vẫn kiểm tra thông tin và chịu trách nhiệm.</li>
+<li>Ví dụ: tóm tắt tài liệu – cần kiểm tra xem có sai dữ kiện hay bỏ sót ý.</li>
+<li>Không nhập thông tin cá nhân không cần thiết; kiểm tra lại thông tin; không chép nguyên văn nếu chưa hiểu.</li>
+</ul>
+</div>
+<div class="callout ok"><strong>Chốt:</strong> AI hỗ trợ → Con người kiểm tra → Con người quyết định.</div>
+<div class="teacher-note">
+<div class="tn-title">🎫 HĐ4 · EXIT TICKET · 5 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Hình thức:</b> HS trả lời cá nhân 3 câu bằng giấy, biểu mẫu số hoặc miệng nhanh.</div>
+<div class="tn-item"><b>GV thu minh chứng:</b> Ít nhất kiểm tra câu 2 và 3 để biết HS có hiểu vai trò kiểm tra/an toàn.</div>
+<div class="tn-item"><b>Đáp án mở:</b> Không bắt buộc đúng từng chữ; cần đúng ý và có ví dụ hợp lí.</div>
+<div class="tn-item"><b>Chuyển tiết:</b> Dặn HS lưu sản phẩm Tiết 1 và chuẩn bị file bảng tính cho Tiết 2.</div>
+</div>
+<div class="tn-chot"><b>Chốt 60–90 giây:</b> AI mạnh ở xử lí/tạo gợi ý; có thể sai; con người kiểm tra và quyết định.</div>
+</div></section>
 <!-- ==================== TIẾT 2 ==================== -->
 <section class="slide" data-period="2" data-title="Yêu cầu cần đạt tiết 2">
-  <div class="period-marker">TIẾT 2 • SLIDE 1/9</div>
-  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
-  <h2>Cuối tiết 2, em cần làm được gì?</h2>
-  <div class="lesson-goal">
-    <h3>🎯 4 yêu cầu cần đạt</h3>
-    <ul>
-      <li>Nhận diện được 9 kỹ năng cần rèn luyện.</li>
-      <li>Hoàn thành bảng tự đánh giá 9 kỹ năng trên máy tính.</li>
-      <li>Tạo được biểu đồ radar từ dữ liệu của chính mình.</li>
-      <li>Chọn 3 kỹ năng ưu tiên để rèn luyện dựa trên dữ liệu.</li>
-    </ul>
-  </div>
-  <div class="teacher-note">GV có thể nói: “Cuối tiết, mỗi em phải có một biểu đồ radar của riêng mình và biết 3 kỹ năng sẽ ưu tiên rèn luyện.”</div>
+<div class="period-marker">TIẾT 2 • SLIDE 1/9</div>
+<div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+<h2>Cuối tiết 2, em cần làm được gì?</h2>
+<div class="lesson-goal">
+<h3>🎯 4 yêu cầu cần đạt</h3>
+<ul>
+<li>Nhận diện được 9 kỹ năng cần rèn luyện.</li>
+<li>Hoàn thành bảng tự đánh giá 9 kỹ năng trên máy tính.</li>
+<li>Tạo được biểu đồ radar từ dữ liệu của chính mình.</li>
+<li>Chọn 3 kỹ năng ưu tiên để rèn luyện dựa trên dữ liệu.</li>
+</ul>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🎯 CHỐT ĐÍCH ĐẾN TIẾT 2</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Thời gian:</b> khoảng 1 phút, tích hợp vào mở đầu HĐ1.</div>
+<div class="tn-item"><b>Sản phẩm cuối tiết:</b> bảng điểm 9 kỹ năng + biểu đồ radar + 3 kỹ năng ưu tiên có lí do.</div>
+<div class="tn-item"><b>Nhắc HS:</b> Tự đánh giá không phải bài kiểm tra xếp hạng, không công khai điểm cá nhân.</div>
+<div class="tn-item"><b>Câu nói gợi ý:</b> “Cuối tiết, mỗi em phải có một biểu đồ radar của riêng mình và biết 3 kỹ năng sẽ ưu tiên rèn luyện.”</div>
+</div>
+</div>
 </section>
-
 <section class="slide" data-period="2" data-title="Xếp nhóm 9 kỹ năng">
-  <div class="period-marker">TIẾT 2 • SLIDE 2/9</div>
-  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
-  <h2>Xếp 9 kỹ năng vào 4 nhóm</h2>
-  <div class="skillgrid">
-    <div class="skill">1. Tư duy phân tích</div><div class="skill">2. Khả năng thích nghi</div><div class="skill">3. Lãnh đạo & ảnh hưởng tích cực</div>
-    <div class="skill">4. Tư duy sáng tạo</div><div class="skill">5. Động lực & tự nhận thức</div><div class="skill">6. Hiểu biết công nghệ</div>
-    <div class="skill">7. Thấu cảm & lắng nghe</div><div class="skill">8. Học hỏi suốt đời</div><div class="skill">9. AI & dữ liệu</div>
-  </div>
-  <button class="choice" id="groupReveal">Xem cách xếp tham khảo</button>
-  <div class="reveal answer" id="groupAnswer">
-    <table class="two-col-table">
-      <thead><tr><th>Nhóm</th><th>Kỹ năng</th></tr></thead>
-      <tbody>
-        <tr><td>Nhận thức</td><td>Tư duy phân tích; Tư duy sáng tạo</td></tr>
-        <tr><td>Cảm xúc – xã hội</td><td>Lãnh đạo & ảnh hưởng tích cực; Thấu cảm & lắng nghe</td></tr>
-        <tr><td>Công nghệ</td><td>Hiểu biết công nghệ; AI & dữ liệu</td></tr>
-        <tr><td>Tự thân</td><td>Khả năng thích nghi; Động lực & tự nhận thức; Học hỏi suốt đời</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="teacher-note">Đây là cách phân nhóm để hệ thống hóa. Một kỹ năng thực tế có thể liên quan nhiều nhóm.</div>
+<div class="period-marker">TIẾT 2 • SLIDE 2/9</div>
+<div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+<h2>Xếp 9 kỹ năng vào 4 nhóm</h2>
+<div class="skillgrid">
+<div class="skill">1. Tư duy phân tích</div><div class="skill">2. Khả năng thích nghi</div><div class="skill">3. Lãnh đạo &amp; ảnh hưởng tích cực</div>
+<div class="skill">4. Tư duy sáng tạo</div><div class="skill">5. Động lực &amp; tự nhận thức</div><div class="skill">6. Hiểu biết công nghệ</div>
+<div class="skill">7. Thấu cảm &amp; lắng nghe</div><div class="skill">8. Học hỏi suốt đời</div><div class="skill">9. AI &amp; dữ liệu</div>
+</div>
+<button class="choice" id="groupReveal">Xem cách xếp tham khảo</button>
+<div class="reveal answer" id="groupAnswer">
+<table class="two-col-table">
+<thead><tr><th>Nhóm</th><th>Kỹ năng</th></tr></thead>
+<tbody>
+<tr><td>Nhận thức</td><td>Tư duy phân tích; Tư duy sáng tạo</td></tr>
+<tr><td>Cảm xúc – xã hội</td><td>Lãnh đạo &amp; ảnh hưởng tích cực; Thấu cảm &amp; lắng nghe</td></tr>
+<tr><td>Công nghệ</td><td>Hiểu biết công nghệ; AI &amp; dữ liệu</td></tr>
+<tr><td>Tự thân</td><td>Khả năng thích nghi; Động lực &amp; tự nhận thức; Học hỏi suốt đời</td></tr>
+</tbody>
+</table>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🧩 HĐ1 · XẾP ĐÚNG NHÓM KỸ NĂNG · 5 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Cho cặp HS xếp 9 kỹ năng vào 4 nhóm: nhận thức; cảm xúc–xã hội; công nghệ; tự thân.</div>
+<div class="tn-item"><b>B2:</b> Thời gian thao tác 2 phút. Có thể dùng phiếu số/PHT hoặc trả lời miệng.</div>
+<div class="tn-item"><b>B3:</b> Hiện đáp án tham khảo và hỏi: “Kỹ năng nào có thể liên quan nhiều nhóm?”</div>
+<div class="tn-item"><b>B4:</b> Chuyển ý: biết tên kỹ năng chưa đủ, cần biết mình đang ở đâu.</div>
+</div>
+<div class="tn-warn"><b>Lưu ý:</b> Việc phân nhóm chỉ để hệ thống hóa, không phải phân loại cứng.</div>
+</div>
 </section>
-
 <section class="slide" data-period="2" data-title="Tự đánh giá trên bảng tính">
-  <div class="period-marker">TIẾT 2 • SLIDE 3/9</div>
-  <div class="kicker">THỰC HÀNH • 12 PHÚT</div>
-  <h2>Nhập dữ liệu vào file mẫu</h2>
-  <div class="grid2">
-    <div class="card">
-      <h3>📄 File: Mau_TuDanhGia_9KyNang_AI.xlsx</h3>
-      <p><strong>Sheet DanhGia:</strong> 27 phát biểu, mỗi kỹ năng có 3 phát biểu.</p>
-      <p><strong>Điểm:</strong> 1 = Chưa bao giờ … 5 = Luôn luôn.</p>
-      <p><strong>Sheet TongHop:</strong> tự cộng điểm từng kỹ năng.</p>
-    </div>
-    <div class="card">
-      <h3>🧮 Công thức mẫu</h3>
-      <p><code>=SUM(DanhGia!D2:D4)</code></p>
-      <p class="mini">→ Cộng 3 phát biểu của kỹ năng đầu tiên.</p>
-      <p><strong>Mức độ:</strong><br/>3–6 Cần rèn luyện<br/>7–9 Đang hình thành<br/>10–12 Khá<br/>13–15 Tốt</p>
-    </div>
-  </div>
-  <div class="callout warn"><strong>Lưu ý:</strong> Tự đánh giá là “ảnh chụp hiện tại”, không phải nhãn cố định và không dùng để xếp hạng giữa các bạn.</div>
-  <div class="teacher-note">HS chỉ nhập điểm 1–5 ở sheet DanhGia. Không công khai điểm cá nhân của HS trước lớp.</div>
-</section>
+<div class="period-marker">TIẾT 2 • SLIDE 3/9</div>
+<div class="kicker">THỰC HÀNH • 12 PHÚT</div>
+<h2>Nhập dữ liệu vào file mẫu</h2>
+<div class="grid2">
+<div class="card">
+<h3>📄 File: Mau_TuDanhGia_9KyNang_AI.xlsx</h3>
+<p><strong>Sheet DanhGia:</strong> 27 phát biểu, mỗi kỹ năng có 3 phát biểu.</p>
+<p><strong>Điểm:</strong> 1 = Chưa bao giờ … 5 = Luôn luôn.</p>
+<p><strong>Sheet TongHop:</strong> tự cộng điểm từng kỹ năng.</p>
+</div>
+<div class="card">
+<h3>🧮 Công thức mẫu</h3>
+<p><code>=SUM(DanhGia!D2:D4)</code></p>
+<p class="mini">→ Cộng 3 phát biểu của kỹ năng đầu tiên.</p>
+<p><strong>Mức độ:</strong><br/>3–6 Cần rèn luyện<br/>7–9 Đang hình thành<br/>10–12 Khá<br/>13–15 Tốt</p>
+</div>
+</div>
+<div class="callout warn"><strong>Lưu ý:</strong> Tự đánh giá là “ảnh chụp hiện tại”, không phải nhãn cố định và không dùng để xếp hạng giữa các bạn.</div>
 
+<div class="khbd-file-structure callout" style="margin-top:14px">
+<strong>Cấu trúc file mẫu:</strong> Sheet <b>DanhGia</b> có 27 phát biểu (9 kỹ năng × 3 phát biểu);
+          HS chỉ nhập điểm 1–5. Sheet <b>TongHop</b> tự cộng điểm từng kỹ năng (3–15).
+          Sheet <b>ViDu_Radar</b> chứa dữ liệu minh họa để đối chiếu.
+        </div>
+<div class="teacher-note">
+<div class="tn-title">💻 HĐ2 · TỰ ĐÁNH GIÁ 9 KỸ NĂNG · 12 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Chuẩn bị:</b> Phát file <b>Mau_TuDanhGia_9KyNang_AI.xlsx</b> trước giờ hoặc qua thư mục dùng chung.</div>
+<div class="tn-item"><b>B1:</b> HS mở sheet DanhGia, chỉ nhập điểm 1–5 cho 27 phát biểu. Không sửa công thức.</div>
+<div class="tn-item"><b>B2:</b> Nhắc thang điểm 1–5 và yêu cầu trả lời trung thực theo thói quen hiện tại.</div>
+<div class="tn-item"><b>B3:</b> Sang sheet TongHop kiểm tra đủ 9 tổng điểm, mỗi kỹ năng 3–15.</div>
+<div class="tn-item"><b>B4:</b> GV hỗ trợ lỗi nhập dữ liệu/công thức, không nhận xét “em tốt/yếu” dựa vào điểm.</div>
+<div class="tn-item"><b>Sản phẩm:</b> Bảng điểm 9 kỹ năng của từng HS.</div>
+</div>
+<div class="tn-warn"><b>Bảo mật:</b> Không yêu cầu HS công khai điểm cá nhân trước lớp. Không dùng bảng này để xếp hạng.</div>
+</div>
+</section>
 <section class="slide" data-period="2" data-title="Dữ liệu mẫu">
-  <div class="period-marker">TIẾT 2 • SLIDE 4/9</div>
-  <div class="kicker">SẢN PHẨM DỰ KIẾN</div>
-  <h2>Ví dụ dữ liệu sau khi tổng hợp</h2>
-  <table class="two-col-table">
-    <thead><tr><th>Kỹ năng</th><th>Điểm mẫu</th><th>Mức dự kiến</th></tr></thead>
-    <tbody>
-      <tr><td>Tư duy phân tích</td><td>11</td><td>Khá</td></tr>
-      <tr><td>Khả năng thích nghi</td><td>9</td><td>Đang hình thành</td></tr>
-      <tr><td>Lãnh đạo & ảnh hưởng tích cực</td><td>10</td><td>Khá</td></tr>
-      <tr><td>Tư duy sáng tạo</td><td>12</td><td>Khá</td></tr>
-      <tr><td>Động lực & tự nhận thức</td><td>8</td><td>Đang hình thành</td></tr>
-      <tr><td>Hiểu biết công nghệ</td><td>10</td><td>Khá</td></tr>
-      <tr><td>Thấu cảm & lắng nghe</td><td>13</td><td>Tốt</td></tr>
-      <tr><td>Học hỏi suốt đời</td><td>11</td><td>Khá</td></tr>
-      <tr><td>AI & dữ liệu</td><td>9</td><td>Đang hình thành</td></tr>
-    </tbody>
-  </table>
-  <div class="teacher-note">Đây là dữ liệu minh họa, không phải dữ liệu của một HS thật.</div>
+<div class="period-marker">TIẾT 2 • SLIDE 4/9</div>
+<div class="kicker">SẢN PHẨM DỰ KIẾN</div>
+<h2>Ví dụ dữ liệu sau khi tổng hợp</h2>
+<table class="two-col-table">
+<thead><tr><th>Kỹ năng</th><th>Điểm mẫu</th><th>Mức dự kiến</th></tr></thead>
+<tbody>
+<tr><td>Tư duy phân tích</td><td>11</td><td>Khá</td></tr>
+<tr><td>Khả năng thích nghi</td><td>9</td><td>Đang hình thành</td></tr>
+<tr><td>Lãnh đạo &amp; ảnh hưởng tích cực</td><td>10</td><td>Khá</td></tr>
+<tr><td>Tư duy sáng tạo</td><td>12</td><td>Khá</td></tr>
+<tr><td>Động lực &amp; tự nhận thức</td><td>8</td><td>Đang hình thành</td></tr>
+<tr><td>Hiểu biết công nghệ</td><td>10</td><td>Khá</td></tr>
+<tr><td>Thấu cảm &amp; lắng nghe</td><td>13</td><td>Tốt</td></tr>
+<tr><td>Học hỏi suốt đời</td><td>11</td><td>Khá</td></tr>
+<tr><td>AI &amp; dữ liệu</td><td>9</td><td>Đang hình thành</td></tr>
+</tbody>
+</table>
+<div class="teacher-note">
+<div class="tn-title">📋 DỮ LIỆU MINH HỌA · DÙNG ĐỂ HƯỚNG DẪN</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Mục đích:</b> Cho HS kiểm tra xem file của mình đang tính đúng cấu trúc và hiểu cách đọc mức điểm.</div>
+<div class="tn-item"><b>Không dùng:</b> Không yêu cầu HS phải có điểm giống dữ liệu mẫu.</div>
+<div class="tn-item"><b>Điểm cần hỏi:</b> “Mức nào cao nhất? Mức nào thấp nhất? Điều đó có phải là kết luận cố định về một người không?”</div>
+<div class="tn-item"><b>Dự phòng:</b> Nếu file bảng tính lỗi, có thể dùng bộ điểm mẫu này để tiếp tục HĐ3.</div>
+</div>
+</div>
 </section>
-
 <section class="slide" data-period="2" data-title="Biểu đồ radar">
-  <div class="period-marker">TIẾT 2 • SLIDE 5/9</div>
-  <div class="kicker">THỰC HÀNH TRỌNG TÂM • 18 PHÚT</div>
-  <h2>Biểu đồ radar 9 kỹ năng</h2>
-  <div class="radarwrap">
-    <div id="sliders"></div>
-    <div class="radarbox"><svg aria-label="Biểu đồ radar kỹ năng" id="radar" viewBox="0 0 520 520"></svg></div>
-  </div>
-  <div class="radar-guide"><strong>Cách tạo trong Excel:</strong> Chọn vùng tên kỹ năng + tổng điểm → Insert/Chèn → Radar → đặt tiêu đề “Bản đồ kỹ năng của em”.</div>
-  <div class="teacher-note">Bộ điểm mặc định ở slide này chính là dữ liệu minh họa 11, 9, 10, 12, 8, 10, 13, 11, 9.</div>
+<div class="period-marker">TIẾT 2 • SLIDE 5/9</div>
+<div class="kicker">THỰC HÀNH TRỌNG TÂM • 18 PHÚT</div>
+<h2>Biểu đồ radar 9 kỹ năng</h2>
+<div class="radarwrap">
+<div id="sliders"></div>
+<div class="radarbox"><svg aria-label="Biểu đồ radar kỹ năng" id="radar" viewbox="0 0 520 520"></svg></div>
+</div>
+<div class="radar-guide"><strong>Cách tạo trong Excel:</strong> Chọn vùng tên kỹ năng + tổng điểm → Insert/Chèn → Radar → đặt tiêu đề “Bản đồ kỹ năng của em”.</div>
+<div class="teacher-note">
+<div class="tn-title">📈 HĐ3 · TẠO VÀ ĐỌC BIỂU ĐỒ RADAR · 18 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Chọn vùng tên 9 kỹ năng + tổng điểm ở sheet TongHop.</div>
+<div class="tn-item"><b>B2:</b> Insert/Chèn → Chart/Biểu đồ → Radar (hoặc Radar with markers).</div>
+<div class="tn-item"><b>B3:</b> Đặt tiêu đề “Bản đồ kỹ năng của em”; kiểm tra đủ 9 trục, đúng 9 giá trị, thang tối đa 15 nếu phần mềm cho phép.</div>
+<div class="tn-item"><b>B4:</b> HS đọc: điểm nào xa tâm nhất/gần tâm nhất; chưa vội kết luận tốt/xấu.</div>
+</div>
+<div class="tn-warn"><b>Nếu HS dùng LibreOffice/Google Sheets:</b> Tên lệnh có thể khác nhẹ; mục tiêu là có biểu đồ radar đúng dữ liệu, không yêu cầu trang trí.</div>
+<div class="tn-chot"><b>Sản phẩm:</b> 01 biểu đồ radar 9 kỹ năng, đọc được và đúng dữ liệu.</div>
+</div>
 </section>
-
-
-
-<section class="slide" data-period="2" data-title="Trắc nghiệm tương tác - Tiết 2">
-  <div class="period-marker">TIẾT 2 • SLIDE 6/9</div>
-  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
-  <h2>Tiết 2 – Đọc dữ liệu kỹ năng</h2>
-  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
-  
-  <div class="quiz-panel" data-mcq-set="p2">
-    <div class="quiz-q">Câu 1. Biểu đồ radar dùng để làm gì trong bài học này?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Xếp hạng học sinh trong lớp</button><button class="quiz-option" data-answer="B" data-correct="1">B. Trực quan hóa điểm tự đánh giá của 9 kỹ năng</button><button class="quiz-option" data-answer="C">C. Dự đoán chính xác nghề nghiệp tương lai</button><button class="quiz-option" data-answer="D">D. Thay giáo viên kết luận năng lực học sinh</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p2">
-    <div class="quiz-q">Câu 2. Một kỹ năng có tổng điểm 8/15 được xếp ở mức nào?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Cần rèn luyện</button><button class="quiz-option" data-answer="B" data-correct="1">B. Đang hình thành</button><button class="quiz-option" data-answer="C">C. Khá</button><button class="quiz-option" data-answer="D">D. Tốt</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p2">
-    <div class="quiz-q">Câu 3. Khi chọn 3 kỹ năng ưu tiên, cách làm nào phù hợp nhất?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ chọn 3 kỹ năng có điểm cao nhất</button><button class="quiz-option" data-answer="B">B. Chọn ngẫu nhiên</button><button class="quiz-option" data-answer="C" data-correct="1">C. Dựa vào dữ liệu và nhu cầu học tập thực tế</button><button class="quiz-option" data-answer="D">D. Chọn giống bạn bên cạnh</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-score" id="p2McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-mcq="p2">Làm lại</button></div>
-  <div class="teacher-note">Dùng sau khi HS đã tạo radar để chuyển từ đọc điểm sang lựa chọn mục tiêu.</div>
+<section class="slide" data-period="2" data-title="Đọc biểu đồ và chọn mục tiêu">
+<div class="period-marker">TIẾT 2 • SLIDE 6/9</div>
+<div class="kicker">PHÂN TÍCH • 10 PHÚT</div>
+<h2>Từ biểu đồ → 3 kỹ năng ưu tiên</h2>
+<div class="cards">
+<div class="card"><h3>Điểm cao nhất?</h3><p>Thấu cảm &amp; lắng nghe: <strong>13/15</strong></p></div>
+<div class="card"><h3>Điểm thấp nhất?</h3><p>Động lực &amp; tự nhận thức: <strong>8/15</strong></p></div>
+<div class="card"><h3>3 ưu tiên mẫu</h3><p>Động lực &amp; tự nhận thức • Khả năng thích nghi • AI &amp; dữ liệu</p></div>
+</div>
+<div class="expected">
+<h3>✅ Sản phẩm dự kiến</h3>
+<ul>
+<li>Điểm mạnh: nêu được 1 kỹ năng và dẫn chứng hành vi.</li>
+<li>Điểm cần rèn: nêu được 1 kỹ năng và lí do.</li>
+<li>Chọn 3 kỹ năng ưu tiên dựa trên dữ liệu hoặc nhu cầu học tập.</li>
+</ul>
+</div>
+<div class="callout ok"><strong>Chốt:</strong> Điểm thấp không có nghĩa là “em yếu”; nó chỉ cho biết em nên tập trung rèn ở đâu.</div>
+<div class="teacher-note">
+<div class="tn-title">🎯 HĐ4 · TỪ BIỂU ĐỒ ĐẾN MỤC TIÊU · 10 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> HS xác định điểm mạnh hiện tại và 1 kỹ năng cần rèn từ biểu đồ của mình.</div>
+<div class="tn-item"><b>B2:</b> HS chọn 3 kỹ năng ưu tiên. Không bắt buộc đúng 3 kỹ năng thấp nhất.</div>
+<div class="tn-item"><b>B3:</b> Viết lí do dựa trên điểm số hoặc hành vi học tập thật.</div>
+<div class="tn-item"><b>B4:</b> Đổi cặp kiểm tra: lựa chọn có lí do chưa? Có biến điểm thấp thành nhãn “yếu” không?</div>
+</div>
+<div class="tn-chot"><b>Sản phẩm:</b> Điểm mạnh + điểm cần rèn + 3 kỹ năng ưu tiên + lí do. Đây là dữ liệu đầu vào cho Tiết 3.</div>
+</div></section><section class="slide" data-period="2" data-title="Trắc nghiệm tương tác - Tiết 2">
+<div class="period-marker">TIẾT 2 • SLIDE 7/9</div>
+<div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+<h2>Tiết 2 – Đọc dữ liệu kỹ năng</h2>
+<span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+<div class="quiz-panel" data-mcq-set="p2">
+<div class="quiz-q">Câu 1. Biểu đồ radar dùng để làm gì trong bài học này?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Xếp hạng học sinh trong lớp</button><button class="quiz-option" data-answer="B" data-correct="1">B. Trực quan hóa điểm tự đánh giá của 9 kỹ năng</button><button class="quiz-option" data-answer="C">C. Dự đoán chính xác nghề nghiệp tương lai</button><button class="quiz-option" data-answer="D">D. Thay giáo viên kết luận năng lực học sinh</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p2">
+<div class="quiz-q">Câu 2. Một kỹ năng có tổng điểm 8/15 được xếp ở mức nào?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Cần rèn luyện</button><button class="quiz-option" data-answer="B" data-correct="1">B. Đang hình thành</button><button class="quiz-option" data-answer="C">C. Khá</button><button class="quiz-option" data-answer="D">D. Tốt</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p2">
+<div class="quiz-q">Câu 3. Khi chọn 3 kỹ năng ưu tiên, cách làm nào phù hợp nhất?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ chọn 3 kỹ năng có điểm cao nhất</button><button class="quiz-option" data-answer="B">B. Chọn ngẫu nhiên</button><button class="quiz-option" data-answer="C" data-correct="1">C. Dựa vào dữ liệu và nhu cầu học tập thực tế</button><button class="quiz-option" data-answer="D">D. Chọn giống bạn bên cạnh</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-score" id="p2McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+<div class="quiz-actions"><button data-reset-mcq="p2" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">📝 KIỂM TRA NHANH · TÙY CHỌN 2–3 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Thời điểm:</b> Sau HĐ4 nếu còn thời gian, hoặc dùng đầu Tiết 3 để ôn lại.</div>
+<div class="tn-item"><b>Trọng tâm:</b> Hiểu đúng ý nghĩa radar và mức 3–15; lựa chọn ưu tiên dựa vào dữ liệu + nhu cầu.</div>
+<div class="tn-item"><b>Nếu thiếu thời gian:</b> Làm câu 1 và 3.</div>
+<div class="tn-item"><b>Không cộng thêm:</b> Đây là slide hỗ trợ, không phải HĐ mới trong KHBD.</div>
+</div>
+</div>
 </section>
 <section class="slide" data-period="2" data-title="Đúng Sai trực tiếp - Tiết 2">
-  <div class="period-marker">TIẾT 2 • SLIDE 7/9</div>
-  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
-  <h2>Tiết 2 – Hiểu đúng về tự đánh giá</h2>
-  <div class="tf-grid" data-tf-set="p2tf">
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>1.</strong> Điểm trên biểu đồ radar càng xa tâm thì mức tự đánh giá ở kỹ năng đó càng cao.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Mỗi trục biểu diễn một kỹ năng theo cùng thang điểm.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>2.</strong> Kỹ năng có điểm thấp nghĩa là học sinh đó “yếu” và khó thay đổi.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Đây chỉ là tự đánh giá tại một thời điểm và dùng để xác định nội dung cần rèn luyện.</div>
-    </div>
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>3.</strong> Kết quả tự đánh giá không nên dùng để công khai xếp hạng học sinh.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Mục tiêu là tự nhận biết và phát triển bản thân.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>4.</strong> Ba kỹ năng ưu tiên bắt buộc phải là ba kỹ năng có điểm thấp nhất.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Điểm số là một căn cứ; HS còn cần xem nhu cầu học tập và mục tiêu cá nhân.</div>
-    </div></div>
-  <div class="quiz-score" id="p2tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-tf="p2tf">Làm lại</button></div>
-  <div class="teacher-note">Giúp tránh việc HS hiểu radar là công cụ gắn nhãn hoặc xếp loại cố định.</div>
+<div class="period-marker">TIẾT 2 • SLIDE 8/9</div>
+<div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+<h2>Tiết 2 – Hiểu đúng về tự đánh giá</h2>
+<div class="tf-grid" data-tf-set="p2tf">
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>1.</strong> Điểm trên biểu đồ radar càng xa tâm thì mức tự đánh giá ở kỹ năng đó càng cao.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Mỗi trục biểu diễn một kỹ năng theo cùng thang điểm.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>2.</strong> Kỹ năng có điểm thấp nghĩa là học sinh đó “yếu” và khó thay đổi.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Đây chỉ là tự đánh giá tại một thời điểm và dùng để xác định nội dung cần rèn luyện.</div>
+</div>
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>3.</strong> Kết quả tự đánh giá không nên dùng để công khai xếp hạng học sinh.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Mục tiêu là tự nhận biết và phát triển bản thân.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>4.</strong> Ba kỹ năng ưu tiên bắt buộc phải là ba kỹ năng có điểm thấp nhất.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Điểm số là một căn cứ; HS còn cần xem nhu cầu học tập và mục tiêu cá nhân.</div>
+</div></div>
+<div class="quiz-score" id="p2tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+<div class="quiz-actions"><button data-reset-tf="p2tf" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">✅ ĐÚNG/SAI · TÙY CHỌN</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Mục đích:</b> Sửa hai ngộ nhận: “điểm thấp = yếu” và “3 ưu tiên bắt buộc là 3 điểm thấp nhất”.</div>
+<div class="tn-item"><b>Cách dùng:</b> HS ra hiệu Đ/S; GV bấm để hiện đáp án và giải thích ngắn.</div>
+<div class="tn-item"><b>Nếu sai nhiều câu 2:</b> Nhắc lại đây là tự đánh giá tại một thời điểm, kỹ năng có thể rèn.</div>
+<div class="tn-item"><b>Nếu sai nhiều câu 4:</b> Quay lại HĐ4, yêu cầu nêu lí do chọn kỹ năng ưu tiên.</div>
+</div>
+</div>
 </section>
 <section class="slide" data-period="2" data-title="Ghi vào vở - Tiết 2">
-  <div class="period-marker">TIẾT 2 • SLIDE 8/9</div>
-  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
-  <h2>Tiết 2 – Em cần ghi nhớ điều gì?</h2>
-  <div class="lesson-goal">
-    <h3>✍️ Nội dung ghi vào vở</h3>
-    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
-      <li><strong>9 kỹ năng cần rèn luyện:</strong> Tư duy phân tích; Khả năng thích nghi; Lãnh đạo và ảnh hưởng tích cực; Tư duy sáng tạo; Động lực và tự nhận thức; Hiểu biết công nghệ; Thấu cảm và lắng nghe; Học hỏi suốt đời; AI và dữ liệu.</li>
-      <li><strong>Tự đánh giá kỹ năng</strong> giúp biết điểm mạnh và kỹ năng cần ưu tiên rèn luyện; kết quả chỉ phản ánh một thời điểm, không dùng để xếp hạng giữa các bạn.</li>
-      <li><strong>Biểu đồ radar</strong> dùng để trực quan hóa 9 kỹ năng: điểm càng xa tâm thì mức tự đánh giá càng cao.</li>
-      <li><strong>Từ dữ liệu đến mục tiêu:</strong> xem biểu đồ → xác định điểm mạnh/điểm cần rèn → chọn 3 kỹ năng ưu tiên → chuẩn bị kế hoạch rèn luyện.</li>
-    </ol>
-  </div>
-  <div class="callout"><strong>Câu chốt:</strong> Dữ liệu giúp em biết mình đang ở đâu để chọn đúng điều cần rèn luyện.</div>
-  <div class="teacher-note">Cho HS ghi bài sau khi đã hoàn thành biểu đồ radar, để các em liên hệ trực tiếp nội dung ghi với sản phẩm vừa làm.</div>
-</section>
-
-<section class="slide" data-period="2" data-title="Đọc biểu đồ và chọn mục tiêu">
-  <div class="period-marker">TIẾT 2 • SLIDE 9/9</div>
-  <div class="kicker">PHÂN TÍCH • 10 PHÚT</div>
-  <h2>Từ biểu đồ → 3 kỹ năng ưu tiên</h2>
-  <div class="cards">
-    <div class="card"><h3>Điểm cao nhất?</h3><p>Thấu cảm & lắng nghe: <strong>13/15</strong></p></div>
-    <div class="card"><h3>Điểm thấp nhất?</h3><p>Động lực & tự nhận thức: <strong>8/15</strong></p></div>
-    <div class="card"><h3>3 ưu tiên mẫu</h3><p>Động lực & tự nhận thức • Khả năng thích nghi • AI & dữ liệu</p></div>
-  </div>
-  <div class="expected">
-    <h3>✅ Sản phẩm dự kiến</h3>
-    <ul>
-      <li>Điểm mạnh: nêu được 1 kỹ năng và dẫn chứng hành vi.</li>
-      <li>Điểm cần rèn: nêu được 1 kỹ năng và lí do.</li>
-      <li>Chọn 3 kỹ năng ưu tiên dựa trên dữ liệu hoặc nhu cầu học tập.</li>
-    </ul>
-  </div>
-  <div class="callout ok"><strong>Chốt:</strong> Điểm thấp không có nghĩa là “em yếu”; nó chỉ cho biết em nên tập trung rèn ở đâu.</div>
+<div class="period-marker">TIẾT 2 • SLIDE 9/9</div>
+<div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+<h2>Tiết 2 – Em cần ghi nhớ điều gì?</h2>
+<div class="lesson-goal">
+<h3>✍️ Nội dung ghi vào vở</h3>
+<ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+<li><strong>9 kỹ năng cần rèn luyện:</strong> Tư duy phân tích; Khả năng thích nghi; Lãnh đạo và ảnh hưởng tích cực; Tư duy sáng tạo; Động lực và tự nhận thức; Hiểu biết công nghệ; Thấu cảm và lắng nghe; Học hỏi suốt đời; AI và dữ liệu.</li>
+<li><strong>Tự đánh giá kỹ năng</strong> giúp biết điểm mạnh và kỹ năng cần ưu tiên rèn luyện; kết quả chỉ phản ánh một thời điểm, không dùng để xếp hạng giữa các bạn.</li>
+<li><strong>Biểu đồ radar</strong> dùng để trực quan hóa 9 kỹ năng: điểm càng xa tâm thì mức tự đánh giá càng cao.</li>
+<li><strong>Từ dữ liệu đến mục tiêu:</strong> xem biểu đồ → xác định điểm mạnh/điểm cần rèn → chọn 3 kỹ năng ưu tiên → chuẩn bị kế hoạch rèn luyện.</li>
+</ol>
+</div>
+<div class="callout"><strong>Câu chốt:</strong> Dữ liệu giúp em biết mình đang ở đâu để chọn đúng điều cần rèn luyện.</div>
+<div class="teacher-note">
+<div class="tn-title">✍️ GHI VỞ · 3 PHÚT HOẶC HOÀN THIỆN SAU TIẾT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Ưu tiên ghi:</b> 9 kỹ năng; ý nghĩa tự đánh giá; cách đọc radar; quy trình từ dữ liệu → 3 ưu tiên.</div>
+<div class="tn-item"><b>Nếu hết giờ:</b> HS chỉ ghi câu chốt và chụp slide để hoàn thiện sau, vì KHBD Tiết 2 đã đủ 45 phút.</div>
+<div class="tn-item"><b>Không ghi:</b> Không cần chép lại bảng 9 điểm mẫu.</div>
+<div class="tn-item"><b>Chuyển tiếp:</b> Dặn HS giữ lại 3 kỹ năng ưu tiên để dùng trong prompt ở Tiết 3.</div>
+</div>
+</div>
 </section>
 
 <!-- ==================== TIẾT 3 ==================== -->
 <section class="slide" data-period="3" data-title="Yêu cầu cần đạt tiết 3">
-  <div class="period-marker">TIẾT 3 • SLIDE 1/9</div>
-  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
-  <h2>Cuối tiết 3, em cần làm được gì?</h2>
-  <div class="lesson-goal">
-    <h3>🎯 4 yêu cầu cần đạt</h3>
-    <ul>
-      <li>Viết được prompt rõ ràng: bối cảnh/dữ liệu – nhiệm vụ – yêu cầu đầu ra – tiêu chí.</li>
-      <li>Dùng 3 kỹ năng ưu tiên ở tiết 2 để yêu cầu AI đề xuất kế hoạch.</li>
-      <li>Kiểm tra và sửa ít nhất 2 điểm trong gợi ý của AI.</li>
-      <li>Hoàn thành kế hoạch 4 tuần có hành động, thời lượng và cách tự kiểm.</li>
-    </ul>
-  </div>
-  <div class="teacher-note">GV nói rõ: “Sản phẩm cuối tiết không phải câu trả lời của AI, mà là kế hoạch do chính em lựa chọn và chỉnh sửa.”</div>
+<div class="period-marker">TIẾT 3 • SLIDE 1/9</div>
+<div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+<h2>Cuối tiết 3, em cần làm được gì?</h2>
+<div class="lesson-goal">
+<h3>🎯 4 yêu cầu cần đạt</h3>
+<ul>
+<li>Viết được prompt rõ ràng: bối cảnh/dữ liệu – nhiệm vụ – yêu cầu đầu ra – tiêu chí.</li>
+<li>Dùng 3 kỹ năng ưu tiên ở tiết 2 để yêu cầu AI đề xuất kế hoạch.</li>
+<li>Kiểm tra và sửa ít nhất 2 điểm trong gợi ý của AI.</li>
+<li>Hoàn thành kế hoạch 4 tuần có hành động, thời lượng và cách tự kiểm.</li>
+</ul>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🎯 CHỐT ĐÍCH ĐẾN TIẾT 3</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Sản phẩm cuối:</b> 01 prompt rõ + 01 bản gợi ý AI + ít nhất 2 chỉnh sửa có lí do + kế hoạch 4 tuần.</div>
+<div class="tn-item"><b>Thông điệp cần nói rõ:</b> “Sản phẩm không phải câu trả lời của AI, mà là kế hoạch do chính em lựa chọn và chỉnh sửa.”</div>
+<div class="tn-item"><b>An toàn:</b> Chỉ nhập dữ liệu kỹ năng cần thiết; không nhập họ tên đầy đủ, số điện thoại, địa chỉ, tài khoản, thông tin gia đình.</div>
+<div class="tn-item"><b>Thời lượng:</b> 45 phút; các slide quiz/Đúng-Sai là tùy chọn thay cho hỏi đáp.</div>
+</div>
+</div>
 </section>
-
 <section class="slide" data-period="3" data-title="Sửa prompt trong 60 giây">
-  <div class="period-marker">TIẾT 3 • SLIDE 2/9</div>
-  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
-  <h2>Sửa prompt trong 60 giây</h2>
-  <div class="grid2">
-    <div class="card"><h3>❌ Prompt mơ hồ</h3><p class="question" style="font-size:28px">“Hãy giúp em giỏi hơn.”</p></div>
-    <div class="card"><h3>✅ Prompt tốt hơn</h3><p>“Em là học sinh lớp 9 và muốn cải thiện kỹ năng quản lí việc học. Hãy đề xuất kế hoạch 4 tuần; mỗi tuần 2 hành động nhỏ, mỗi hành động không quá 20 phút/ngày; có tiêu chí tự kiểm cuối tuần; dùng ngôn ngữ dễ hiểu.”</p></div>
-  </div>
-  <div class="flow">
-    <div class="item"><strong>Bối cảnh</strong></div><div class="arrow">→</div><div class="item"><strong>Nhiệm vụ</strong></div><div class="arrow">→</div><div class="item"><strong>Đầu ra + tiêu chí</strong></div>
-  </div>
-  <div class="teacher-note">Chốt: prompt tốt không cần dài, nhưng phải đủ thông tin quan trọng.</div>
+<div class="period-marker">TIẾT 3 • SLIDE 2/9</div>
+<div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+<h2>Sửa prompt trong 60 giây</h2>
+<div class="grid2">
+<div class="card"><h3>❌ Prompt mơ hồ</h3><p class="question" style="font-size:28px">“Hãy giúp em giỏi hơn.”</p></div>
+<div class="card"><h3>✅ Prompt tốt hơn</h3><p>“Em là học sinh lớp 9 và muốn cải thiện kỹ năng quản lí việc học. Hãy đề xuất kế hoạch 4 tuần; mỗi tuần 2 hành động nhỏ, mỗi hành động không quá 20 phút/ngày; có tiêu chí tự kiểm cuối tuần; dùng ngôn ngữ dễ hiểu.”</p></div>
+</div>
+<div class="flow">
+<div class="item"><strong>Bối cảnh</strong></div><div class="arrow">→</div><div class="item"><strong>Nhiệm vụ</strong></div><div class="arrow">→</div><div class="item"><strong>Đầu ra + tiêu chí</strong></div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">⚡ HĐ1 · SỬA PROMPT TRONG 60 GIÂY · 5 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Chiếu prompt “Hãy giúp em giỏi hơn.” và cho HS sửa cá nhân/cặp trong 60 giây.</div>
+<div class="tn-item"><b>B2:</b> Mời 2 HS đọc prompt. Cả lớp chỉ ra phần đã thêm.</div>
+<div class="tn-item"><b>B3:</b> Đối chiếu với mẫu: bối cảnh/dữ liệu – nhiệm vụ – đầu ra – tiêu chí/giới hạn.</div>
+<div class="tn-item"><b>B4:</b> Nhấn mạnh prompt rõ không nhất thiết dài, nhưng phải đủ thông tin quan trọng.</div>
+</div>
+<div class="tn-chot"><b>Sản phẩm:</b> 01 prompt tốt hơn prompt ban đầu.</div>
+</div>
 </section>
-
 <section class="slide" data-period="3" data-title="Dùng dữ liệu thật của em">
-  <div class="period-marker">TIẾT 3 • SLIDE 3/9</div>
-  <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
-  <h2>AI làm cố vấn – em là người quyết định</h2>
-  <div class="grid2">
-    <div class="card">
-      <h3>📊 Dữ liệu mẫu</h3>
-      <p>Động lực & tự nhận thức: <strong>8/15</strong></p>
-      <p>Khả năng thích nghi: <strong>9/15</strong></p>
-      <p>AI & dữ liệu: <strong>9/15</strong></p>
-    </div>
-    <div class="prompt-box">
-      <strong>Prompt mẫu:</strong><br/>
+<div class="period-marker">TIẾT 3 • SLIDE 3/9</div>
+<div class="kicker">THỰC HÀNH • 15 PHÚT</div>
+<h2>AI làm cố vấn – em là người quyết định</h2>
+<div class="grid2">
+<div class="card">
+<h3>📊 Dữ liệu mẫu</h3>
+<p>Động lực &amp; tự nhận thức: <strong>8/15</strong></p>
+<p>Khả năng thích nghi: <strong>9/15</strong></p>
+<p>AI &amp; dữ liệu: <strong>9/15</strong></p>
+</div>
+<div class="prompt-box">
+<strong>Prompt mẫu:</strong><br/>
       “Bạn là cố vấn học tập cho học sinh THCS. Em muốn rèn 3 kỹ năng: Động lực và tự nhận thức (8/15), Khả năng thích nghi (9/15), AI và dữ liệu (9/15). Hãy đề xuất kế hoạch 4 tuần. Mỗi tuần chỉ 2 hành động nhỏ, mỗi hành động tối đa 20–30 phút/ngày. Mỗi hành động phải có minh chứng hoặc cách tự kiểm. Dùng ngôn ngữ dễ hiểu; không yêu cầu thông tin cá nhân.”
     </div>
-  </div>
-  <div class="callout warn"><strong>An toàn:</strong> Không nhập họ tên đầy đủ, số điện thoại, địa chỉ, tài khoản hoặc thông tin gia đình nếu không cần thiết.</div>
-  <div class="teacher-note">HS đánh dấu 3 loại nội dung trong câu trả lời AI: phù hợp / chưa rõ / không phù hợp.</div>
-</section>
+</div>
+<div class="callout warn"><strong>An toàn:</strong> Không nhập họ tên đầy đủ, số điện thoại, địa chỉ, tài khoản hoặc thông tin gia đình nếu không cần thiết.</div>
 
+<div class="khbd-ai-sample" style="margin-top:14px">
+<button class="choice" type="button">Nhấn Space để xem gợi ý AI mẫu (dùng khi mất mạng)</button>
+<div class="reveal answer">
+<table class="two-col-table">
+<thead><tr><th>Tuần</th><th>Gợi ý AI mẫu</th><th>HS cần xem xét</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Viết 1 mục tiêu học tập trong tuần; cuối mỗi ngày đánh dấu đã làm/chưa làm.</td><td>Phù hợp, cụ thể, dễ kiểm.</td></tr>
+<tr><td>2</td><td>Tạo lịch học cố định 60 phút mỗi ngày.</td><td>Có thể quá nặng; cần chỉnh theo lịch thật.</td></tr>
+<tr><td>3</td><td>Khi dùng AI, chọn 1 thông tin quan trọng và kiểm tra bằng SGK/tài liệu GV.</td><td>Phù hợp; có minh chứng rõ.</td></tr>
+<tr><td>4</td><td>Thử thay đổi cách học khi kế hoạch bị gián đoạn và ghi lại phương án thay thế.</td><td>Phù hợp nhưng cần cụ thể hóa tình huống.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="teacher-note">
+<div class="tn-title">🤖 HĐ2 · AI LÀM CỐ VẤN – EM QUYẾT ĐỊNH · 15 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> HS lấy 3 kỹ năng ưu tiên từ Tiết 2; chỉ nhập điểm/kỹ năng cần thiết.</div>
+<div class="tn-item"><b>B2:</b> Dùng prompt mẫu rồi điều chỉnh theo dữ liệu của mình. Không sao chép dữ liệu mẫu nếu đã có dữ liệu cá nhân.</div>
+<div class="tn-item"><b>B3:</b> Sau khi AI trả lời, đánh dấu từng gợi ý: phù hợp / chưa rõ / không phù hợp.</div>
+<div class="tn-item"><b>B4:</b> Lưu bản gợi ý ban đầu để lát nữa chứng minh đã chỉnh sửa.</div>
+</div>
+<div class="tn-warn"><b>Dự phòng mất mạng:</b> Nhấn Space để hiện bản gợi ý AI mẫu; HS vẫn thực hiện HĐ3 kiểm tra và chỉnh sửa.</div>
+<div class="tn-chot"><b>Sản phẩm:</b> 01 bản gợi ý kế hoạch do AI tạo hoặc bản mẫu thay thế khi mất mạng.</div>
+</div>
+</section>
 <section class="slide" data-period="3" data-title="Kiểm tra AI trước khi dùng">
-  <div class="period-marker">TIẾT 3 • SLIDE 4/9</div>
-  <div class="kicker">TƯ DUY PHẢN BIỆN • 10 PHÚT</div>
-  <h2>Không dùng nguyên câu trả lời AI</h2>
-  <table class="two-col-table">
-    <thead><tr><th>Gợi ý AI</th><th>Vấn đề</th><th>Cách sửa</th></tr></thead>
-    <tbody>
-      <tr><td>“Học cố định 60 phút mỗi ngày.”</td><td>Quá dài, không phù hợp lịch cá nhân.</td><td>20 phút/ngày, 3 ngày/tuần; cuối tuần kiểm tra số buổi hoàn thành.</td></tr>
-      <tr><td>“Hãy tự tin và tích cực hơn.”</td><td>Quá chung chung, không đo được.</td><td>Mỗi tuần phát biểu/đặt câu hỏi trong ít nhất 2 tiết học.</td></tr>
-      <tr><td>“Đăng ký khóa học trả phí về AI.”</td><td>Không cần thiết, có thể tốn chi phí.</td><td>Dùng nhiệm vụ miễn phí và kiểm tra thông tin bằng tài liệu GV cung cấp.</td></tr>
-    </tbody>
-  </table>
-  <div class="expected"><h3>✅ Mốc đạt</h3><p>HS phải chỉ ra ít nhất <strong>2 điểm đã sửa</strong> và giải thích vì sao sửa.</p></div>
-  <div class="teacher-note">Nếu HS chỉ sao chép nguyên văn câu trả lời AI thì chưa đạt mục tiêu hoạt động.</div>
-</section>
+<div class="period-marker">TIẾT 3 • SLIDE 4/9</div>
+<div class="kicker">TƯ DUY PHẢN BIỆN • 10 PHÚT</div>
+<h2>Không dùng nguyên câu trả lời AI</h2>
 
+<div class="khbd-checklist callout" style="margin-top:14px">
+<strong>Checklist 5 câu trước khi dùng gợi ý AI:</strong><br/>
+      ① Có đúng 3 kỹ năng em chọn không?  
+      ② Hành động có làm được trong điều kiện của em không?<br/>
+      ③ Có tiêu chí hoặc minh chứng để tự kiểm không?  
+      ④ Có phần nào quá chung chung, lặp lại hoặc không cần thiết không?<br/>
+      ⑤ Có yêu cầu chia sẻ thông tin cá nhân không cần thiết không?
+    </div>
+<table class="two-col-table">
+<thead><tr><th>Gợi ý AI</th><th>Vấn đề</th><th>Cách sửa</th></tr></thead>
+<tbody>
+<tr><td>“Học cố định 60 phút mỗi ngày.”</td><td>Quá dài, không phù hợp lịch cá nhân.</td><td>20 phút/ngày, 3 ngày/tuần; cuối tuần kiểm tra số buổi hoàn thành.</td></tr>
+<tr><td>“Hãy tự tin và tích cực hơn.”</td><td>Quá chung chung, không đo được.</td><td>Mỗi tuần phát biểu/đặt câu hỏi trong ít nhất 2 tiết học.</td></tr>
+<tr><td>“Đăng ký khóa học trả phí về AI.”</td><td>Không cần thiết, có thể tốn chi phí.</td><td>Dùng nhiệm vụ miễn phí và kiểm tra thông tin bằng tài liệu GV cung cấp.</td></tr>
+</tbody>
+</table>
+<div class="expected"><h3>✅ Mốc đạt</h3><p>HS phải chỉ ra ít nhất <strong>2 điểm đã sửa</strong> và giải thích vì sao sửa.</p></div>
+<div class="teacher-note">
+<div class="tn-title">🔍 HĐ3 · KIỂM TRA AI TRƯỚC KHI DÙNG · 10 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> HS dùng checklist 5 câu trên slide để kiểm tra bản gợi ý.</div>
+<div class="tn-item"><b>B2:</b> HS sửa trực tiếp hoặc gửi prompt tiếp theo, ví dụ “Rút gọn còn 2 hành động/tuần, dưới 20 phút và thêm tiêu chí tự kiểm”.</div>
+<div class="tn-item"><b>B3:</b> Bắt buộc đánh dấu ít nhất 2 điểm đã thay đổi so với gợi ý ban đầu.</div>
+<div class="tn-item"><b>B4:</b> Mời 1–2 HS nói: “AI gợi ý gì và em đã không đồng ý/chỉnh điểm nào?”</div>
+</div>
+<div class="tn-warn"><b>Mốc đạt:</b> Nếu chỉ sao chép nguyên câu trả lời AI thì chưa đạt mục tiêu HĐ3.</div>
+<div class="tn-chot"><b>Sản phẩm:</b> Ít nhất 02 chỉnh sửa có lí do, thể hiện “con người kiểm tra – con người quyết định”.</div>
+</div>
+</section>
 <section class="slide" data-period="3" data-title="Kế hoạch 4 tuần">
-  <div class="period-marker">TIẾT 3 • SLIDE 5/9</div>
-  <div class="kicker">SẢN PHẨM CUỐI • 10 PHÚT</div>
-  <h2>Kế hoạch 4 tuần của em</h2>
-  <table class="two-col-table">
-    <thead><tr><th>Tuần</th><th>Kỹ năng</th><th>Hành động cụ thể</th><th>Thời lượng</th><th>Cách tự kiểm</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Động lực & tự nhận thức</td><td>Đặt 1 mục tiêu học tập; mỗi tối đánh dấu hoàn thành/chưa hoàn thành.</td><td>5 phút/ngày</td><td>Ít nhất 5/7 ngày có tự kiểm.</td></tr>
-      <tr><td>2</td><td>Khả năng thích nghi</td><td>Lập lịch học 3 buổi; nếu lịch thay đổi, viết phương án thay thế.</td><td>15–20 phút/buổi</td><td>Có lịch ban đầu và phương án điều chỉnh.</td></tr>
-      <tr><td>3</td><td>AI & dữ liệu</td><td>Dùng AI hỗ trợ 1 nhiệm vụ; kiểm tra 2 thông tin bằng SGK/tài liệu GV.</td><td>20 phút × 2</td><td>Ghi rõ thông tin và nguồn đối chiếu.</td></tr>
-      <tr><td>4</td><td>Kết hợp 3 kỹ năng</td><td>Tự chọn 1 nhiệm vụ học tập; lập kế hoạch, dùng AI, kiểm tra và tự đánh giá.</td><td>30 phút</td><td>Nộp sản phẩm + 3 câu tự nhận xét.</td></tr>
-    </tbody>
-  </table>
-  <div class="teacher-note">Không bắt buộc HS giống kế hoạch mẫu. GV chỉ đối chiếu đủ 4 yếu tố: mục tiêu/kỹ năng – hành động – thời lượng – cách tự kiểm.</div>
+<div class="period-marker">TIẾT 3 • SLIDE 5/9</div>
+<div class="kicker">SẢN PHẨM CUỐI • 10 PHÚT</div>
+<h2>Kế hoạch 4 tuần của em</h2>
+<table class="two-col-table">
+<thead><tr><th>Tuần</th><th>Kỹ năng</th><th>Hành động cụ thể</th><th>Thời lượng</th><th>Cách tự kiểm</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Động lực &amp; tự nhận thức</td><td>Đặt 1 mục tiêu học tập; mỗi tối đánh dấu hoàn thành/chưa hoàn thành.</td><td>5 phút/ngày</td><td>Ít nhất 5/7 ngày có tự kiểm.</td></tr>
+<tr><td>2</td><td>Khả năng thích nghi</td><td>Lập lịch học 3 buổi; nếu lịch thay đổi, viết phương án thay thế.</td><td>15–20 phút/buổi</td><td>Có lịch ban đầu và phương án điều chỉnh.</td></tr>
+<tr><td>3</td><td>AI &amp; dữ liệu</td><td>Dùng AI hỗ trợ 1 nhiệm vụ; kiểm tra 2 thông tin bằng SGK/tài liệu GV.</td><td>20 phút × 2</td><td>Ghi rõ thông tin và nguồn đối chiếu.</td></tr>
+<tr><td>4</td><td>Kết hợp 3 kỹ năng</td><td>Tự chọn 1 nhiệm vụ học tập; lập kế hoạch, dùng AI, kiểm tra và tự đánh giá.</td><td>30 phút</td><td>Nộp sản phẩm + 3 câu tự nhận xét.</td></tr>
+</tbody>
+</table>
+<div class="teacher-note">
+<div class="tn-title">🗓️ HĐ4 · KẾ HOẠCH 4 TUẦN CỦA EM · 10 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> HS điền 4 cột cốt lõi: kỹ năng/mục tiêu – hành động – thời lượng – minh chứng/cách tự kiểm.</div>
+<div class="tn-item"><b>B2:</b> Hành động phải nhỏ, cụ thể; tránh “cố gắng hơn”, “học tốt hơn”.</div>
+<div class="tn-item"><b>B3:</b> Tự rà theo rubric: dữ liệu 2; prompt 2; kiểm tra/cải tiến AI 2; kế hoạch khả thi 3; an toàn 1.</div>
+<div class="tn-item"><b>B4:</b> Lưu/nộp file theo quy ước của GV. Có thể dùng PHT số nếu lớp đang làm trên web.</div>
+</div>
+<div class="tn-chot"><b>Không bắt buộc giống mẫu:</b> Chỉ cần cụ thể, khả thi, có thời gian và cách tự kiểm.</div>
+</div>
 </section>
-
-
-
 <section class="slide" data-period="3" data-title="Trắc nghiệm tương tác - Tiết 3">
-  <div class="period-marker">TIẾT 3 • SLIDE 6/9</div>
-  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
-  <h2>Tiết 3 – Prompt và kế hoạch hành động</h2>
-  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
-  
-  <div class="quiz-panel" data-mcq-set="p3">
-    <div class="quiz-q">Câu 1. Prompt nào rõ ràng hơn?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. “Hãy giúp em học tốt hơn.”</button><button class="quiz-option" data-answer="B" data-correct="1">B. “Em là HS lớp 9. Hãy lập kế hoạch 4 tuần, mỗi tuần 2 việc nhỏ, có cách tự kiểm.”</button><button class="quiz-option" data-answer="C">C. “Hãy làm tất cả cho em.”</button><button class="quiz-option" data-answer="D">D. “Viết thật nhiều nội dung.”</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p3">
-    <div class="quiz-q">Câu 2. AI gợi ý “Học 60 phút mỗi ngày” nhưng em thấy không phù hợp lịch của mình. Em nên làm gì?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Giữ nguyên vì AI đã gợi ý</button><button class="quiz-option" data-answer="B">B. Bỏ toàn bộ kế hoạch</button><button class="quiz-option" data-answer="C" data-correct="1">C. Điều chỉnh thành hành động khả thi và có cách tự kiểm</button><button class="quiz-option" data-answer="D">D. Nhờ AI tự quyết định thời gian thay em</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-panel" data-mcq-set="p3">
-    <div class="quiz-q">Câu 3. Kế hoạch rèn kỹ năng tốt cần có đủ yếu tố nào?</div>
-    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ cần tên kỹ năng và lời hứa cố gắng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Kỹ năng/mục tiêu – hành động – thời lượng – cách tự kiểm</button><button class="quiz-option" data-answer="C">C. Càng nhiều việc càng tốt</button><button class="quiz-option" data-answer="D">D. Phải giống hoàn toàn kế hoạch mẫu</button></div>
-    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
-  </div>
-  <div class="quiz-score" id="p3McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-mcq="p3">Làm lại</button></div>
-  <div class="teacher-note">Dùng sau phần kiểm tra AI trước khi dùng, trước khi HS hoàn thiện kế hoạch 4 tuần.</div>
+<div class="period-marker">TIẾT 3 • SLIDE 6/9</div>
+<div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+<h2>Tiết 3 – Prompt và kế hoạch hành động</h2>
+<span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+<div class="quiz-panel" data-mcq-set="p3">
+<div class="quiz-q">Câu 1. Prompt nào rõ ràng hơn?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. “Hãy giúp em học tốt hơn.”</button><button class="quiz-option" data-answer="B" data-correct="1">B. “Em là HS lớp 9. Hãy lập kế hoạch 4 tuần, mỗi tuần 2 việc nhỏ, có cách tự kiểm.”</button><button class="quiz-option" data-answer="C">C. “Hãy làm tất cả cho em.”</button><button class="quiz-option" data-answer="D">D. “Viết thật nhiều nội dung.”</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p3">
+<div class="quiz-q">Câu 2. AI gợi ý “Học 60 phút mỗi ngày” nhưng em thấy không phù hợp lịch của mình. Em nên làm gì?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Giữ nguyên vì AI đã gợi ý</button><button class="quiz-option" data-answer="B">B. Bỏ toàn bộ kế hoạch</button><button class="quiz-option" data-answer="C" data-correct="1">C. Điều chỉnh thành hành động khả thi và có cách tự kiểm</button><button class="quiz-option" data-answer="D">D. Nhờ AI tự quyết định thời gian thay em</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-panel" data-mcq-set="p3">
+<div class="quiz-q">Câu 3. Kế hoạch rèn kỹ năng tốt cần có đủ yếu tố nào?</div>
+<div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ cần tên kỹ năng và lời hứa cố gắng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Kỹ năng/mục tiêu – hành động – thời lượng – cách tự kiểm</button><button class="quiz-option" data-answer="C">C. Càng nhiều việc càng tốt</button><button class="quiz-option" data-answer="D">D. Phải giống hoàn toàn kế hoạch mẫu</button></div>
+<div aria-live="polite" class="quiz-result">Chọn một đáp án.</div>
+</div>
+<div class="quiz-score" id="p3McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+<div class="quiz-actions"><button data-reset-mcq="p3" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">📝 KIỂM TRA NHANH · TÙY CHỌN</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Dùng khi:</b> HS đã hoàn thành HĐ3 hoặc đang chờ bạn khác hoàn thiện kế hoạch.</div>
+<div class="tn-item"><b>Trọng tâm:</b> prompt rõ; biết chỉnh gợi ý AI; cấu trúc kế hoạch tốt.</div>
+<div class="tn-item"><b>Nếu thiếu thời gian:</b> Chỉ làm câu 2 và 3.</div>
+<div class="tn-item"><b>Không thay thế:</b> Quiz không thay cho minh chứng “2 chỉnh sửa có lí do”.</div>
+</div>
+</div>
 </section>
 <section class="slide" data-period="3" data-title="Đúng Sai trực tiếp - Tiết 3">
-  <div class="period-marker">TIẾT 3 • SLIDE 7/9</div>
-  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
-  <h2>Tiết 3 – Người học là người quyết định</h2>
-  <div class="tf-grid" data-tf-set="p3tf">
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>1.</strong> Prompt rõ cần nêu bối cảnh/dữ liệu, nhiệm vụ, yêu cầu đầu ra và tiêu chí hoặc giới hạn.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Những thành phần này giúp AI hiểu đúng điều người dùng cần.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>2.</strong> Nếu gợi ý của AI nghe hợp lí thì không cần chỉnh sửa trước khi đưa vào kế hoạch.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Cần kiểm tra tính phù hợp với thời gian, điều kiện và mục tiêu thật của người học.</div>
-    </div>
-    <div class="tf-row" data-correct="T">
-      <div class="tf-text"><strong>3.</strong> Một hành động nhỏ nhưng cụ thể và có thể theo dõi tốt hơn một mục tiêu chung chung.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Đúng. Hành động cụ thể giúp HS biết cần làm gì và kiểm tra được tiến độ.</div>
-    </div>
-    <div class="tf-row" data-correct="F">
-      <div class="tf-text"><strong>4.</strong> Khi dùng AI để lập kế hoạch, nên cung cấp càng nhiều thông tin cá nhân càng tốt.</div>
-      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
-      <div class="tf-explain">Sai. Chỉ cung cấp dữ liệu cần thiết; không chia sẻ thông tin cá nhân không cần thiết.</div>
-    </div></div>
-  <div class="quiz-score" id="p3tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
-  <div class="quiz-actions"><button type="button" data-reset-tf="p3tf">Làm lại</button></div>
-  <div class="teacher-note">Nếu nhiều HS sai câu 2 hoặc 4, GV chốt lại vai trò kiểm tra của con người và an toàn dữ liệu.</div>
+<div class="period-marker">TIẾT 3 • SLIDE 7/9</div>
+<div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+<h2>Tiết 3 – Người học là người quyết định</h2>
+<div class="tf-grid" data-tf-set="p3tf">
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>1.</strong> Prompt rõ cần nêu bối cảnh/dữ liệu, nhiệm vụ, yêu cầu đầu ra và tiêu chí hoặc giới hạn.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Những thành phần này giúp AI hiểu đúng điều người dùng cần.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>2.</strong> Nếu gợi ý của AI nghe hợp lí thì không cần chỉnh sửa trước khi đưa vào kế hoạch.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Cần kiểm tra tính phù hợp với thời gian, điều kiện và mục tiêu thật của người học.</div>
+</div>
+<div class="tf-row" data-correct="T">
+<div class="tf-text"><strong>3.</strong> Một hành động nhỏ nhưng cụ thể và có thể theo dõi tốt hơn một mục tiêu chung chung.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Đúng. Hành động cụ thể giúp HS biết cần làm gì và kiểm tra được tiến độ.</div>
+</div>
+<div class="tf-row" data-correct="F">
+<div class="tf-text"><strong>4.</strong> Khi dùng AI để lập kế hoạch, nên cung cấp càng nhiều thông tin cá nhân càng tốt.</div>
+<div class="tf-buttons"><button data-tf="T" type="button">Đúng</button><button data-tf="F" type="button">Sai</button></div>
+<div class="tf-explain">Sai. Chỉ cung cấp dữ liệu cần thiết; không chia sẻ thông tin cá nhân không cần thiết.</div>
+</div></div>
+<div class="quiz-score" id="p3tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+<div class="quiz-actions"><button data-reset-tf="p3tf" type="button">Làm lại</button></div>
+<div class="teacher-note">
+<div class="tn-title">✅ ĐÚNG/SAI · TÙY CHỌN</div>
+<div class="tn-grid">
+<div class="tn-item"><b>Câu trọng tâm:</b> Câu 2 về việc phải chỉnh gợi ý AI; câu 4 về bảo vệ thông tin cá nhân.</div>
+<div class="tn-item"><b>Cách dùng:</b> HS ra hiệu; GV chấm trực tiếp. Giải thích tối đa 20–30 giây/câu.</div>
+<div class="tn-item"><b>Nếu sai câu 2:</b> Quay lại ví dụ “60 phút mỗi ngày”.</div>
+<div class="tn-item"><b>Nếu sai câu 4:</b> Nhắc nguyên tắc chỉ cung cấp dữ liệu cần thiết cho nhiệm vụ.</div>
+</div>
+</div>
 </section>
 <section class="slide" data-period="3" data-title="Ghi vào vở - Tiết 3">
-  <div class="period-marker">TIẾT 3 • SLIDE 8/9</div>
-  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
-  <h2>Tiết 3 – Em cần ghi nhớ điều gì?</h2>
-  <div class="lesson-goal">
-    <h3>✍️ Nội dung ghi vào vở</h3>
-    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
-      <li><strong>Prompt rõ ràng</strong> cần có: bối cảnh/dữ liệu cần thiết → nhiệm vụ → yêu cầu đầu ra → tiêu chí hoặc giới hạn.</li>
-      <li><strong>Không dùng nguyên câu trả lời của AI.</strong> Cần kiểm tra mức phù hợp, phát hiện điểm chưa hợp lí và chỉnh sửa trước khi sử dụng.</li>
-      <li><strong>Kế hoạch phát triển kỹ năng</strong> cần có: kỹ năng/mục tiêu → hành động cụ thể → thời lượng → minh chứng hoặc cách tự kiểm.</li>
-      <li><strong>AI chỉ là công cụ hỗ trợ.</strong> Người học vẫn phải lựa chọn, điều chỉnh và chịu trách nhiệm với kế hoạch của mình.</li>
-    </ol>
-  </div>
-  <div class="callout ok"><strong>Câu chốt:</strong> Prompt rõ – Kiểm tra AI – Hành động cụ thể – Tự theo dõi tiến bộ.</div>
-  <div class="teacher-note">Cho HS 3–4 phút ghi bài. Có thể yêu cầu HS đóng khung 4 thành phần của prompt và 4 thành phần của kế hoạch.</div>
+<div class="period-marker">TIẾT 3 • SLIDE 8/9</div>
+<div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+<h2>Tiết 3 – Em cần ghi nhớ điều gì?</h2>
+<div class="lesson-goal">
+<h3>✍️ Nội dung ghi vào vở</h3>
+<ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+<li><strong>Prompt rõ ràng</strong> cần có: bối cảnh/dữ liệu cần thiết → nhiệm vụ → yêu cầu đầu ra → tiêu chí hoặc giới hạn.</li>
+<li><strong>Không dùng nguyên câu trả lời của AI.</strong> Cần kiểm tra mức phù hợp, phát hiện điểm chưa hợp lí và chỉnh sửa trước khi sử dụng.</li>
+<li><strong>Kế hoạch phát triển kỹ năng</strong> cần có: kỹ năng/mục tiêu → hành động cụ thể → thời lượng → minh chứng hoặc cách tự kiểm.</li>
+<li><strong>AI chỉ là công cụ hỗ trợ.</strong> Người học vẫn phải lựa chọn, điều chỉnh và chịu trách nhiệm với kế hoạch của mình.</li>
+</ol>
+</div>
+<div class="callout ok"><strong>Câu chốt:</strong> Prompt rõ – Kiểm tra AI – Hành động cụ thể – Tự theo dõi tiến bộ.</div>
+<div class="teacher-note">
+<div class="tn-title">✍️ GHI VỞ · 3 PHÚT HOẶC HOÀN THIỆN SAU TIẾT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>HS cần ghi:</b> 4 thành phần của prompt; nguyên tắc kiểm tra AI; 4 thành phần của kế hoạch phát triển kỹ năng.</div>
+<div class="tn-item"><b>Đề nghị:</b> Cho HS đóng khung hai công thức: “Prompt rõ” và “Kế hoạch tốt”.</div>
+<div class="tn-item"><b>Nếu hết giờ:</b> Chỉ ghi câu chốt, chụp slide và hoàn thiện sau.</div>
+<div class="tn-item"><b>Không cần chép:</b> Không chép bảng kế hoạch mẫu từng tuần.</div>
+</div>
+</div>
 </section>
-
 <section class="slide" data-period="3" data-title="Chốt bài">
-  <div class="period-marker">TIẾT 3 • SLIDE 9/9</div>
-  <div class="kicker">CHỐT BÀI • CAM KẾT HÀNH ĐỘNG</div>
-  <h2>Điều em sẽ làm ngay sau bài học</h2>
-  <div class="mindmap">
-    <div class="node">🧠<br/><strong>Hiểu nhiệm vụ</strong><br/><span class="mini">biết mình cần AI giúp gì</span></div>
-    <div class="node center">AI HỖ TRỢ<br/>CON NGƯỜI<br/>QUYẾT ĐỊNH</div>
-    <div class="node">🔎<br/><strong>Kiểm tra</strong><br/><span class="mini">không dùng kết quả máy móc</span></div>
-    <div class="node">🧰<br/><strong>Chọn công cụ</strong><br/><span class="mini">theo nhiệm vụ</span></div>
-    <div class="node">📈<br/><strong>Phát triển</strong><br/><span class="mini">dùng dữ liệu để rèn kỹ năng</span></div>
-    <div class="node">🛡️<br/><strong>An toàn</strong><br/><span class="mini">bảo vệ dữ liệu cá nhân</span></div>
-  </div>
-  <div class="expected">
-    <h3>✍️ Việc em làm ngay trong tuần 1</h3>
-    <p>“Mỗi tối em dành 5 phút xem lại mục tiêu của ngày và đánh dấu đã hoàn thành/chưa hoàn thành.”</p>
-    <p>Hoặc: “Khi dùng AI cho bài tập, em sẽ kiểm tra ít nhất 1 thông tin quan trọng bằng SGK hoặc tài liệu giáo viên cung cấp.”</p>
-  </div>
-  <div class="callout ok"><strong>Thông điệp cuối:</strong> Sinh tồn trong thời AI không phải là biết thật nhiều công cụ, mà là biết học, biết kiểm tra, biết lựa chọn và tiếp tục phát triển bản thân.</div>
-</section>
-
-<div class="period-end-overlay" id="periodEndOverlay" role="dialog" aria-modal="true" aria-labelledby="periodEndTitle">
-  <div class="period-end-card">
-    <div class="kicker">MỐC KẾT THÚC TIẾT DẠY</div>
-    <h2 id="periodEndTitle">Đã hết nội dung Tiết 1</h2>
-    <p id="periodEndText">Bạn đang ở slide cuối của tiết.</p>
-    <div class="period-actions">
-      <button id="stayPeriod" type="button">Ở lại tiết hiện tại</button>
-      <button class="primary" id="startNextPeriod" type="button">Bắt đầu tiết tiếp theo</button>
-    </div>
-  </div>
+<div class="period-marker">TIẾT 3 • SLIDE 9/9</div>
+<div class="kicker">CHỐT BÀI • CAM KẾT HÀNH ĐỘNG</div>
+<h2>Điều em sẽ làm ngay sau bài học</h2>
+<div class="mindmap">
+<div class="node">🧠<br/><strong>Hiểu nhiệm vụ</strong><br/><span class="mini">biết mình cần AI giúp gì</span></div>
+<div class="node center">AI HỖ TRỢ<br/>CON NGƯỜI<br/>QUYẾT ĐỊNH</div>
+<div class="node">🔎<br/><strong>Kiểm tra</strong><br/><span class="mini">không dùng kết quả máy móc</span></div>
+<div class="node">🧰<br/><strong>Chọn công cụ</strong><br/><span class="mini">theo nhiệm vụ</span></div>
+<div class="node">📈<br/><strong>Phát triển</strong><br/><span class="mini">dùng dữ liệu để rèn kỹ năng</span></div>
+<div class="node">🛡️<br/><strong>An toàn</strong><br/><span class="mini">bảo vệ dữ liệu cá nhân</span></div>
+</div>
+<div class="expected">
+<h3>✍️ Việc em làm ngay trong tuần 1</h3>
+<p>“Mỗi tối em dành 5 phút xem lại mục tiêu của ngày và đánh dấu đã hoàn thành/chưa hoàn thành.”</p>
+<p>Hoặc: “Khi dùng AI cho bài tập, em sẽ kiểm tra ít nhất 1 thông tin quan trọng bằng SGK hoặc tài liệu giáo viên cung cấp.”</p>
+</div>
+<div class="callout ok"><strong>Thông điệp cuối:</strong> Sinh tồn trong thời AI không phải là biết thật nhiều công cụ, mà là biết học, biết kiểm tra, biết lựa chọn và tiếp tục phát triển bản thân.</div>
+<div class="teacher-note">
+<div class="tn-title">🏁 HĐ5 · CHIA SẺ NHANH &amp; CAM KẾT · 5 PHÚT</div>
+<div class="tn-grid">
+<div class="tn-item"><b>B1:</b> Mỗi HS viết 1 việc sẽ làm ngay trong tuần 1.</div>
+<div class="tn-item"><b>B2:</b> Mời 2–3 HS chia sẻ, ưu tiên câu có hành động và cách tự kiểm cụ thể.</div>
+<div class="tn-item"><b>B3:</b> Đối chiếu lại 4 yêu cầu đầu tiết.</div>
+<div class="tn-item"><b>B4:</b> Thu/nắm sản phẩm để theo dõi ở hoạt động sau hoặc lần học tiếp theo.</div>
+</div>
+<div class="tn-chot"><b>Thông điệp kết:</b> Sinh tồn trong thời AI không phải biết thật nhiều công cụ, mà là biết học, biết kiểm tra, biết lựa chọn và tiếp tục phát triển bản thân.</div>
+</div></section>
+<div aria-labelledby="periodEndTitle" aria-modal="true" class="period-end-overlay" id="periodEndOverlay" role="dialog">
+<div class="period-end-card">
+<div class="kicker">MỐC KẾT THÚC TIẾT DẠY</div>
+<h2 id="periodEndTitle">Đã hết nội dung Tiết 1</h2>
+<p id="periodEndText">Bạn đang ở slide cuối của tiết.</p>
+<div class="period-actions">
+<button id="stayPeriod" type="button">Ở lại tiết hiện tại</button>
+<button class="primary" id="startNextPeriod" type="button">Bắt đầu tiết tiếp theo</button>
+</div>
+</div>
 </div>
 </main>
-
-<nav class="toolbar" aria-label="Điều khiển bài giảng">
-  <button id="prev" title="Trang trước">←</button>
-  <button id="next" title="Trang sau">→</button>
-  <button id="notes" title="Ghi chú giáo viên">GV</button>
-  <button id="laser" title="Laser Pointer">●</button>
-  <button id="full" title="Toàn màn hình">⛶</button>
-  <select id="periodSelect" aria-label="Chọn tiết dạy" title="Chuyển nhanh đến tiết dạy">
-    <option value="1">Tiết 1 • 11 slide</option>
-    <option value="2">Tiết 2 • 9 slide</option>
-    <option value="3">Tiết 3 • 9 slide</option>
-  </select>
-  <div class="period-badge" id="periodBadge"><b>TIẾT 1</b><span>Slide 1/11</span></div>
-  <button id="timerBtn" title="Bấm để chạy/tạm dừng đồng hồ 45 phút" type="button">⏱ 45:00</button>
-  <div id="slideTitle"></div><div id="counter"></div>
+<nav aria-label="Điều khiển bài giảng" class="toolbar">
+<button id="prev" title="Trang trước">←</button>
+<button id="next" title="Trang sau">→</button>
+<button id="notes" title="Ghi chú giáo viên">GV</button>
+<button id="laser" title="Laser Pointer">●</button>
+<button id="full" title="Toàn màn hình">⛶</button>
+<select aria-label="Chọn tiết dạy" id="periodSelect" title="Chuyển nhanh đến tiết dạy">
+<option value="1">Tiết 1 • 11 slide</option>
+<option value="2">Tiết 2 • 9 slide</option>
+<option value="3">Tiết 3 • 9 slide</option>
+</select>
+<div class="period-badge" id="periodBadge"><b>TIẾT 1</b><span>Slide 1/11</span></div>
+<button id="timerBtn" title="Bấm để chạy/tạm dừng đồng hồ 45 phút" type="button">⏱ 45:00</button>
+<div id="slideTitle"></div><div id="counter"></div>
 </nav>
 </div>
 <div class="laser-dot" id="laserDot"></div>
-
 <script>
 (function(){
   const slides=[...document.querySelectorAll('.slide')];
@@ -1041,6 +1334,15 @@ input[type=range]{width:100%}
     });
     updateTfScore(setId);
   }));
+
+
+  // Hiện các khối gợi ý bổ sung của KHBD khi bấm nút.
+  document.querySelectorAll('.prompt-examples-khbd > button, .khbd-ai-sample > button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const reveal=btn.parentElement.querySelector('.reveal');
+      if(reveal)reveal.classList.add('show');
+    });
+  });
 
   const skillNames=['Phân tích','Thích nghi','Lãnh đạo','Sáng tạo','Tự nhận thức','Công nghệ','Thấu cảm','Học suốt đời','AI & dữ liệu'];
   const vals=[11,9,10,12,8,10,13,11,9];
