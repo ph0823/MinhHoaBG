@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kỹ năng sinh tồn thời AI - Bài giảng lớp 9</title>
+<style>
+:root{
+  --bg:#f6fbff;
+  --panel:#ffffff;
+  --card:#ffffff;
+  --text:#17324d;
+  --muted:#5d7388;
+  --accent:#2f80ed;
+  --accent2:#7b61ff;
+  --accent3:#15b8a6;
+  --ok:#27ae60;
+  --warn:#f2a900;
+  --bad:#e95d6a;
+  --line:#d8e7f3;
+  --soft-blue:#eaf4ff;
+  --soft-purple:#f0ecff;
+  --soft-green:#e9fbf5;
+  --soft-yellow:#fff8df;
+  --soft-red:#fff0f2;
+  --nav:#eef6fc;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{overflow:hidden}
+button,input,select{font:inherit}
+#app{height:100vh;display:grid;grid-template-rows:6px 1fr 58px}
+#progress{background:#dfeaf4}
+#progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2));transition:.25s}
+#deck{position:relative;min-height:0}
+.slide{
+  position:absolute;inset:0;padding:42px 58px 34px;display:none;overflow:auto;
+  background:
+    radial-gradient(circle at 92% 7%,rgba(47,128,237,.10),transparent 25%),
+    radial-gradient(circle at 5% 88%,rgba(123,97,255,.08),transparent 24%),
+    linear-gradient(180deg,#fbfdff 0%,#f4faff 100%);
+}
+.slide.active{display:block}
+.kicker{font-size:14px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:900}
+h1{font-size:clamp(34px,5vw,68px);line-height:1.03;margin:14px 0 18px;color:#153a63}
+h2{font-size:clamp(28px,3.6vw,48px);line-height:1.1;margin:8px 0 20px;color:#173d67}
+h3{font-size:22px;margin:8px 0 10px;color:#204b75}
+p{font-size:20px;line-height:1.5;color:#35516d}
+.lead{font-size:clamp(22px,2.3vw,30px);max-width:980px}
+.grid2{display:grid;grid-template-columns:1.04fr .96fr;gap:26px;align-items:center}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{
+  background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:20px;padding:18px;
+  box-shadow:0 10px 28px rgba(42,86,124,.07)
+}
+.card strong{color:#173a5e}
+.bigicon{font-size:60px;line-height:1}
+.tag{
+  display:inline-block;padding:7px 11px;border:1px solid #cfe0ee;border-radius:999px;margin:5px 6px 5px 0;
+  color:#244d72;background:white;font-weight:700
+}
+.callout{
+  border-left:5px solid var(--accent);padding:14px 18px;background:var(--soft-blue);
+  border-radius:0 14px 14px 0;color:#254c70;font-size:18px;line-height:1.5
+}
+.callout.warn{border-color:var(--warn);background:var(--soft-yellow)}
+.callout.ok{border-color:var(--ok);background:var(--soft-green)}
+.question{font-size:clamp(25px,3vw,42px);font-weight:850;line-height:1.2;color:#173d67}
+.reveal{display:none;margin-top:14px}
+.reveal.show{display:block}
+.reveal.hint{border-left:5px solid var(--warn)}
+.reveal.step{border-left:5px solid var(--accent2)}
+.reveal.answer{border-left:5px solid var(--ok)}
+.choice{
+  width:100%;text-align:left;padding:14px 16px;margin:8px 0;border-radius:13px;border:1px solid #cfe0ee;
+  background:white;color:var(--text);cursor:pointer;box-shadow:0 4px 14px rgba(42,86,124,.04)
+}
+.choice:hover{border-color:var(--accent);transform:translateY(-1px)}
+.choice.correct{background:var(--soft-green);border-color:#79d8aa}
+.choice.wrong{background:var(--soft-red);border-color:#ef9aa3}
+.feedback{min-height:28px;color:var(--muted);font-size:17px}
+.explain-box{
+  margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);
+  background:#f8fbfe;color:#35516d;font-size:16px;line-height:1.5
+}
+.explain-box strong{color:#173a5e}
+.prompt-box{
+  margin-top:16px;padding:16px;border-radius:15px;border:1px solid #cabfff;
+  background:var(--soft-purple);font-size:17px;line-height:1.55;color:#3b3d67
+}
+.goal-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0
+}
+.goal{
+  background:white;border:1px solid var(--line);border-radius:16px;padding:14px 15px;
+  box-shadow:0 7px 18px rgba(42,86,124,.05)
+}
+.goal b{display:block;color:#1f5d9d;margin-bottom:4px}
+.lesson-goal{
+  border:2px solid #cde4f7;background:linear-gradient(135deg,#eef8ff,#f7fbff);
+  border-radius:20px;padding:18px 20px;margin:12px 0 20px
+}
+.lesson-goal h3{margin:0 0 8px;color:#155b9d}
+.lesson-goal ul{margin:6px 0 0 22px;padding:0;color:#35516d;font-size:18px;line-height:1.5}
+.two-col-table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;box-shadow:0 7px 18px rgba(42,86,124,.05)}
+.two-col-table th,.two-col-table td{border:1px solid #d8e7f3;padding:10px 12px;vertical-align:top;line-height:1.4}
+.two-col-table th{background:#eaf4ff;color:#184d7d;text-align:left}
+.two-col-table td{color:#35516d}
+.two-col-table td:first-child{font-weight:800;color:#244d72}
+.expected{
+  margin-top:16px;padding:15px 17px;border-radius:16px;background:var(--soft-green);
+  border:1px solid #bfead5;color:#2f5c49
+}
+.expected h3{margin-top:0;color:#287a56}
+.expected ul{margin:6px 0 0 20px;line-height:1.5}
+.mini{font-size:15px;color:var(--muted);line-height:1.45}
+.skillgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.skill{
+  padding:12px;border-radius:14px;background:white;border:1px solid var(--line);font-size:16px;
+  box-shadow:0 6px 16px rgba(42,86,124,.045)
+}
+.rangeRow{display:grid;grid-template-columns:180px 1fr 42px;gap:12px;align-items:center;margin:9px 0}
+input[type=range]{width:100%}
+.radarwrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+.radarbox{max-width:520px;margin:auto}
+.radarbox svg{width:100%;height:auto}
+.radar-guide{
+  margin-top:14px;padding:13px 15px;border-left:5px solid var(--accent);background:var(--soft-blue);
+  border-radius:0 12px 12px 0;font-size:15px;line-height:1.5;color:#315779
+}
+.mindmap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.node{border:1px solid var(--line);border-radius:16px;padding:16px;background:white;text-align:center;box-shadow:0 7px 18px rgba(42,86,124,.05)}
+.node.center{grid-column:2;background:linear-gradient(135deg,#e9f5ff,#efeaff);font-weight:900;font-size:22px;color:#294a75}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.flow .item{padding:14px;border:1px solid var(--line);border-radius:14px;background:white;text-align:center}
+.flow .arrow{font-weight:900;color:#8aa8c1;display:flex;align-items:center;justify-content:center}
+.toolbar{
+  display:flex;align-items:center;gap:9px;padding:8px 14px;background:var(--nav);border-top:1px solid #d6e4ef
+}
+.toolbar button,.toolbar select{
+  min-width:42px;height:38px;border:1px solid #c8dbe9;border-radius:10px;background:white;color:#254d72;cursor:pointer
+}
+.toolbar button:hover,.toolbar select:hover{border-color:var(--accent)}
+#counter{margin-left:auto;color:#5f7589;font-size:14px}
+#slideTitle{font-size:14px;color:#365a7a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.teacher-note{
+  display:none;margin-top:18px;padding:14px;border:1px dashed #7aa8ca;border-radius:12px;
+  color:#315779;background:#f7fbff
+}
+.teacher-note.show{display:block}
+.laser-dot{
+  position:fixed;width:16px;height:16px;border-radius:50%;background:#ff3b5b;
+  box-shadow:0 0 18px 7px rgba(255,59,91,.35);pointer-events:none;z-index:9999;display:none;transform:translate(-50%,-50%)
+}
+.period-badge{
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;padding:7px 10px;border:1px solid #c8dbe9;border-radius:999px;
+  background:white;color:#35516d;font-size:13px;font-weight:800
+}
+.period-badge b{color:var(--accent)}
+#periodSelect{padding:0 9px}
+#timerBtn{min-width:92px!important;font-variant-numeric:tabular-nums}
+#timerBtn.running{border-color:#79d8aa;color:#21804d}
+#timerBtn.warning{border-color:#f1c75b;color:#936b00}
+#timerBtn.danger{border-color:#ef9aa3;color:#b93645}
+.period-marker{
+  position:absolute;top:14px;left:18px;z-index:2;padding:6px 10px;border-radius:999px;
+  background:white;border:1px solid #cfe0ee;font-size:12px;color:#365a7a;font-weight:800
+}
+.period-end-overlay{
+  position:absolute;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(237,247,255,.88);backdrop-filter:blur(6px)
+}
+.period-end-overlay.show{display:flex}
+.period-end-card{
+  width:min(680px,95%);background:white;border:1px solid #c8dbe9;border-radius:24px;padding:28px;text-align:center;
+  box-shadow:0 18px 55px rgba(42,86,124,.18)
+}
+.period-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.period-actions button{min-height:44px;padding:10px 16px;border-radius:11px;border:1px solid #c8dbe9;background:white;color:#254d72;cursor:pointer}
+.period-actions .primary{background:#eaf4ff;border-color:#78b7ef;color:#155b9d}
+@media(max-width:900px){
+  .slide{padding:28px 22px 28px}
+  .grid2,.grid3,.radarwrap,.skillgrid,.mindmap,.goal-strip,.flow{grid-template-columns:1fr}
+  .node.center{grid-column:auto}
+  .toolbar{gap:6px;padding:7px 8px}
+  #slideTitle{display:none}
+  .rangeRow{grid-template-columns:120px 1fr 36px}
+  .period-badge{display:none}
+  #timerBtn{min-width:78px!important;font-size:12px}
+  #periodSelect{max-width:90px}
+}
+@media print{
+  body{overflow:visible;background:white;color:black}
+  #app{display:block;height:auto}
+  #progress,.toolbar,.laser-dot{display:none!important}
+  .slide{position:relative;display:block!important;min-height:100vh;page-break-after:always;background:white;color:black}
+  .card,.skill,.node{background:white;color:black}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="progress"><div></div></div>
+  <main id="deck">
+
+<!-- ==================== TIẾT 1 ==================== -->
+<section class="slide active" data-period="1" data-title="Mở đầu">
+  <div class="period-marker">TIẾT 1 • SLIDE 1/8</div>
+  <div class="kicker">CHUYÊN ĐỀ AI 9 • 3 TIẾT</div>
+  <div class="grid2">
+    <div>
+      <h1>KỸ NĂNG<br/>SINH TỒN<br/>THỜI AI</h1>
+      <p class="lead">Biết <strong>dùng AI đúng việc</strong>, biết <strong>kiểm tra kết quả</strong> và vẫn là người <strong>ra quyết định cuối cùng</strong>.</p>
+      <span class="tag">AI hỗ trợ</span><span class="tag">Con người kiểm tra</span><span class="tag">Con người quyết định</span>
+    </div>
+    <div class="card" style="padding:28px">
+      <div class="bigicon">🤖 + 🧠</div>
+      <h3>Câu hỏi mở đầu</h3>
+      <p>Nếu AI trả lời rất nhanh, tại sao chúng ta vẫn phải học cách kiểm tra và tự quyết định?</p>
+      <button class="choice" id="introReveal">Xem gợi ý</button>
+      <div class="reveal answer explain-box" id="introAnswer"><strong>Gợi ý:</strong> Vì AI có thể sai, thiếu bối cảnh hoặc đưa ra gợi ý không phù hợp. Người dùng phải hiểu nhiệm vụ, kiểm tra kết quả và chịu trách nhiệm với cách mình sử dụng AI.</div>
+    </div>
+  </div>
+  <div class="teacher-note">Mục tiêu của bài không phải “học thật nhiều tên công cụ AI”, mà là hình thành cách dùng AI có mục đích, có kiểm tra và có trách nhiệm.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Yêu cầu cần đạt tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 2/8</div>
+  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+  <h2>Cuối tiết 1, em cần làm được gì?</h2>
+  <div class="lesson-goal">
+    <h3>🎯 4 yêu cầu cần đạt</h3>
+    <ul>
+      <li>Nói được bằng lời của mình “sinh tồn trong thời AI” là gì.</li>
+      <li>Phân biệt việc AI hỗ trợ tốt với việc vẫn cần con người kiểm tra hoặc chịu trách nhiệm.</li>
+      <li>Chọn được nhóm công cụ phù hợp cho một nhiệm vụ học tập.</li>
+      <li>Nhớ nguyên tắc: <strong>AI hỗ trợ → con người kiểm tra → con người quyết định.</strong></li>
+    </ul>
+  </div>
+  <div class="goal-strip">
+    <div class="goal"><b>1. Hiểu</b>Sinh tồn thời AI</div>
+    <div class="goal"><b>2. Phân loại</b>AI làm gì tốt?</div>
+    <div class="goal"><b>3. Lựa chọn</b>Chọn công cụ đúng việc</div>
+    <div class="goal"><b>4. Kiểm tra</b>Không chép máy móc</div>
+  </div>
+  <div class="teacher-note">GV có thể nói nguyên văn: “Cuối tiết, các em phải trả lời được 3 câu: AI giúp em việc gì? Việc gì không nên giao hoàn toàn cho AI? Khi dùng AI, em phải kiểm tra điều gì?”</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Khởi động - AI làm được đến đâu?">
+  <div class="period-marker">TIẾT 1 • SLIDE 3/8</div>
+  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+  <h2>AI làm được đến đâu?</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>📖 Đoạn văn ngắn</h3>
+      <p style="font-size:18px">“Trong một buổi học, Minh dùng AI để tóm tắt một bài đọc dài. Chỉ sau vài giây, AI đưa ra bản tóm tắt ngắn gọn và đề xuất thêm ba câu hỏi ôn tập. Minh thấy rất tiện nên định chép nguyên câu trả lời vào vở. Tuy nhiên, khi đối chiếu với SGK, Minh phát hiện AI đã ghi sai một mốc thời gian. Minh sửa lại thông tin và dùng các câu hỏi của AI để tự luyện tập.”</p>
+    </div>
+    <div>
+      <div class="prompt-box"><strong>Prompt:</strong><br/>“Tóm tắt đoạn văn trên trong 2 câu, dùng từ dễ hiểu với học sinh THCS. Không bổ sung thông tin ngoài đoạn văn.”</div>
+      <button class="choice" id="sampleReveal">Xem sản phẩm dự kiến</button>
+      <div class="reveal answer expected" id="sampleAnswer">
+        <h3>✅ Sản phẩm dự kiến</h3>
+        <p>“AI có thể giúp học sinh tóm tắt tài liệu và tạo câu hỏi ôn tập nhanh. Tuy nhiên, người học cần kiểm tra lại thông tin trước khi sử dụng vì AI có thể đưa ra nội dung chưa chính xác.”</p>
+      </div>
+    </div>
+  </div>
+  <div class="teacher-note">GV cho HS làm theo cặp. Sau khi AI trả lời, yêu cầu HS chỉ ra 1 điểm AI làm tốt và 1 điều cần kiểm tra.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Sinh tồn thời AI">
+  <div class="period-marker">TIẾT 1 • SLIDE 4/8</div>
+  <div class="kicker">KHÁM PHÁ</div>
+  <h2>“Sinh tồn trong thời AI” nghĩa là gì?</h2>
+  <div class="grid2">
+    <div class="card">
+      <div class="bigicon">🌐</div>
+      <h3>Không chỉ là biết dùng AI</h3>
+      <p>Em còn cần biết <strong>thích nghi</strong>, <strong>tiếp tục học</strong>, <strong>kiểm tra thông tin</strong> và <strong>bảo vệ bản thân</strong> trong môi trường số.</p>
+    </div>
+    <div class="card">
+      <div class="bigicon">🛡️</div>
+      <h3>Những tình huống cần cảnh giác</h3>
+      <p>Tin giả • deepfake • lừa đảo • mất dữ liệu • AI trả lời sai • công việc thay đổi.</p>
+    </div>
+  </div>
+  <div class="callout"><strong>Khái niệm chốt:</strong> Sinh tồn trong thời AI là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</div>
+  <div class="teacher-note">Dùng đúng khái niệm này để thống nhất với KHBD mới.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="AI đúng việc - Con người đúng vai">
+  <div class="period-marker">TIẾT 1 • SLIDE 5/8</div>
+  <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
+  <h2>AI đúng việc – Con người đúng vai</h2>
+  <table class="two-col-table">
+    <thead><tr><th>Nhiệm vụ</th><th>Em sẽ xếp vào đâu?</th></tr></thead>
+    <tbody>
+      <tr><td>Tóm tắt một đoạn văn</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+      <tr><td>Gợi ý lịch học một buổi</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+      <tr><td>Viết nháp thông báo cho CLB</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+      <tr><td>Tư vấn khi một bạn buồn và bị cô lập</td><td>AI hỗ trợ tốt / cần kiểm tra / không nên giao hoàn toàn?</td></tr>
+    </tbody>
+  </table>
+  <button class="choice" id="classifyReveal">Xem đáp án tham khảo</button>
+  <div class="reveal answer" id="classifyAnswer">
+    <table class="two-col-table">
+      <thead><tr><th>Nhiệm vụ</th><th>Phân loại tham khảo</th><th>Lí do</th></tr></thead>
+      <tbody>
+        <tr><td>Tóm tắt đoạn văn</td><td>AI hỗ trợ tốt</td><td>Xử lí văn bản nhanh; HS vẫn kiểm tra ý chính.</td></tr>
+        <tr><td>Lịch học một buổi</td><td>AI hỗ trợ nhưng cần kiểm tra</td><td>AI không biết hết lịch cá nhân, sức khỏe và ưu tiên thực tế.</td></tr>
+        <tr><td>Thông báo CLB</td><td>AI hỗ trợ tốt</td><td>Tạo bản nháp nhanh; người dùng sửa thời gian, địa điểm, giọng điệu.</td></tr>
+        <tr><td>Bạn buồn và bị cô lập</td><td>Không nên giao hoàn toàn cho AI</td><td>Cần người thật lắng nghe, hiểu bối cảnh và chịu trách nhiệm.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="teacher-note">Không dùng cách nói tuyệt đối “AI không thể”. Nên dùng “không nên giao hoàn toàn cho AI” khi nhiệm vụ cần trách nhiệm của con người.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Chọn công cụ đúng nhiệm vụ">
+  <div class="period-marker">TIẾT 1 • SLIDE 6/8</div>
+  <div class="kicker">THỰC HÀNH TRỌNG TÂM • 20 PHÚT</div>
+  <h2>Chọn công cụ đúng nhiệm vụ</h2>
+  <div class="cards">
+    <div class="card"><h3>A. Giải thích khái niệm</h3><p class="mini">Ví dụ: “Deepfake là gì?”</p><span class="tag">Trợ lí AI đa năng</span></div>
+    <div class="card"><h3>B. Làm việc với tài liệu</h3><p class="mini">Tóm tắt tài liệu GV cung cấp</p><span class="tag">AI làm việc với tài liệu</span></div>
+    <div class="card"><h3>C. Chuẩn bị thuyết trình</h3><p class="mini">Tạo dàn ý 5 slide</p><span class="tag">Trợ lí AI / tổng hợp</span></div>
+    <div class="card"><h3>D. Thiết kế poster</h3><p class="mini">“AI hỗ trợ – con người quyết định”</p><span class="tag">AI sáng tạo đa phương tiện</span></div>
+  </div>
+  <div class="callout warn" style="margin-top:16px"><strong>Bắt buộc:</strong> Sau khi AI tạo kết quả, em phải kiểm tra ít nhất 1 thông tin hoặc 1 yêu cầu bằng SGK/tài liệu GV cung cấp.</div>
+  <div class="teacher-note">Không yêu cầu HS học thuộc danh sách tên công cụ. Tập trung vào loại nhiệm vụ và cách kiểm tra đầu ra.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Sản phẩm dự kiến tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 7/8</div>
+  <div class="kicker">GV ĐỐI CHIẾU SẢN PHẨM</div>
+  <h2>Một sản phẩm đạt cần có gì?</h2>
+  <table class="two-col-table">
+    <thead><tr><th>Nhiệm vụ</th><th>Kết quả chính cần có</th><th>Bước kiểm tra</th></tr></thead>
+    <tbody>
+      <tr><td>Giải thích deepfake</td><td>Nêu được nội dung giả do AI tạo/chỉnh, có thể giống thật, cần kiểm tra nguồn.</td><td>Đối chiếu tài liệu/SGK.</td></tr>
+      <tr><td>Tóm tắt tài liệu</td><td>5 ý bám đúng tài liệu, không tự thêm số liệu.</td><td>Chọn 2 ý và chỉ ra đoạn làm căn cứ.</td></tr>
+      <tr><td>Dàn ý slide</td><td>Có mở đầu – lợi ích – rủi ro – cách dùng – nguyên tắc.</td><td>Kiểm tra nội dung có vượt ngoài bài học không.</td></tr>
+      <tr><td>Poster</td><td>Bố cục rõ, chữ ít, thông điệp dễ hiểu.</td><td>HS tự chỉnh, không dùng nguyên sản phẩm AI.</td></tr>
+    </tbody>
+  </table>
+  <div class="teacher-note">GV chấm theo: đúng nhiệm vụ – chọn công cụ hợp lí – có bước kiểm tra – có chỉnh sửa của HS.</div>
+</section>
+
+<section class="slide" data-period="1" data-title="Chốt tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 8/8</div>
+  <div class="kicker">EXIT TICKET • 5 PHÚT</div>
+  <h2>3 câu chốt tiết 1</h2>
+  <p class="question" style="font-size:28px">1. “Sinh tồn thời AI” là gì?</p>
+  <p class="question" style="font-size:28px">2. Nêu 1 việc AI hỗ trợ tốt nhưng vẫn phải kiểm tra.</p>
+  <p class="question" style="font-size:28px">3. Nêu 1 nguyên tắc an toàn khi dùng AI.</p>
+  <button class="choice" id="exit1Reveal">Xem đáp án tham khảo</button>
+  <div class="reveal answer expected" id="exit1Answer">
+    <h3>✅ Đáp án tham khảo</h3>
+    <ul>
+      <li>Biết thích nghi, học hỏi, dùng AI hiệu quả nhưng vẫn kiểm tra thông tin và chịu trách nhiệm.</li>
+      <li>Ví dụ: tóm tắt tài liệu – cần kiểm tra xem có sai dữ kiện hay bỏ sót ý.</li>
+      <li>Không nhập thông tin cá nhân không cần thiết; kiểm tra lại thông tin; không chép nguyên văn nếu chưa hiểu.</li>
+    </ul>
+  </div>
+  <div class="callout ok"><strong>Chốt:</strong> AI hỗ trợ → Con người kiểm tra → Con người quyết định.</div>
+</section>
+
+<!-- ==================== TIẾT 2 ==================== -->
+<section class="slide" data-period="2" data-title="Yêu cầu cần đạt tiết 2">
+  <div class="period-marker">TIẾT 2 • SLIDE 1/6</div>
+  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+  <h2>Cuối tiết 2, em cần làm được gì?</h2>
+  <div class="lesson-goal">
+    <h3>🎯 4 yêu cầu cần đạt</h3>
+    <ul>
+      <li>Nhận diện được 9 kỹ năng cần rèn luyện.</li>
+      <li>Hoàn thành bảng tự đánh giá 9 kỹ năng trên máy tính.</li>
+      <li>Tạo được biểu đồ radar từ dữ liệu của chính mình.</li>
+      <li>Chọn 3 kỹ năng ưu tiên để rèn luyện dựa trên dữ liệu.</li>
+    </ul>
+  </div>
+  <div class="teacher-note">GV có thể nói: “Cuối tiết, mỗi em phải có một biểu đồ radar của riêng mình và biết 3 kỹ năng sẽ ưu tiên rèn luyện.”</div>
+</section>
+
+<section class="slide" data-period="2" data-title="Xếp nhóm 9 kỹ năng">
+  <div class="period-marker">TIẾT 2 • SLIDE 2/6</div>
+  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+  <h2>Xếp 9 kỹ năng vào 4 nhóm</h2>
+  <div class="skillgrid">
+    <div class="skill">1. Tư duy phân tích</div><div class="skill">2. Khả năng thích nghi</div><div class="skill">3. Lãnh đạo & ảnh hưởng tích cực</div>
+    <div class="skill">4. Tư duy sáng tạo</div><div class="skill">5. Động lực & tự nhận thức</div><div class="skill">6. Hiểu biết công nghệ</div>
+    <div class="skill">7. Thấu cảm & lắng nghe</div><div class="skill">8. Học hỏi suốt đời</div><div class="skill">9. AI & dữ liệu</div>
+  </div>
+  <button class="choice" id="groupReveal">Xem cách xếp tham khảo</button>
+  <div class="reveal answer" id="groupAnswer">
+    <table class="two-col-table">
+      <thead><tr><th>Nhóm</th><th>Kỹ năng</th></tr></thead>
+      <tbody>
+        <tr><td>Nhận thức</td><td>Tư duy phân tích; Tư duy sáng tạo</td></tr>
+        <tr><td>Cảm xúc – xã hội</td><td>Lãnh đạo & ảnh hưởng tích cực; Thấu cảm & lắng nghe</td></tr>
+        <tr><td>Công nghệ</td><td>Hiểu biết công nghệ; AI & dữ liệu</td></tr>
+        <tr><td>Tự thân</td><td>Khả năng thích nghi; Động lực & tự nhận thức; Học hỏi suốt đời</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="teacher-note">Đây là cách phân nhóm để hệ thống hóa. Một kỹ năng thực tế có thể liên quan nhiều nhóm.</div>
+</section>
+
+<section class="slide" data-period="2" data-title="Tự đánh giá trên bảng tính">
+  <div class="period-marker">TIẾT 2 • SLIDE 3/6</div>
+  <div class="kicker">THỰC HÀNH • 12 PHÚT</div>
+  <h2>Nhập dữ liệu vào file mẫu</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>📄 File: Mau_TuDanhGia_9KyNang_AI.xlsx</h3>
+      <p><strong>Sheet DanhGia:</strong> 27 phát biểu, mỗi kỹ năng có 3 phát biểu.</p>
+      <p><strong>Điểm:</strong> 1 = Chưa bao giờ … 5 = Luôn luôn.</p>
+      <p><strong>Sheet TongHop:</strong> tự cộng điểm từng kỹ năng.</p>
+    </div>
+    <div class="card">
+      <h3>🧮 Công thức mẫu</h3>
+      <p><code>=SUM(DanhGia!D2:D4)</code></p>
+      <p class="mini">→ Cộng 3 phát biểu của kỹ năng đầu tiên.</p>
+      <p><strong>Mức độ:</strong><br/>3–6 Cần rèn luyện<br/>7–9 Đang hình thành<br/>10–12 Khá<br/>13–15 Tốt</p>
+    </div>
+  </div>
+  <div class="callout warn"><strong>Lưu ý:</strong> Tự đánh giá là “ảnh chụp hiện tại”, không phải nhãn cố định và không dùng để xếp hạng giữa các bạn.</div>
+  <div class="teacher-note">HS chỉ nhập điểm 1–5 ở sheet DanhGia. Không công khai điểm cá nhân của HS trước lớp.</div>
+</section>
+
+<section class="slide" data-period="2" data-title="Dữ liệu mẫu">
+  <div class="period-marker">TIẾT 2 • SLIDE 4/6</div>
+  <div class="kicker">SẢN PHẨM DỰ KIẾN</div>
+  <h2>Ví dụ dữ liệu sau khi tổng hợp</h2>
+  <table class="two-col-table">
+    <thead><tr><th>Kỹ năng</th><th>Điểm mẫu</th><th>Mức dự kiến</th></tr></thead>
+    <tbody>
+      <tr><td>Tư duy phân tích</td><td>11</td><td>Khá</td></tr>
+      <tr><td>Khả năng thích nghi</td><td>9</td><td>Đang hình thành</td></tr>
+      <tr><td>Lãnh đạo & ảnh hưởng tích cực</td><td>10</td><td>Khá</td></tr>
+      <tr><td>Tư duy sáng tạo</td><td>12</td><td>Khá</td></tr>
+      <tr><td>Động lực & tự nhận thức</td><td>8</td><td>Đang hình thành</td></tr>
+      <tr><td>Hiểu biết công nghệ</td><td>10</td><td>Khá</td></tr>
+      <tr><td>Thấu cảm & lắng nghe</td><td>13</td><td>Tốt</td></tr>
+      <tr><td>Học hỏi suốt đời</td><td>11</td><td>Khá</td></tr>
+      <tr><td>AI & dữ liệu</td><td>9</td><td>Đang hình thành</td></tr>
+    </tbody>
+  </table>
+  <div class="teacher-note">Đây là dữ liệu minh họa, không phải dữ liệu của một HS thật.</div>
+</section>
+
+<section class="slide" data-period="2" data-title="Biểu đồ radar">
+  <div class="period-marker">TIẾT 2 • SLIDE 5/6</div>
+  <div class="kicker">THỰC HÀNH TRỌNG TÂM • 18 PHÚT</div>
+  <h2>Biểu đồ radar 9 kỹ năng</h2>
+  <div class="radarwrap">
+    <div id="sliders"></div>
+    <div class="radarbox"><svg aria-label="Biểu đồ radar kỹ năng" id="radar" viewBox="0 0 520 520"></svg></div>
+  </div>
+  <div class="radar-guide"><strong>Cách tạo trong Excel:</strong> Chọn vùng tên kỹ năng + tổng điểm → Insert/Chèn → Radar → đặt tiêu đề “Bản đồ kỹ năng của em”.</div>
+  <div class="teacher-note">Bộ điểm mặc định ở slide này chính là dữ liệu minh họa 11, 9, 10, 12, 8, 10, 13, 11, 9.</div>
+</section>
+
+<section class="slide" data-period="2" data-title="Đọc biểu đồ và chọn mục tiêu">
+  <div class="period-marker">TIẾT 2 • SLIDE 6/6</div>
+  <div class="kicker">PHÂN TÍCH • 10 PHÚT</div>
+  <h2>Từ biểu đồ → 3 kỹ năng ưu tiên</h2>
+  <div class="cards">
+    <div class="card"><h3>Điểm cao nhất?</h3><p>Thấu cảm & lắng nghe: <strong>13/15</strong></p></div>
+    <div class="card"><h3>Điểm thấp nhất?</h3><p>Động lực & tự nhận thức: <strong>8/15</strong></p></div>
+    <div class="card"><h3>3 ưu tiên mẫu</h3><p>Động lực & tự nhận thức • Khả năng thích nghi • AI & dữ liệu</p></div>
+  </div>
+  <div class="expected">
+    <h3>✅ Sản phẩm dự kiến</h3>
+    <ul>
+      <li>Điểm mạnh: nêu được 1 kỹ năng và dẫn chứng hành vi.</li>
+      <li>Điểm cần rèn: nêu được 1 kỹ năng và lí do.</li>
+      <li>Chọn 3 kỹ năng ưu tiên dựa trên dữ liệu hoặc nhu cầu học tập.</li>
+    </ul>
+  </div>
+  <div class="callout ok"><strong>Chốt:</strong> Điểm thấp không có nghĩa là “em yếu”; nó chỉ cho biết em nên tập trung rèn ở đâu.</div>
+</section>
+
+<!-- ==================== TIẾT 3 ==================== -->
+<section class="slide" data-period="3" data-title="Yêu cầu cần đạt tiết 3">
+  <div class="period-marker">TIẾT 3 • SLIDE 1/6</div>
+  <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
+  <h2>Cuối tiết 3, em cần làm được gì?</h2>
+  <div class="lesson-goal">
+    <h3>🎯 4 yêu cầu cần đạt</h3>
+    <ul>
+      <li>Viết được prompt rõ ràng: bối cảnh/dữ liệu – nhiệm vụ – yêu cầu đầu ra – tiêu chí.</li>
+      <li>Dùng 3 kỹ năng ưu tiên ở tiết 2 để yêu cầu AI đề xuất kế hoạch.</li>
+      <li>Kiểm tra và sửa ít nhất 2 điểm trong gợi ý của AI.</li>
+      <li>Hoàn thành kế hoạch 4 tuần có hành động, thời lượng và cách tự kiểm.</li>
+    </ul>
+  </div>
+  <div class="teacher-note">GV nói rõ: “Sản phẩm cuối tiết không phải câu trả lời của AI, mà là kế hoạch do chính em lựa chọn và chỉnh sửa.”</div>
+</section>
+
+<section class="slide" data-period="3" data-title="Sửa prompt trong 60 giây">
+  <div class="period-marker">TIẾT 3 • SLIDE 2/6</div>
+  <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
+  <h2>Sửa prompt trong 60 giây</h2>
+  <div class="grid2">
+    <div class="card"><h3>❌ Prompt mơ hồ</h3><p class="question" style="font-size:28px">“Hãy giúp em giỏi hơn.”</p></div>
+    <div class="card"><h3>✅ Prompt tốt hơn</h3><p>“Em là học sinh lớp 9 và muốn cải thiện kỹ năng quản lí việc học. Hãy đề xuất kế hoạch 4 tuần; mỗi tuần 2 hành động nhỏ, mỗi hành động không quá 20 phút/ngày; có tiêu chí tự kiểm cuối tuần; dùng ngôn ngữ dễ hiểu.”</p></div>
+  </div>
+  <div class="flow">
+    <div class="item"><strong>Bối cảnh</strong></div><div class="arrow">→</div><div class="item"><strong>Nhiệm vụ</strong></div><div class="arrow">→</div><div class="item"><strong>Đầu ra + tiêu chí</strong></div>
+  </div>
+  <div class="teacher-note">Chốt: prompt tốt không cần dài, nhưng phải đủ thông tin quan trọng.</div>
+</section>
+
+<section class="slide" data-period="3" data-title="Dùng dữ liệu thật của em">
+  <div class="period-marker">TIẾT 3 • SLIDE 3/6</div>
+  <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
+  <h2>AI làm cố vấn – em là người quyết định</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>📊 Dữ liệu mẫu</h3>
+      <p>Động lực & tự nhận thức: <strong>8/15</strong></p>
+      <p>Khả năng thích nghi: <strong>9/15</strong></p>
+      <p>AI & dữ liệu: <strong>9/15</strong></p>
+    </div>
+    <div class="prompt-box">
+      <strong>Prompt mẫu:</strong><br/>
+      “Bạn là cố vấn học tập cho học sinh THCS. Em muốn rèn 3 kỹ năng: Động lực và tự nhận thức (8/15), Khả năng thích nghi (9/15), AI và dữ liệu (9/15). Hãy đề xuất kế hoạch 4 tuần. Mỗi tuần chỉ 2 hành động nhỏ, mỗi hành động tối đa 20–30 phút/ngày. Mỗi hành động phải có minh chứng hoặc cách tự kiểm. Dùng ngôn ngữ dễ hiểu; không yêu cầu thông tin cá nhân.”
+    </div>
+  </div>
+  <div class="callout warn"><strong>An toàn:</strong> Không nhập họ tên đầy đủ, số điện thoại, địa chỉ, tài khoản hoặc thông tin gia đình nếu không cần thiết.</div>
+  <div class="teacher-note">HS đánh dấu 3 loại nội dung trong câu trả lời AI: phù hợp / chưa rõ / không phù hợp.</div>
+</section>
+
+<section class="slide" data-period="3" data-title="Kiểm tra AI trước khi dùng">
+  <div class="period-marker">TIẾT 3 • SLIDE 4/6</div>
+  <div class="kicker">TƯ DUY PHẢN BIỆN • 10 PHÚT</div>
+  <h2>Không dùng nguyên câu trả lời AI</h2>
+  <table class="two-col-table">
+    <thead><tr><th>Gợi ý AI</th><th>Vấn đề</th><th>Cách sửa</th></tr></thead>
+    <tbody>
+      <tr><td>“Học cố định 60 phút mỗi ngày.”</td><td>Quá dài, không phù hợp lịch cá nhân.</td><td>20 phút/ngày, 3 ngày/tuần; cuối tuần kiểm tra số buổi hoàn thành.</td></tr>
+      <tr><td>“Hãy tự tin và tích cực hơn.”</td><td>Quá chung chung, không đo được.</td><td>Mỗi tuần phát biểu/đặt câu hỏi trong ít nhất 2 tiết học.</td></tr>
+      <tr><td>“Đăng ký khóa học trả phí về AI.”</td><td>Không cần thiết, có thể tốn chi phí.</td><td>Dùng nhiệm vụ miễn phí và kiểm tra thông tin bằng tài liệu GV cung cấp.</td></tr>
+    </tbody>
+  </table>
+  <div class="expected"><h3>✅ Mốc đạt</h3><p>HS phải chỉ ra ít nhất <strong>2 điểm đã sửa</strong> và giải thích vì sao sửa.</p></div>
+  <div class="teacher-note">Nếu HS chỉ sao chép nguyên văn câu trả lời AI thì chưa đạt mục tiêu hoạt động.</div>
+</section>
+
+<section class="slide" data-period="3" data-title="Kế hoạch 4 tuần">
+  <div class="period-marker">TIẾT 3 • SLIDE 5/6</div>
+  <div class="kicker">SẢN PHẨM CUỐI • 10 PHÚT</div>
+  <h2>Kế hoạch 4 tuần của em</h2>
+  <table class="two-col-table">
+    <thead><tr><th>Tuần</th><th>Kỹ năng</th><th>Hành động cụ thể</th><th>Thời lượng</th><th>Cách tự kiểm</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Động lực & tự nhận thức</td><td>Đặt 1 mục tiêu học tập; mỗi tối đánh dấu hoàn thành/chưa hoàn thành.</td><td>5 phút/ngày</td><td>Ít nhất 5/7 ngày có tự kiểm.</td></tr>
+      <tr><td>2</td><td>Khả năng thích nghi</td><td>Lập lịch học 3 buổi; nếu lịch thay đổi, viết phương án thay thế.</td><td>15–20 phút/buổi</td><td>Có lịch ban đầu và phương án điều chỉnh.</td></tr>
+      <tr><td>3</td><td>AI & dữ liệu</td><td>Dùng AI hỗ trợ 1 nhiệm vụ; kiểm tra 2 thông tin bằng SGK/tài liệu GV.</td><td>20 phút × 2</td><td>Ghi rõ thông tin và nguồn đối chiếu.</td></tr>
+      <tr><td>4</td><td>Kết hợp 3 kỹ năng</td><td>Tự chọn 1 nhiệm vụ học tập; lập kế hoạch, dùng AI, kiểm tra và tự đánh giá.</td><td>30 phút</td><td>Nộp sản phẩm + 3 câu tự nhận xét.</td></tr>
+    </tbody>
+  </table>
+  <div class="teacher-note">Không bắt buộc HS giống kế hoạch mẫu. GV chỉ đối chiếu đủ 4 yếu tố: mục tiêu/kỹ năng – hành động – thời lượng – cách tự kiểm.</div>
+</section>
+
+<section class="slide" data-period="3" data-title="Chốt bài">
+  <div class="period-marker">TIẾT 3 • SLIDE 6/6</div>
+  <div class="kicker">CHỐT BÀI • CAM KẾT HÀNH ĐỘNG</div>
+  <h2>Điều em sẽ làm ngay sau bài học</h2>
+  <div class="mindmap">
+    <div class="node">🧠<br/><strong>Hiểu nhiệm vụ</strong><br/><span class="mini">biết mình cần AI giúp gì</span></div>
+    <div class="node center">AI HỖ TRỢ<br/>CON NGƯỜI<br/>QUYẾT ĐỊNH</div>
+    <div class="node">🔎<br/><strong>Kiểm tra</strong><br/><span class="mini">không dùng kết quả máy móc</span></div>
+    <div class="node">🧰<br/><strong>Chọn công cụ</strong><br/><span class="mini">theo nhiệm vụ</span></div>
+    <div class="node">📈<br/><strong>Phát triển</strong><br/><span class="mini">dùng dữ liệu để rèn kỹ năng</span></div>
+    <div class="node">🛡️<br/><strong>An toàn</strong><br/><span class="mini">bảo vệ dữ liệu cá nhân</span></div>
+  </div>
+  <div class="expected">
+    <h3>✍️ Việc em làm ngay trong tuần 1</h3>
+    <p>“Mỗi tối em dành 5 phút xem lại mục tiêu của ngày và đánh dấu đã hoàn thành/chưa hoàn thành.”</p>
+    <p>Hoặc: “Khi dùng AI cho bài tập, em sẽ kiểm tra ít nhất 1 thông tin quan trọng bằng SGK hoặc tài liệu giáo viên cung cấp.”</p>
+  </div>
+  <div class="callout ok"><strong>Thông điệp cuối:</strong> Sinh tồn trong thời AI không phải là biết thật nhiều công cụ, mà là biết học, biết kiểm tra, biết lựa chọn và tiếp tục phát triển bản thân.</div>
+</section>
+
+<div class="period-end-overlay" id="periodEndOverlay" role="dialog" aria-modal="true" aria-labelledby="periodEndTitle">
+  <div class="period-end-card">
+    <div class="kicker">MỐC KẾT THÚC TIẾT DẠY</div>
+    <h2 id="periodEndTitle">Đã hết nội dung Tiết 1</h2>
+    <p id="periodEndText">Bạn đang ở slide cuối của tiết.</p>
+    <div class="period-actions">
+      <button id="stayPeriod" type="button">Ở lại tiết hiện tại</button>
+      <button class="primary" id="startNextPeriod" type="button">Bắt đầu tiết tiếp theo</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<nav class="toolbar" aria-label="Điều khiển bài giảng">
+  <button id="prev" title="Trang trước">←</button>
+  <button id="next" title="Trang sau">→</button>
+  <button id="notes" title="Ghi chú giáo viên">GV</button>
+  <button id="laser" title="Laser Pointer">●</button>
+  <button id="full" title="Toàn màn hình">⛶</button>
+  <select id="periodSelect" aria-label="Chọn tiết dạy" title="Chuyển nhanh đến tiết dạy">
+    <option value="1">Tiết 1 • 8 slide</option>
+    <option value="2">Tiết 2 • 6 slide</option>
+    <option value="3">Tiết 3 • 6 slide</option>
+  </select>
+  <div class="period-badge" id="periodBadge"><b>TIẾT 1</b><span>Slide 1/8</span></div>
+  <button id="timerBtn" title="Bấm để chạy/tạm dừng đồng hồ 45 phút" type="button">⏱ 45:00</button>
+  <div id="slideTitle"></div><div id="counter"></div>
+</nav>
+</div>
+<div class="laser-dot" id="laserDot"></div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const progress=document.querySelector('#progress>div');
+  const counter=document.getElementById('counter');
+  const slideTitle=document.getElementById('slideTitle');
+  const periodBadge=document.getElementById('periodBadge');
+  const periodSelect=document.getElementById('periodSelect');
+  const overlay=document.getElementById('periodEndOverlay');
+  const overlayTitle=document.getElementById('periodEndTitle');
+  const overlayText=document.getElementById('periodEndText');
+  const stayPeriod=document.getElementById('stayPeriod');
+  const startNextPeriod=document.getElementById('startNextPeriod');
+  const timerBtn=document.getElementById('timerBtn');
+
+  const periods={
+    1:{start:0,end:7,total:8},
+    2:{start:8,end:13,total:6},
+    3:{start:14,end:19,total:6}
+  };
+
+  let idx=0, laserOn=false;
+  let timerSeconds=45*60, timerId=null, timerRunning=false;
+
+  function periodOf(index){ return Number(slides[index]?.dataset.period||1); }
+  function localIndex(index){ const p=periodOf(index),cfg=periods[p]; return index-cfg.start+1; }
+  function formatTime(sec){ sec=Math.max(0,sec);const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
+  function updateTimerUI(){
+    timerBtn.textContent='⏱ '+formatTime(timerSeconds);
+    timerBtn.classList.toggle('running',timerRunning&&timerSeconds>300);
+    timerBtn.classList.toggle('warning',timerSeconds<=300&&timerSeconds>60);
+    timerBtn.classList.toggle('danger',timerSeconds<=60);
+  }
+  function pauseTimer(){timerRunning=false;if(timerId){clearInterval(timerId);timerId=null}updateTimerUI()}
+  function resetTimer(){pauseTimer();timerSeconds=45*60;updateTimerUI()}
+  function toggleTimer(){
+    if(timerRunning){pauseTimer();return}
+    timerRunning=true;updateTimerUI();
+    timerId=setInterval(()=>{timerSeconds--;if(timerSeconds<=0){timerSeconds=0;pauseTimer()}updateTimerUI()},1000);
+  }
+
+  function show(i,{allowCrossPeriod=false}={}){
+    const target=Math.max(0,Math.min(slides.length-1,i));
+    const curP=periodOf(idx),targetP=periodOf(target);
+    if(!allowCrossPeriod&&targetP>curP){showPeriodEnd(curP);return}
+    idx=target;
+    slides.forEach((s,n)=>s.classList.toggle('active',n===idx));
+    const p=periodOf(idx),cfg=periods[p],local=localIndex(idx);
+    progress.style.width=(local/cfg.total*100)+'%';
+    counter.textContent=`Tiết ${p}: ${local}/${cfg.total} • Tổng ${idx+1}/${slides.length}`;
+    slideTitle.textContent=slides[idx].dataset.title||'';
+    periodBadge.innerHTML=`<b>TIẾT ${p}</b><span>Slide ${local}/${cfg.total}</span>`;
+    periodSelect.value=String(p);
+    overlay.classList.remove('show');
+  }
+  function showPeriodEnd(p){
+    overlayTitle.textContent=`Đã hết nội dung Tiết ${p}`;
+    if(p<3){
+      overlayText.textContent=`Tiết ${p} có ${periods[p].total} slide. GV có thể chốt mục tiêu trước khi chuyển sang Tiết ${p+1}.`;
+      startNextPeriod.style.display='';
+      startNextPeriod.textContent=`Bắt đầu Tiết ${p+1}`;
+    }else{
+      overlayText.textContent='Bạn đã hoàn thành toàn bộ chuyên đề.';
+      startNextPeriod.style.display='none';
+    }
+    overlay.classList.add('show');
+  }
+  function nextSlide(){const p=periodOf(idx);if(idx>=periods[p].end){showPeriodEnd(p);return}show(idx+1)}
+  function prevSlide(){show(idx-1,{allowCrossPeriod:true})}
+  function startPeriod(p){const cfg=periods[p];if(!cfg)return;resetTimer();show(cfg.start,{allowCrossPeriod:true})}
+
+  document.getElementById('prev').addEventListener('click',prevSlide);
+  document.getElementById('next').addEventListener('click',nextSlide);
+  periodSelect.addEventListener('change',()=>startPeriod(Number(periodSelect.value)));
+  stayPeriod.addEventListener('click',()=>overlay.classList.remove('show'));
+  startNextPeriod.addEventListener('click',()=>{const p=periodOf(idx);if(p<3)startPeriod(p+1)});
+  timerBtn.addEventListener('click',toggleTimer);
+  timerBtn.addEventListener('dblclick',resetTimer);
+
+  document.getElementById('notes').addEventListener('click',()=>{
+    const n=slides[idx].querySelector('.teacher-note');if(n)n.classList.toggle('show');
+  });
+  document.getElementById('full').addEventListener('click',()=>{
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  });
+
+  const laser=document.getElementById('laser'),dot=document.getElementById('laserDot');
+  laser.addEventListener('click',()=>{laserOn=!laserOn;dot.style.display=laserOn?'block':'none';laser.style.borderColor=laserOn?'#ff3b5b':''});
+  document.addEventListener('pointermove',e=>{if(laserOn){dot.style.left=e.clientX+'px';dot.style.top=e.clientY+'px'}});
+
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;
+    if(overlay.classList.contains('show')){if(e.key==='Escape')overlay.classList.remove('show');return}
+    if(e.key==='ArrowRight'){nextSlide();return}
+    if(e.key==='ArrowLeft'){prevSlide();return}
+    if(e.code==='Space'){
+      e.preventDefault();
+      const rs=[...slides[idx].querySelectorAll('.reveal')];
+      const next=rs.find(x=>!x.classList.contains('show'));
+      if(next)next.classList.add('show'); else nextSlide();
+    }
+  });
+
+  const revealPairs=[
+    ['introReveal','introAnswer'],['sampleReveal','sampleAnswer'],['classifyReveal','classifyAnswer'],
+    ['exit1Reveal','exit1Answer'],['groupReveal','groupAnswer']
+  ];
+  revealPairs.forEach(([b,a])=>{
+    const btn=document.getElementById(b),ans=document.getElementById(a);
+    if(btn&&ans)btn.addEventListener('click',()=>ans.classList.add('show'));
+  });
+
+  const skillNames=['Phân tích','Thích nghi','Lãnh đạo','Sáng tạo','Tự nhận thức','Công nghệ','Thấu cảm','Học suốt đời','AI & dữ liệu'];
+  const vals=[11,9,10,12,8,10,13,11,9];
+  const sliders=document.getElementById('sliders');
+  if(sliders){
+    skillNames.forEach((n,i)=>{
+      const row=document.createElement('div');row.className='rangeRow';
+      row.innerHTML='<label>'+n+'</label><input type="range" min="3" max="15" value="'+vals[i]+'" aria-label="'+n+'"><strong>'+vals[i]+'</strong>';
+      const input=row.querySelector('input'),out=row.querySelector('strong');
+      input.addEventListener('input',()=>{vals[i]=Number(input.value);out.textContent=input.value;drawRadar()});
+      sliders.appendChild(row);
+    });
+  }
+  function p(cx,cy,r,a){return[cx+Math.cos(a)*r,cy+Math.sin(a)*r]}
+  function drawRadar(){
+    const svg=document.getElementById('radar');if(!svg)return;
+    const cx=260,cy=260,R=185,N=skillNames.length;let h='';
+    for(let ring=1;ring<=5;ring++){
+      let pts=[];for(let i=0;i<N;i++){const a=-Math.PI/2+i*2*Math.PI/N;pts.push(p(cx,cy,R*ring/5,a).join(','))}
+      h+='<polygon points="'+pts.join(' ')+'" fill="none" stroke="#d2e3ef" stroke-width="1"/>';
+    }
+    for(let i=0;i<N;i++){
+      const a=-Math.PI/2+i*2*Math.PI/N,q=p(cx,cy,R,a),l=p(cx,cy,R+38,a);
+      h+='<line x1="'+cx+'" y1="'+cy+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="#d2e3ef"/>';
+      h+='<text x="'+l[0]+'" y="'+l[1]+'" fill="#35516d" font-size="11" text-anchor="middle">'+skillNames[i]+'</text>';
+    }
+    let pts=[];
+    for(let i=0;i<N;i++){const a=-Math.PI/2+i*2*Math.PI/N;pts.push(p(cx,cy,R*(vals[i]/15),a).join(','))}
+    h+='<polygon points="'+pts.join(' ')+'" fill="rgba(47,128,237,.17)" stroke="#2f80ed" stroke-width="3"/>';
+    svg.innerHTML=h;
+  }
+  drawRadar();
+  resetTimer();
+  show(0,{allowCrossPeriod:true});
+})();
+</script>
+</body>
+</html>
