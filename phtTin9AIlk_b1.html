@@ -426,7 +426,7 @@ th{background:#edf5ff}
 "use strict";
 
 const WORKSHEET_ID = "tin9_ai_bai1";
-const STORAGE_KEY = `worksheet_${WORKSHEET_ID}_local_v7`;
+const STORAGE_KEY = `worksheet_${WORKSHEET_ID}_local_v8`;
 const SESSION_KEY = `worksheet_${WORKSHEET_ID}_active_student_v1`;
 
 const firebaseConfig = {
@@ -546,38 +546,80 @@ const activities = [
   },
 
   {
-    title:"Tiết 1 · HĐ3: Chọn công cụ AI đúng nhiệm vụ",
+    title:"Tiết 1 · HĐ3: Chọn cách dùng AI phù hợp",
     render:r=>`
       <span class="lesson-chip">TIẾT 1 · THỰC HÀNH TRỌNG TÂM</span>
-      <h2>HĐ3. Chọn công cụ đúng nhiệm vụ</h2>
-      <div class="activity-goal"><b>Mục tiêu:</b> Chọn nhóm công cụ theo nhiệm vụ và biết bước kiểm tra đầu ra.</div>
+      <h2>HĐ3. Chọn cách dùng AI phù hợp với nhiệm vụ</h2>
+      <div class="activity-goal">
+        <b>Mục tiêu:</b> Không cần nhớ AI nào “thuộc nhóm nào”. Hãy xác định <b>vai trò AI cần đảm nhiệm</b> trong từng nhiệm vụ.
+      </div>
+
+      <div class="task-note">
+        <b>Ghi nhớ:</b> Một AI đa năng như Gemini hoặc ChatGPT có thể làm nhiều vai trò.
+        Ví dụ: vừa giải thích, vừa đọc tài liệu, vừa tìm nguồn, vừa hỗ trợ tạo hình.
+      </div>
 
       <div class="subtask">
-        <h3>1. Nối nhiệm vụ với nhóm công cụ</h3>
+        <h3>1. Nối nhiệm vụ với vai trò AI phù hợp nhất</h3>
         <div class="notice">
-          A. Trợ lí AI đa năng · B. Công cụ làm việc với tài liệu/nguồn ·
-          C. Công cụ tìm kiếm/tổng hợp có nguồn · D. AI sáng tạo đa phương tiện
+          A. Trợ lí AI: hỏi đáp, giải thích, gợi ý, viết nháp<br>
+          B. Làm việc với tài liệu: đọc PDF/file đã có, tóm tắt, hỏi đáp theo tài liệu<br>
+          C. Tìm kiếm – tổng hợp có nguồn: tìm thông tin mới, tổng hợp nhiều nguồn<br>
+          D. Sáng tạo đa phương tiện: hình ảnh, poster, slide, video, âm thanh
         </div>
+
         <div class="table-wrap">
           <table class="match-table">
-            <thead><tr><th>Nhiệm vụ</th><th>Nhóm công cụ</th></tr></thead>
+            <thead><tr><th>Nhiệm vụ</th><th>Vai trò AI phù hợp nhất</th></tr></thead>
             <tbody>
-              <tr><td>Giải thích khái niệm “deepfake” cho HS lớp 9</td><td>${selectField("a3_tool_explain","",["","A","B","C","D"],r)}</td></tr>
-              <tr><td>Tóm tắt một tài liệu GV cung cấp thành 5 ý</td><td>${selectField("a3_tool_doc","",["","A","B","C","D"],r)}</td></tr>
-              <tr><td>Tìm ý và nguồn tham khảo cho bài thuyết trình</td><td>${selectField("a3_tool_search","",["","A","B","C","D"],r)}</td></tr>
-              <tr><td>Thiết kế ý tưởng poster “AI hỗ trợ – con người quyết định”</td><td>${selectField("a3_tool_media","",["","A","B","C","D"],r)}</td></tr>
+              <tr>
+                <td>Giải thích “deepfake” cho học sinh lớp 9 bằng ngôn ngữ dễ hiểu</td>
+                <td>${selectField("a3_role_explain","",["","A","B","C","D"],r)}</td>
+              </tr>
+              <tr>
+                <td>Tóm tắt một file PDF do giáo viên cung cấp, chỉ dựa trên nội dung file</td>
+                <td>${selectField("a3_role_doc","",["","A","B","C","D"],r)}</td>
+              </tr>
+              <tr>
+                <td>Tìm 3 nguồn đáng tin về deepfake và nêu nội dung chính của mỗi nguồn</td>
+                <td>${selectField("a3_role_search","",["","A","B","C","D"],r)}</td>
+              </tr>
+              <tr>
+                <td>Tạo ý tưởng poster “AI hỗ trợ – Con người quyết định”</td>
+                <td>${selectField("a3_role_media","",["","A","B","C","D"],r)}</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
       <div class="subtask">
-        <h3>2. Điền khuyết quy trình dùng AI</h3>
+        <h3>2. Trắc nghiệm: cùng một AI có thể dùng cho nhiều vai trò không?</h3>
+        <p><b>Ví dụ em dùng Gemini cho cả 4 nhiệm vụ trên. Điều đó có sai không?</b></p>
+        ${radioGroup("a3_same_ai",[
+          ["A","Sai, mỗi AI chỉ được dùng cho một loại nhiệm vụ"],
+          ["B","Không sai, nếu AI đó hỗ trợ đủ chức năng cần thiết"],
+          ["C","Sai, chỉ AI chuyên biệt mới được sử dụng"],
+          ["D","Không quan trọng nhiệm vụ, dùng AI nào cũng giống nhau"]
+        ],r)}
+      </div>
+
+      <div class="subtask">
+        <h3>3. Điền khuyết quy trình</h3>
         <div class="fill-sentence">
-          Xác định nhiệm vụ → Chọn công cụ → Đặt yêu cầu rõ →
-          ${inputText("a3_fill_verify",r,"bước tiếp theo")}
+          Xác định nhiệm vụ → Xác định
+          ${inputText("a3_fill_role",r,"vai trò AI")}
+          → Chọn công cụ phù hợp → Đặt yêu cầu rõ →
+          ${inputText("a3_fill_verify",r,"bước cần làm")}
           → Chỉnh sửa → Tự quyết định.
         </div>
+      </div>
+
+      <div class="subtask">
+        <h3>4. Vận dụng với công cụ em đang dùng</h3>
+        <p>Hãy chọn một AI em biết hoặc đang dùng (ví dụ Gemini, ChatGPT...) và nêu <b>hai vai trò khác nhau</b> mà AI đó có thể đảm nhiệm.</p>
+        ${inputText("a3_my_ai",r,"Tên AI em chọn")}
+        ${textArea("a3_two_roles",r,"Ví dụ: Vai trò 1... dùng khi...; Vai trò 2... dùng khi...")}
       </div>`
   },
 
@@ -786,10 +828,11 @@ const AUTO_SCORE_OBJECTIVE = [
   {key:"a2_match_notice",correct:"AI hỗ trợ tốt",points:0.20},
   {key:"a2_match_emotion",correct:"Không nên giao hoàn toàn cho AI",points:0.20},
   {key:"a2_mcq",correct:"C",points:0.45},
-  {key:"a3_tool_explain",correct:"A",points:0.25},
-  {key:"a3_tool_doc",correct:"B",points:0.25},
-  {key:"a3_tool_search",correct:"C",points:0.25},
-  {key:"a3_tool_media",correct:"D",points:0.25},
+  {key:"a3_role_explain",correct:"A",points:0.20},
+  {key:"a3_role_doc",correct:"B",points:0.20},
+  {key:"a3_role_search",correct:"C",points:0.20},
+  {key:"a3_role_media",correct:"D",points:0.20},
+  {key:"a3_same_ai",correct:"B",points:0.20},
 
   // Tiết 2 = 2,50 điểm
   {key:"a4_g1",correct:"Nhận thức",points:0.15},
@@ -819,7 +862,7 @@ const AUTO_SCORE_OBJECTIVE = [
 
 const AUTO_SCORE_PRODUCT = [
   {name:"HĐ1 · Điền khuyết",points:0.25,keys:["a1_fill_check","a1_fill_decide"]},
-  {name:"HĐ3 · Quy trình kiểm tra",points:0.25,keys:["a3_fill_verify"]},
+  {name:"HĐ3 · Quy trình dùng AI",points:0.25,keys:["a3_fill_role","a3_fill_verify"]},
   {name:"HĐ6 · 3 kỹ năng ưu tiên",points:0.25,keys:["a6_skill1","a6_skill2","a6_skill3","a6_reason"]},
   {name:"HĐ7 · Điền khuyết prompt",points:0.25,keys:["a7_fill_info","a7_fill_output"]},
   {name:"HĐ8 · Viết lại gợi ý AI",points:0.50,keys:["a8_rewrite"]},
@@ -1116,7 +1159,7 @@ async function syncCurrentToFirebase(){
     score:calculateAutoScore(currentRecord),
     meta:{
       worksheetId:WORKSHEET_ID,
-      version:"7"
+      version:"8"
     }
   };
 
@@ -1244,7 +1287,7 @@ function defaultRecord(cls,no,name){
     ownerUid:firebaseUser?.uid||"",
     createdAt:Date.now(),
     updatedAt:Date.now(),
-    meta:{worksheetId:WORKSHEET_ID,version:"7"}
+    meta:{worksheetId:WORKSHEET_ID,version:"8"}
   };
 }
 
@@ -1381,7 +1424,7 @@ async function persistCurrent(forceRemote=false){
   currentRecord.meta={
     ...(currentRecord.meta||{}),
     worksheetId:WORKSHEET_ID,
-    version:"7"
+    version:"8"
   };
 
   const d=allData();
@@ -1496,7 +1539,7 @@ async function enterStudent(){
         ownerUid:firebaseUser.uid,
         createdAt:Number(chosen.createdAt)||Date.now(),
         updatedAt:Date.now(),
-        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"7"}
+        meta:{...(chosen.meta||{}),worksheetId:WORKSHEET_ID,version:"8"}
       };
     }else{
       currentRecord=defaultRecord(cls,no,name);
@@ -1913,13 +1956,18 @@ const REVIEW_FIELDS = [
     ]
   },
   {
-    title:"Tiết 1 · HĐ3: Chọn công cụ đúng nhiệm vụ",
+    title:"Tiết 1 · HĐ3: Chọn cách dùng AI phù hợp",
     items:[
-      {key:"a3_tool_explain",label:"Giải thích deepfake",type:"exact",correct:"A"},
-      {key:"a3_tool_doc",label:"Tóm tắt tài liệu GV cung cấp",type:"exact",correct:"B"},
-      {key:"a3_tool_search",label:"Tìm ý và nguồn tham khảo",type:"exact",correct:"C"},
-      {key:"a3_tool_media",label:"Thiết kế ý tưởng poster",type:"exact",correct:"D"},
-      {key:"a3_fill_verify",label:"Điền khuyết quy trình dùng AI",type:"manual"}
+      {key:"a3_role_explain",label:"Giải thích deepfake → vai trò AI",type:"exact",correct:"A"},
+      {key:"a3_role_doc",label:"Tóm tắt file GV cung cấp → vai trò AI",type:"exact",correct:"B"},
+      {key:"a3_role_search",label:"Tìm nguồn tham khảo → vai trò AI",type:"exact",correct:"C"},
+      {key:"a3_role_media",label:"Tạo poster → vai trò AI",type:"exact",correct:"D"},
+      {key:"a3_same_ai",label:"Cùng một AI có thể đảm nhiệm nhiều vai trò",type:"choice",correct:"B",
+       options:{A:"Mỗi AI chỉ được dùng cho một loại nhiệm vụ",B:"Có thể, nếu AI hỗ trợ đủ chức năng",C:"Chỉ AI chuyên biệt mới được dùng",D:"Dùng AI nào cũng giống nhau"}},
+      {key:"a3_fill_role",label:"Điền khuyết: xác định vai trò AI",type:"manual"},
+      {key:"a3_fill_verify",label:"Điền khuyết: kiểm tra kết quả",type:"manual"},
+      {key:"a3_my_ai",label:"AI học sinh lựa chọn",type:"manual"},
+      {key:"a3_two_roles",label:"Hai vai trò khác nhau của cùng một AI",type:"manual"}
     ]
   },
   {
