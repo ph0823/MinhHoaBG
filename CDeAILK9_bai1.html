@@ -197,6 +197,39 @@ input[type=range]{width:100%}
   .slide{position:relative;display:block!important;min-height:100vh;page-break-after:always;background:white;color:black}
   .card,.skill,.node{background:white;color:black}
 }
+
+.note-copy{
+  border:2px dashed #9ec9eb;background:#ffffff;border-radius:18px;padding:16px 18px;margin-top:14px
+}
+.note-copy strong{color:#155b9d}
+
+
+/* ===== TƯƠNG TÁC TRẮC NGHIỆM / ĐÚNG-SAI ===== */
+.quiz-panel{margin-top:12px;padding:15px 17px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 7px 18px rgba(42,86,124,.05)}
+.quiz-q{font-size:19px;font-weight:800;color:#214f79;margin:0 0 9px}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.quiz-option{min-height:50px;text-align:left;padding:11px 13px;border-radius:12px;border:1px solid #cfe0ee;background:#fff;color:#274e70;cursor:pointer;font-weight:650}
+.quiz-option:hover{border-color:var(--accent);background:#f8fbff}
+.quiz-option.correct{border-color:#70cf9c;background:#e9fbf2;color:#23613f}
+.quiz-option.wrong{border-color:#eb929c;background:#fff0f2;color:#8f3340}
+.quiz-option:disabled{cursor:default;opacity:1}
+.quiz-result{margin-top:11px;padding:10px 12px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);color:#35516d;font-size:16px;min-height:44px}
+.quiz-score{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:11px 13px;border-radius:13px;background:var(--soft-blue);border:1px solid #c7e0f4}
+.quiz-score strong{color:#155b9d;font-size:19px}
+.quiz-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.quiz-actions button{min-height:42px;padding:9px 14px;border-radius:10px;border:1px solid #bcd6e9;background:#fff;color:#24547c;cursor:pointer;font-weight:750}
+.tf-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.tf-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.tf-text{font-size:17px;line-height:1.4;color:#35516d}
+.tf-buttons{display:flex;gap:7px}
+.tf-buttons button{min-width:76px;min-height:42px;border:1px solid #cfe0ee;border-radius:10px;background:#fff;color:#274e70;cursor:pointer;font-weight:800}
+.tf-buttons button.correct{background:#e9fbf2;border-color:#70cf9c;color:#23613f}
+.tf-buttons button.wrong{background:#fff0f2;border-color:#eb929c;color:#8f3340}
+.tf-explain{grid-column:1/-1;display:none;padding:8px 10px;border-radius:9px;background:#f7fbff;color:#536d84;font-size:14px}
+.tf-row.graded .tf-explain{display:block}
+.live-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#fff8df;border:1px solid #f0d88b;color:#886100;font-size:13px;font-weight:850}
+@media(max-width:760px){.quiz-options{grid-template-columns:1fr}.tf-row{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -226,7 +259,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="Yêu cầu cần đạt tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 2/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 1/11</div>
   <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
   <h2>Cuối tiết 1, em cần làm được gì?</h2>
   <div class="lesson-goal">
@@ -248,7 +281,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="Khởi động - AI làm được đến đâu?">
-  <div class="period-marker">TIẾT 1 • SLIDE 3/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 2/11</div>
   <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
   <h2>AI làm được đến đâu?</h2>
   <div class="grid2">
@@ -269,7 +302,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="Sinh tồn thời AI">
-  <div class="period-marker">TIẾT 1 • SLIDE 4/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 3/11</div>
   <div class="kicker">KHÁM PHÁ</div>
   <h2>“Sinh tồn trong thời AI” nghĩa là gì?</h2>
   <div class="grid2">
@@ -289,7 +322,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="AI đúng việc - Con người đúng vai">
-  <div class="period-marker">TIẾT 1 • SLIDE 5/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 4/11</div>
   <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
   <h2>AI đúng việc – Con người đúng vai</h2>
   <table class="two-col-table">
@@ -317,7 +350,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="Chọn công cụ đúng nhiệm vụ">
-  <div class="period-marker">TIẾT 1 • SLIDE 6/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 5/11</div>
   <div class="kicker">THỰC HÀNH TRỌNG TÂM • 20 PHÚT</div>
   <h2>Chọn công cụ đúng nhiệm vụ</h2>
   <div class="cards">
@@ -331,7 +364,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="1" data-title="Sản phẩm dự kiến tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 7/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 6/11</div>
   <div class="kicker">GV ĐỐI CHIẾU SẢN PHẨM</div>
   <h2>Một sản phẩm đạt cần có gì?</h2>
   <table class="two-col-table">
@@ -346,8 +379,81 @@ input[type=range]{width:100%}
   <div class="teacher-note">GV chấm theo: đúng nhiệm vụ – chọn công cụ hợp lí – có bước kiểm tra – có chỉnh sửa của HS.</div>
 </section>
 
+
+
+<section class="slide" data-period="1" data-title="Trắc nghiệm tương tác - Tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 7/11</div>
+  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+  <h2>Tiết 1 – Dùng AI đúng việc</h2>
+  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+  
+  <div class="quiz-panel" data-mcq-set="p1">
+    <div class="quiz-q">Câu 1. Việc nào phù hợp nhất để AI hỗ trợ phần lớn?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Lắng nghe và an ủi một bạn đang khủng hoảng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Tóm tắt một đoạn tài liệu thành các ý chính</button><button class="quiz-option" data-answer="C">C. Chịu trách nhiệm cuối cùng cho một quyết định quan trọng</button><button class="quiz-option" data-answer="D">D. Quyết định thay giáo viên cách đánh giá từng học sinh</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p1">
+    <div class="quiz-q">Câu 2. Sau khi AI tóm tắt tài liệu, bước nào cần làm tiếp?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chép ngay vào vở</button><button class="quiz-option" data-answer="B">B. Gửi cho bạn và coi là đáp án chính thức</button><button class="quiz-option" data-answer="C" data-correct="1">C. Đối chiếu với tài liệu và kiểm tra thông tin quan trọng</button><button class="quiz-option" data-answer="D">D. Yêu cầu AI viết dài hơn mà không cần đọc lại</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p1">
+    <div class="quiz-q">Câu 3. Nguyên tắc nào đúng nhất?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. AI quyết định – con người làm theo</button><button class="quiz-option" data-answer="B">B. AI trả lời nhanh nên không cần kiểm tra</button><button class="quiz-option" data-answer="C" data-correct="1">C. AI hỗ trợ – con người kiểm tra – con người quyết định</button><button class="quiz-option" data-answer="D">D. Chỉ dùng AI khi không có tài liệu học tập</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-score" id="p1McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-mcq="p1">Làm lại</button></div>
+  <div class="teacher-note">Dùng sau hoạt động “Chọn công cụ đúng nhiệm vụ”. Cho HS giải thích bằng các từ khóa: dữ liệu – bối cảnh – trách nhiệm.</div>
+</section>
+<section class="slide" data-period="1" data-title="Đúng Sai trực tiếp - Tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 8/11</div>
+  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+  <h2>Tiết 1 – Kiểm tra nhanh kiến thức</h2>
+  <div class="tf-grid" data-tf-set="p1tf">
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>1.</strong> AI có thể giúp tạo bản nháp nhanh nhưng người dùng vẫn cần kiểm tra trước khi sử dụng.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Tốc độ không bảo đảm AI luôn chính xác hoặc phù hợp bối cảnh.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>2.</strong> Khi AI trả lời rất tự tin thì có thể bỏ qua bước đối chiếu nguồn.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Cách diễn đạt tự tin không phải bằng chứng nội dung chính xác.</div>
+    </div>
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>3.</strong> Những nhiệm vụ liên quan cảm xúc, đạo đức và trách nhiệm không nên giao hoàn toàn cho AI.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Con người cần hiểu bối cảnh và chịu trách nhiệm với quyết định.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>4.</strong> Học sinh cần nhớ càng nhiều tên công cụ AI càng tốt thì mới sử dụng AI hiệu quả.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Quan trọng hơn là xác định nhiệm vụ, chọn loại công cụ phù hợp và kiểm tra đầu ra.</div>
+    </div></div>
+  <div class="quiz-score" id="p1tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-tf="p1tf">Làm lại</button></div>
+  <div class="teacher-note">Dùng ngay trước slide ghi vở để phát hiện chỗ HS còn nhầm.</div>
+</section>
+<section class="slide" data-period="1" data-title="Ghi vào vở - Tiết 1">
+  <div class="period-marker">TIẾT 1 • SLIDE 9/11</div>
+  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+  <h2>Tiết 1 – Em cần ghi nhớ điều gì?</h2>
+  <div class="lesson-goal">
+    <h3>✍️ Nội dung ghi vào vở</h3>
+    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+      <li><strong>Sinh tồn trong thời AI</strong> là khả năng thích nghi, tiếp tục học hỏi, biết khai thác AI nhưng vẫn bảo vệ bản thân, kiểm tra thông tin và chịu trách nhiệm với quyết định.</li>
+      <li><strong>AI hỗ trợ tốt</strong> các nhiệm vụ như: xử lí thông tin, tóm tắt, tạo bản nháp, phân tích dữ liệu, gợi ý ý tưởng.</li>
+      <li><strong>Con người vẫn cần</strong> kiểm tra độ chính xác, xem xét bối cảnh, cảm xúc, đạo đức và chịu trách nhiệm với quyết định cuối cùng.</li>
+      <li><strong>Nguyên tắc dùng AI:</strong> Xác định nhiệm vụ → Chọn công cụ phù hợp → Đặt yêu cầu rõ → Kiểm tra kết quả → Chỉnh sửa → Tự quyết định.</li>
+    </ol>
+  </div>
+  <div class="callout ok"><strong>Câu chốt:</strong> AI hỗ trợ – Con người kiểm tra – Con người quyết định.</div>
+  <div class="teacher-note">Cho HS 3–4 phút ghi bài. GV có thể yêu cầu HS gạch chân 3 từ khóa: “thích nghi”, “kiểm tra”, “trách nhiệm”.</div>
+</section>
+
 <section class="slide" data-period="1" data-title="Chốt tiết 1">
-  <div class="period-marker">TIẾT 1 • SLIDE 8/8</div>
+  <div class="period-marker">TIẾT 1 • SLIDE 10/11</div>
   <div class="kicker">EXIT TICKET • 5 PHÚT</div>
   <h2>3 câu chốt tiết 1</h2>
   <p class="question" style="font-size:28px">1. “Sinh tồn thời AI” là gì?</p>
@@ -367,7 +473,7 @@ input[type=range]{width:100%}
 
 <!-- ==================== TIẾT 2 ==================== -->
 <section class="slide" data-period="2" data-title="Yêu cầu cần đạt tiết 2">
-  <div class="period-marker">TIẾT 2 • SLIDE 1/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 1/9</div>
   <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
   <h2>Cuối tiết 2, em cần làm được gì?</h2>
   <div class="lesson-goal">
@@ -383,7 +489,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="2" data-title="Xếp nhóm 9 kỹ năng">
-  <div class="period-marker">TIẾT 2 • SLIDE 2/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 2/9</div>
   <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
   <h2>Xếp 9 kỹ năng vào 4 nhóm</h2>
   <div class="skillgrid">
@@ -407,7 +513,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="2" data-title="Tự đánh giá trên bảng tính">
-  <div class="period-marker">TIẾT 2 • SLIDE 3/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 3/9</div>
   <div class="kicker">THỰC HÀNH • 12 PHÚT</div>
   <h2>Nhập dữ liệu vào file mẫu</h2>
   <div class="grid2">
@@ -429,7 +535,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="2" data-title="Dữ liệu mẫu">
-  <div class="period-marker">TIẾT 2 • SLIDE 4/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 4/9</div>
   <div class="kicker">SẢN PHẨM DỰ KIẾN</div>
   <h2>Ví dụ dữ liệu sau khi tổng hợp</h2>
   <table class="two-col-table">
@@ -450,7 +556,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="2" data-title="Biểu đồ radar">
-  <div class="period-marker">TIẾT 2 • SLIDE 5/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 5/9</div>
   <div class="kicker">THỰC HÀNH TRỌNG TÂM • 18 PHÚT</div>
   <h2>Biểu đồ radar 9 kỹ năng</h2>
   <div class="radarwrap">
@@ -461,8 +567,81 @@ input[type=range]{width:100%}
   <div class="teacher-note">Bộ điểm mặc định ở slide này chính là dữ liệu minh họa 11, 9, 10, 12, 8, 10, 13, 11, 9.</div>
 </section>
 
+
+
+<section class="slide" data-period="2" data-title="Trắc nghiệm tương tác - Tiết 2">
+  <div class="period-marker">TIẾT 2 • SLIDE 6/9</div>
+  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+  <h2>Tiết 2 – Đọc dữ liệu kỹ năng</h2>
+  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+  
+  <div class="quiz-panel" data-mcq-set="p2">
+    <div class="quiz-q">Câu 1. Biểu đồ radar dùng để làm gì trong bài học này?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Xếp hạng học sinh trong lớp</button><button class="quiz-option" data-answer="B" data-correct="1">B. Trực quan hóa điểm tự đánh giá của 9 kỹ năng</button><button class="quiz-option" data-answer="C">C. Dự đoán chính xác nghề nghiệp tương lai</button><button class="quiz-option" data-answer="D">D. Thay giáo viên kết luận năng lực học sinh</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p2">
+    <div class="quiz-q">Câu 2. Một kỹ năng có tổng điểm 8/15 được xếp ở mức nào?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Cần rèn luyện</button><button class="quiz-option" data-answer="B" data-correct="1">B. Đang hình thành</button><button class="quiz-option" data-answer="C">C. Khá</button><button class="quiz-option" data-answer="D">D. Tốt</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p2">
+    <div class="quiz-q">Câu 3. Khi chọn 3 kỹ năng ưu tiên, cách làm nào phù hợp nhất?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ chọn 3 kỹ năng có điểm cao nhất</button><button class="quiz-option" data-answer="B">B. Chọn ngẫu nhiên</button><button class="quiz-option" data-answer="C" data-correct="1">C. Dựa vào dữ liệu và nhu cầu học tập thực tế</button><button class="quiz-option" data-answer="D">D. Chọn giống bạn bên cạnh</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-score" id="p2McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-mcq="p2">Làm lại</button></div>
+  <div class="teacher-note">Dùng sau khi HS đã tạo radar để chuyển từ đọc điểm sang lựa chọn mục tiêu.</div>
+</section>
+<section class="slide" data-period="2" data-title="Đúng Sai trực tiếp - Tiết 2">
+  <div class="period-marker">TIẾT 2 • SLIDE 7/9</div>
+  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+  <h2>Tiết 2 – Hiểu đúng về tự đánh giá</h2>
+  <div class="tf-grid" data-tf-set="p2tf">
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>1.</strong> Điểm trên biểu đồ radar càng xa tâm thì mức tự đánh giá ở kỹ năng đó càng cao.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Mỗi trục biểu diễn một kỹ năng theo cùng thang điểm.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>2.</strong> Kỹ năng có điểm thấp nghĩa là học sinh đó “yếu” và khó thay đổi.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Đây chỉ là tự đánh giá tại một thời điểm và dùng để xác định nội dung cần rèn luyện.</div>
+    </div>
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>3.</strong> Kết quả tự đánh giá không nên dùng để công khai xếp hạng học sinh.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Mục tiêu là tự nhận biết và phát triển bản thân.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>4.</strong> Ba kỹ năng ưu tiên bắt buộc phải là ba kỹ năng có điểm thấp nhất.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Điểm số là một căn cứ; HS còn cần xem nhu cầu học tập và mục tiêu cá nhân.</div>
+    </div></div>
+  <div class="quiz-score" id="p2tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-tf="p2tf">Làm lại</button></div>
+  <div class="teacher-note">Giúp tránh việc HS hiểu radar là công cụ gắn nhãn hoặc xếp loại cố định.</div>
+</section>
+<section class="slide" data-period="2" data-title="Ghi vào vở - Tiết 2">
+  <div class="period-marker">TIẾT 2 • SLIDE 8/9</div>
+  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+  <h2>Tiết 2 – Em cần ghi nhớ điều gì?</h2>
+  <div class="lesson-goal">
+    <h3>✍️ Nội dung ghi vào vở</h3>
+    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+      <li><strong>9 kỹ năng cần rèn luyện:</strong> Tư duy phân tích; Khả năng thích nghi; Lãnh đạo và ảnh hưởng tích cực; Tư duy sáng tạo; Động lực và tự nhận thức; Hiểu biết công nghệ; Thấu cảm và lắng nghe; Học hỏi suốt đời; AI và dữ liệu.</li>
+      <li><strong>Tự đánh giá kỹ năng</strong> giúp biết điểm mạnh và kỹ năng cần ưu tiên rèn luyện; kết quả chỉ phản ánh một thời điểm, không dùng để xếp hạng giữa các bạn.</li>
+      <li><strong>Biểu đồ radar</strong> dùng để trực quan hóa 9 kỹ năng: điểm càng xa tâm thì mức tự đánh giá càng cao.</li>
+      <li><strong>Từ dữ liệu đến mục tiêu:</strong> xem biểu đồ → xác định điểm mạnh/điểm cần rèn → chọn 3 kỹ năng ưu tiên → chuẩn bị kế hoạch rèn luyện.</li>
+    </ol>
+  </div>
+  <div class="callout"><strong>Câu chốt:</strong> Dữ liệu giúp em biết mình đang ở đâu để chọn đúng điều cần rèn luyện.</div>
+  <div class="teacher-note">Cho HS ghi bài sau khi đã hoàn thành biểu đồ radar, để các em liên hệ trực tiếp nội dung ghi với sản phẩm vừa làm.</div>
+</section>
+
 <section class="slide" data-period="2" data-title="Đọc biểu đồ và chọn mục tiêu">
-  <div class="period-marker">TIẾT 2 • SLIDE 6/6</div>
+  <div class="period-marker">TIẾT 2 • SLIDE 9/9</div>
   <div class="kicker">PHÂN TÍCH • 10 PHÚT</div>
   <h2>Từ biểu đồ → 3 kỹ năng ưu tiên</h2>
   <div class="cards">
@@ -483,7 +662,7 @@ input[type=range]{width:100%}
 
 <!-- ==================== TIẾT 3 ==================== -->
 <section class="slide" data-period="3" data-title="Yêu cầu cần đạt tiết 3">
-  <div class="period-marker">TIẾT 3 • SLIDE 1/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 1/9</div>
   <div class="kicker">CHỐT MỤC TIÊU ĐẦU TIẾT</div>
   <h2>Cuối tiết 3, em cần làm được gì?</h2>
   <div class="lesson-goal">
@@ -499,7 +678,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="3" data-title="Sửa prompt trong 60 giây">
-  <div class="period-marker">TIẾT 3 • SLIDE 2/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 2/9</div>
   <div class="kicker">KHỞI ĐỘNG • 5 PHÚT</div>
   <h2>Sửa prompt trong 60 giây</h2>
   <div class="grid2">
@@ -513,7 +692,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="3" data-title="Dùng dữ liệu thật của em">
-  <div class="period-marker">TIẾT 3 • SLIDE 3/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 3/9</div>
   <div class="kicker">THỰC HÀNH • 15 PHÚT</div>
   <h2>AI làm cố vấn – em là người quyết định</h2>
   <div class="grid2">
@@ -533,7 +712,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="3" data-title="Kiểm tra AI trước khi dùng">
-  <div class="period-marker">TIẾT 3 • SLIDE 4/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 4/9</div>
   <div class="kicker">TƯ DUY PHẢN BIỆN • 10 PHÚT</div>
   <h2>Không dùng nguyên câu trả lời AI</h2>
   <table class="two-col-table">
@@ -549,7 +728,7 @@ input[type=range]{width:100%}
 </section>
 
 <section class="slide" data-period="3" data-title="Kế hoạch 4 tuần">
-  <div class="period-marker">TIẾT 3 • SLIDE 5/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 5/9</div>
   <div class="kicker">SẢN PHẨM CUỐI • 10 PHÚT</div>
   <h2>Kế hoạch 4 tuần của em</h2>
   <table class="two-col-table">
@@ -564,8 +743,81 @@ input[type=range]{width:100%}
   <div class="teacher-note">Không bắt buộc HS giống kế hoạch mẫu. GV chỉ đối chiếu đủ 4 yếu tố: mục tiêu/kỹ năng – hành động – thời lượng – cách tự kiểm.</div>
 </section>
 
+
+
+<section class="slide" data-period="3" data-title="Trắc nghiệm tương tác - Tiết 3">
+  <div class="period-marker">TIẾT 3 • SLIDE 6/9</div>
+  <div class="kicker">📝 TRẮC NGHIỆM TƯƠNG TÁC</div>
+  <h2>Tiết 3 – Prompt và kế hoạch hành động</h2>
+  <span class="live-badge">Làm cá nhân • Chấm ngay trên màn hình</span>
+  
+  <div class="quiz-panel" data-mcq-set="p3">
+    <div class="quiz-q">Câu 1. Prompt nào rõ ràng hơn?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. “Hãy giúp em học tốt hơn.”</button><button class="quiz-option" data-answer="B" data-correct="1">B. “Em là HS lớp 9. Hãy lập kế hoạch 4 tuần, mỗi tuần 2 việc nhỏ, có cách tự kiểm.”</button><button class="quiz-option" data-answer="C">C. “Hãy làm tất cả cho em.”</button><button class="quiz-option" data-answer="D">D. “Viết thật nhiều nội dung.”</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p3">
+    <div class="quiz-q">Câu 2. AI gợi ý “Học 60 phút mỗi ngày” nhưng em thấy không phù hợp lịch của mình. Em nên làm gì?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Giữ nguyên vì AI đã gợi ý</button><button class="quiz-option" data-answer="B">B. Bỏ toàn bộ kế hoạch</button><button class="quiz-option" data-answer="C" data-correct="1">C. Điều chỉnh thành hành động khả thi và có cách tự kiểm</button><button class="quiz-option" data-answer="D">D. Nhờ AI tự quyết định thời gian thay em</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-panel" data-mcq-set="p3">
+    <div class="quiz-q">Câu 3. Kế hoạch rèn kỹ năng tốt cần có đủ yếu tố nào?</div>
+    <div class="quiz-options"><button class="quiz-option" data-answer="A">A. Chỉ cần tên kỹ năng và lời hứa cố gắng</button><button class="quiz-option" data-answer="B" data-correct="1">B. Kỹ năng/mục tiêu – hành động – thời lượng – cách tự kiểm</button><button class="quiz-option" data-answer="C">C. Càng nhiều việc càng tốt</button><button class="quiz-option" data-answer="D">D. Phải giống hoàn toàn kế hoạch mẫu</button></div>
+    <div class="quiz-result" aria-live="polite">Chọn một đáp án.</div>
+  </div>
+  <div class="quiz-score" id="p3McqScore"><strong>Điểm: 0/3</strong><span>Chọn đáp án để hệ thống chấm trực tiếp.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-mcq="p3">Làm lại</button></div>
+  <div class="teacher-note">Dùng sau phần kiểm tra AI trước khi dùng, trước khi HS hoàn thiện kế hoạch 4 tuần.</div>
+</section>
+<section class="slide" data-period="3" data-title="Đúng Sai trực tiếp - Tiết 3">
+  <div class="period-marker">TIẾT 3 • SLIDE 7/9</div>
+  <div class="kicker">✅ CHẤM ĐÚNG / SAI TRỰC TIẾP</div>
+  <h2>Tiết 3 – Người học là người quyết định</h2>
+  <div class="tf-grid" data-tf-set="p3tf">
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>1.</strong> Prompt rõ cần nêu bối cảnh/dữ liệu, nhiệm vụ, yêu cầu đầu ra và tiêu chí hoặc giới hạn.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Những thành phần này giúp AI hiểu đúng điều người dùng cần.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>2.</strong> Nếu gợi ý của AI nghe hợp lí thì không cần chỉnh sửa trước khi đưa vào kế hoạch.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Cần kiểm tra tính phù hợp với thời gian, điều kiện và mục tiêu thật của người học.</div>
+    </div>
+    <div class="tf-row" data-correct="T">
+      <div class="tf-text"><strong>3.</strong> Một hành động nhỏ nhưng cụ thể và có thể theo dõi tốt hơn một mục tiêu chung chung.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Đúng. Hành động cụ thể giúp HS biết cần làm gì và kiểm tra được tiến độ.</div>
+    </div>
+    <div class="tf-row" data-correct="F">
+      <div class="tf-text"><strong>4.</strong> Khi dùng AI để lập kế hoạch, nên cung cấp càng nhiều thông tin cá nhân càng tốt.</div>
+      <div class="tf-buttons"><button type="button" data-tf="T">Đúng</button><button type="button" data-tf="F">Sai</button></div>
+      <div class="tf-explain">Sai. Chỉ cung cấp dữ liệu cần thiết; không chia sẻ thông tin cá nhân không cần thiết.</div>
+    </div></div>
+  <div class="quiz-score" id="p3tfScore"><strong>Điểm: 0/4</strong><span>Chấm trực tiếp từng phát biểu.</span></div>
+  <div class="quiz-actions"><button type="button" data-reset-tf="p3tf">Làm lại</button></div>
+  <div class="teacher-note">Nếu nhiều HS sai câu 2 hoặc 4, GV chốt lại vai trò kiểm tra của con người và an toàn dữ liệu.</div>
+</section>
+<section class="slide" data-period="3" data-title="Ghi vào vở - Tiết 3">
+  <div class="period-marker">TIẾT 3 • SLIDE 8/9</div>
+  <div class="kicker">GHI VÀO VỞ • KIẾN THỨC TRỌNG TÂM</div>
+  <h2>Tiết 3 – Em cần ghi nhớ điều gì?</h2>
+  <div class="lesson-goal">
+    <h3>✍️ Nội dung ghi vào vở</h3>
+    <ol style="margin:8px 0 0 24px;font-size:19px;line-height:1.6;color:#35516d">
+      <li><strong>Prompt rõ ràng</strong> cần có: bối cảnh/dữ liệu cần thiết → nhiệm vụ → yêu cầu đầu ra → tiêu chí hoặc giới hạn.</li>
+      <li><strong>Không dùng nguyên câu trả lời của AI.</strong> Cần kiểm tra mức phù hợp, phát hiện điểm chưa hợp lí và chỉnh sửa trước khi sử dụng.</li>
+      <li><strong>Kế hoạch phát triển kỹ năng</strong> cần có: kỹ năng/mục tiêu → hành động cụ thể → thời lượng → minh chứng hoặc cách tự kiểm.</li>
+      <li><strong>AI chỉ là công cụ hỗ trợ.</strong> Người học vẫn phải lựa chọn, điều chỉnh và chịu trách nhiệm với kế hoạch của mình.</li>
+    </ol>
+  </div>
+  <div class="callout ok"><strong>Câu chốt:</strong> Prompt rõ – Kiểm tra AI – Hành động cụ thể – Tự theo dõi tiến bộ.</div>
+  <div class="teacher-note">Cho HS 3–4 phút ghi bài. Có thể yêu cầu HS đóng khung 4 thành phần của prompt và 4 thành phần của kế hoạch.</div>
+</section>
+
 <section class="slide" data-period="3" data-title="Chốt bài">
-  <div class="period-marker">TIẾT 3 • SLIDE 6/6</div>
+  <div class="period-marker">TIẾT 3 • SLIDE 9/9</div>
   <div class="kicker">CHỐT BÀI • CAM KẾT HÀNH ĐỘNG</div>
   <h2>Điều em sẽ làm ngay sau bài học</h2>
   <div class="mindmap">
@@ -604,11 +856,11 @@ input[type=range]{width:100%}
   <button id="laser" title="Laser Pointer">●</button>
   <button id="full" title="Toàn màn hình">⛶</button>
   <select id="periodSelect" aria-label="Chọn tiết dạy" title="Chuyển nhanh đến tiết dạy">
-    <option value="1">Tiết 1 • 8 slide</option>
-    <option value="2">Tiết 2 • 6 slide</option>
-    <option value="3">Tiết 3 • 6 slide</option>
+    <option value="1">Tiết 1 • 11 slide</option>
+    <option value="2">Tiết 2 • 9 slide</option>
+    <option value="3">Tiết 3 • 9 slide</option>
   </select>
-  <div class="period-badge" id="periodBadge"><b>TIẾT 1</b><span>Slide 1/8</span></div>
+  <div class="period-badge" id="periodBadge"><b>TIẾT 1</b><span>Slide 1/11</span></div>
   <button id="timerBtn" title="Bấm để chạy/tạm dừng đồng hồ 45 phút" type="button">⏱ 45:00</button>
   <div id="slideTitle"></div><div id="counter"></div>
 </nav>
@@ -631,9 +883,9 @@ input[type=range]{width:100%}
   const timerBtn=document.getElementById('timerBtn');
 
   const periods={
-    1:{start:0,end:7,total:8},
-    2:{start:8,end:13,total:6},
-    3:{start:14,end:19,total:6}
+    1:{start:0,end:10,total:11},
+    2:{start:11,end:19,total:9},
+    3:{start:20,end:28,total:9}
   };
 
   let idx=0, laserOn=false;
@@ -727,6 +979,68 @@ input[type=range]{width:100%}
     const btn=document.getElementById(b),ans=document.getElementById(a);
     if(btn&&ans)btn.addEventListener('click',()=>ans.classList.add('show'));
   });
+
+
+  // ===== TRẮC NGHIỆM TƯƠNG TÁC =====
+  function updateMcqScore(setId){
+    const panels=[...document.querySelectorAll('[data-mcq-set="'+setId+'"]')];
+    let correct=0,answered=0;
+    panels.forEach(panel=>{if(panel.dataset.answered==='1'){answered++;if(panel.dataset.isCorrect==='1')correct++;}});
+    const box=document.getElementById(setId+'McqScore');
+    if(box)box.innerHTML='<strong>Điểm: '+correct+'/'+panels.length+'</strong><span>Đã trả lời '+answered+'/'+panels.length+' câu.</span>';
+  }
+  document.querySelectorAll('[data-mcq-set]').forEach(panel=>{
+    const setId=panel.dataset.mcqSet,buttons=[...panel.querySelectorAll('.quiz-option')],result=panel.querySelector('.quiz-result');
+    buttons.forEach(btn=>btn.addEventListener('click',()=>{
+      if(panel.dataset.answered==='1')return;
+      const ok=btn.hasAttribute('data-correct');
+      panel.dataset.answered='1';panel.dataset.isCorrect=ok?'1':'0';
+      btn.classList.add(ok?'correct':'wrong');
+      buttons.forEach(b=>{b.disabled=true;if(b.hasAttribute('data-correct'))b.classList.add('correct');});
+      if(result)result.innerHTML=ok?'<strong>✓ Chính xác.</strong> Em đã chọn đúng.':'<strong>✗ Chưa đúng.</strong> Đáp án đúng đã được đánh dấu; hãy giải thích lại bằng kiến thức vừa học.';
+      updateMcqScore(setId);
+    }));
+  });
+  document.querySelectorAll('[data-reset-mcq]').forEach(btn=>btn.addEventListener('click',()=>{
+    const setId=btn.dataset.resetMcq;
+    document.querySelectorAll('[data-mcq-set="'+setId+'"]').forEach(panel=>{
+      delete panel.dataset.answered;delete panel.dataset.isCorrect;
+      panel.querySelectorAll('.quiz-option').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});
+      const r=panel.querySelector('.quiz-result');if(r)r.textContent='Chọn một đáp án.';
+    });
+    updateMcqScore(setId);
+  }));
+
+  // ===== ĐÚNG / SAI TRỰC TIẾP =====
+  function updateTfScore(setId){
+    const set=document.querySelector('[data-tf-set="'+setId+'"]');if(!set)return;
+    const rows=[...set.querySelectorAll('.tf-row')];let answered=0,correct=0;
+    rows.forEach(row=>{if(row.dataset.answered==='1'){answered++;if(row.dataset.isCorrect==='1')correct++;}});
+    const box=document.getElementById(setId+'Score');
+    if(box)box.innerHTML='<strong>Điểm: '+correct+'/'+rows.length+'</strong><span>Đã trả lời '+answered+'/'+rows.length+' phát biểu.</span>';
+  }
+  document.querySelectorAll('[data-tf-set]').forEach(set=>{
+    const setId=set.dataset.tfSet;
+    set.querySelectorAll('.tf-row').forEach(row=>{
+      const buttons=[...row.querySelectorAll('[data-tf]')];
+      buttons.forEach(btn=>btn.addEventListener('click',()=>{
+        if(row.dataset.answered==='1')return;
+        const ok=btn.dataset.tf===row.dataset.correct;
+        row.dataset.answered='1';row.dataset.isCorrect=ok?'1':'0';row.classList.add('graded');
+        btn.classList.add(ok?'correct':'wrong');
+        buttons.forEach(b=>{b.disabled=true;if(b.dataset.tf===row.dataset.correct)b.classList.add('correct');});
+        updateTfScore(setId);
+      }));
+    });
+  });
+  document.querySelectorAll('[data-reset-tf]').forEach(btn=>btn.addEventListener('click',()=>{
+    const setId=btn.dataset.resetTf,set=document.querySelector('[data-tf-set="'+setId+'"]');if(!set)return;
+    set.querySelectorAll('.tf-row').forEach(row=>{
+      delete row.dataset.answered;delete row.dataset.isCorrect;row.classList.remove('graded');
+      row.querySelectorAll('[data-tf]').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});
+    });
+    updateTfScore(setId);
+  }));
 
   const skillNames=['Phân tích','Thích nghi','Lãnh đạo','Sáng tạo','Tự nhận thức','Công nghệ','Thấu cảm','Học suốt đời','AI & dữ liệu'];
   const vals=[11,9,10,12,8,10,13,11,9];
