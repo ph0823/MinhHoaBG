@@ -2,7 +2,7 @@
 
 <html lang="vi">
 <head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>AI quanh em – Đâu là AI? | Bài giảng HTML tương tác lớp 6</title>
+<title>AI quanh em – Đâu là AI? | Bài giảng lớp 6 - bản rà soát tối ưu</title>
 <style>
 :root{
   --ink:#12304A;--muted:#557086;--blue:#4B7BFF;--cyan:#21C7C7;--violet:#7A64F6;
@@ -253,8 +253,16 @@ body.notes-open #stage{padding-right:390px}
   #slide-3 .warm-help{display:none}
 }
 
+
+
+/* ===== BẢN RÀ SOÁT: LƯỚI 3 TÌNH HUỐNG ===== */
+.triple-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.triple-grid .compare-card{padding:18px;min-height:320px}
+.triple-grid .compare-card h3{font-size:20px;margin:10px 0}
+.triple-grid .compare-card li{font-size:15px;line-height:1.38;margin:8px 0}
+@media(max-width:900px){.triple-grid{grid-template-columns:1fr 1fr}.triple-grid .compare-card:last-child{grid-column:1/-1}}
 </style></head>
-<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức và khởi động tư duy: hiện đại/tự động/thông minh chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV cho HS quan sát 3 hình máy giặt, máy điều hoà và đèn cảm biến chuyển động; hỏi nhanh “Thiết bị nào có AI? Vì sao?”. Cho HS giơ 1 ngón = Có, 2 ngón = Không, 3 ngón = Chưa chắc; chưa chốt theo tên thiết bị. Câu hỏi gợi mở: Chỉ nhìn hình ảnh này, em đã đủ thông tin để kết luận chưa? Đáp án/chốt: Không thể kết luận chỉ theo vẻ ngoài, cảm biến, tự động hay chữ smart; phải xem tính năng cụ thể của từng phiên bản. Lưu ý: Chưa yêu cầu HS giải thích AI là gì ở slide này. Chuyển ý: Trước khi làm thám tử AI, chúng ta cần một câu trả lời thật đơn giản cho câu hỏi “AI là gì?”." id="slide-1">
+<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức: hiện đại, tự động, có cảm biến hay có chữ 'smart' chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV cho HS quan sát 3 hình; giơ 1 ngón = Có AI, 2 = Không AI, 3 = Chưa đủ thông tin. Không chốt ngay theo tên thiết bị. Câu hỏi gợi mở: Chỉ nhìn hình, em đã đủ căn cứ chưa? Nếu hai máy giặt giống nhau bên ngoài nhưng một bản có tính năng nhận biết loại vải còn một bản chỉ chạy chương trình cố định thì em có xếp giống nhau không? Dự kiến: Không thể kết luận từ hình; phải biết tính năng cụ thể. Sai lầm thường gặp: 'Đồ hiện đại/đắt tiền = AI'. Cách xử lí: Yêu cầu HS nêu chức năng thay vì tên thiết bị. Chốt: Chưa đủ thông tin cũng là một câu trả lời đúng khi thiếu căn cứ. Chuyển ý: Trước khi làm thám tử AI, ta cần biết đích đến của bài và hiểu AI theo cách đơn giản." id="slide-1">
 <div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
 <h1>AI QUANH EM<br/>ĐÂU LÀ AI?</h1>
 <div class="subtitle">Quan sát • phân loại • giải thích — và biết nói <b>“chưa đủ thông tin”</b> khi chưa có căn cứ.</div>
@@ -282,8 +290,19 @@ body.notes-open #stage{padding-right:390px}
 </div>
 </div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 20</div>
-</section><section class="page" data-document-role="page" data-index="1" data-label="AI LÀ GÌ?" data-speaker-notes="Mục tiêu: Cho học sinh lớp 6 có một khái niệm làm việc thật đơn giản về AI trước khi phân loại ví dụ. Thời lượng: 2 phút. Cách tổ chức: GV đọc câu định nghĩa ngắn, nhấn Space để hiện lần lượt 4 nhóm ví dụ rồi dòng HS ghi vở. Câu hỏi gợi mở: AI có nhất thiết phải là robot không? Một chiếc máy giặt có thể chỉ có một vài tính năng dùng AI hay toàn bộ máy đều là AI? Dự kiến: AI không nhất thiết là robot; AI có thể nằm trong một tính năng của phần mềm hoặc thiết bị. Chốt: Trí tuệ nhân tạo (AI) là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người, chẳng hạn nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý hoặc tạo nội dung. Lưu ý: Đây là khái niệm đơn giản để học sinh sử dụng trong bài; không yêu cầu thuộc định nghĩa kỹ thuật, không nói AI suy nghĩ y hệt con người. Chuyển ý: Từ khái niệm này, chúng ta sẽ xem những dấu hiệu nào giúp nhận biết một tính năng có thể đang dùng AI." id="slide-ai-la-gi">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 17</div>
+</section><section class="page" data-document-role="page" data-index="1" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: Công khai đích đến trước khi hình thành khái niệm. Thời lượng: 1 phút. Cách tổ chức: GV không đọc nguyên văn; chỉ nhấn bốn động từ: Phân biệt – Kể tên – Mô tả – Có căn cứ. Câu hỏi gợi mở: Mục tiêu nào giúp em tránh đoán sai nhất? Mục tiêu nào yêu cầu em giải thích chứ không chỉ chọn đáp án? Dự kiến: 'Có căn cứ' giúp tránh đoán; 'Mô tả' buộc nói rõ chức năng. Chốt: Cuối bài, em không chỉ nói 'có/không AI' mà phải nói được vì sao." id="slide-2">
+<div class="label">BẢN ĐỒ ĐÍCH ĐẾN</div>
+<h1>HỌC XONG, EM CÓ THỂ…</h1>
+<div class="subtitle">Bốn mục tiêu ngắn gọn, dễ nhớ.</div>
+<div class="goal-grid">
+<div class="goal fragment"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Công cụ/tính năng có AI và không có AI qua ví dụ gần gũi.</p></div>
+<div class="goal fragment"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Nêu được một số công cụ AI thông dụng quanh em.</p></div>
+<div class="goal fragment"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng chính của ít nhất 3 tính năng AI.</p></div>
+<div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
+</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">02 / 17</div>
+</section><section class="page" data-document-role="page" data-index="2" data-label="AI LÀ GÌ?" data-speaker-notes="Mục tiêu: Cung cấp một khái niệm làm việc, đủ đơn giản cho lớp 6. Thời lượng: 2 phút. Cách tổ chức: GV đọc câu định nghĩa ngắn; nhấn Space từng ví dụ; HS chỉ ghi dòng cuối. Câu hỏi gợi mở: AI có nhất thiết phải là robot không? Một thiết bị có thể chỉ có một vài tính năng dùng AI hay toàn bộ thiết bị đều là AI? Dự kiến: AI không nhất thiết là robot; AI có thể nằm trong một tính năng cụ thể. Sai lầm thường gặp: Nhân hóa AI như con người hoặc coi AI là mọi phần mềm tự động. Cách xử lí: Dùng cụm 'thực hiện một số nhiệm vụ thường cần khả năng của con người'; không nói AI suy nghĩ y hệt con người. Chốt: Trong bài này, ta quan sát bốn nhóm chức năng: nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung. Chuyển ý: Bây giờ thử phân loại các tình huống gần gũi." id="slide-ai-la-gi">
 <div class="label">KHÁI NIỆM CƠ BẢN • 2 PHÚT</div>
 <h1>AI LÀ GÌ?</h1>
 <div class="subtitle">Hiểu thật đơn giản trước khi đi tìm AI quanh em.</div>
@@ -330,19 +349,8 @@ body.notes-open #stage{padding-right:390px}
     AI là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người,
     như <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý hoặc tạo nội dung</b>.
   </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">02 / 20</div>
-</section><section class="page" data-document-role="page" data-index="2" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: Công khai yêu cầu cần đạt để HS biết đích đến của tiết học. Thời lượng: 1 phút. Cách tổ chức: GV đọc nhanh 4 động từ Phân biệt – Kể tên – Mô tả – Có căn cứ; HS không cần chép. Câu hỏi gợi mở: Trong 4 mục tiêu, mục nào giúp em tránh đoán sai nhất? Chốt: Học sinh không chỉ gọi tên AI mà phải nói được chức năng và biết dừng lại khi chưa đủ thông tin. Lưu ý: Không đi sâu thuật toán/học máy." id="slide-2">
-<div class="label">BẢN ĐỒ ĐÍCH ĐẾN</div>
-<h1>HỌC XONG, EM CÓ THỂ…</h1>
-<div class="subtitle">Bốn mục tiêu ngắn gọn, dễ nhớ.</div>
-<div class="goal-grid">
-<div class="goal fragment"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Công cụ/tính năng có AI và không có AI qua ví dụ gần gũi.</p></div>
-<div class="goal fragment"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Nêu được một số công cụ AI thông dụng quanh em.</p></div>
-<div class="goal fragment"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng chính của ít nhất 3 tính năng AI.</p></div>
-<div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 20</div>
-</section><section class="page" data-document-role="page" data-index="3" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện quan niệm sai “tự động = AI” và luyện phân loại dựa trên chức năng. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn đủ 6 thẻ. Thanh điều khiển nằm cố định ngay dưới câu hướng dẫn; GV chỉ bấm “Chấm / Hiện đáp án” sau khi lớp đã thống nhất. Sau khi chấm, nhãn đáp án và giải thích xuất hiện ngay trong từng thẻ nhưng nút điều khiển vẫn giữ nguyên vị trí. Đáp án: Máy tính bỏ túi – Không AI; gợi ý tuyến theo giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn cảm biến – Chưa đủ thông tin. Câu hỏi gợi mở: Vì sao đèn cảm biến không nên vội gọi là AI? Chốt: cảm biến, tự động hoặc điều khiển từ xa chưa đủ để kết luận có AI. Lưu ý: Nếu muốn cho lớp làm lại, bấm “Làm lại”; ưu tiên nghe lí do hơn điểm số." id="slide-3">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 17</div>
+</section><section class="page" data-document-role="page" data-index="3" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện ngộ nhận 'tự động = AI' và luyện phân loại có căn cứ. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn đủ 6 thẻ; yêu cầu nói lí do ở ít nhất 2 thẻ trước khi bấm chấm. Đáp án: Máy tính bỏ túi – Không AI; dự đoán/gợi ý tuyến theo dữ liệu giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn chỉ mô tả 'có cảm biến chuyển động' – Chưa đủ TT. Câu hỏi gợi mở: Vì sao quạt remote không phải bằng chứng AI? Vì sao đèn cảm biến ở đây chưa đủ thông tin, nhưng một đèn PIR được mô tả rõ 'có chuyển động thì bật' lại có thể xếp Không AI? Dự kiến: Remote và PIR có thể hoạt động theo quy tắc cố định; mô tả ban đầu của đèn chưa nêu rõ cơ chế. Sai lầm thường gặp: HS nghĩ có cảm biến là AI. Cách xử lí: Hỏi 'Cảm biến chỉ thu dữ liệu hay hệ thống còn nhận dạng/dự đoán gì?'. Chốt: Tự động/cảm biến chưa đủ để kết luận." id="slide-3">
 <div class="label">KHỞI ĐỘNG • TRÒ CHƠI 5 PHÚT</div>
 <h1>AI HAY KHÔNG AI?</h1>
 <div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div><div class="interaction-bar"><span class="interaction-status" id="warmStatus">Đã chọn 0/6</span><span class="warm-help">Chọn đủ 6 thẻ rồi chấm</span><button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button><button class="action-btn" id="warmReset" type="button">Làm lại</button></div>
@@ -354,8 +362,8 @@ body.notes-open #stage{padding-right:390px}
 <div class="scenario"><div class="mini-vis">🎙 <span>→</span> 💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận dạng lời nói và xử lí ngôn ngữ là tính năng AI.</div></div>
 <div class="scenario"><div class="mini-vis">🚶 <span>→</span> 💡</div><b>Đèn tự sáng khi có người</b><small>Chỉ biết có cảm biến chuyển động.</small><div class="tag unk answer-label" style="display:none">CHƯA ĐỦ TT</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến và tự động chưa đủ để kết luận có AI.</div></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 20</div>
-</section><section class="page" data-document-role="page" data-index="4" data-label="CHỐT SAU KHỞI ĐỘNG • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt kết luận của Hoạt động 1 để HS có câu ghi vở ngay sau khởi động. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space hiện 3 ý, sau đó hiện khung HS ghi vở. Không yêu cầu chép cả 3 thẻ; chỉ chép nội dung trong khung vàng. Câu hỏi gợi mở: Vì sao quạt remote hoặc đèn cảm biến chưa đủ để kết luận là AI? Chốt: không suy luận từ vẻ ngoài, tự động hay cảm biến; phải xem tính năng cụ thể. Chuyển ý: Bây giờ ta tìm hiểu sâu hơn cách phân biệt công cụ theo quy tắc cố định với tính năng AI." id="slide-chot-khoi-dong">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 17</div>
+</section><section class="page" data-document-role="page" data-index="4" data-label="CHỐT SAU KHỞI ĐỘNG • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt duy nhất một thông điệp sau khởi động, tránh lặp lại quá nhiều. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space từng thẻ; HS chỉ chép khung vàng. Câu hỏi gợi mở: Khi nào 'chưa đủ thông tin' là câu trả lời tốt hơn 'không AI'? Dự kiến: Khi mô tả chưa nói rõ chức năng/cách xử lí. Chốt: Không đoán theo vẻ ngoài; xem tính năng cụ thể. Chuyển ý: Ta sẽ phân biệt ba kiểu tình huống thường gặp." id="slide-chot-khoi-dong">
 <div class="label">CHỐT SAU KHỞI ĐỘNG • GHI VỞ</div>
 <h1>ĐỪNG ĐOÁN AI THEO VẺ NGOÀI</h1>
 <div class="subtitle">Dừng 45 giây để chốt điều quan trọng nhất vừa phát hiện.</div>
@@ -367,38 +375,43 @@ body.notes-open #stage{padding-right:390px}
 </div>
 <div class="copy-box fragment"><div class="copy-tag">✍ HS GHI VỞ<br/>30–45 giây</div><div class="copy-text">Không phải mọi thiết bị điện tử, thiết bị tự động hoặc thiết bị “thông minh” đều có AI. Muốn phân loại cần xem <b>tính năng cụ thể</b>.</div></div>
 </div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">05 / 20</div>
-</section><section class="page" data-document-role="page" data-index="5" data-label="MÁY TÍNH BỎ TÚI CÓ PHẢI AI?" data-speaker-notes="Mục tiêu: Hình thành tiêu chí nhận diện từ cách công cụ làm việc, không từ tốc độ. Thời lượng: 3 phút. Cách tổ chức: GV cho HS dự đoán trước; nhấn Space để hiện lần lượt Gợi ý → Suy luận → Kết luận. Câu hỏi: Nếu máy tính nhanh hơn em rất nhiều, vì sao vẫn chưa gọi là AI? Dự kiến: vì nó thực hiện phép tính theo quy tắc/công thức đã lập trình. Đáp án/chốt: Máy tính bỏ túi thông thường không phải ví dụ AI chỉ vì tính nhanh. Lưu ý: dùng cụm 'thông thường' để tránh khẳng định tuyệt đối về mọi thiết bị." id="slide-4">
-<div class="label">SUY LUẬN TỪ CĂN CỨ</div>
-<h1>MÁY TÍNH BỎ TÚI CÓ PHẢI AI?</h1>
-<div class="subtitle">Làm nhanh không đồng nghĩa với “có trí tuệ nhân tạo”.</div>
-<div class="steps">
-<div class="step"><span>1</span><div><b>Gợi ý</b><p>Tách “làm nhanh” khỏi “cách công cụ thực hiện nhiệm vụ”.</p></div></div>
-<div class="step fragment"><span>2</span><div><b>Suy luận</b><p>Máy tính bỏ túi thông thường thực hiện phép tính theo quy tắc/công thức đã thiết kế sẵn.</p></div></div>
-<div class="step answer fragment"><span>✓</span><div><b>Kết luận</b><p><b>Không.</b> Tốc độ nhanh hay tự động chưa đủ để gọi là AI.</p></div></div>
-</div>
-<div class="side-visual calc"><div class="calc-screen">125 × 24<br/><strong>3000</strong></div><div class="keys">7 8 9<br/>4 5 6<br/>1 2 3</div></div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">06 / 20</div>
-</section><section class="page" data-document-role="page" data-index="6" data-label="KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI" data-speaker-notes="Mục tiêu: So sánh trực quan quy tắc cố định với một tính năng AI xử lí ngôn ngữ. Thời lượng: 4 phút. Cách tổ chức: Cho HS mô tả đầu vào – cách làm – đầu ra của hai bên. Câu hỏi: Hai công cụ đều cho kết quả nhanh; điểm khác nằm ở đâu? Dự kiến: ứng dụng dịch phải nhận dạng lời nói/ngôn ngữ và tạo bản dịch phù hợp. Chốt: tên hoặc vẻ ngoài thiết bị chưa đủ; cần xem chức năng cụ thể. Lưu ý: Không giải thích machine learning chi tiết ở bài này." id="slide-5">
+<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">05 / 17</div>
+</section><section class="page" data-document-role="page" data-index="5" data-label="BA KIỂU TÌNH HUỐNG CẦN PHÂN BIỆT" data-speaker-notes="Mục tiêu: Giúp HS phân biệt ba kiểu tình huống thường gặp: quy tắc cố định, tính năng AI điển hình và trường hợp chưa đủ dữ kiện. Thời lượng: 4 phút. Cách tổ chức: GV cho HS quan sát ba thẻ, yêu cầu nói theo mẫu 'Đầu vào – Cách xử lí – Kết quả'. Sau mỗi thẻ, hỏi 'Em có đủ căn cứ chưa?'. Câu hỏi gợi mở: Máy tính bỏ túi và ứng dụng dịch đều cho kết quả nhanh, vì sao không xếp chúng giống nhau? Một robot hút bụi chỉ được mô tả bằng tên sản phẩm thì em có nên kết luận ngay không? Dự kiến: Máy tính bỏ túi thông thường làm theo công thức/quy tắc; dịch giọng nói có nhận dạng và xử lí ngôn ngữ; robot hút bụi nếu chưa mô tả tính năng thì chưa đủ căn cứ. Sai lầm thường gặp: HS cho rằng thiết bị đắt tiền, có cảm biến, có camera hoặc có LIDAR thì chắc chắn là AI. Cách xử lí: Nhắc rằng cảm biến/camera/LIDAR chỉ là nguồn dữ liệu; phải xem hệ thống dùng dữ liệu đó để làm gì. Chốt: Không phân loại theo vẻ ngoài hay độ hiện đại; hãy xem chức năng cụ thể và mức độ thông tin đang có. Chuyển ý: Từ ba kiểu tình huống này, ta rút ra bốn dấu hiệu thường gặp ở tính năng AI." id="slide-5">
 <div class="label">HÌNH THÀNH KIẾN THỨC</div>
-<h1>KHÔNG PHẢI CÁI GÌ “THÔNG MINH” CŨNG LÀ AI</h1>
-<div class="subtitle">So sánh hai cách làm việc khác nhau.</div>
-<div class="compare-grid">
+<h1>BA KIỂU TÌNH HUỐNG CẦN PHÂN BIỆT</h1>
+<div class="subtitle">Không chỉ hỏi “Có AI hay không?” — trước hết hãy xem <b>cách công cụ thực hiện nhiệm vụ</b>.</div>
+<div class="triple-grid">
 <div class="compare-card">
 <div class="diagram"><div class="device-box">🧮</div><div class="arrow">→</div><div class="output">3000</div></div>
-<h3>Máy tính bỏ túi thông thường</h3>
-<ul><li>Đầu vào: số và phép tính</li><li>Làm theo quy tắc/công thức cố định</li><li>Không dùng tốc độ tính để suy ra AI</li></ul>
+<h3>1. Quy tắc cố định</h3>
+<ul>
+<li>Ví dụ: máy tính bỏ túi thông thường</li>
+<li>Thực hiện công thức/lệnh đã thiết kế</li>
+<li><b>Không gọi là AI chỉ vì làm rất nhanh</b></li>
+</ul>
 </div>
-<div class="vs">VS</div>
 <div class="compare-card accent fragment">
 <div class="diagram"><div class="device-box">🎙</div><div class="arrow">→</div><div class="output">💬🌐</div></div>
-<h3>Ứng dụng dịch giọng nói dùng AI</h3>
-<ul><li>Đầu vào: lời nói hoặc văn bản</li><li>Nhận dạng lời nói + xử lí ngôn ngữ</li><li>Ví dụ rõ về tính năng AI</li></ul>
+<h3>2. Tính năng AI điển hình</h3>
+<ul>
+<li>Ví dụ: dịch giọng nói</li>
+<li>Nhận dạng lời nói + xử lí ngôn ngữ</li>
+<li>Dấu hiệu AI rõ trong bối cảnh bài học</li>
+</ul>
+</div>
+<div class="compare-card fragment">
+<div class="diagram"><div class="device-box">🤖</div><div class="arrow">→</div><div class="output">?</div></div>
+<h3>3. Chưa đủ thông tin</h3>
+<ul>
+<li>Ví dụ: chỉ biết tên “robot hút bụi”</li>
+<li>Chưa biết nó nhận biết/điều hướng bằng cách nào</li>
+<li><b>Chưa nên kết luận</b></li>
+</ul>
 </div>
 </div>
-<div class="rule fragment">Tên hoặc vẻ ngoài thiết bị <b>chưa đủ</b> để kết luận.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">07 / 20</div>
-</section><section class="page" data-document-role="page" data-index="7" data-label="4 DẤU HIỆU GỢI Ý CÓ AI" data-speaker-notes="Mục tiêu: Tạo 'bộ kính quan sát' gồm 4 nhóm dấu hiệu AI gần gũi. Thời lượng: 4 phút. Cách tổ chức: Nhấn Space để hiện từng nhóm; sau mỗi nhóm yêu cầu HS nêu 1 ví dụ. Bốn nhóm: nhận dạng; xử lí ngôn ngữ; dự đoán/gợi ý; tạo nội dung. Câu hỏi gợi mở: Một hệ thống có một trong các dấu hiệu này đã chắc chắn là AI chưa? Chốt: Đây là dấu hiệu gợi ý, không phải công thức kết luận tuyệt đối. Lưu ý: Nếu HS hỏi 'AI học thế nào?', chỉ nói ngắn gọn rằng nhiều hệ thống tìm mẫu từ dữ liệu và sẽ học sâu ở bài sau." id="slide-6">
+<div class="rule fragment"><b>Quy tắc vàng:</b> Mô tả chức năng trước → tìm dấu hiệu AI → nếu dữ kiện thiếu, chọn “Chưa đủ thông tin”.</div>
+<div class="notebook-line fragment"><strong>✍ HS ghi vở:</strong> Không thể kết luận AI chỉ từ tốc độ, cảm biến hay tên thiết bị. Cần xem <b>tính năng cụ thể</b> và <b>cách hệ thống xử lí nhiệm vụ</b>.</div>
+</section><section class="page" data-document-role="page" data-index="6" data-label="4 DẤU HIỆU GỢI Ý CÓ AI" data-speaker-notes="Mục tiêu: Tạo bộ 'kính quan sát' gồm bốn nhóm chức năng thường gặp ở AI. Thời lượng: 4 phút. Cách tổ chức: Nhấn Space hiện từng nhóm. Sau mỗi nhóm, gọi một HS nêu ví dụ và một HS khác nói chức năng cụ thể. Câu hỏi gợi mở: Nhận diện khuôn mặt thuộc nhóm nào? Chatbot thuộc nhóm nào? Một hệ thống có một dấu hiệu này đã chắc chắn là AI chưa? Dự kiến: Nhận diện khuôn mặt → nhận dạng; chatbot → xử lí ngôn ngữ; một dấu hiệu chỉ là căn cứ gợi ý, không thay thế việc kiểm tra sản phẩm cụ thể. Sai lầm thường gặp: HS biến bốn dấu hiệu thành định nghĩa cứng 'cứ có gợi ý là AI'. Cách xử lí: Nhấn từ 'gợi ý'; hỏi thêm 'Gợi ý đó được tạo từ dữ liệu hay chỉ là danh sách cố định?'. Chốt: Bốn nhóm giúp quan sát, không phải công thức kiểm định AI. Chuyển ý: Ta áp dụng ngay vào các tính năng quen thuộc quanh mình." id="slide-6">
 <div class="label">THÁM TỬ AI</div>
 <h1>4 DẤU HIỆU GỢI Ý CÓ AI</h1>
 <div class="subtitle">Đây là dấu hiệu <b>gợi ý</b>, không phải công thức kết luận tuyệt đối.</div>
@@ -408,22 +421,9 @@ body.notes-open #stage{padding-right:390px}
 <div class="signal fragment"><div class="sig-icon">📊→🎯</div><h3>Dự đoán / gợi ý</h3><p>Giao thông, video, sản phẩm, lộ trình, từ tiếp theo.</p></div>
 <div class="signal fragment"><div class="sig-icon">✍🖼🎵</div><h3>Tạo nội dung</h3><p>Văn bản, hình ảnh, âm thanh theo yêu cầu.</p></div>
 </div>
-<div class="rule fragment">Muốn kết luận về một sản phẩm cụ thể, vẫn cần biết rõ tính năng/công nghệ của nó.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">08 / 20</div>
-</section><section class="page" data-document-role="page" data-index="8" data-label="CHỐT KIẾN THỨC 1 • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt phần hình thành kiến thức 2.1 và hệ thống hóa 4 dấu hiệu gợi ý AI. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space từng thẻ; HS chỉ chép câu trong khung vàng. Câu hỏi gợi mở: Hẹn giờ thuộc nhóm nào? Nhận diện khuôn mặt thuộc nhóm nào? Chốt: quy tắc cố định khác với các chức năng AI điển hình, nhưng không dùng một dấu hiệu đơn lẻ làm định nghĩa kỹ thuật. Lưu ý: Không đi sâu dữ liệu/thuật toán ở tiết này." id="slide-chot-kien-thuc-1">
-<div class="label">CHỐT KIẾN THỨC 1 • GHI VỞ</div>
-<h1>PHÂN BIỆT QUA CÁCH CÔNG CỤ LÀM VIỆC</h1>
-<div class="subtitle">Không cần nhớ định nghĩa phức tạp — chỉ cần nhớ hai nhóm dấu hiệu.</div>
-<div class="checkpoint-wrap">
-<div class="checkpoint-grid">
-<div class="checkpoint-card fragment"><div class="cp-icon">⚙</div><h3>Quy tắc cố định</h3><p>Thực hiện lệnh, công thức, hẹn giờ hoặc nút bấm đã được thiết kế sẵn.</p></div>
-<div class="checkpoint-card fragment"><div class="cp-icon">AI</div><h3>Dấu hiệu gợi ý AI</h3><p>Nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý hoặc tạo nội dung.</p></div>
-<div class="checkpoint-card fragment"><div class="cp-icon">?</div><h3>Không tuyệt đối hóa</h3><p>Các dấu hiệu trên chỉ là gợi ý; vẫn cần xem tính năng cụ thể của sản phẩm.</p></div>
-</div>
-<div class="copy-box fragment"><div class="copy-tag">✍ HS GHI VỞ<br/>45 giây</div><div class="copy-text">Một số tính năng AI quen thuộc có thể hỗ trợ <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý hoặc tạo nội dung</b>.</div></div>
-</div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">09 / 20</div>
-</section><section class="page" data-document-role="page" data-index="9" data-label="MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA" data-speaker-notes="Mục tiêu: Mở rộng các ví dụ AI trong đời sống nhưng vẫn gọi đúng tên tính năng. Thời lượng: 5 phút. Cách tổ chức: GV chỉ vào từng thẻ, HS nói theo mẫu 'Tính năng … dùng AI để hỗ trợ con người …'. Câu hỏi gợi mở: Vì sao không nên nói 'bản đồ là AI' hoặc 'camera là AI'? Dự kiến: vì chỉ một số tính năng của ứng dụng/thiết bị có thể dùng AI. Chốt: nói về tính năng cụ thể: dự đoán giao thông, nhận diện khuôn mặt, dịch giọng nói, chatbot, gợi ý nội dung. Lưu ý: Khi HS nêu ví dụ mới, yêu cầu mô tả chức năng trước khi phân loại." id="slide-7">
+<div class="rule fragment">Muốn kết luận về một sản phẩm cụ thể, vẫn cần biết rõ tính năng/công nghệ của nó.</div><div class="notebook-line fragment"><strong>✍ HS ghi vở:</strong> Bốn dấu hiệu thường gặp ở tính năng AI: <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>. Đây là dấu hiệu gợi ý, không phải tiêu chí tuyệt đối.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">07 / 17</div>
+</section><section class="page" data-document-role="page" data-index="7" data-label="MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA" data-speaker-notes="Mục tiêu: Mở rộng ví dụ nhưng luyện cách nói chính xác theo 'tên tính năng + chức năng'. Thời lượng: 4 phút. Cách tổ chức: GV chỉ ngẫu nhiên 3–4 thẻ, HS nói theo mẫu 'Tính năng … dùng AI để hỗ trợ …'. Không cần đọc hết sáu thẻ. Câu hỏi gợi mở: Vì sao câu 'bản đồ là AI' kém chính xác hơn 'tính năng dự đoán giao thông dùng AI'? Vì sao 'camera là AI' cũng quá rộng? Dự kiến: Vì một ứng dụng/thiết bị có nhiều chức năng; chỉ một số chức năng có thể dùng AI. Sai lầm thường gặp: Gắn nhãn AI cho toàn bộ thiết bị hoặc thương hiệu. Cách xử lí: Yêu cầu HS đổi câu trả lời sang mẫu 'tính năng + chức năng'. Chốt: Khi nêu ví dụ AI, luôn chỉ rõ chức năng cụ thể. Chuyển ý: Ta luyện cách diễn đạt này bằng một câu ghi nhớ ngắn." id="slide-7">
 <div class="label">KHÁM PHÁ</div>
 <h1>MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA</h1>
 <div class="subtitle">Nói về <b>tính năng cụ thể</b>, không gắn nhãn AI cho cả thiết bị.</div>
@@ -435,11 +435,11 @@ body.notes-open #stage{padding-right:390px}
 <div class="feature-card fragment"><div class="feat-vis">❓→💬</div><b>Chatbot AI</b><small>Hiểu câu hỏi và tạo câu trả lời.</small></div>
 <div class="feature-card fragment"><div class="feat-vis">▶▶→⭐</div><b>Gợi ý nội dung</b><small>Đề xuất nội dung có khả năng phù hợp.</small></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">10 / 20</div>
-</section><section class="page" data-document-role="page" data-index="10" data-label="CHỐT KIẾN THỨC 2 • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt phần 2.2, trực tiếp hỗ trợ yêu cầu 6.C2.2: kể tên và mô tả chức năng của một số công cụ AI. Thời lượng: 60 giây. Cách tổ chức: Cho HS đọc 4 ví dụ, gọi 1 em nói lại theo mẫu 'Tính năng ... hỗ trợ con người ...'; sau đó hiện khung ghi vở. Câu hỏi gợi mở: Vì sao nói 'bản đồ là AI' chưa chính xác bằng 'tính năng dự đoán giao thông'? Chốt: luôn gắn tên tính năng với chức năng cụ thể." id="slide-chot-kien-thuc-2">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">08 / 17</div>
+</section><section class="page" data-document-role="page" data-index="8" data-label="CHỐT KIẾN THỨC 2 • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt kĩ năng kể tên và mô tả chức năng của một số tính năng AI; mã yêu cầu 6.C2.2 chỉ dành cho GV, không cần nói với HS. Thời lượng: 60 giây. Cách tổ chức: Gọi 1–2 HS nói lại theo mẫu 'Tính năng … hỗ trợ con người …'; sau đó hiện khung ghi vở. Câu hỏi gợi mở: Nếu em chỉ nói 'YouTube có AI' thì còn thiếu gì? Hãy sửa thành một câu cụ thể hơn. Dự kiến: 'Tính năng gợi ý video đề xuất nội dung có khả năng phù hợp với người dùng'. Sai lầm thường gặp: HS nêu tên ứng dụng thay cho tính năng. Cách xử lí: Hỏi tiếp 'Trong ứng dụng đó, chức năng nào?'. Chốt: Nêu ví dụ AI = tên tính năng + chức năng chính." id="slide-chot-kien-thuc-2">
 <div class="label">CHỐT KIẾN THỨC 2 • GHI VỞ</div>
 <h1>NÓI ĐÚNG: TÊN TÍNH NĂNG + CHỨC NĂNG</h1>
-<div class="subtitle">Để đạt 6.C2.2, em cần kể tên và mô tả được chức năng.</div>
+<div class="subtitle">Kể tên đúng chưa đủ — hãy nói thêm <b>tính năng đó hỗ trợ làm gì</b>.</div>
 <div class="checkpoint-wrap">
 <div class="skill-row">
 <div class="skill-line fragment"><div class="skill-icon">🎙</div><div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch sang ngôn ngữ khác.</small></div></div>
@@ -449,34 +449,34 @@ body.notes-open #stage{padding-right:390px}
 </div>
 <div class="copy-box fragment"><div class="copy-tag">✍ HS GHI VỞ<br/>45 giây</div><div class="copy-text">Khi nêu một ví dụ AI, cần nói rõ <b>tên tính năng</b> và <b>chức năng chính</b> của tính năng đó. Em cần mô tả được ít nhất 3 ví dụ quen thuộc.</div></div>
 </div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">11 / 20</div>
-</section><section class="page" data-document-role="page" data-index="11" data-label="THÁM TỬ AI — 8 TÌNH HUỐNG" data-speaker-notes="Mục tiêu: Luyện phân loại và lập luận theo nhóm. Thời lượng: 7 phút. Cách tổ chức: Nhóm 3–4 HS chọn đủ 8 thẻ, sau đó GV bấm 'Chấm 8 tình huống'. Đáp án: Báo thức – Không AI; Robot hút bụi thiếu mô tả – Chưa đủ TT; Quạt remote – Không AI; Camera nhận diện mặt – Có AI; Máy tính bỏ túi – Không AI; Dịch giọng nói – Có AI; Đèn cảm ứng – Chưa đủ TT; Gợi ý video – Có AI. Câu hỏi gợi mở: Nhóm cần biết thêm gì về robot hút bụi/đèn để kết luận? Chốt: Khi mô tả thiếu, lựa chọn 'Chưa đủ thông tin' là thái độ khoa học. Lưu ý: Không biến điểm thành mục tiêu chính." id="slide-8">
+<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">09 / 17</div>
+</section><section class="page" data-document-role="page" data-index="9" data-label="THÁM TỬ AI — 8 TÌNH HUỐNG" data-speaker-notes="Mục tiêu: Luyện phân loại bằng căn cứ và biết dừng lại khi thiếu dữ kiện. Thời lượng: 7 phút. Cách tổ chức: Nhóm 3–4 HS chọn đủ 8 thẻ; trước khi bấm chấm, yêu cầu nhóm chọn 1 thẻ khó nhất và chuẩn bị lí do. Đáp án: Báo thức – Không AI; robot hút bụi chỉ nêu tên – Chưa đủ TT; quạt remote – Không AI; camera nhận diện mặt – Có AI; máy tính bỏ túi – Không AI; dịch giọng nói – Có AI; đèn PIR bật khi có chuyển động – Không AI; gợi ý video cá nhân hóa – Có AI. Câu hỏi gợi mở: Với robot hút bụi, em cần biết thêm điều gì để kết luận? Với đèn PIR, vì sao có cảm biến nhưng vẫn không phải ví dụ AI? Dự kiến: Cần biết robot có nhận dạng vật cản/đồ vật, học bản đồ hoặc thích nghi theo dữ liệu hay chỉ chạy theo quy tắc; cảm biến PIR chỉ phát hiện chuyển động rồi kích hoạt quy tắc bật/tắt. Sai lầm thường gặp: Cho rằng camera, LIDAR hoặc cảm biến tự thân đã là AI. Cách xử lí: Nhắc cảm biến chỉ thu dữ liệu; AI hay không phụ thuộc cách dữ liệu được xử lí. Chốt: Phân loại dựa vào mô tả chức năng, không dựa vào tên thiết bị." id="slide-8">
 <div class="label">LUYỆN TẬP • THỬ THÁCH NHÓM</div>
 <h1>THÁM TỬ AI — 8 TÌNH HUỐNG</h1>
 <div class="subtitle">Phân loại bằng căn cứ: Có AI • Không AI • Chưa đủ thông tin.</div>
 <div class="detect-grid">
 <div><b>⏰ Báo thức theo giờ</b><small>Đúng giờ cài sẵn thì chuông reo.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Báo thức hoạt động theo thời gian/quy tắc cố định.</div></div>
-<div><b>🤖 Robot hút bụi</b><small>Không mô tả cách điều hướng.</small><span class="pill-unk answer-label" style="display:none">Chưa đủ TT</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Chỉ biết tên “robot hút bụi” chưa đủ để biết nó di chuyển có dùng AI không (vd có camera/LIDAR để dựng bản đồ 3D không).</div></div>
+<div><b>🤖 Robot hút bụi</b><small>Không mô tả cách điều hướng.</small><span class="pill-unk answer-label" style="display:none">Chưa đủ TT</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Chỉ biết tên “robot hút bụi” chưa đủ. Cần biết nó có nhận dạng/ước lượng môi trường hay chỉ chạy theo quy tắc lập trình.</div></div>
 <div><b>🔘 Quạt remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Bấm nút nào, quạt thực hiện lệnh tương ứng — không phải bằng chứng AI.</div></div>
 <div><b>📷 Camera nhận diện mặt</b><small>Xác minh khuôn mặt trong hình.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận diện/xác minh khuôn mặt là tính năng AI.</div></div>
 <div><b>🧮 Máy tính bỏ túi</b><small>Tính theo công thức đã lập trình.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính toán theo công thức đã lập trình không phải bằng chứng AI.</div></div>
 <div><b>🎙 Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận lời nói và tạo bản dịch là xử lí ngôn ngữ bằng AI.</div></div>
-<div><b>💡 Đèn cảm ứng</b><small>Chỉ biết sáng khi phát hiện chuyển động.</small><span class="pill-unk answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến chuyển động (PIR/Hồng ngoại) là phần cứng thuần túy, không dùng AI.</div></div>
-<div><b>▶ Gợi ý video</b><small>Đề xuất theo tín hiệu sử dụng.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Gợi ý nội dung dựa trên tín hiệu sử dụng là dấu hiệu mạnh của AI.</div></div>
+<div><b>💡 Đèn cảm ứng</b><small>Cảm biến PIR phát hiện chuyển động rồi bật đèn theo quy tắc.</small><span class="answer-label pill-no" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến PIR chỉ thu tín hiệu chuyển động; bật đèn theo quy tắc cố định không phải bằng chứng AI.</div></div>
+<div><b>▶ Gợi ý video</b><small>Đề xuất dựa trên lịch sử và tín hiệu sử dụng của người xem.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Gợi ý nội dung dựa trên tín hiệu sử dụng là dấu hiệu mạnh của AI.</div></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">12 / 20</div>
-<div class="interaction-bar"><span class="interaction-status" id="detStatus">Đã chọn 0/8</span><button class="action-btn primary" id="detCheck" type="button">Chấm 8 tình huống</button><button class="action-btn" id="detReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="12" data-label="MỨC ĐỘ BẰNG CHỨNG VỀ AI" data-speaker-notes="Mục tiêu: Hiểu rằng bằng chứng nhận diện AI có mức độ mạnh/yếu khác nhau. Thời lượng: 3 phút. Cách tổ chức: Nhấn Space để hiện từng cột; gọi HS đặt ví dụ vào cột phù hợp. Hỏi nhanh: remote quạt ở đâu? nhận diện khuôn mặt ở đâu? chỉ biết tên robot hút bụi ở đâu? Đáp án: lần lượt Bằng chứng yếu – Gợi ý mạnh – Chưa đủ thông tin. Chốt: đây chỉ là suy luận ban đầu, không phải 'máy kiểm định AI'. Lưu ý: Khi cần kết luận thật, xem tài liệu/mô tả chính thức của sản phẩm." id="slide-9">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">10 / 17</div>
+<div class="interaction-bar"><span class="interaction-status" id="detStatus">Đã chọn 0/8</span><button class="action-btn primary" id="detCheck" type="button">Chấm 8 tình huống</button><button class="action-btn" id="detReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="10" data-label="CĂN CỨ NÀO ĐỦ ĐỂ KẾT LUẬN?" data-speaker-notes="Mục tiêu: Giúp HS hiểu rằng một số thông tin chỉ là dấu hiệu yếu, một số là dấu hiệu điển hình, và có trường hợp phải nói chưa đủ thông tin. Thời lượng: 3 phút. Cách tổ chức: Cho HS xếp nhanh ba ví dụ: 'hẹn giờ', 'nhận diện khuôn mặt', 'chỉ biết tên robot hút bụi'. Câu hỏi gợi mở: Vì sao không nên dùng phần trăm để nói 'thiết bị này 80% là AI'? Khi nào em cần tìm tài liệu chính thức của sản phẩm? Dự kiến: Không có thang điểm phần trăm đơn giản để xác định AI; muốn kết luận chắc hơn cần xem mô tả chức năng/công nghệ. Sai lầm thường gặp: HS coi dấu hiệu AI là thước đo xác suất chính xác. Cách xử lí: Dùng ba nhãn định tính: chưa đủ căn cứ / dấu hiệu điển hình / cần xác minh thêm. Chốt: Đây là quy trình suy luận học tập, không phải máy kiểm định AI." id="slide-9">
 <div class="label">MÔ PHỎNG NHẬN DIỆN</div>
-<h1>MỨC ĐỘ BẰNG CHỨNG VỀ AI</h1>
-<div class="subtitle">Không phải mọi dấu hiệu đều mạnh như nhau.</div>
+<h1>CĂN CỨ NÀO ĐỦ ĐỂ KẾT LUẬN?</h1>
+<div class="subtitle">Dùng mô tả định tính — không gắn phần trăm chắc chắn khi chưa có căn cứ.</div>
 <div class="meter-grid">
-<div class="meter weak fragment"><div class="meter-icon">⏲</div><h3>Bằng chứng yếu</h3><p>Hẹn giờ • nút bấm • quy tắc cố định.</p><div class="meter-bar"><i style="width:28%"></i></div></div>
-<div class="meter strong fragment"><div class="meter-icon">🧠</div><h3>Gợi ý mạnh</h3><p>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung.</p><div class="meter-bar"><i style="width:82%"></i></div></div>
-<div class="meter unknown fragment"><div class="meter-icon">?</div><h3>Chưa đủ thông tin</h3><p>Chỉ biết tên thiết bị hoặc mô tả quá chung.</p><div class="meter-bar"><i style="width:50%"></i></div></div>
+<div class="meter weak fragment"><div class="meter-icon">⏲</div><h3>Chưa đủ để kết luận</h3><p>Hẹn giờ • nút bấm • cảm biến đơn giản • chữ “smart”.</p></div>
+<div class="meter strong fragment"><div class="meter-icon">🧠</div><h3>Dấu hiệu AI điển hình</h3><p>Nhận dạng • xử lí ngôn ngữ • dự đoán/gợi ý • tạo nội dung.</p></div>
+<div class="meter unknown fragment"><div class="meter-icon">?</div><h3>Cần xác minh thêm</h3><p>Chỉ biết tên sản phẩm hoặc mô tả chức năng còn quá chung.</p></div>
 </div>
-<div class="rule fragment">Đây là cách suy luận ban đầu, không phải “máy kiểm định AI”.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">13 / 20</div>
-</section><section class="page" data-document-role="page" data-index="13" data-label="CHỌN ĐÁP ÁN ĐÚNG NHẤT" data-speaker-notes="Mục tiêu: Kiểm tra nhanh hai ngộ nhận trọng tâm. Thời lượng: 3 phút. Cách tổ chức: Cho HS bấm từng phương án; hệ thống phản hồi ngay. Câu 1 đáp án C vì hẹn giờ có thể chỉ là quy tắc cố định. Câu 2 đáp án B vì chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên. Câu hỏi sau đáp án: Em dùng từ khóa nào để giải thích? Chốt: phải dựa vào chức năng cụ thể. Lưu ý: Nếu HS chọn sai, cho giải thích trước khi GV chốt." id="slide-10">
+<div class="rule fragment">Muốn kết luận chắc hơn, hãy xem <b>mô tả chức năng hoặc tài liệu chính thức</b> của sản phẩm.</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">11 / 17</div>
+</section><section class="page" data-document-role="page" data-index="11" data-label="CHỌN ĐÁP ÁN ĐÚNG NHẤT" data-speaker-notes="Mục tiêu: Kiểm tra nhanh hai ngộ nhận trọng tâm sau phần luyện tập. Thời lượng: 3 phút. Cách tổ chức: HS chọn đáp án; trước khi GV xác nhận, gọi một em giải thích bằng từ khóa 'quy tắc cố định', 'xử lí ngôn ngữ' hoặc 'tính năng cụ thể'. Câu hỏi gợi mở: Câu 1 — vì sao tự bật/tắt theo giờ chưa đủ? Câu 2 — chatbot đang thực hiện nhóm chức năng nào trong bốn dấu hiệu? Dự kiến: Hẹn giờ có thể là quy tắc cố định; chatbot xử lí ngôn ngữ và tạo câu trả lời. Sai lầm thường gặp: Chọn theo cảm giác 'thiết bị hiện đại'. Cách xử lí: Yêu cầu chỉ ra một chức năng cụ thể làm căn cứ. Chốt: Câu trả lời đúng phải đi kèm lí do." id="slide-10">
 <div class="label">TRẮC NGHIỆM TƯƠNG TÁC</div>
 <h1>CHỌN ĐÁP ÁN ĐÚNG NHẤT</h1>
 <div class="subtitle">Giải thích bằng “chức năng cụ thể”.</div>
@@ -488,18 +488,8 @@ body.notes-open #stage{padding-right:390px}
 <div class="qnum">2</div><div class="qtext"><b>Trường hợp nào là ví dụ rõ nhất về tính năng AI?</b>
 <button class="quiz-option" data-correct="0" type="button">A. Đồng hồ reo đúng giờ đã đặt</button><button class="quiz-option" data-correct="1" type="button">B. Chatbot hiểu câu hỏi và tạo câu trả lời</button><button class="quiz-option" data-correct="0" type="button">C. Máy tính bỏ túi thực hiện phép cộng</button><div class="quiz-feedback" data-bad="Đồng hồ báo thức và máy tính bỏ túi thông thường có thể hoạt động theo quy tắc cố định." data-ok="Chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên là ví dụ rõ về AI xử lí ngôn ngữ.">Chọn một đáp án.</div></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">14 / 20</div>
-</section><section class="page" data-document-role="page" data-index="14" data-label="KIỂM TRA 3 MỆNH ĐỀ" data-speaker-notes="Mục tiêu: Củng cố 3 kết luận cốt lõi bằng Đúng/Sai. Thời lượng: 2 phút. Cách tổ chức: HS bấm Đúng/Sai; sau câu sai yêu cầu sửa lại thành mệnh đề đúng. Đáp án: 1 Sai; 2 Đúng; 3 Đúng. Sửa câu 1: 'Thiết bị có cảm biến chưa chắc có AI'. Chốt: cảm biến là nguồn tín hiệu; AI hay không còn phụ thuộc cách hệ thống xử lí. Lưu ý: Câu 2 rèn thói quen không kết luận khi thiếu bằng chứng." id="slide-11">
-<div class="label">ĐÚNG / SAI NHANH</div>
-<h1>KIỂM TRA 3 MỆNH ĐỀ</h1>
-<div class="subtitle">Sai thì sửa lại cho đúng.</div>
-<div class="tf-grid">
-<div class="tf"><span class="num">1</span><p>Mọi thiết bị có cảm biến đều là AI.</p><div class="tf-actions"><button class="tf-btn" data-correct="0" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="1" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Cảm biến chỉ thu nhận tín hiệu; nhiều thiết bị có cảm biến nhưng chỉ hoạt động theo quy tắc đơn giản."></div></div>
-<div class="tf"><span class="num">2</span><p>Thiếu thông tin về robot hút bụi thì có thể chọn “Chưa đủ thông tin”.</p><div class="tf-actions"><button class="tf-btn" data-correct="1" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="0" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Khi thiếu mô tả chức năng/công nghệ, “Chưa đủ thông tin” là lựa chọn hợp lí."></div></div>
-<div class="tf"><span class="num">3</span><p>Ứng dụng nhận giọng nói và tạo bản dịch là ví dụ rõ về AI xử lí ngôn ngữ.</p><div class="tf-actions"><button class="tf-btn" data-correct="1" data-value="true" type="button">Đúng</button><button class="tf-btn" data-correct="0" data-value="false" type="button">Sai</button></div><div class="tf-feedback" data-explain="Nhận giọng nói và tạo bản dịch là ví dụ rõ về AI xử lí ngôn ngữ."></div></div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">15 / 20</div>
-</section><section class="page" data-document-role="page" data-index="15" data-label="CHỐT LUYỆN TẬP • CÔNG THỨC THÁM TỬ AI" data-speaker-notes="Mục tiêu: Chốt Hoạt động 3 đúng theo KHBD bằng 3 câu hỏi 'Thám tử AI'. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space hiện 3 bước; yêu cầu cả lớp đọc đồng thanh câu hỏi số 3. Câu hỏi gợi mở: Với robot hút bụi chỉ biết tên sản phẩm, ta dừng ở bước nào? Đáp án/chốt: bước 3 — chưa đủ thông tin. Chuyển ý: Dùng ngay 3 câu hỏi này để 'Săn AI quanh em' ở hoạt động vận dụng." id="slide-chot-luyen-tap">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">12 / 17</div>
+</section><section class="page" data-document-role="page" data-index="12" data-label="CHỐT LUYỆN TẬP • CÔNG THỨC THÁM TỬ AI" data-speaker-notes="Mục tiêu: Chốt quy trình ba câu hỏi dùng cho mọi ví dụ mới. Thời lượng: 60 giây. Cách tổ chức: Nhấn Space hiện lần lượt 3 bước; yêu cầu cả lớp đọc câu 3. Câu hỏi gợi mở: Với một camera lạ chỉ có nhãn 'smart', em đang ở bước nào? Nếu tài liệu nói camera nhận diện người và phân biệt vật thể thì căn cứ thay đổi ra sao? Dự kiến: Ban đầu chưa đủ thông tin; khi có mô tả nhận diện/phân loại thì có căn cứ AI rõ hơn. Sai lầm thường gặp: HS bỏ qua bước 1 và nhảy thẳng tới kết luận. Cách xử lí: Bắt buộc mô tả 'công cụ làm gì?' trước khi phân loại. Chốt: Công cụ làm gì? → Có dấu hiệu AI nào? → Đã đủ thông tin chưa?" id="slide-chot-luyen-tap">
 <div class="label">CHỐT LUYỆN TẬP • CÔNG THỨC THÁM TỬ AI</div>
 <h1>3 CÂU HỎI GIÚP EM KHÔNG KẾT LUẬN VỘI</h1>
 <div class="subtitle">Đây là quy trình đơn giản để dùng cho mọi ví dụ mới.</div>
@@ -511,15 +501,15 @@ body.notes-open #stage{padding-right:390px}
 </div>
 <div class="copy-box fragment"><div class="copy-tag">✍ GHI NHỚ<br/>30–45 giây</div><div class="copy-text">Khi chưa đủ thông tin để xác định có AI hay không, cần <b>tìm hiểu thêm thay vì đoán</b>.</div></div>
 </div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">16 / 20</div>
-</section><section class="page" data-document-role="page" data-index="16" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: Vận dụng vào môi trường sống của HS và luyện cách nêu căn cứ. Thời lượng: 4 phút. Cách tổ chức: HS/nhóm nhập tên tính năng, chức năng quan sát được, phân loại, lí do; bấm Lưu ví dụ. GV mở 2–3 ví dụ đã lưu để chữa. Câu hỏi gợi mở: Em đang mô tả thiết bị hay đang mô tả tính năng? Chốt: chỉ viết 'TV/camera/máy lạnh' là chưa đủ; phải nói tính năng cụ thể. Lưu ý: Không nhập họ tên/dữ liệu cá nhân; dữ liệu chỉ lưu trên trình duyệt máy đang dùng." id="slide-12">
+<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">13 / 17</div>
+</section><section class="page" data-document-role="page" data-index="13" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: Vận dụng quy trình vào ví dụ thật quanh HS và luyện nêu căn cứ. Thời lượng: 4 phút. Cách tổ chức: Mỗi nhóm nhập 1 ví dụ, ghi đủ tên tính năng – chức năng – phân loại – lí do; bấm Lưu. GV mở 2–3 ví dụ khác nhau để chữa. Câu hỏi gợi mở: Em đang mô tả thiết bị hay tính năng? Nếu bạn chỉ viết 'TV thông minh' thì em sẽ hỏi thêm câu gì? Dự kiến: Cần hỏi TV có tính năng nào như gợi ý nội dung, nhận giọng nói, nhận dạng... Sai lầm thường gặp: Nêu thương hiệu/tên thiết bị thay cho tính năng; nhập thông tin cá nhân. Cách xử lí: Chỉ lưu ví dụ về công nghệ, không nhập họ tên, tài khoản hay dữ liệu riêng tư. Chốt: Ví dụ tốt phải có tính năng cụ thể và căn cứ rõ." id="slide-12">
 <div class="label">VẬN DỤNG</div>
 <h1>SĂN AI QUANH EM</h1>
 <div class="subtitle">Ghi lại một ví dụ của chính em bằng <b>tính năng + căn cứ</b>.</div>
 <div class="worksheet"><div class="field"><b>Tên tính năng / công cụ</b><input class="hunt-input" id="huntName" placeholder="Ví dụ: mở khóa bằng khuôn mặt trên điện thoại" type="text"/></div><div class="field"><b>Chức năng em quan sát được</b><textarea class="hunt-input" id="huntFunc" placeholder="Ví dụ: camera quét khuôn mặt để xác minh người dùng" rows="2"></textarea></div><div class="field"><b>Em phân loại</b><select class="hunt-input" id="huntClass"><option value="Có AI">Có AI</option><option value="Không AI">Không AI</option><option value="Chưa đủ thông tin">Chưa đủ thông tin</option></select></div><div class="field"><b>Lí do / căn cứ</b><input class="hunt-input" id="huntWhy" placeholder="Em dựa vào tính năng..." type="text"/></div></div>
 <div class="tip">Nếu chỉ viết “TV”, “camera”, “máy lạnh”… thì <b>chưa đủ</b>. Hãy nêu tính năng cụ thể.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">17 / 20</div>
-<div class="hunt-actions"><button class="action-btn primary" id="huntSave" type="button">Lưu ví dụ</button><button class="action-btn" id="huntClear" type="button">Xóa ô nhập</button></div><div class="hunt-list" id="huntList"><div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div></div></section><section class="page" data-document-role="page" data-index="17" data-label="TỔNG HỢP 4 Ý CỐT LÕI" data-speaker-notes="Mục tiêu: Tổng hợp toàn bộ kiến thức cuối tiết, giúp HS tự kiểm tra phần đã ghi ở các slide chốt. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space hiện 4 ý; HS đối chiếu với vở, chỉ bổ sung ý còn thiếu, không chép lại toàn bộ. Chốt: 4 ý này bám đúng nội dung cốt lõi của KHBD. Lưu ý: dành thời gian cho HS kiểm tra vở thay vì đọc lại dài dòng." id="slide-13">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">14 / 17</div>
+<div class="hunt-actions"><button class="action-btn primary" id="huntSave" type="button">Lưu ví dụ</button><button class="action-btn" id="huntClear" type="button">Xóa ô nhập</button></div><div class="hunt-list" id="huntList"><div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div></div></section><section class="page" data-document-role="page" data-index="14" data-label="TỔNG HỢP 4 Ý CỐT LÕI" data-speaker-notes="Mục tiêu: Tổng hợp cuối tiết mà không lặp lại toàn bộ bài. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space từng ý; HS tự đánh dấu ✓ vào ý đã có trong vở và chỉ bổ sung ý thiếu. Câu hỏi gợi mở: Trong 4 ý, ý nào giúp em tránh kết luận vội nhất? Ý nào giúp em mô tả AI chính xác hơn? Dự kiến: 'chưa đủ thông tin' giúp tránh đoán; 'tính năng + chức năng' giúp nói chính xác. Chốt: Không cần chép lại toàn bộ nếu vở đã đủ." id="slide-13">
 <div class="label">CHỐT KIẾN THỨC</div>
 <h1>TỔNG HỢP 4 Ý CỐT LÕI</h1>
 <div class="subtitle">Đối chiếu với các phần em đã ghi — không cần chép lại nếu đã đủ.</div>
@@ -529,8 +519,8 @@ body.notes-open #stage{padding-right:390px}
 <div class="note-card fragment"><span>3</span><p>Một số tính năng AI hỗ trợ <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>.</p></div>
 <div class="note-card fragment"><span>4</span><p>Khi chưa đủ thông tin, cần <b>tìm hiểu thêm</b> thay vì đoán theo vẻ ngoài.</p></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">18 / 20</div>
-</section><section class="page" data-document-role="page" data-index="18" data-label="TRƯỚC KHI RA VỀ…" data-speaker-notes="Mục tiêu: Đánh giá cuối tiết. Thời lượng: 2 phút. Cách tổ chức: HS trả lời 3 câu vào giấy/miệng; GV chỉ hiện gợi ý câu 3 sau khi HS đã trả lời. Câu 1–2 kiểm tra nhận diện và mô tả chức năng. Câu 3 đáp án: Không; máy tính bỏ túi thông thường tính theo quy tắc/công thức đã lập trình, tính nhanh chưa đủ chứng minh AI. Lưu ý: Nếu nhiều HS sai câu 3, quay lại slide so sánh trước khi kết thúc." id="slide-14">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">15 / 17</div>
+</section><section class="page" data-document-role="page" data-index="15" data-label="TRƯỚC KHI RA VỀ…" data-speaker-notes="Mục tiêu: Đánh giá nhanh ba yêu cầu chính: nêu ví dụ, mô tả chức năng, giải thích bằng căn cứ. Thời lượng: 2 phút. Cách tổ chức: HS trả lời cá nhân; câu 1–2 có thể viết cùng một ví dụ, câu 3 bắt buộc có từ 'quy tắc/công thức' hoặc diễn đạt tương đương. Câu hỏi gợi mở: Nếu một HS trả lời 'camera là AI', em sẽ yêu cầu bạn bổ sung gì? Dự kiến: Bổ sung tính năng cụ thể như nhận diện khuôn mặt/vật thể. Đáp án: Câu 3 — Không; tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh AI. Sai lầm thường gặp: Chỉ trả lời 'không' mà không nêu lí do. Cách xử lí: Yêu cầu hoàn thành mẫu 'Không, vì…'." id="slide-14">
 <div class="label">EXIT TICKET • 3 CÂU</div>
 <h1>TRƯỚC KHI RA VỀ…</h1>
 <div class="subtitle">Ba câu kiểm tra xem em đã nắm được cách nhận diện AI chưa.</div>
@@ -540,8 +530,8 @@ body.notes-open #stage{padding-right:390px}
 <div class="exit"><span>3</span><p>Một máy tính bỏ túi thông thường tính rất nhanh. Điều đó có đủ để khẳng định nó là AI không? Vì sao?</p></div>
 </div>
 <button class="action-btn primary" id="exitReveal" type="button">Hiện gợi ý câu 3</button><div class="answer-strip manual-hidden" id="exitAnswer"><b>Gợi ý câu 3:</b> Không. Tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh có AI.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">19 / 20</div>
-</section><section class="page" data-document-role="page" data-index="19" data-label="BẢN ĐỒ “THÁM TỬ AI”" data-speaker-notes="Mục tiêu: Đóng bài bằng quy trình hành động dễ nhớ. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space để hiện lần lượt các nút mindmap; mời 2 HS hoàn thành câu 'Sau bài này, khi gặp một thiết bị lạ em sẽ…'. Chốt quy trình: Quan sát → Xem chức năng → Tìm căn cứ → Nếu chưa rõ, nói 'Chưa đủ thông tin'. Dặn dò: Tìm ở nhà 1 tính năng có AI và 1 trường hợp chưa chắc có AI; ghi tên – chức năng – lí do. Lưu ý: Đây là thông điệp cuối, nên đọc chậm và nhấn mạnh 'không đoán theo vẻ ngoài'." id="slide-15">
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">16 / 17</div>
+</section><section class="page" data-document-role="page" data-index="16" data-label="BẢN ĐỒ “THÁM TỬ AI”" data-speaker-notes="Mục tiêu: Đóng bài bằng quy trình hành động ngắn, dễ nhớ. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space hiện từng nút; mời 2 HS hoàn thành câu 'Khi gặp một thiết bị lạ, em sẽ…'. Câu hỏi gợi mở: Bước nào quan trọng nhất để tránh đoán? Có trường hợp nào em dừng ở 'chưa đủ thông tin' không? Dự kiến: Cần xem chức năng và tìm căn cứ; có thể dừng khi mô tả sản phẩm quá chung. Chốt: Quan sát → xem chức năng → tìm căn cứ → nếu chưa rõ, nói 'chưa đủ thông tin'. Dặn dò: Tìm ở nhà 1 tính năng có AI và 1 trường hợp chưa chắc có AI; ghi tên tính năng – chức năng – lí do." id="slide-15">
 <div class="label">MINDMAP • CUỐI BÀI</div>
 <h1>BẢN ĐỒ “THÁM TỬ AI”</h1>
 <div class="subtitle">Một quy trình 3 bước để không bị đánh lừa bởi vẻ ngoài.</div>
@@ -553,7 +543,7 @@ body.notes-open #stage{padding-right:390px}
 <div class="mind-node n4 fragment"><b>NẾU CHƯA RÕ</b><small>Nói “Chưa đủ thông tin”</small></div>
 </div>
 <div class="final-message fragment">Không đoán AI theo vẻ ngoài. Hãy xem <b>tính năng cụ thể</b>, tìm căn cứ và sẵn sàng nói “chưa đủ thông tin”.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">20 / 20</div>
+<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">17 / 17</div>
 </section></div></main><nav aria-label="Điều khiển bài giảng" class="toolbar"><button class="tool-btn" id="prevBtn" title="Slide trước" type="button">←</button><button class="tool-btn" id="nextBtn" title="Slide sau" type="button">→</button><button class="tool-btn" id="revealBtn" title="Hiện nội dung tiếp theo" type="button">✦</button><button class="tool-btn" id="notesBtn" title="Ghi chú giáo viên" type="button">GV</button><button class="tool-btn" id="overviewBtn" title="Tổng quan slide" type="button">▦</button><button class="tool-btn" id="laserBtn" title="Laser Pointer" type="button">●</button><button class="tool-btn" id="fullBtn" title="Toàn màn hình" type="button">⛶</button><button class="tool-btn" id="resetSlideBtn" title="Làm lại slide hiện tại" type="button">↺</button><button class="tool-btn timer-btn" id="timerBtn" title="Bấm: chạy/tạm dừng • Nhấp đúp: đặt lại 45 phút" type="button">⏱ 45:00</button><div id="slideTitle"></div><div id="counter"></div></nav></div><aside id="notesDrawer"><div class="notes-head"><div id="notesSlideTitle"></div><button class="notes-close" id="notesClose" type="button">×</button></div><div class="notes-body" id="notesBody"></div></aside><div id="overviewOverlay"><div class="overview-card"><div class="overview-head"><h2>Tổng quan bài giảng</h2><button class="notes-close" id="overviewClose" type="button">×</button></div><div class="overview-grid" id="overviewGrid"></div></div></div><div id="laserDot"></div><div id="toast"></div><script>
 (function(){
   'use strict';
@@ -595,7 +585,7 @@ body.notes-open #stage{padding-right:390px}
   function next(){if(!revealNext())show(idx+1)} function prev(){show(idx-1)}
 
   function formatNotes(text){
-    const labels=['Mục tiêu','Thời lượng','Cách tổ chức','Câu hỏi gợi mở','Câu hỏi','Dự kiến','Đáp án/chốt','Đáp án','Chốt','Lưu ý','Chuyển ý','Dặn dò','Hỏi nhanh','Sửa câu 1'];
+    const labels=['Mục tiêu','Thời lượng','Cách tổ chức','Câu hỏi gợi mở','Câu hỏi','Dự kiến','Sai lầm thường gặp','Cách xử lí','Đáp án/chốt','Đáp án','Chốt','Lưu ý','Chuyển ý','Dặn dò','Hỏi nhanh','Sửa câu 1'];
     let out=text;
     labels.forEach(k=>{out=out.replace(new RegExp(k.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+':','g'),'§'+k+':')});
     return out.split('§').filter(Boolean).map(part=>{

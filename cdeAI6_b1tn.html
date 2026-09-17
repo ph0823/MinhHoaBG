@@ -79,7 +79,7 @@
       <div id="knowledgeBox" class="knowledge-box"></div>
 
       <div id="guideBox" class="info-box">
-        <strong>Hướng dẫn làm bài:</strong><br>
+        <strong>Hướng dẫn làm bài:</strong><br>• Bài gồm 20 câu: 8 Nhận biết, 6 Thông hiểu, 6 Vận dụng.<br>
         • Thứ tự câu hỏi và đáp án được trộn ngẫu nhiên.<br>
         • Mỗi lần chỉ hiển thị một câu.<br>
         • Chọn đúng mới được chuyển sang câu tiếp theo.<br>
@@ -135,7 +135,7 @@ const APP_CONFIG = {
   grade: "6",
   semester: "HK1",
   type: "quiz",
-  version: "1.1.0",
+  version: "1.2.0",
   totalActivities: 0,
   totalQuestions: 20
 };
@@ -376,18 +376,28 @@ const KIEN_THUC_TRONG_TAM = {
   tieuDeTrang: "Trắc nghiệm - AI quanh em - Đâu là AI?",
   phuDe: "Chuyên đề AI cốt lõi – Lớp 6 – Bài 1",
   noiDungHTML: `<h2>BÀI 1. AI QUANH EM - ĐÂU LÀ AI?</h2>
-    <h3>1. Trí tuệ nhân tạo - AI là gì?</h3>
-    <ol>
-      <li>Là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người.</li>
-      <li>AI không nhất thiết là robot, có thể là một tính năng của ứng dụng hay thiết bị.</li>
-      
-    </ol>
-    <h3>2. Nhận diện AI quanh em</h3>
+    <h3>1. AI là gì?</h3>
     <ul>
-      <li>AI xuất hiện trong nhiều công cụ và tính năng quen thuộc như dịch ngôn ngữ, nhận diện hình ảnh, nhận dạng giọng nói, gợi ý nội dung, bản đồ và chatbot.</li>
-          
+      <li>AI là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người.</li>
+      <li>AI không nhất thiết là robot; AI có thể chỉ nằm trong <strong>một tính năng</strong> của ứng dụng hoặc thiết bị.</li>
     </ul>
-    <p><strong>Ghi nhớ:</strong> Không dùng một dấu hiệu đơn lẻ như “hiện đại”, “tự động”, “có cảm biến” hay “có điều khiển từ xa” để kết luận thiết bị có AI.</p>`
+
+    <h3>2. Bốn nhóm dấu hiệu thường gặp ở tính năng AI</h3>
+    <ul>
+      <li><strong>Nhận dạng:</strong> khuôn mặt, hình ảnh, vật thể, giọng nói.</li>
+      <li><strong>Xử lí ngôn ngữ:</strong> hiểu câu hỏi, dịch, tóm tắt, trả lời.</li>
+      <li><strong>Dự đoán/gợi ý:</strong> tuyến đường, video, bài luyện phù hợp.</li>
+      <li><strong>Tạo nội dung:</strong> văn bản, hình ảnh, âm thanh theo yêu cầu.</li>
+    </ul>
+
+    <h3>3. Cách suy nghĩ khi gặp một thiết bị lạ</h3>
+    <ol>
+      <li>Mô tả <strong>tính năng cụ thể</strong> đang làm gì.</li>
+      <li>Tìm dấu hiệu AI phù hợp với chức năng đó.</li>
+      <li>Nếu mô tả còn thiếu, chọn <strong>“Chưa đủ thông tin”</strong> thay vì đoán.</li>
+    </ol>
+
+    <p><strong>Ghi nhớ:</strong> Tự động, có cảm biến, có điều khiển từ xa, kết nối mạng hoặc được gọi là “thông minh” <strong>chưa đủ</strong> để khẳng định có AI.</p>`
 };
 
 /* Nếu không có kiến thức trọng tâm, dùng:
@@ -397,223 +407,243 @@ const KIEN_THUC_TRONG_TAM = null;
 const BO_CAU_HOI = [
   {
     "level": "Nhận biết",
-    "question": "Thiết bị nào sau đây là ví dụ rõ ràng có ứng dụng AI?",
+    "question": "Cách hiểu nào phù hợp nhất với AI trong bài học này?",
     "answers": [
-      "Camera có chức năng nhận diện khuôn mặt người dùng",
-      "Đồng hồ báo thức chỉ reo đúng vào thời gian đã được cài sẵn",
-      "Quạt điện chỉ thay đổi tốc độ theo nút bấm điều khiển",
-      "Máy tính bỏ túi chỉ thực hiện phép tính theo công thức"
+      "Công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người",
+      "Tên gọi chung cho mọi thiết bị điện tử có màn hình và có bộ xử lí bên trong",
+      "Công nghệ chỉ xuất hiện trong robot có hình dáng gần giống với con người",
+      "Tên gọi của mọi chương trình tự động làm việc nhanh hơn người sử dụng"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "AI không đồng nghĩa với mọi thiết bị điện tử hay mọi chương trình tự động; AI có thể nằm trong một tính năng cụ thể."
   },
   {
     "level": "Nhận biết",
-    "question": "Thiết bị nào sau đây là ví dụ rõ ràng không dùng AI?",
+    "question": "Phát biểu nào đúng về nơi AI có thể xuất hiện?",
     "answers": [
-      "Máy tính bỏ túi thông thường chỉ tính theo công thức",
-      "Ứng dụng dịch giọng nói có thể xử lí câu người dùng nói",
-      "Camera an ninh có chức năng nhận diện khuôn mặt người",
-      "Ứng dụng video có chức năng gợi ý nội dung cho người xem"
+      "AI có thể nằm trong một tính năng của ứng dụng hoặc thiết bị",
+      "AI chỉ xuất hiện trong robot có khả năng di chuyển ngoài đời thực",
+      "AI chỉ có trong máy tính cấu hình mạnh và các trung tâm dữ liệu lớn",
+      "AI chỉ có trong các thiết bị luôn kết nối Internet khi đang hoạt động"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Một thiết bị có thể có nhiều chức năng và chỉ một số chức năng trong đó dùng AI."
   },
   {
     "level": "Nhận biết",
-    "question": "Tính năng nào sau đây thường là dấu hiệu gợi ý có ứng dụng AI?",
+    "question": "Tính năng nào thuộc nhóm nhận dạng?",
     "answers": [
-      "Nhận dạng giọng nói để hiểu lời người dùng",
-      "Bật quạt đúng mức tốc độ theo nút người dùng chọn",
-      "Phát chuông đúng giờ theo thời gian người dùng cài",
-      "Bật đèn khi công tắc điện được người dùng nhấn xuống"
+      "Mở khóa điện thoại bằng cách xác minh khuôn mặt người dùng",
+      "Hẹn giờ để tivi tự tắt sau đúng ba mươi phút đã cài",
+      "Bật quạt ở mức số ba khi người dùng bấm nút tương ứng",
+      "Hiển thị kết quả phép tính sau khi người dùng nhập các con số"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Xác minh khuôn mặt là một ví dụ điển hình của chức năng nhận dạng."
   },
   {
     "level": "Nhận biết",
-    "question": "Trường hợp nào sau đây chưa đủ thông tin để kết luận thiết bị có AI?",
+    "question": "Tính năng nào thuộc nhóm xử lí ngôn ngữ?",
     "answers": [
-      "Robot hút bụi chỉ được mô tả là hoạt động tự động",
-      "Camera được nêu rõ có chức năng nhận diện khuôn mặt",
-      "Ứng dụng được nêu rõ có chức năng dịch giọng nói giữa hai ngôn ngữ",
-      "Trang video được nêu rõ có chức năng gợi ý nội dung"
+      "Ứng dụng nghe câu tiếng Việt rồi tạo bản dịch sang tiếng Anh",
+      "Đồng hồ reo đúng thời gian mà người dùng đã cài từ trước",
+      "Đèn bật khi công tắc điện được người dùng nhấn xuống",
+      "Máy tính bỏ túi thực hiện phép chia theo công thức đã lập trình"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Nghe lời nói và tạo bản dịch là hoạt động nhận dạng lời nói và xử lí ngôn ngữ."
   },
   {
     "level": "Nhận biết",
-    "question": "Thiết bị nào sau đây không nên được xem là AI chỉ vì có điều khiển từ xa?",
+    "question": "Tính năng nào thuộc nhóm dự đoán hoặc gợi ý?",
     "answers": [
-      "Quạt điện chỉ nhận lệnh từ chiếc điều khiển từ xa",
-      "Camera có thể nhận diện khuôn mặt của người đi qua",
-      "Ứng dụng bản đồ có thể gợi ý lộ trình phù hợp cho người dùng",
-      "Chatbot có thể hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ"
+      "Ứng dụng video đề xuất nội dung dựa trên tín hiệu sử dụng của người xem",
+      "Quạt điện thay đổi tốc độ đúng theo nút bấm trên điều khiển từ xa",
+      "Đèn bàn sáng lên khi người dùng nhấn trực tiếp công tắc điện",
+      "Máy tính bỏ túi hiển thị kết quả sau khi nhập phép tính số học"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Đề xuất nội dung dựa trên dữ liệu/tín hiệu sử dụng là ví dụ về gợi ý."
   },
   {
     "level": "Nhận biết",
-    "question": "Công cụ nào sau đây có chức năng xử lí ngôn ngữ?",
+    "question": "Tình huống nào là ví dụ về AI tạo nội dung?",
     "answers": [
-      "Ứng dụng dịch có thể chuyển câu tiếng Việt sang tiếng Anh",
-      "Đồng hồ báo thức chỉ phát âm báo đúng vào thời gian đã được cài sẵn",
-      "Máy tính bỏ túi chỉ thực hiện phép tính số học theo quy tắc",
-      "Quạt điều khiển từ xa chỉ thay đổi tốc độ theo các lệnh bấm đã chọn"
+      "Công cụ tạo một bức tranh mới theo phần mô tả bằng văn bản của người dùng",
+      "Đồng hồ điện tử hiển thị thời gian hiện tại theo bộ đếm đã được cài đặt",
+      "Quạt điện quay ở mức hai sau khi người dùng chọn đúng nút trên điều khiển",
+      "Máy tính bỏ túi hiển thị kết quả khi người dùng nhập một phép nhân số học"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Tạo hình ảnh mới theo yêu cầu là một ví dụ về AI tạo nội dung."
   },
   {
     "level": "Nhận biết",
-    "question": "Tính năng nào sau đây là ví dụ về gợi ý nội dung bằng AI?",
+    "question": "Trường hợp nào là ví dụ rõ về hoạt động theo quy tắc cố định, không phải AI?",
     "answers": [
-      "Ứng dụng video đề xuất clip phù hợp với người xem",
-      "Đồng hồ điện tử hiển thị giờ theo thời gian hiện tại",
-      "Đèn bàn bật sáng khi người dùng nhấn công tắc điện",
-      "Máy tính bỏ túi hiển thị kết quả sau khi người dùng nhập phép tính"
+      "Báo thức reo đúng vào thời gian mà người dùng đã cài từ trước",
+      "Camera xác minh khuôn mặt để cho phép người dùng mở khóa thiết bị",
+      "Ứng dụng dịch nghe lời nói rồi tạo bản dịch sang một ngôn ngữ khác",
+      "Trang học tập đề xuất bài luyện dựa trên kết quả học trước đó"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Báo thức theo giờ chỉ thực hiện quy tắc đã cài, nên đây không phải ví dụ AI."
   },
   {
     "level": "Nhận biết",
-    "question": "Phát biểu nào phù hợp nhất với bài học về AI quanh em?",
+    "question": "Thông tin nào tự nó chưa đủ để khẳng định một thiết bị có AI?",
     "answers": [
-      "Không phải mọi thiết bị tự động hoặc thông minh đều có AI",
-      "Mọi thiết bị điện tử có bộ xử lí đều được xem là thiết bị AI",
-      "Mọi thiết bị có cảm biến đều sử dụng AI để đưa ra quyết định",
-      "Mọi thiết bị kết nối mạng đều dùng AI để xử lí và phân tích dữ liệu"
+      "Thiết bị có cảm biến và được quảng cáo bằng từ “thông minh”",
+      "Camera có chức năng nhận diện khuôn mặt trong hình ảnh",
+      "Ứng dụng có chức năng hiểu câu hỏi và tạo câu trả lời",
+      "Công cụ tạo hình ảnh mới từ phần mô tả của người dùng"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Cảm biến và nhãn “thông minh” chưa cho biết hệ thống xử lí dữ liệu như thế nào."
   },
   {
     "level": "Thông hiểu",
-    "question": "Một đèn tự bật khi trời tối nhờ cảm biến ánh sáng. Nên kết luận thế nào?",
+    "question": "Vì sao máy tính bỏ túi thông thường không phải ví dụ đại diện cho AI?",
     "answers": [
-      "Chưa đủ thông tin để khẳng định đèn có ứng dụng AI",
-      "Chắc chắn có AI vì đèn có thể tự động bật khi trời tối",
-      "Chắc chắn có AI vì thiết bị đã sử dụng một loại cảm biến",
-      "Chắc chắn không có AI vì đèn chỉ dùng để chiếu sáng"
+      "Nó chủ yếu thực hiện phép tính theo công thức và quy tắc đã thiết kế",
+      "Nó thường có màn hình nhỏ hơn nhiều so với màn hình của điện thoại",
+      "Nó có thể cho kết quả nhanh hơn con người ở một số phép tính số học",
+      "Nó không cần kết nối Internet trong phần lớn thời gian sử dụng"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Tốc độ nhanh không phải tiêu chí quyết định; điều quan trọng là cách công cụ thực hiện nhiệm vụ."
   },
   {
     "level": "Thông hiểu",
-    "question": "Vì sao máy tính bỏ túi thông thường không được dùng làm ví dụ đại diện cho AI?",
+    "question": "Một đèn dùng cảm biến PIR để phát hiện chuyển động rồi bật sáng theo quy tắc đã cài. Cách phân loại phù hợp nhất là gì?",
     "answers": [
-      "Nó chủ yếu thực hiện phép tính theo quy tắc đã thiết kế",
-      "Nó có thể cho kết quả nhanh hơn con người trong nhiều phép tính",
-      "Nó có màn hình điện tử và các phím để người dùng nhập dữ liệu",
-      "Nó có thể lưu một số kết quả tính toán trong bộ nhớ tạm thời"
+      "Không AI vì cảm biến chỉ kích hoạt một quy tắc bật đèn cố định",
+      "Có AI vì thiết bị đã có cảm biến để nhận tín hiệu từ môi trường",
+      "Có AI vì đèn có thể tự hoạt động mà không cần người bấm công tắc",
+      "Chưa đủ thông tin vì mọi thiết bị có cảm biến đều rất khó phân loại"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Ở đây mô tả đã đủ rõ: PIR phát hiện chuyển động rồi kích hoạt quy tắc bật đèn, không có dấu hiệu AI cần thiết."
   },
   {
     "level": "Thông hiểu",
-    "question": "Một camera có chức năng phát hiện và nhận diện khuôn mặt. Cách phân loại hợp lí là gì?",
+    "question": "Một robot hút bụi chỉ được mô tả là “tự chạy quanh phòng”. Em nên kết luận thế nào?",
     "answers": [
-      "Có AI vì có chức năng nhận diện khuôn mặt",
-      "Không AI vì camera chỉ là thiết bị dùng để ghi hình",
-      "Chưa đủ thông tin vì mọi camera đều hoạt động giống nhau",
-      "Không AI vì thiết bị không trực tiếp trò chuyện với người dùng"
+      "Chưa đủ thông tin vì cần biết robot nhận biết và xử lí môi trường ra sao",
+      "Có AI vì robot có thể tự di chuyển mà người dùng không cần đẩy trực tiếp",
+      "Có AI vì sản phẩm có chữ robot nên chắc chắn phải dùng trí tuệ nhân tạo",
+      "Không AI vì nhiệm vụ hút bụi không liên quan đến nhận dạng hay dự đoán"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Tên sản phẩm và việc tự chạy chưa đủ; cần biết cách nó nhận biết môi trường và ra quyết định."
   },
   {
     "level": "Thông hiểu",
-    "question": "Một ứng dụng bản đồ tự đề xuất tuyến đường dựa trên tình trạng giao thông. Cách phân loại phù hợp là gì?",
+    "question": "Hai camera giống nhau về hình dáng. Camera A chỉ ghi hình, camera B có chức năng nhận diện khuôn mặt. Nhận xét nào đúng?",
     "answers": [
-      "Có AI vì ứng dụng có chức năng gợi ý lộ trình phù hợp",
-      "Không AI vì bản đồ chỉ có nhiệm vụ hiển thị vị trí và đường đi",
-      "Chưa đủ thông tin vì mọi ứng dụng bản đồ đều không dùng AI",
-      "Không AI vì người dùng vẫn phải tự quyết định tuyến đường cuối cùng"
+      "Chỉ chức năng nhận diện khuôn mặt của camera B là ví dụ rõ về AI",
+      "Cả hai camera đều là AI vì cùng có cảm biến hình ảnh và bộ xử lí",
+      "Chỉ camera A là AI vì ghi hình tạo ra dữ liệu để máy tính xử lí",
+      "Không camera nào là AI vì camera chỉ có nhiệm vụ thu nhận hình ảnh"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Cần phân loại theo tính năng cụ thể, không theo hình dáng hay loại thiết bị."
   },
   {
     "level": "Thông hiểu",
-    "question": "Một chiếc quạt được quảng cáo là “quạt thông minh” nhưng chỉ biết có điều khiển từ xa. Nên làm gì?",
+    "question": "Ứng dụng bản đồ đề xuất tuyến đường dựa trên tình trạng giao thông hiện tại. Dấu hiệu AI đáng chú ý nhất là gì?",
     "answers": [
-      "Tìm thêm thông tin về tính năng trước khi kết luận có AI",
-      "Khẳng định có AI vì sản phẩm đã được gọi là quạt thông minh",
-      "Khẳng định có AI vì quạt nhận được tín hiệu từ điều khiển từ xa",
-      "Khẳng định không AI vì mọi loại quạt đều không thể sử dụng AI"
+      "Ứng dụng dự đoán và gợi ý tuyến phù hợp dựa trên dữ liệu giao thông",
+      "Ứng dụng hiển thị bản đồ đường phố trên màn hình của thiết bị",
+      "Ứng dụng cần kết nối mạng để nhận dữ liệu về vị trí của người dùng",
+      "Ứng dụng có nút phóng to và thu nhỏ bản đồ để người dùng thao tác"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Điểm đáng chú ý là việc dự đoán/gợi ý dựa trên dữ liệu, không phải giao diện hay kết nối mạng."
   },
   {
     "level": "Thông hiểu",
-    "question": "Vì sao nói “có cảm biến” chưa đủ để kết luận một thiết bị có AI?",
+    "question": "Vì sao nói “thiết bị có cảm biến” chưa đủ để kết luận có AI?",
     "answers": [
-      "Cảm biến chỉ là một dấu hiệu, cần xem thiết bị xử lí thế nào",
-      "Cảm biến luôn chỉ dùng cho thiết bị không có khả năng xử lí dữ liệu",
-      "Cảm biến chỉ xuất hiện trong thiết bị hoạt động bằng cơ khí hoàn toàn",
-      "Cảm biến luôn hoạt động độc lập và không liên quan đến chức năng thiết bị"
+      "Cảm biến chủ yếu thu tín hiệu; cần xem hệ thống xử lí dữ liệu đó như thế nào",
+      "Cảm biến chỉ xuất hiện ở những thiết bị không có khả năng xử lí dữ liệu",
+      "Cảm biến luôn hoạt động độc lập nên không thể kết hợp với phần mềm khác",
+      "Cảm biến chỉ dùng trong thiết bị cơ khí nên không liên quan đến máy tính"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Cảm biến cung cấp dữ liệu đầu vào; AI hay không phụ thuộc vào cách hệ thống xử lí dữ liệu và thực hiện nhiệm vụ."
   },
   {
     "level": "Vận dụng",
-    "question": "Một robot hút bụi được mô tả chỉ là “tự chạy quanh phòng”. Em nên phân loại thế nào?",
+    "question": "Một tivi nhận câu nói “mở kênh thiếu nhi” rồi hiểu yêu cầu và chuyển đúng kênh. Căn cứ nào cho thấy đây là tính năng AI?",
     "answers": [
-      "Chưa đủ thông tin vì cần biết robot xử lí môi trường ra sao",
-      "Có AI vì robot có thể di chuyển mà không cần người đẩy trực tiếp",
-      "Có AI vì mọi robot hiện đại ngày nay đều phải dùng trí tuệ nhân tạo",
-      "Không AI vì thiết bị chỉ dùng để hút bụi nên không thể có trí tuệ nhân tạo"
+      "Tivi nhận dạng lời nói và xử lí ngôn ngữ để hiểu yêu cầu của người dùng",
+      "Tivi có loa và micro nên có thể thu và phát âm thanh trong phòng",
+      "Tivi kết nối mạng và có nhiều ứng dụng giải trí được cài đặt sẵn",
+      "Tivi có điều khiển từ xa để người dùng thay đổi kênh khi cần"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Nhận dạng lời nói và hiểu yêu cầu bằng ngôn ngữ là dấu hiệu AI điển hình."
   },
   {
     "level": "Vận dụng",
-    "question": "Một điện thoại mở khóa bằng cách nhận diện khuôn mặt chủ máy. Tính năng này nên được xếp vào nhóm nào?",
+    "question": "Trang học tập tự chọn bài luyện dễ hoặc khó dựa trên kết quả trước đó của học sinh. Đây là dấu hiệu nào?",
     "answers": [
-      "Có AI vì tính năng thực hiện nhận diện khuôn mặt",
-      "Không AI vì điện thoại chỉ dùng camera để chụp hình người dùng",
-      "Chưa đủ thông tin vì điện thoại nào cũng có camera ở mặt trước",
-      "Không AI vì mở khóa chỉ là chức năng bảo mật của thiết bị"
+      "Dự đoán hoặc gợi ý nội dung phù hợp dựa trên dữ liệu học tập",
+      "Hiển thị bài tập trên một màn hình có nhiều nút để lựa chọn",
+      "Lưu tên các bài học vào bộ nhớ để giáo viên có thể xem lại",
+      "Cho phép học sinh đăng nhập bằng tài khoản trước khi bắt đầu"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Hệ thống dùng dữ liệu học trước đó để gợi ý nội dung phù hợp, thuộc nhóm dự đoán/gợi ý."
   },
   {
     "level": "Vận dụng",
-    "question": "Một ứng dụng nghe lời nói của em rồi chuyển thành văn bản. Căn cứ nào giúp nhận diện AI?",
+    "question": "Một tủ lạnh được quảng cáo là “smart”, có Wi-Fi và màn hình cảm ứng nhưng chưa mô tả chức năng khác. Em nên làm gì?",
     "answers": [
-      "Ứng dụng có chức năng nhận dạng và xử lí giọng nói",
-      "Ứng dụng được cài đặt trên một thiết bị điện tử hiện đại",
-      "Ứng dụng cần dùng micro để thu âm lời nói của người sử dụng",
-      "Ứng dụng có nút bấm để người dùng bắt đầu và kết thúc ghi âm"
+      "Tìm thêm mô tả tính năng trước khi kết luận tủ lạnh có AI",
+      "Kết luận có AI vì thiết bị vừa kết nối Wi-Fi vừa có màn hình",
+      "Kết luận có AI vì nhà sản xuất đã dùng từ “smart” trong quảng cáo",
+      "Kết luận không AI vì tủ lạnh chỉ là thiết bị dùng để bảo quản thực phẩm"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Tên gọi, Wi-Fi và màn hình chưa đủ; cần xem tính năng cụ thể."
   },
   {
     "level": "Vận dụng",
-    "question": "Một tivi tự tắt sau 30 phút đúng theo thời gian người dùng đã hẹn. Nên phân loại thế nào?",
+    "question": "Một ứng dụng tạo hình con mèo đội mũ phi hành gia từ câu mô tả của em. Tính năng này thuộc nhóm nào?",
     "answers": [
-      "Không AI vì tivi chỉ thực hiện quy tắc hẹn giờ cố định",
-      "Có AI vì tivi có thể tự tắt mà không cần người dùng bấm nút",
-      "Có AI vì tivi là thiết bị điện tử hiện đại có nhiều chức năng",
-      "Chưa đủ thông tin vì mọi chức năng hẹn giờ đều có thể là AI"
+      "Tạo nội dung vì hệ thống tạo ra hình ảnh mới theo yêu cầu",
+      "Nhận dạng vì hệ thống chỉ cần nhận ra hình dạng của con mèo",
+      "Hẹn giờ vì hệ thống tạo hình sau một khoảng thời gian xử lí",
+      "Điều khiển vì người dùng đã bấm nút để bắt đầu tạo hình"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Tạo hình ảnh mới từ mô tả là ví dụ của AI tạo nội dung."
   },
   {
     "level": "Vận dụng",
-    "question": "Một trang học tập đề xuất bài luyện khác nhau dựa trên kết quả trước đó của học sinh. Dấu hiệu nào đáng chú ý nhất?",
+    "question": "Một cổng trường dùng camera để xác minh khuôn mặt học sinh đã đăng kí trước. Cách giải thích nào tốt nhất?",
     "answers": [
-      "Hệ thống gợi ý nội dung dựa trên thông tin của người học",
-      "Hệ thống có màn hình đẹp và nhiều nút chức năng để lựa chọn",
-      "Hệ thống hoạt động trên Internet và cần trình duyệt để truy cập",
-      "Hệ thống lưu lại tên bài học đã được giáo viên nhập từ trước"
+      "Đây là ví dụ AI nhận dạng vì hệ thống phân tích hình ảnh để xác minh khuôn mặt",
+      "Đây là AI vì camera là thiết bị điện tử hiện đại và thường có nhiều cảm biến",
+      "Đây không phải AI vì camera chỉ có nhiệm vụ thu hình ảnh ở trước cổng trường",
+      "Chưa đủ thông tin vì mọi hệ thống bảo mật đều phải dùng cùng một công nghệ"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Căn cứ nằm ở chức năng xác minh khuôn mặt, không phải ở việc thiết bị là camera."
   },
   {
     "level": "Vận dụng",
-    "question": "Khi gặp một thiết bị mới được quảng cáo là “siêu thông minh”, cách suy nghĩ phù hợp nhất là gì?",
+    "question": "Máy giặt A chỉ chạy chương trình 30 phút đã chọn. Máy giặt B phân tích lượng quần áo rồi tự điều chỉnh chu trình. Nhận xét nào hợp lí nhất?",
     "answers": [
-      "Xem chức năng cụ thể rồi mới kết luận có AI hay không",
-      "Tin rằng thiết bị có AI vì nhà sản xuất dùng từ siêu thông minh",
-      "Cho rằng thiết bị có AI nếu nó có màn hình hoặc kết nối Internet",
-      "Cho rằng thiết bị không có AI nếu chưa từng thấy nó trong bài học"
+      "Máy B có dấu hiệu AI rõ hơn vì điều chỉnh dựa trên dữ liệu đầu vào",
+      "Máy A có AI rõ hơn vì chương trình 30 phút luôn cho kết quả ổn định",
+      "Cả hai chắc chắn có AI vì đều là thiết bị điện tử hoạt động tự động",
+      "Cả hai chắc chắn không AI vì nhiệm vụ chính của chúng chỉ là giặt quần áo"
     ],
-    "correct": 0
+    "correct": 0,
+    "explanation": "Máy A làm theo chương trình cố định; máy B có biểu hiện xử lí dữ liệu để điều chỉnh hoạt động, nên có dấu hiệu AI rõ hơn."
   }
 ];
 
@@ -636,7 +666,7 @@ function getSubtitle(){return KIEN_THUC_TRONG_TAM?.phuDe?.trim()||DEFAULT_SUBTIT
 function hasKnowledge(){return Boolean(KIEN_THUC_TRONG_TAM&&typeof KIEN_THUC_TRONG_TAM.noiDungHTML==="string"&&KIEN_THUC_TRONG_TAM.noiDungHTML.trim())}
 function showDataError(message){document.getElementById("app").style.display="none";const box=document.getElementById("dataError");box.style.display="block";box.innerHTML="<strong>Lỗi dữ liệu bài trắc nghiệm:</strong><br>"+message}
 
-function validateQuestionBank(){if(!Array.isArray(BO_CAU_HOI))throw new Error("BO_CAU_HOI phải là một mảng.");if(BO_CAU_HOI.length===0)throw new Error("BO_CAU_HOI chưa có câu hỏi.");BO_CAU_HOI.forEach((q,index)=>{if(!q||typeof q!=="object")throw new Error(`Câu ${index+1} không phải object hợp lệ.`);if(!q.question||typeof q.question!=="string")throw new Error(`Câu ${index+1} chưa có nội dung question.`);if(!Array.isArray(q.answers)||q.answers.length<2)throw new Error(`Câu ${index+1} phải có ít nhất 2 đáp án.`);if(!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.answers.length)throw new Error(`Câu ${index+1} có correct không hợp lệ.`);q.answers.forEach((answer,answerIndex)=>{if(typeof answer!=="string"||!answer.trim())throw new Error(`Đáp án ${answerIndex+1} của câu ${index+1} không hợp lệ.`)})})}
+function validateQuestionBank(){if(!Array.isArray(BO_CAU_HOI))throw new Error("BO_CAU_HOI phải là một mảng.");if(BO_CAU_HOI.length===0)throw new Error("BO_CAU_HOI chưa có câu hỏi.");BO_CAU_HOI.forEach((q,index)=>{if(!q||typeof q!=="object")throw new Error(`Câu ${index+1} không phải object hợp lệ.`);if(!q.question||typeof q.question!=="string")throw new Error(`Câu ${index+1} chưa có nội dung question.`);if(!Array.isArray(q.answers)||q.answers.length<2)throw new Error(`Câu ${index+1} phải có ít nhất 2 đáp án.`);if(!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.answers.length)throw new Error(`Câu ${index+1} có correct không hợp lệ.`);q.answers.forEach((answer,answerIndex)=>{if(typeof answer!=="string"||!answer.trim())throw new Error(`Đáp án ${answerIndex+1} của câu ${index+1} không hợp lệ.`)});if(q.explanation!==undefined&&(typeof q.explanation!=="string"||!q.explanation.trim()))throw new Error(`Câu ${index+1} có explanation không hợp lệ.`)})}
 
 function initializePage(){
   validateQuestionBank();
@@ -667,7 +697,7 @@ function initializePage(){
 function toggleKnowledge(){if(!hasKnowledge())return;const box=document.getElementById("knowledgeBox"),button=document.getElementById("memoryToggleButton");if(box.classList.contains("show")){hideKnowledge()}else{box.classList.add("show");button.innerHTML="▲ Ẩn nội dung cần nhớ";button.setAttribute("aria-expanded","true")}}
 function hideKnowledge(){const box=document.getElementById("knowledgeBox"),button=document.getElementById("memoryToggleButton");box.classList.remove("show");button.innerHTML="📘 Hiện nội dung cần nhớ";button.setAttribute("aria-expanded","false")}
 function shuffleArray(array){const arr=[...array];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
-function shuffleAnswers(question){const answerObjects=question.answers.map((text,index)=>({text,isCorrect:index===question.correct}));const shuffled=shuffleArray(answerObjects);return{level:question.level||"Nhận biết",question:question.question,answers:shuffled.map(item=>item.text),correct:shuffled.findIndex(item=>item.isCorrect)}}
+function shuffleAnswers(question){const answerObjects=question.answers.map((text,index)=>({text,isCorrect:index===question.correct}));const shuffled=shuffleArray(answerObjects);return{level:question.level||"Nhận biết",question:question.question,answers:shuffled.map(item=>item.text),correct:shuffled.findIndex(item=>item.isCorrect),explanation:question.explanation||""}}
 function createNewQuiz(){return shuffleArray(BO_CAU_HOI.map(question=>shuffleAnswers(question)))}
 function showScreen(screenId){document.querySelectorAll(".screen").forEach(screen=>screen.classList.remove("active"));document.getElementById(screenId).classList.add("active")}
 async function startQuiz(){
@@ -688,7 +718,7 @@ async function startQuiz(){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderQuestion(){const q=questions[currentQuestion];document.getElementById("questionCounter").textContent=`Câu ${currentQuestion+1} / ${questions.length}`;document.getElementById("currentScore").textContent=`Điểm hiện tại: ${score}/${questions.length}`;document.getElementById("progressFill").style.width=((currentQuestion+1)/questions.length*100)+"%";const levelBadge=document.getElementById("levelBadge");levelBadge.textContent=q.level||"";levelBadge.className=`level-badge ${getLevelClass(q.level)}`;document.getElementById("questionText").textContent=`Câu ${currentQuestion+1}. ${q.question}`;const answersContainer=document.getElementById("answers");answersContainer.innerHTML="";q.answers.forEach((answer,index)=>{const button=document.createElement("button");button.type="button";button.className="answer-btn";button.innerHTML=`<span class="answer-letter">${String.fromCharCode(65+index)}</span><span class="answer-content"></span>`;button.querySelector(".answer-content").textContent=answer;button.onclick=function(){selectAnswer(index,button)};answersContainer.appendChild(button)});firstAttemptAnswered=false;questionCompleted=false;const feedback=document.getElementById("feedback");feedback.className="feedback";feedback.textContent="";document.getElementById("nextButton").style.display="none"}
-function selectAnswer(selectedIndex,selectedButton){if(questionCompleted)return;const q=questions[currentQuestion],feedback=document.getElementById("feedback");if(!firstAttemptAnswered){firstAttemptAnswered=true;if(selectedIndex===q.correct)score++}if(selectedIndex===q.correct){questionCompleted=true;selectedButton.classList.add("correct");document.querySelectorAll(".answer-btn").forEach(button=>button.disabled=true);feedback.textContent="✓ Chính xác! Em có thể chuyển sang câu tiếp theo.";feedback.className="feedback show correct-feedback";document.getElementById("nextButton").style.display="inline-block";document.getElementById("currentScore").textContent=`Điểm hiện tại: ${score}/${questions.length}`;return}selectedButton.classList.add("wrong");selectedButton.disabled=true;feedback.textContent="✗ Chưa đúng. Em hãy thử chọn một đáp án khác.";feedback.className="feedback show wrong-feedback"}
+function selectAnswer(selectedIndex,selectedButton){if(questionCompleted)return;const q=questions[currentQuestion],feedback=document.getElementById("feedback");if(!firstAttemptAnswered){firstAttemptAnswered=true;if(selectedIndex===q.correct)score++}if(selectedIndex===q.correct){questionCompleted=true;selectedButton.classList.add("correct");document.querySelectorAll(".answer-btn").forEach(button=>button.disabled=true);feedback.textContent="✓ Chính xác! "+(q.explanation||"Em có thể chuyển sang câu tiếp theo.");feedback.className="feedback show correct-feedback";document.getElementById("nextButton").style.display="inline-block";document.getElementById("currentScore").textContent=`Điểm hiện tại: ${score}/${questions.length}`;return}selectedButton.classList.add("wrong");selectedButton.disabled=true;feedback.textContent="✗ Chưa đúng. Hãy xem lại chức năng cụ thể và căn cứ trong tình huống rồi thử lại.";feedback.className="feedback show wrong-feedback"}
 function nextQuestion(){if(!questionCompleted)return;currentQuestion++;if(currentQuestion<questions.length){renderQuestion();window.scrollTo({top:0,behavior:"smooth"})}else{showResult()}}
 function showResult(){
   showScreen("resultScreen");
@@ -705,7 +735,7 @@ function showResult(){
   if(score===total){
     icon.textContent="🏆";
     message.textContent="Xuất sắc! Em đã trả lời đúng ngay lần đầu tất cả các câu.";
-    detail.textContent=`Kết quả: ${score}/${total} điểm.`;
+    detail.textContent=`Kết quả: ${score}/${total} điểm theo lựa chọn đầu tiên của mỗi câu.`;
     retryButton.style.display="none";
   }else if(ratio>=.8){
     icon.textContent="⭐";
