@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 
 <html lang="vi">
-<head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>AI quanh em – Đâu là AI? | Bài giảng lớp 6 - bản rà soát tối ưu</title>
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>AI quanh em – Đâu là AI? | Bài giảng tương tác nâng cấp lớp 6</title>
 <style>
 :root{
   --ink:#12304A;--muted:#557086;--blue:#4B7BFF;--cyan:#21C7C7;--violet:#7A64F6;
@@ -22,247 +24,116 @@
 h1{font-size:48px;line-height:1.03;margin:0 0 12px;font-weight:900;letter-spacing:-.02em}
 .subtitle{font-size:21px;color:var(--muted);margin-bottom:24px;max-width:1100px}
 .hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:28px;align-items:center}
-.hero-card,.compare-card,.goal,.signal,.feature-card,.scenario,.quiz-card,.meter,.tf,.worksheet,.note-card,.exit{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:24px;box-shadow:0 14px 35px rgba(28,83,120,.10)}
+.hero-card,.compare-card,.goal,.signal,.feature-card,.scenario,.quiz-card,.meter,.tf,.worksheet,.note-card,.exit,.error-card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:24px;box-shadow:0 14px 35px rgba(28,83,120,.10)}
 .question-card{padding:28px}.eyebrow{font-size:14px;font-weight:900;color:var(--violet);letter-spacing:.08em}.big-q{font-size:28px;font-weight:800;line-height:1.28;margin:10px 0 18px}.answer-chip{display:inline-block;background:#E7FAF2;color:#197856;border:1px solid #BCEBD9;padding:10px 14px;border-radius:999px;font-size:17px}
-.visual-hero{height:340px;position:relative;display:flex;align-items:center;justify-content:center}.lens{font-size:180px;color:var(--cyan);transform:rotate(-22deg)}.robot-head{position:absolute;background:var(--violet);color:white;width:130px;height:96px;border-radius:30px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;right:76px;bottom:75px;box-shadow:0 18px 30px rgba(122,100,246,.22)}
-.spark{position:absolute;color:var(--yellow);font-size:42px}.s1{top:52px;right:80px}.s2{left:40px;bottom:50px}
+
 .goal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.goal{padding:22px;text-align:center}.goal-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:30px;font-weight:900}.goal h3{margin:6px;font-size:22px}.goal p{margin:0;color:var(--muted);font-size:17px;line-height:1.45}
 .scenario-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.scenario{padding:14px;position:relative;min-height:170px}.mini-vis{font-size:28px;background:var(--soft);border-radius:14px;text-align:center;padding:10px;margin-bottom:8px}.mini-vis span{color:var(--blue);font-weight:900}.scenario b{display:block;font-size:17px}.scenario small{display:block;color:var(--muted);font-size:14px;line-height:1.35;margin:5px 0 8px}.tag{display:inline-block;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900}.tag.ai,.pill-ai{background:#E7FAF2;color:#197856}.tag.no,.pill-no{background:#FFF0F1;color:#B34850}.tag.unk,.pill-unk{background:#FFF8E4;color:#8C6815}
-.steps{width:760px;display:grid;gap:14px}.step{display:grid;grid-template-columns:56px 1fr;gap:16px;background:white;border:1px solid var(--line);border-radius:20px;padding:17px 20px;box-shadow:0 10px 25px rgba(28,83,120,.07)}.step>span{width:50px;height:50px;border-radius:16px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--blue)}.step b{font-size:19px}.step p{margin:4px 0;color:var(--muted);font-size:17px;line-height:1.4}.step.answer{border-color:#BCEBD9;background:#F6FFFB}.step.answer>span{background:#DDF8EB;color:#17815C}
-.side-visual{position:absolute;right:85px;bottom:115px;width:285px;height:330px;background:#1C3042;border-radius:30px;padding:22px;box-shadow:0 25px 45px rgba(18,48,74,.22);transform:rotate(3deg)}.calc-screen{background:#E9F4C9;border-radius:12px;padding:20px;text-align:right;font-family:monospace;font-size:24px}.calc-screen strong{font-size:36px}.keys{color:#D9E8F2;font-size:34px;line-height:1.55;letter-spacing:15px;padding:20px;text-align:center}
-.compare-grid{display:grid;grid-template-columns:1fr 70px 1fr;gap:18px;align-items:stretch}.compare-card{padding:22px}.compare-card.accent{border-color:#C9C1FF}.diagram{height:92px;display:flex;align-items:center;justify-content:center;gap:16px;background:var(--soft);border-radius:18px}.device-box,.output{font-size:42px}.arrow{font-size:30px;color:var(--blue);font-weight:900}.compare-card h3{font-size:21px}.compare-card li{margin:10px 0;font-size:16px;color:var(--muted)}.vs{display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:var(--violet)}.rule,.tip,.final-message{margin-top:18px;padding:14px 18px;border-radius:16px;background:#FFF8E5;border-left:6px solid var(--yellow);font-size:17px}
+
+.compare-grid{display:grid;grid-template-columns:1fr 70px 1fr;gap:18px;align-items:stretch}.compare-card{padding:22px}.compare-card.accent{border-color:#C9C1FF}.diagram{height:92px;display:flex;align-items:center;justify-content:center;gap:16px;background:var(--soft);border-radius:18px}.device-box,.output{font-size:42px}.arrow{font-size:30px;color:var(--blue);font-weight:900}.compare-card h3{font-size:21px}.compare-card li{margin:10px 0;font-size:16px;color:var(--muted)}
+.rule,.tip,.final-message{margin-top:18px;padding:14px 18px;border-radius:16px;background:#FFF8E5;border-left:6px solid var(--yellow);font-size:17px}
 .signal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.signal{padding:18px;text-align:center}.sig-icon{font-size:32px;background:var(--soft);border-radius:18px;padding:14px}.signal h3{font-size:20px;margin:10px 0 5px}.signal p{font-size:15px;color:var(--muted);margin:0;line-height:1.4}
 .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature-card{padding:16px;min-height:150px}.feat-vis{font-size:28px;background:var(--soft);padding:10px;border-radius:14px;text-align:center;margin-bottom:8px}.feature-card b{display:block;font-size:17px}.feature-card small{color:var(--muted);font-size:14px;line-height:1.35}
-.detect-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.detect-grid>div{background:white;border:1px solid var(--line);border-radius:18px;padding:13px;min-height:130px}.detect-grid b{font-size:15px}.detect-grid small{display:block;color:var(--muted);font-size:12px;line-height:1.35;margin:6px 0}.pill-ai,.pill-no,.pill-unk{display:inline-block;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}
-.meter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.meter{padding:24px}.meter-icon{font-size:50px}.meter h3{font-size:22px;margin:8px 0}.meter p{color:var(--muted);font-size:16px}.meter-bar{height:12px;border-radius:999px;background:#ECF2F6;overflow:hidden}.meter-bar i{display:block;height:100%;border-radius:999px;background:var(--yellow)}.meter.strong .meter-bar i{background:var(--green)}.meter.unknown .meter-bar i{background:#A9BAC7}
-.quiz-card{display:grid;grid-template-columns:62px 1fr;gap:18px;padding:17px 20px;margin-bottom:16px}.qnum{width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900}.qtext>b{font-size:19px}.option{display:inline-block;margin:9px 8px 0 0;padding:9px 12px;border-radius:12px;background:#F3F7FA;color:var(--muted);font-size:14px}.option.correct{background:#E7FAF2;color:#197856;font-weight:800}
-.tf-grid{display:grid;gap:16px}.tf{display:grid;grid-template-columns:54px 1fr 100px;gap:16px;align-items:center;padding:18px 20px}.tf .num{width:46px;height:46px;border-radius:15px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--blue)}.tf p{font-size:18px;margin:0}.tf b{text-align:center;border-radius:999px;padding:9px}.tf .true{background:#E7FAF2;color:#197856}.tf .false{background:#FFF0F1;color:#B34850}
-.worksheet{background:white;border:1px solid var(--line);border-radius:24px;padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:15px;box-shadow:0 14px 35px rgba(28,83,120,.08)}.field{background:#F7FBFE;border:1px dashed #BFD6E6;border-radius:16px;padding:15px}.field b{display:block;font-size:14px;color:var(--blue);margin-bottom:8px}.field span{font-size:17px}.field.two{display:flex;flex-direction:column}.note-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.note-card{padding:20px;display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center}.note-card>span{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:white;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900}.note-card p{font-size:17px;line-height:1.4;margin:0}
-.exit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.exit{padding:22px}.exit span{display:flex;width:52px;height:52px;border-radius:18px;background:var(--soft);align-items:center;justify-content:center;color:var(--blue);font-weight:900;font-size:22px}.exit p{font-size:18px;line-height:1.45}.answer-strip{margin-top:20px;background:#E7FAF2;border:1px solid #BCEBD9;border-radius:16px;padding:14px 18px;color:#197856;font-size:16px}
-.mind{height:410px;position:relative}.mind-center{position:absolute;left:470px;top:145px;width:220px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:900;box-shadow:0 18px 35px rgba(75,123,255,.24)}.mind-node{position:absolute;width:250px;background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(28,83,120,.08)}.mind-node b{font-size:17px}.mind-node small{display:block;color:var(--muted);font-size:14px;margin-top:6px}.n1{left:55px;top:45px}.n2{right:55px;top:45px}.n3{left:55px;bottom:35px}.n4{right:55px;bottom:35px}
-@media print{body{background:white}.page{page-break-after:always}}
 
-/* ===== CHẾ ĐỘ BÀI GIẢNG TƯƠNG TÁC ===== */
+.worksheet{background:white;border:1px solid var(--line);border-radius:24px;padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:15px;box-shadow:0 14px 35px rgba(28,83,120,.08)}.field{background:#F7FBFE;border:1px dashed #BFD6E6;border-radius:16px;padding:15px}.field b{display:block;font-size:14px;color:var(--blue);margin-bottom:8px}.field span{font-size:17px}.field.two{display:flex;flex-direction:column}
+.exit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.exit{padding:22px}.exit span{display:flex;width:52px;height:52px;border-radius:18px;background:var(--soft);align-items:center;justify-content:center;color:var(--blue);font-weight:900;font-size:22px}.exit p{font-size:18px;line-height:1.45}.answer-strip{margin-top:20px;background:#E7FAF2;border:1px solid #BCEBD9;border-radius:16px;padding:14px 18px;color:#197856;font-size:16px}
+.mind{height:410px;position:relative}.mind-center{position:absolute;left:470px;top:145px;width:220px;height:120px;border-radius:35px;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:900;box-shadow:0 18px 35px rgba(75,123,255,.24)}.mind-node{position:absolute;width:250px;background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(28,83,120,.08)}.mind-node b{font-size:17px;color:var(--blue)}.mind-node small{display:block;color:var(--ink);font-size:16px;font-weight:700;margin-top:6px;border-bottom:1px dashed #ccc;padding-bottom:2px}.n1{left:55px;top:45px}.n2{right:55px;top:45px}.n3{left:55px;bottom:35px}.n4{right:55px;bottom:35px}
+
+/* ===== ERROR FIX GAME ===== */
+.error-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.error-card{padding:20px;position:relative;cursor:pointer;transition:transform 0.2s}
+.error-card:hover{transform:translateY(-4px);border-color:var(--blue)}
+.error-card .statement{font-size:19px;font-weight:700;line-height:1.4;margin-bottom:15px;color:#B34850}
+.error-card .statement::before{content:"\201C";font-size:24px;color:var(--coral)}
+.error-card .statement::after{content:"\201D";font-size:24px;color:var(--coral)}
+.error-card .fix-btn{background:var(--soft);color:var(--blue);border:1px solid #C9DDEB;border-radius:12px;padding:8px 16px;font-weight:800;font-size:14px;cursor:pointer}
+.error-card .correction{margin-top:15px;padding:15px;background:#E7FAF2;border-left:4px solid #35C48D;border-radius:8px;font-size:16px;display:none;color:#197856}
+.error-card.revealed .correction{display:block;animation:fragmentIn 0.3s ease}
+.error-card.revealed .fix-btn{display:none}
+
+/* Interaction & Tools */
 html,body{width:100%;height:100%;overflow:hidden;background:#DDECF6}
-body{user-select:none}
 #app{width:100%;height:100vh;display:grid;grid-template-rows:6px minmax(0,1fr) 58px;background:#DDECF6}
 #progress{height:6px;background:#C9DDEB;overflow:hidden;z-index:50}#progressBar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));transition:width .28s ease}
-#stage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px;transition:padding-right .25s ease}
-body.notes-open #stage{padding-right:390px}
+#stage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px}
 #slideCanvas{position:relative;width:1280px;height:720px;flex:0 0 1280px;transform-origin:center center;will-change:transform}
 .page{position:absolute;inset:0;display:none;margin:0;opacity:0;transform:translateY(12px) scale(.995);pointer-events:none}
 .page.active{display:block;opacity:1;transform:none;pointer-events:auto;animation:pageIn .32s cubic-bezier(.2,.8,.2,1)}
 @keyframes pageIn{from{opacity:0;transform:translateY(15px) scale(.992)}to{opacity:1;transform:none}}
 .fragment{transition:opacity .32s ease,transform .32s ease,filter .32s ease}.fragment.fragment-hidden{opacity:0;transform:translateY(16px);filter:blur(2px);pointer-events:none}.fragment.fragment-show{animation:fragmentIn .38s cubic-bezier(.2,.85,.25,1)}
 @keyframes fragmentIn{from{opacity:0;transform:translateY(15px) scale(.98)}to{opacity:1;transform:none}}
-.toolbar{height:58px;display:flex;align-items:center;gap:7px;padding:7px 12px;background:rgba(255,255,255,.94);border-top:1px solid #CBDDE9;box-shadow:0 -8px 28px rgba(18,48,74,.08);z-index:80;backdrop-filter:blur(14px)}
-.tool-btn{height:42px;min-width:44px;border:1px solid #D3E2EC;border-radius:13px;background:white;color:var(--ink);font-weight:850;cursor:pointer;box-shadow:0 4px 12px rgba(18,48,74,.06);transition:.15s}.tool-btn:hover{border-color:var(--blue);transform:translateY(-1px)}.tool-btn.on{color:white;background:var(--blue);border-color:var(--blue)}.tool-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}.timer-btn{min-width:104px;font-variant-numeric:tabular-nums}.timer-btn.running{border-color:var(--green);color:#17815C}.timer-btn.warning{border-color:#E9B83C;color:#8C6815}.timer-btn.danger{border-color:var(--coral);color:#B34850}
-#slideTitle{margin-left:5px;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:800;color:#587287}#counter{margin-left:auto;font-size:13px;font-weight:900;color:#6B8395}
-#notesDrawer{position:fixed;right:0;top:0;bottom:58px;width:380px;background:rgba(250,253,255,.98);border-left:1px solid #C9DDEB;box-shadow:-18px 0 40px rgba(18,48,74,.12);z-index:120;transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column}body.notes-open #notesDrawer{transform:none}.notes-head{padding:15px 16px;border-bottom:1px solid #D8E7F0;display:flex;gap:10px;align-items:center;background:white}.notes-head>div{font-weight:900;font-size:16px;line-height:1.25}.notes-close{margin-left:auto;width:36px;height:36px;border:1px solid #D5E3EC;border-radius:11px;background:white;font-size:22px;cursor:pointer;color:#557086}.notes-body{padding:14px 16px 24px;overflow:auto;font-size:14px;line-height:1.5;color:#3D586D}.note-section{background:white;border:1px solid #DCE9F1;border-radius:14px;padding:11px 12px;margin-bottom:9px}.note-section b{color:var(--blue)}
-#overviewOverlay{position:fixed;inset:0;z-index:160;background:rgba(18,48,74,.45);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:28px}#overviewOverlay.show{display:flex}.overview-card{width:min(1080px,95vw);max-height:88vh;background:#F8FCFF;border-radius:24px;border:1px solid #D3E3ED;box-shadow:0 30px 80px rgba(18,48,74,.25);overflow:hidden}.overview-head{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid #D6E5EE}.overview-head h2{font-size:23px;margin:0}.overview-grid{padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-height:72vh;overflow:auto}.overview-item{border:1px solid #D5E5EE;background:white;border-radius:15px;padding:12px;cursor:pointer;text-align:left;color:var(--ink);transition:.15s}.overview-item:hover,.overview-item.current{border-color:var(--blue);box-shadow:0 8px 20px rgba(75,123,255,.10)}.overview-item strong{display:block;font-size:13px;color:var(--blue);margin-bottom:4px}.overview-item span{font-size:14px;font-weight:800;line-height:1.25}
-#laserDot{position:fixed;width:16px;height:16px;border-radius:50%;background:#ff3048;box-shadow:0 0 18px 7px rgba(255,48,72,.52);pointer-events:none;z-index:999;display:none;transform:translate(-50%,-50%)}
-#toast{position:fixed;left:50%;bottom:75px;transform:translate(-50%,20px);padding:10px 16px;border-radius:999px;background:#173A55;color:white;font-weight:800;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:.2s}#toast.show{opacity:1;transform:translate(-50%,0)}
-.choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}.mini-choice{border:1px solid #D6E5EE;border-radius:9px;background:#F8FBFD;color:#486276;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer;transition:.12s}.mini-choice:hover{border-color:var(--blue)}.mini-choice.selected{background:#EAF1FF;border-color:var(--blue);color:#315FD3}.mini-choice.good{background:#E7FAF2;border-color:#7DDBB6;color:#197856}.mini-choice.bad{background:#FFF0F1;border-color:#F3AAB0;color:#B34850}.answer-label{margin-top:7px!important}.card-feedback{display:none;margin-top:7px;padding:7px 8px;border-radius:9px;background:#F4F9FC;color:#5A7284;font-size:11px;line-height:1.35}.card-feedback.show{display:block}.interaction-bar{margin-top:12px;display:flex;gap:8px;align-items:center;justify-content:flex-end;position:relative;z-index:4}.interaction-status{margin-right:auto;font-size:13px;font-weight:850;color:#60798C}.action-btn{border:1px solid #CFE0EA;border-radius:12px;background:white;color:var(--ink);padding:9px 13px;font-weight:850;cursor:pointer;transition:.15s}.action-btn:hover{border-color:var(--blue);transform:translateY(-1px)}.action-btn.primary{background:linear-gradient(135deg,var(--blue),var(--violet));color:white;border-color:transparent}
-.quiz-option{display:inline-block;margin:9px 8px 0 0;padding:9px 12px;border-radius:12px;background:#F3F7FA;border:1px solid #E1EBF1;color:var(--muted);font-size:14px;cursor:pointer;transition:.14s}.quiz-option:hover{border-color:var(--blue)}.quiz-option.good{background:#E7FAF2;border-color:#8BDFBF;color:#197856;font-weight:800}.quiz-option.bad{background:#FFF0F1;border-color:#F2B0B5;color:#B34850}.quiz-feedback{font-size:13px;margin-top:9px;color:#5E778A;min-height:18px}.quiz-feedback.ok{color:#197856}.quiz-feedback.err{color:#B34850}
-.tf{grid-template-columns:54px 1fr 200px!important}.tf-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.tf-btn{border:1px solid #D8E6EE;border-radius:11px;background:#F8FBFD;padding:10px;font-weight:850;color:#557086;cursor:pointer}.tf-btn.good{background:#E7FAF2;border-color:#8BDFBF;color:#197856}.tf-btn.bad{background:#FFF0F1;border-color:#F2B0B5;color:#B34850}.tf-feedback{grid-column:2/4;font-size:12px;color:#5E778A;margin-top:-8px;min-height:16px}
-.hunt-input{width:100%;border:1px solid #CFE0EA;border-radius:11px;background:white;padding:10px 11px;color:var(--ink);font:inherit;user-select:text}.hunt-input:focus{outline:2px solid rgba(75,123,255,.2);border-color:var(--blue)}textarea.hunt-input{resize:none}.hunt-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.hunt-list{margin-top:10px;display:flex;gap:8px;overflow-x:auto;padding-bottom:3px}.hunt-item{min-width:255px;max-width:300px;background:white;border:1px solid #D8E7F0;border-radius:14px;padding:10px;font-size:12px}.hunt-item b{font-size:13px}.hunt-item small{display:block;color:#61798B;margin-top:4px;line-height:1.35}.empty-state{font-size:12px;color:#7890A2;padding:8px}.manual-hidden{display:none!important}.manual-hidden.revealed{display:block!important;animation:fragmentIn .35s ease}
-.page .scenario,.page .goal,.page .signal,.page .feature-card,.page .compare-card,.page .meter,.page .note-card,.page .exit,.page .quiz-card{transition:transform .18s ease,box-shadow .18s ease}.page .scenario:hover,.page .feature-card:hover,.page .signal:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(28,83,120,.13)}
-@media(max-width:850px){#slideTitle{display:none}.overview-grid{grid-template-columns:1fr 1fr}.toolbar{gap:4px;padding:7px}.tool-btn{min-width:39px}.timer-btn{min-width:88px;font-size:12px}body.notes-open #stage{padding-right:0}#notesDrawer{width:min(92vw,380px)}}
-@media print{html,body{overflow:visible!important;background:white}.toolbar,#progress,#notesDrawer,#overviewOverlay,#laserDot,#toast{display:none!important}#app{display:block;height:auto}.page{position:relative!important;display:block!important;opacity:1!important;transform:none!important;page-break-after:always}.fragment.fragment-hidden{opacity:1!important;transform:none!important;filter:none!important}.answer-label,.card-feedback{display:block!important}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
-
-/* ===== SLIDE CHỐT KIẾN THỨC THEO TỪNG MỤC ===== */
-.checkpoint-wrap{display:grid;gap:18px}
-.checkpoint-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.checkpoint-card{background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 12px 28px rgba(28,83,120,.09)}
-.checkpoint-card .cp-icon{width:52px;height:52px;border-radius:17px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:white;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:900;margin-bottom:10px}
-.checkpoint-card h3{font-size:20px;margin:0 0 7px}.checkpoint-card p{font-size:16px;line-height:1.42;color:var(--muted);margin:0}
-.copy-box{display:grid;grid-template-columns:94px 1fr;gap:15px;align-items:center;background:linear-gradient(135deg,#FFF9E7,#FFFDF6);border:1px solid #F2D989;border-left:7px solid var(--yellow);border-radius:20px;padding:16px 18px;box-shadow:0 10px 25px rgba(130,95,12,.06)}
-.copy-tag{background:#FFECAD;color:#765811;border-radius:16px;padding:11px 8px;text-align:center;font-size:13px;font-weight:900;line-height:1.25}
-.copy-text{font-size:20px;line-height:1.45;font-weight:800;color:#29485F}
-.micro-note{font-size:14px;color:#6A8191;margin-top:8px}
-.skill-row{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
-.skill-line{background:white;border:1px solid var(--line);border-radius:17px;padding:14px 16px;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center}
-.skill-line .skill-icon{width:48px;height:48px;border-radius:15px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:23px}
-.skill-line b{display:block;font-size:17px}.skill-line small{display:block;color:var(--muted);font-size:14px;line-height:1.35;margin-top:3px}
-.detective-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.detective-step{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;min-height:180px;box-shadow:0 12px 26px rgba(28,83,120,.08)}
-.detective-step .num{display:flex;width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--blue));align-items:center;justify-content:center;color:white;font-size:22px;font-weight:900;margin-bottom:10px}
-.detective-step h3{font-size:20px;margin:0 0 7px}.detective-step p{font-size:16px;line-height:1.42;color:var(--muted);margin:0}
-
-/* ===== SLIDE 1: ẢNH THIẾT BỊ DẪN NHẬP ===== */
-.intro-device-gallery{
-  height:340px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;
-}
-.intro-device-card{
-  position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:20px;
-  box-shadow:0 12px 28px rgba(28,83,120,.12);min-width:0;
-}
+/* Slide Specifics */
+.intro-device-gallery{height:340px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;}
+.intro-device-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 12px 28px rgba(28,83,120,.12);}
 .intro-device-card.wide{grid-column:1 / -1}
-.intro-device-photo{
-  position:absolute;inset:0 0 36px 0;width:100%;height:calc(100% - 36px);object-fit:contain;
-  background:linear-gradient(180deg,#fff,#f5f9fc);padding:7px;z-index:2;
-}
-.intro-device-fallback{
-  position:absolute;inset:0 0 36px 0;display:flex;align-items:center;justify-content:center;
-  font-size:54px;background:linear-gradient(135deg,#F4FAFF,#EAF5FC);z-index:1;
-}
-.intro-device-label{
-  position:absolute;left:0;right:0;bottom:0;height:36px;display:flex;align-items:center;justify-content:center;
-  padding:0 8px;background:#fff;color:var(--ink);font-size:13px;font-weight:900;border-top:1px solid #E2EDF3;z-index:3;
-}
-.intro-device-card:after{
-  content:"?";position:absolute;top:8px;right:8px;width:27px;height:27px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;background:rgba(75,123,255,.92);color:#fff;
-  font-size:16px;font-weight:900;z-index:4;box-shadow:0 5px 12px rgba(75,123,255,.22);
-}
-.intro-device-gallery-caption{
-  position:absolute;right:76px;bottom:34px;font-size:12px;font-weight:800;color:#60798C;z-index:5;
-  background:rgba(255,255,255,.88);padding:5px 9px;border-radius:999px;border:1px solid #DCE9F1;
-}
+.intro-device-photo{position:absolute;inset:0 0 36px 0;width:100%;height:calc(100% - 36px);object-fit:contain;background:linear-gradient(180deg,#fff,#f5f9fc);padding:7px;}
+.intro-device-label{position:absolute;left:0;right:0;bottom:0;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;font-size:13px;font-weight:900;border-top:1px solid #E2EDF3;}
+.intro-device-card:after{content:"?";position:absolute;top:8px;right:8px;width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(75,123,255,.92);color:#fff;font-weight:900;}
 
-/* ===== SLIDE KHÁI NIỆM AI CHO HỌC SINH LỚP 6 ===== */
-.ai-definition{
-  display:grid;grid-template-columns:120px 1fr;gap:22px;align-items:center;
-  background:linear-gradient(135deg,#FFFFFF,#F4FAFF);
-  border:1px solid var(--line);border-radius:24px;padding:22px 26px;
-  box-shadow:0 14px 35px rgba(28,83,120,.10)
-}
-.ai-badge{
-  width:104px;height:104px;border-radius:30px;
-  display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,var(--blue),var(--violet));
-  color:white;font-size:40px;font-weight:950;letter-spacing:-.04em;
-  box-shadow:0 16px 30px rgba(75,123,255,.22)
-}
-.ai-def-main{font-size:26px;line-height:1.35;font-weight:850;color:var(--ink)}
+.ai-definition{display:grid;grid-template-columns:120px 1fr;gap:22px;align-items:center;background:linear-gradient(135deg,#FFFFFF,#F4FAFF);border:1px solid var(--line);border-radius:24px;padding:22px 26px;box-shadow:0 14px 35px rgba(28,83,120,.10)}
+.ai-badge{width:104px;height:104px;border-radius:30px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--blue),var(--violet));color:white;font-size:40px;font-weight:950;}
+.ai-def-main{font-size:26px;line-height:1.35;font-weight:850;}
 .ai-def-main mark{background:#FFF1A8;color:inherit;padding:1px 5px;border-radius:7px}
 .ai-def-sub{margin-top:8px;font-size:17px;line-height:1.45;color:var(--muted)}
 .ai-example-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
-.ai-example{
-  background:white;border:1px solid var(--line);border-radius:19px;padding:15px;
-  min-height:132px;box-shadow:0 10px 24px rgba(28,83,120,.07)
-}
-.ai-example .ai-ex-icon{
-  height:48px;display:flex;align-items:center;justify-content:center;
-  border-radius:13px;background:var(--soft);font-size:27px;margin-bottom:9px
-}
-.ai-example b{display:block;font-size:16px;margin-bottom:4px}
-.ai-example small{display:block;color:var(--muted);font-size:13px;line-height:1.35}
-.notebook-line{
-  margin-top:15px;padding:12px 16px;border-radius:15px;
-  background:#EEF8FF;border:1px dashed #9FCBE8;border-left:6px solid var(--blue);
-  font-size:16px;line-height:1.42;color:#294D67
-}
-.notebook-line strong{color:var(--blue)}
-@media(max-width:900px){
-  .ai-example-grid{grid-template-columns:repeat(2,1fr)}
-  .ai-definition{grid-template-columns:90px 1fr}
-  .ai-badge{width:80px;height:80px;font-size:31px}
-}
+.ai-example{background:white;border:1px solid var(--line);border-radius:19px;padding:15px;min-height:132px;}
+.ai-example .ai-ex-icon{height:48px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:var(--soft);font-size:27px;margin-bottom:9px}
 
-
-/* ===== TỐI ƯU SLIDE 4: AI HAY KHÔNG AI ===== */
-#slide-3 .subtitle{margin-bottom:10px}
-#slide-3 .interaction-bar{
-  position:relative;
-  margin:0 0 10px;
-  min-height:40px;
-  padding:5px 8px 5px 12px;
-  border:1px solid #D8E7F0;
-  border-radius:14px;
-  background:rgba(255,255,255,.92);
-  box-shadow:0 7px 20px rgba(28,83,120,.07);
-  justify-content:flex-end;
-}
-#slide-3 .interaction-status{
-  font-size:12.5px;
-  color:#557086;
-}
-#slide-3 .action-btn{
-  padding:7px 11px;
-  border-radius:10px;
-  font-size:12.5px;
-  white-space:nowrap;
-}
-#slide-3 .scenario-grid{
-  gap:10px 12px;
-}
-#slide-3 .scenario{
-  padding:10px 11px;
-  min-height:0;
-  border-radius:19px;
-}
-#slide-3 .mini-vis{
-  min-height:44px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:23px;
-  padding:6px 8px;
-  margin-bottom:6px;
-  border-radius:12px;
-}
-#slide-3 .scenario>b{
-  font-size:15.5px;
-  line-height:1.18;
-}
-#slide-3 .scenario small{
-  font-size:12.2px;
-  line-height:1.25;
-  margin:3px 0 5px;
-  min-height:30px;
-}
-#slide-3 .answer-label{
-  padding:4px 7px;
-  font-size:9.5px;
-  margin:0 0 2px;
-}
-#slide-3 .choice-row{
-  gap:4px;
-  margin-top:5px;
-}
-#slide-3 .mini-choice{
-  padding:5px 2px;
-  border-radius:8px;
-  font-size:9.8px;
-  min-height:28px;
-}
-#slide-3 .card-feedback{
-  margin-top:4px;
-  padding:5px 7px;
-  border-radius:8px;
-  font-size:9.6px;
-  line-height:1.2;
-}
-#slide-3 .scenario.graded{
-  border-color:#C9DDEB;
-  box-shadow:0 9px 22px rgba(28,83,120,.08);
-}
-#slide-3 .scenario.graded .mini-vis{
-  background:#F2F8FC;
-}
-#slide-3 .warm-help{
-  font-size:11.5px;
-  color:#6A8295;
-  margin-left:8px;
-  white-space:nowrap;
-}
-@media(max-width:850px){
-  #slide-3 .warm-help{display:none}
-}
-
-
-
-/* ===== BẢN RÀ SOÁT: LƯỚI 3 TÌNH HUỐNG ===== */
 .triple-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
 .triple-grid .compare-card{padding:18px;min-height:320px}
 .triple-grid .compare-card h3{font-size:20px;margin:10px 0}
-.triple-grid .compare-card li{font-size:15px;line-height:1.38;margin:8px 0}
-@media(max-width:900px){.triple-grid{grid-template-columns:1fr 1fr}.triple-grid .compare-card:last-child{grid-column:1/-1}}
-</style></head>
-<body><div id="app"><div id="progress"><div id="progressBar"></div></div><main id="stage"><div id="slideCanvas"><section class="page" data-document-role="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức: hiện đại, tự động, có cảm biến hay có chữ 'smart' chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: GV cho HS quan sát 3 hình; giơ 1 ngón = Có AI, 2 = Không AI, 3 = Chưa đủ thông tin. Không chốt ngay theo tên thiết bị. Câu hỏi gợi mở: Chỉ nhìn hình, em đã đủ căn cứ chưa? Nếu hai máy giặt giống nhau bên ngoài nhưng một bản có tính năng nhận biết loại vải còn một bản chỉ chạy chương trình cố định thì em có xếp giống nhau không? Dự kiến: Không thể kết luận từ hình; phải biết tính năng cụ thể. Sai lầm thường gặp: 'Đồ hiện đại/đắt tiền = AI'. Cách xử lí: Yêu cầu HS nêu chức năng thay vì tên thiết bị. Chốt: Chưa đủ thông tin cũng là một câu trả lời đúng khi thiếu căn cứ. Chuyển ý: Trước khi làm thám tử AI, ta cần biết đích đến của bài và hiểu AI theo cách đơn giản." id="slide-1">
+
+/* Toolbar & Interactive */
+.toolbar{height:58px;display:flex;align-items:center;gap:7px;padding:7px 12px;background:rgba(255,255,255,.94);border-top:1px solid #CBDDE9;z-index:80;}
+.tool-btn{height:42px;min-width:44px;border:1px solid #D3E2EC;border-radius:13px;background:white;font-weight:850;cursor:pointer;}
+.tool-btn:hover{border-color:var(--blue);}
+.tool-btn:disabled{opacity:.35;cursor:not-allowed;}
+#slideTitle{margin-left:5px;font-size:13px;font-weight:800;color:#587287}#counter{margin-left:auto;font-size:13px;font-weight:900;color:#6B8395}
+
+/* Hunt Game */
+.hunt-input{width:100%;border:1px solid #CFE0EA;border-radius:11px;background:white;padding:10px 11px;font:inherit;}
+.hunt-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.hunt-list{margin-top:10px;display:flex;gap:8px;overflow-x:auto;}
+.hunt-item{min-width:255px;background:white;border:1px solid #D8E7F0;border-radius:14px;padding:10px;font-size:12px}
+
+/* Warmup Game */
+#slide-4 .interaction-bar{margin:0 0 10px;padding:5px 8px;border:1px solid #D8E7F0;border-radius:14px;background:rgba(255,255,255,.92);display:flex;justify-content:flex-end;align-items:center;gap:10px;}
+#slide-4 .scenario-grid{gap:10px 12px;}
+#slide-4 .scenario{padding:10px 11px;border-radius:19px;}
+#slide-4 .mini-vis{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:23px;background:var(--soft);border-radius:12px;}
+#slide-4 .choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:5px;}
+#slide-4 .mini-choice{border:1px solid #D6E5EE;border-radius:8px;background:#F8FBFD;padding:5px 2px;font-size:9.8px;font-weight:800;cursor:pointer;}
+#slide-4 .mini-choice:hover{border-color:var(--blue);}
+#slide-4 .mini-choice.selected{background:#EAF1FF;border-color:var(--blue);color:#315FD3;}
+#slide-4 .mini-choice.good{background:#E7FAF2;border-color:#7DDBB6;color:#197856;}
+#slide-4 .mini-choice.bad{background:#FFF0F1;border-color:#F3AAB0;color:#B34850;}
+#slide-4 .card-feedback{display:none;margin-top:4px;padding:5px 7px;border-radius:8px;background:#F4F9FC;font-size:9.6px;color:#5A7284;}
+#slide-4 .card-feedback.show{display:block;}
+.action-btn{border:1px solid #CFE0EA;border-radius:12px;background:white;padding:9px 13px;font-weight:850;cursor:pointer;}
+.action-btn.primary{background:linear-gradient(135deg,var(--blue),var(--violet));color:white;}
+.manual-hidden{display:none!important}.manual-hidden.revealed{display:block!important;animation:fragmentIn .35s ease}
+
+
+.offline-device{height:calc(100% - 36px);display:flex;align-items:center;justify-content:center;font-size:72px;background:linear-gradient(180deg,#fff,#f2f8fd)}
+.concept-check{margin-top:20px;padding:18px 20px;background:#fff;border:1px solid var(--line);border-radius:18px;font-size:19px;line-height:1.5}.concept-answer{display:inline-block;margin-left:8px;padding:5px 10px;border-radius:999px;background:#E7FAF2;color:#197856;font-weight:900}
+.discover-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.discover-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 24px rgba(28,83,120,.07);text-align:center}.discover-example{min-height:92px;background:var(--soft);border-radius:14px;padding:11px;font-size:25px;line-height:1.25}.discover-example b{font-size:15px}.discover-question{font-size:14px;line-height:1.35;color:var(--muted);min-height:56px;padding:9px 3px}.discover-reveal{border:1px solid #CFE0EA;border-radius:10px;background:white;padding:7px 12px;font-weight:850;color:var(--blue);cursor:pointer}.discover-answer{display:none;margin-top:9px;padding:10px;border-radius:12px;background:#E7FAF2;color:#197856;font-size:15px}.discover-card.revealed .discover-answer{display:block;animation:fragmentIn .25s ease}.discover-card.revealed .discover-reveal{display:none}
+.feature-quiz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.feature-quiz-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 9px 22px rgba(28,83,120,.06)}.feature-quiz-card>b{display:block;font-size:15px;line-height:1.3;min-height:38px}.category-choices{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.category-choices button{border:1px solid #D6E5EE;border-radius:8px;background:#F8FBFD;color:#486276;padding:6px 4px;font-size:10.5px;font-weight:800;cursor:pointer}.category-choices button.selected{background:#EAF1FF;border-color:var(--blue);color:#315FD3}.category-choices button.good{background:#E7FAF2;border-color:#7DDBB6;color:#197856}.category-choices button.bad{background:#FFF0F1;border-color:#F3AAB0;color:#B34850}.feature-feedback{display:none;margin-top:7px;padding:7px;border-radius:9px;background:#F4F9FC;color:#5A7284;font-size:11px;line-height:1.3}.feature-quiz-card.graded .feature-feedback{display:block}.feature-bar{margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:flex-end}.feature-bar .interaction-status{margin-right:auto;font-weight:850;color:#60798C}
+.interaction-bar{display:flex;gap:8px;align-items:center;justify-content:flex-end}.interaction-status{margin-right:auto}.empty-state{font-size:12px;color:#7890A2;padding:8px}
+.mind-interactive .mind-node{width:280px}.mind-interactive .n1{left:35px}.mind-interactive .n2{right:35px}.mind-interactive .n3{left:35px}.mind-interactive .n4{right:35px}.mind-select{width:100%;margin-top:6px;padding:6px 7px;border:1px solid #CFE0EA;border-radius:9px;background:white;color:var(--ink);font:inherit;font-size:13px}.mind-select.good{border-color:#35C48D;background:#E7FAF2}.mind-select.bad{border-color:#FF7B83;background:#FFF0F1}.mind-actions{margin-top:2px;display:flex;justify-content:center;gap:9px;align-items:center}#mindStatus{font-weight:850;color:#60798C}.final-message.manual-hidden{display:none}.final-message.manual-hidden.revealed{display:block;animation:fragmentIn .3s ease}
+body.notes-open #stage{padding-right:390px}#notesDrawer{position:fixed;right:0;top:0;bottom:58px;width:380px;background:rgba(250,253,255,.985);border-left:1px solid #C9DDEB;box-shadow:-18px 0 40px rgba(18,48,74,.12);z-index:120;transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column}body.notes-open #notesDrawer{transform:none}.notes-head{padding:15px 16px;border-bottom:1px solid #D8E7F0;display:flex;gap:10px;align-items:center;background:white}.notes-head>div{font-weight:900;font-size:16px;line-height:1.25}.notes-close{margin-left:auto;width:36px;height:36px;border:1px solid #D5E3EC;border-radius:11px;background:white;font-size:22px;cursor:pointer;color:#557086}.notes-body{padding:14px 16px 24px;overflow:auto;font-size:14px;line-height:1.5;color:#3D586D}.note-section{background:white;border:1px solid #DCE9F1;border-radius:14px;padding:11px 12px;margin-bottom:9px}.note-section b{color:var(--blue)}
+#overviewOverlay{position:fixed;inset:0;z-index:160;background:rgba(18,48,74,.45);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:28px}#overviewOverlay.show{display:flex}.overview-card{width:min(1080px,95vw);max-height:88vh;background:#F8FCFF;border-radius:24px;border:1px solid #D3E3ED;box-shadow:0 30px 80px rgba(18,48,74,.25);overflow:hidden}.overview-head{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid #D6E5EE}.overview-head h2{font-size:23px;margin:0}.overview-grid{padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-height:72vh;overflow:auto}.overview-item{border:1px solid #D5E5EE;background:white;border-radius:15px;padding:12px;cursor:pointer;text-align:left;color:var(--ink)}.overview-item.current{border-color:var(--blue);box-shadow:0 8px 20px rgba(75,123,255,.10)}.overview-item strong{display:block;font-size:13px;color:var(--blue);margin-bottom:4px}.overview-item span{font-size:14px;font-weight:800;line-height:1.25}
+#laserDot{position:fixed;width:16px;height:16px;border-radius:50%;background:#ff3048;box-shadow:0 0 18px 7px rgba(255,48,72,.52);pointer-events:none;z-index:999;display:none;transform:translate(-50%,-50%)}#toast{position:fixed;left:50%;bottom:75px;transform:translate(-50%,20px);padding:10px 16px;border-radius:999px;background:#173A55;color:white;font-weight:800;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:.2s}#toast.show{opacity:1;transform:translate(-50%,0)}.timer-btn{min-width:104px;font-variant-numeric:tabular-nums}.timer-btn.running{border-color:var(--green);color:#17815C}.timer-btn.warning{border-color:#E9B83C;color:#8C6815}.timer-btn.danger{border-color:var(--coral);color:#B34850}.tool-btn.on{color:white;background:var(--blue);border-color:var(--blue)}
+@media(max-width:900px){.discover-grid{grid-template-columns:1fr 1fr}.feature-quiz-grid{grid-template-columns:1fr 1fr}body.notes-open #stage{padding-right:0}#notesDrawer{width:min(92vw,380px)}.overview-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="progress"><div id="progressBar"></div></div>
+<main id="stage">
+<div id="slideCanvas">
+<!-- SLIDE 1: INTRO -->
+<section class="page" data-index="0" data-label="AI QUANH EM ĐÂU LÀ AI?" data-speaker-notes="Mục tiêu: Tạo mâu thuẫn nhận thức: hiện đại, tự động, có cảm biến hoặc có chữ “smart” chưa chắc là AI. Thời lượng: 2 phút. Cách tổ chức: Cho HS quan sát 3 thiết bị; giơ 1 ngón = Có AI, 2 = Không AI, 3 = Chưa đủ thông tin. Không chốt ngay. Câu hỏi gợi mở: Chỉ nhìn hình em đã đủ căn cứ chưa? Nếu hai máy giặt giống nhau bên ngoài nhưng một máy chỉ chạy chương trình cố định, một máy tự điều chỉnh theo lượng đồ thì em có xếp giống nhau không? Dự kiến: Không thể kết luận từ vẻ ngoài; phải biết tính năng cụ thể. Sai lầm thường gặp: Đồ đắt tiền, tự động hoặc có cảm biến thì chắc chắn là AI. Cách xử lí: Hỏi lại “Thiết bị đang làm việc gì? Em đang dựa vào chức năng hay chỉ dựa vào tên?”. Chốt: Khi thiếu dữ kiện, “Chưa đủ thông tin” là một câu trả lời khoa học. Chuyển ý: Ta xem đích đến của bài học rồi mới định nghĩa AI thật ngắn.">
 <div class="label">CHUYÊN ĐỀ AI CỐT LÕI • LỚP 6 • BÀI 1/12</div>
 <h1>AI QUANH EM<br/>ĐÂU LÀ AI?</h1>
 <div class="subtitle">Quan sát • phân loại • giải thích — và biết nói <b>“chưa đủ thông tin”</b> khi chưa có căn cứ.</div>
@@ -272,444 +143,208 @@ body.notes-open #stage{padding-right:390px}
 <div class="big-q">Có phải cứ thiết bị hiện đại, tự động hoặc được gọi là “thông minh” thì đều có AI?</div>
 <div class="answer-chip fragment">Không. Phải xem <b>tính năng cụ thể</b>.</div>
 </div>
-<div aria-label="Ba thiết bị quen thuộc để học sinh quan sát và suy nghĩ xem có phải AI hay không" class="visual intro-device-gallery">
-<div class="intro-device-card">
-<div aria-hidden="true" class="intro-device-fallback">🧺</div>
-<img alt="Máy giặt cửa trước" class="intro-device-photo" loading="eager" onerror="this.style.display='none'" src="https://www.lg.com/in/images/washing-machines/md07540887/gallery/FHM1408BDL-Washing-Machines-Right-View-MZ-04-v1.jpg"/>
-<div class="intro-device-label">Máy giặt</div>
-</div>
-<div class="intro-device-card">
-<div aria-hidden="true" class="intro-device-fallback">❄️</div>
-<img alt="Máy điều hoà treo tường" class="intro-device-photo" loading="eager" onerror="this.style.display='none'" src="https://ts4.mm.bing.net/th?id=OIP.Gz953AP4pbcRt1sdbVwkdQHaG7&amp;pid=15.1&amp;o=7&amp;rm=3"/>
-<div class="intro-device-label">Máy điều hoà</div>
-</div>
-<div class="intro-device-card wide">
-<div aria-hidden="true" class="intro-device-fallback">💡</div>
-<img alt="Đèn cảm biến chuyển động" class="intro-device-photo" loading="eager" onerror="this.style.display='none'" src="https://m.media-amazon.com/images/I/719IkcfFzpL.jpg"/>
-<div class="intro-device-label">Đèn cảm biến chuyển động</div>
+<div class="visual intro-device-gallery">
+<div class="intro-device-card"><div class="offline-device">❄️</div><div class="intro-device-label">Máy điều hoà</div></div>
+<div class="intro-device-card"><div class="offline-device">💡</div><div class="intro-device-label">Đèn cảm biến</div></div>
+<div class="intro-device-card wide"><div class="offline-device">🧺</div><div class="intro-device-label">Máy giặt tự động</div></div>
 </div>
 </div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">01 / 17</div>
-</section><section class="page" data-document-role="page" data-index="1" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: Công khai đích đến trước khi hình thành khái niệm. Thời lượng: 1 phút. Cách tổ chức: GV không đọc nguyên văn; chỉ nhấn bốn động từ: Phân biệt – Kể tên – Mô tả – Có căn cứ. Câu hỏi gợi mở: Mục tiêu nào giúp em tránh đoán sai nhất? Mục tiêu nào yêu cầu em giải thích chứ không chỉ chọn đáp án? Dự kiến: 'Có căn cứ' giúp tránh đoán; 'Mô tả' buộc nói rõ chức năng. Chốt: Cuối bài, em không chỉ nói 'có/không AI' mà phải nói được vì sao." id="slide-2">
+</section>
+<!-- SLIDE 2: MỤC TIÊU -->
+<section class="page" data-index="1" data-label="HỌC XONG, EM CÓ THỂ…" data-speaker-notes="Mục tiêu: Công khai đích đến để HS biết mình cần làm được gì. Thời lượng: 1 phút. Cách tổ chức: Không đọc nguyên văn; chỉ nhấn 4 động từ Phân biệt – Kể tên – Mô tả – Có căn cứ. Câu hỏi gợi mở: Mục tiêu nào giúp em tránh đoán sai nhất? Mục tiêu nào buộc em phải giải thích? Dự kiến: “Có căn cứ” giúp tránh đoán; “Mô tả” buộc nói rõ chức năng. Chốt: Cuối bài, em không chỉ trả lời Có/Không mà còn phải nói được Vì sao.">
 <div class="label">BẢN ĐỒ ĐÍCH ĐẾN</div>
 <h1>HỌC XONG, EM CÓ THỂ…</h1>
 <div class="subtitle">Bốn mục tiêu ngắn gọn, dễ nhớ.</div>
 <div class="goal-grid">
-<div class="goal fragment"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Công cụ/tính năng có AI và không có AI qua ví dụ gần gũi.</p></div>
-<div class="goal fragment"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Nêu được một số công cụ AI thông dụng quanh em.</p></div>
-<div class="goal fragment"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng chính của ít nhất 3 tính năng AI.</p></div>
-<div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết chọn “Chưa đủ thông tin” khi chưa thể kết luận.</p></div>
+<div class="goal fragment"><div class="goal-icon">⚖</div><h3>Phân biệt</h3><p>Tính năng có AI và không có AI.</p></div>
+<div class="goal fragment"><div class="goal-icon">◉</div><h3>Kể tên</h3><p>Một số công cụ AI thông dụng quanh em.</p></div>
+<div class="goal fragment"><div class="goal-icon">⚙</div><h3>Mô tả</h3><p>Nói được chức năng của tính năng AI.</p></div>
+<div class="goal fragment"><div class="goal-icon">?</div><h3>Có căn cứ</h3><p>Biết hỏi thêm khi “Chưa đủ thông tin”.</p></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">02 / 17</div>
-</section><section class="page" data-document-role="page" data-index="2" data-label="AI LÀ GÌ?" data-speaker-notes="Mục tiêu: Cung cấp một khái niệm làm việc, đủ đơn giản cho lớp 6. Thời lượng: 2 phút. Cách tổ chức: GV đọc câu định nghĩa ngắn; nhấn Space từng ví dụ; HS chỉ ghi dòng cuối. Câu hỏi gợi mở: AI có nhất thiết phải là robot không? Một thiết bị có thể chỉ có một vài tính năng dùng AI hay toàn bộ thiết bị đều là AI? Dự kiến: AI không nhất thiết là robot; AI có thể nằm trong một tính năng cụ thể. Sai lầm thường gặp: Nhân hóa AI như con người hoặc coi AI là mọi phần mềm tự động. Cách xử lí: Dùng cụm 'thực hiện một số nhiệm vụ thường cần khả năng của con người'; không nói AI suy nghĩ y hệt con người. Chốt: Trong bài này, ta quan sát bốn nhóm chức năng: nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung. Chuyển ý: Bây giờ thử phân loại các tình huống gần gũi." id="slide-ai-la-gi">
+</section>
+<!-- SLIDE 3: ĐỊNH NGHĨA & DẤU HIỆU -->
+<section class="page" data-index="2" data-label="AI LÀ GÌ?" data-speaker-notes="Mục tiêu: Cung cấp khái niệm làm việc ngắn gọn, không biến phần mở đầu thành bài giảng lý thuyết dài. Thời lượng: 2 phút. Cách tổ chức: GV đọc định nghĩa một lần; cho HS nói lại bằng lời của mình. Nhấn Space để hiện từ khóa “tính năng”. Câu hỏi gợi mở: AI có nhất thiết phải là robot không? Một chiếc điện thoại có thể có vài tính năng AI nhưng không phải mọi chức năng đều là AI không? Dự kiến: AI không nhất thiết là robot; AI có thể nằm trong một tính năng cụ thể. Sai lầm thường gặp: HS hiểu AI = robot hoặc AI = mọi phần mềm tự động. Cách xử lí: Nhấn cụm “một số nhiệm vụ” và “một tính năng”. Chốt: Định nghĩa chỉ giúp ta bắt đầu; căn cứ phân loại sẽ được khám phá qua trò chơi.">
 <div class="label">KHÁI NIỆM CƠ BẢN • 2 PHÚT</div>
 <h1>AI LÀ GÌ?</h1>
-<div class="subtitle">Hiểu thật đơn giản trước khi đi tìm AI quanh em.</div>
+<div class="subtitle">Hiểu thật đơn giản trước khi bắt đầu làm “Thám tử AI”.</div>
 <div class="ai-definition">
 <div class="ai-badge">AI</div>
 <div>
-<div class="ai-def-main">
-<mark>Trí tuệ nhân tạo (AI)</mark> là công nghệ giúp máy tính thực hiện
-        một số nhiệm vụ thường cần khả năng của con người.
-      </div>
-<div class="ai-def-sub">
-        AI không nhất thiết là một robot. AI có thể nằm trong <b>một tính năng</b>
-        của ứng dụng hoặc thiết bị.
-      </div>
+<div class="ai-def-main"><mark>Trí tuệ nhân tạo (AI)</mark> là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người.</div>
+<div class="ai-def-sub">AI không nhất thiết là robot. AI có thể chỉ nằm trong <b>một tính năng</b> của ứng dụng hoặc thiết bị.</div>
 </div>
 </div>
-<div class="ai-example-grid">
-<div class="ai-example fragment">
-<div class="ai-ex-icon">📷 → 🙂</div>
-<b>Nhận dạng</b>
-<small>Nhận biết khuôn mặt, hình ảnh, vật thể hoặc giọng nói.</small>
-</div>
-<div class="ai-example fragment">
-<div class="ai-ex-icon">🎙 💬 → 🌐</div>
-<b>Hiểu ngôn ngữ</b>
-<small>Nghe lời nói, hiểu câu hỏi, dịch hoặc trả lời.</small>
-</div>
-<div class="ai-example fragment">
-<div class="ai-ex-icon">📊 → 🎯</div>
-<b>Dự đoán / gợi ý</b>
-<small>Gợi ý video, tuyến đường hoặc lựa chọn phù hợp.</small>
-</div>
-<div class="ai-example fragment">
-<div class="ai-ex-icon">✍ 🖼 🎵</div>
-<b>Tạo nội dung</b>
-<small>Tạo văn bản, hình ảnh hoặc âm thanh theo yêu cầu.</small>
-</div>
-</div>
-<div class="rule fragment">
-<b>Nhớ:</b> Tự động, có cảm biến hoặc có chữ “smart” <b>chưa đủ</b> để khẳng định có AI.
-  </div>
-<div class="notebook-line fragment">
-<strong>✍ HS ghi vở:</strong>
-    AI là công nghệ giúp máy tính thực hiện một số nhiệm vụ thường cần khả năng của con người,
-    như <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý hoặc tạo nội dung</b>.
-  </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">03 / 17</div>
-</section><section class="page" data-document-role="page" data-index="3" data-label="AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện ngộ nhận 'tự động = AI' và luyện phân loại có căn cứ. Thời lượng: 5 phút. Cách tổ chức: Cho HS chọn đủ 6 thẻ; yêu cầu nói lí do ở ít nhất 2 thẻ trước khi bấm chấm. Đáp án: Máy tính bỏ túi – Không AI; dự đoán/gợi ý tuyến theo dữ liệu giao thông – Có AI; quạt remote – Không AI; mở khóa khuôn mặt – Có AI; dịch giọng nói – Có AI; đèn chỉ mô tả 'có cảm biến chuyển động' – Chưa đủ TT. Câu hỏi gợi mở: Vì sao quạt remote không phải bằng chứng AI? Vì sao đèn cảm biến ở đây chưa đủ thông tin, nhưng một đèn PIR được mô tả rõ 'có chuyển động thì bật' lại có thể xếp Không AI? Dự kiến: Remote và PIR có thể hoạt động theo quy tắc cố định; mô tả ban đầu của đèn chưa nêu rõ cơ chế. Sai lầm thường gặp: HS nghĩ có cảm biến là AI. Cách xử lí: Hỏi 'Cảm biến chỉ thu dữ liệu hay hệ thống còn nhận dạng/dự đoán gì?'. Chốt: Tự động/cảm biến chưa đủ để kết luận." id="slide-3">
-<div class="label">KHỞI ĐỘNG • TRÒ CHƠI 5 PHÚT</div>
+<div class="concept-check fragment"><b>Thử nói lại bằng lời của em:</b> “AI không nhất thiết là cả một thiết bị; đôi khi AI chỉ là một ________ của thiết bị.” <span class="concept-answer">tính năng</span></div>
+<div class="rule fragment"><b>Chưa cần học thuộc 4 nhóm chức năng.</b> Ta sẽ tự rút ra chúng từ trò chơi tiếp theo.</div>
+</section>
+<!-- SLIDE 4: TRÒ CHƠI AI HAY KHÔNG AI -->
+<section class="page" data-index="3" data-label="TRÒ CHƠI: AI HAY KHÔNG AI?" data-speaker-notes="Mục tiêu: Phát hiện ngộ nhận “tự động = AI” và luyện phân loại bằng căn cứ. Thời lượng: 7 phút. Cách tổ chức: Cho HS chọn đủ 6 thẻ. Trước khi bấm Chấm, yêu cầu 2 nhóm giải thích một thẻ mình thấy khó nhất. Sau khi chấm, đọc căn cứ chứ không chỉ đọc điểm. Câu hỏi gợi mở: Em đang dựa vào tên thiết bị hay chức năng? Cảm biến PIR đang “hiểu” người hay chỉ phát hiện chuyển động? Với robot hút bụi, em cần biết thêm điều gì? Dự kiến: Máy tính bỏ túi và đèn PIR → Không AI; gợi ý tuyến, nhận diện khuôn mặt, dịch giọng nói → Có AI; robot hút bụi chỉ nêu tên → Chưa đủ thông tin. Sai lầm thường gặp: Có cảm biến/camera là AI; có chữ robot là AI. Cách xử lí: Hỏi “Cảm biến thu dữ liệu hay hệ thống còn nhận dạng/dự đoán gì từ dữ liệu đó?”. Chốt: Phải mô tả chức năng cụ thể trước khi kết luận. Chuyển ý: Từ các ví dụ vừa làm, ta thử tự rút ra những nhóm chức năng thường gặp ở AI." id="slide-4">
+<div class="label">KHỞI ĐỘNG • TRÒ CHƠI 6 TÌNH HUỐNG</div>
 <h1>AI HAY KHÔNG AI?</h1>
-<div class="subtitle">Đọc <b>tính năng</b>, không đoán theo hình dáng thiết bị.</div><div class="interaction-bar"><span class="interaction-status" id="warmStatus">Đã chọn 0/6</span><span class="warm-help">Chọn đủ 6 thẻ rồi chấm</span><button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button><button class="action-btn" id="warmReset" type="button">Làm lại</button></div>
-<div class="scenario-grid">
-<div class="scenario"><div class="mini-vis">🧮 <span>→</span> 3000</div><b>Máy tính bỏ túi</b><small>Tính 125 × 24 theo quy tắc.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính nhanh theo quy tắc cố định chưa phải bằng chứng AI.</div></div>
-<div class="scenario"><div class="mini-vis">🚗📍 <span>→</span> 🗺</div><b>Gợi ý tuyến theo giao thông</b><small>Dự đoán thời gian và đề xuất tuyến.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Dự đoán/gợi ý dựa trên dữ liệu là dấu hiệu mạnh của tính năng AI.</div></div>
-<div class="scenario"><div class="mini-vis">🔘 <span>→</span> 🌀</div><b>Quạt nhận lệnh remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Điều khiển trực tiếp theo nút bấm không phải bằng chứng AI.</div></div>
-<div class="scenario"><div class="mini-vis">📷 <span>→</span> 🙂</div><b>Mở khóa bằng khuôn mặt</b><small>Phân tích khuôn mặt để xác minh.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận diện khuôn mặt là ví dụ rõ về tính năng AI.</div></div>
-<div class="scenario"><div class="mini-vis">🎙 <span>→</span> 💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận dạng lời nói và xử lí ngôn ngữ là tính năng AI.</div></div>
-<div class="scenario"><div class="mini-vis">🚶 <span>→</span> 💡</div><b>Đèn tự sáng khi có người</b><small>Chỉ biết có cảm biến chuyển động.</small><div class="tag unk answer-label" style="display:none">CHƯA ĐỦ TT</div><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến và tự động chưa đủ để kết luận có AI.</div></div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">04 / 17</div>
-</section><section class="page" data-document-role="page" data-index="4" data-label="CHỐT SAU KHỞI ĐỘNG • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt duy nhất một thông điệp sau khởi động, tránh lặp lại quá nhiều. Thời lượng: 45–60 giây. Cách tổ chức: Nhấn Space từng thẻ; HS chỉ chép khung vàng. Câu hỏi gợi mở: Khi nào 'chưa đủ thông tin' là câu trả lời tốt hơn 'không AI'? Dự kiến: Khi mô tả chưa nói rõ chức năng/cách xử lí. Chốt: Không đoán theo vẻ ngoài; xem tính năng cụ thể. Chuyển ý: Ta sẽ phân biệt ba kiểu tình huống thường gặp." id="slide-chot-khoi-dong">
-<div class="label">CHỐT SAU KHỞI ĐỘNG • GHI VỞ</div>
-<h1>ĐỪNG ĐOÁN AI THEO VẺ NGOÀI</h1>
-<div class="subtitle">Dừng 45 giây để chốt điều quan trọng nhất vừa phát hiện.</div>
-<div class="checkpoint-wrap">
-<div class="checkpoint-grid">
-<div class="checkpoint-card fragment"><div class="cp-icon">1</div><h3>Tự động ≠ chắc chắn AI</h3><p>Hẹn giờ, cảm biến hoặc điều khiển từ xa có thể chỉ hoạt động theo quy tắc cố định.</p></div>
-<div class="checkpoint-card fragment"><div class="cp-icon">2</div><h3>Hãy xem tính năng</h3><p>Muốn phân loại, cần biết công cụ đang làm gì và cách nó xử lí nhiệm vụ.</p></div>
-<div class="checkpoint-card fragment"><div class="cp-icon">3</div><h3>Thiếu căn cứ → dừng lại</h3><p>Nếu mô tả chưa đủ, lựa chọn “Chưa đủ thông tin” là hợp lí.</p></div>
-</div>
-<div class="copy-box fragment"><div class="copy-tag">✍ HS GHI VỞ<br/>30–45 giây</div><div class="copy-text">Không phải mọi thiết bị điện tử, thiết bị tự động hoặc thiết bị “thông minh” đều có AI. Muốn phân loại cần xem <b>tính năng cụ thể</b>.</div></div>
-</div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">05 / 17</div>
-</section><section class="page" data-document-role="page" data-index="5" data-label="BA KIỂU TÌNH HUỐNG CẦN PHÂN BIỆT" data-speaker-notes="Mục tiêu: Giúp HS phân biệt ba kiểu tình huống thường gặp: quy tắc cố định, tính năng AI điển hình và trường hợp chưa đủ dữ kiện. Thời lượng: 4 phút. Cách tổ chức: GV cho HS quan sát ba thẻ, yêu cầu nói theo mẫu 'Đầu vào – Cách xử lí – Kết quả'. Sau mỗi thẻ, hỏi 'Em có đủ căn cứ chưa?'. Câu hỏi gợi mở: Máy tính bỏ túi và ứng dụng dịch đều cho kết quả nhanh, vì sao không xếp chúng giống nhau? Một robot hút bụi chỉ được mô tả bằng tên sản phẩm thì em có nên kết luận ngay không? Dự kiến: Máy tính bỏ túi thông thường làm theo công thức/quy tắc; dịch giọng nói có nhận dạng và xử lí ngôn ngữ; robot hút bụi nếu chưa mô tả tính năng thì chưa đủ căn cứ. Sai lầm thường gặp: HS cho rằng thiết bị đắt tiền, có cảm biến, có camera hoặc có LIDAR thì chắc chắn là AI. Cách xử lí: Nhắc rằng cảm biến/camera/LIDAR chỉ là nguồn dữ liệu; phải xem hệ thống dùng dữ liệu đó để làm gì. Chốt: Không phân loại theo vẻ ngoài hay độ hiện đại; hãy xem chức năng cụ thể và mức độ thông tin đang có. Chuyển ý: Từ ba kiểu tình huống này, ta rút ra bốn dấu hiệu thường gặp ở tính năng AI." id="slide-5">
-<div class="label">HÌNH THÀNH KIẾN THỨC</div>
-<h1>BA KIỂU TÌNH HUỐNG CẦN PHÂN BIỆT</h1>
-<div class="subtitle">Không chỉ hỏi “Có AI hay không?” — trước hết hãy xem <b>cách công cụ thực hiện nhiệm vụ</b>.</div>
-<div class="triple-grid">
-<div class="compare-card">
-<div class="diagram"><div class="device-box">🧮</div><div class="arrow">→</div><div class="output">3000</div></div>
-<h3>1. Quy tắc cố định</h3>
-<ul>
-<li>Ví dụ: máy tính bỏ túi thông thường</li>
-<li>Thực hiện công thức/lệnh đã thiết kế</li>
-<li><b>Không gọi là AI chỉ vì làm rất nhanh</b></li>
-</ul>
-</div>
-<div class="compare-card accent fragment">
-<div class="diagram"><div class="device-box">🎙</div><div class="arrow">→</div><div class="output">💬🌐</div></div>
-<h3>2. Tính năng AI điển hình</h3>
-<ul>
-<li>Ví dụ: dịch giọng nói</li>
-<li>Nhận dạng lời nói + xử lí ngôn ngữ</li>
-<li>Dấu hiệu AI rõ trong bối cảnh bài học</li>
-</ul>
-</div>
-<div class="compare-card fragment">
-<div class="diagram"><div class="device-box">🤖</div><div class="arrow">→</div><div class="output">?</div></div>
-<h3>3. Chưa đủ thông tin</h3>
-<ul>
-<li>Ví dụ: chỉ biết tên “robot hút bụi”</li>
-<li>Chưa biết nó nhận biết/điều hướng bằng cách nào</li>
-<li><b>Chưa nên kết luận</b></li>
-</ul>
-</div>
-</div>
-<div class="rule fragment"><b>Quy tắc vàng:</b> Mô tả chức năng trước → tìm dấu hiệu AI → nếu dữ kiện thiếu, chọn “Chưa đủ thông tin”.</div>
-<div class="notebook-line fragment"><strong>✍ HS ghi vở:</strong> Không thể kết luận AI chỉ từ tốc độ, cảm biến hay tên thiết bị. Cần xem <b>tính năng cụ thể</b> và <b>cách hệ thống xử lí nhiệm vụ</b>.</div>
-</section><section class="page" data-document-role="page" data-index="6" data-label="4 DẤU HIỆU GỢI Ý CÓ AI" data-speaker-notes="Mục tiêu: Tạo bộ 'kính quan sát' gồm bốn nhóm chức năng thường gặp ở AI. Thời lượng: 4 phút. Cách tổ chức: Nhấn Space hiện từng nhóm. Sau mỗi nhóm, gọi một HS nêu ví dụ và một HS khác nói chức năng cụ thể. Câu hỏi gợi mở: Nhận diện khuôn mặt thuộc nhóm nào? Chatbot thuộc nhóm nào? Một hệ thống có một dấu hiệu này đã chắc chắn là AI chưa? Dự kiến: Nhận diện khuôn mặt → nhận dạng; chatbot → xử lí ngôn ngữ; một dấu hiệu chỉ là căn cứ gợi ý, không thay thế việc kiểm tra sản phẩm cụ thể. Sai lầm thường gặp: HS biến bốn dấu hiệu thành định nghĩa cứng 'cứ có gợi ý là AI'. Cách xử lí: Nhấn từ 'gợi ý'; hỏi thêm 'Gợi ý đó được tạo từ dữ liệu hay chỉ là danh sách cố định?'. Chốt: Bốn nhóm giúp quan sát, không phải công thức kiểm định AI. Chuyển ý: Ta áp dụng ngay vào các tính năng quen thuộc quanh mình." id="slide-6">
-<div class="label">THÁM TỬ AI</div>
-<h1>4 DẤU HIỆU GỢI Ý CÓ AI</h1>
-<div class="subtitle">Đây là dấu hiệu <b>gợi ý</b>, không phải công thức kết luận tuyệt đối.</div>
-<div class="signal-grid">
-<div class="signal fragment"><div class="sig-icon">📷→🙂</div><h3>Nhận dạng</h3><p>Hình ảnh, khuôn mặt, vật thể, giọng nói, chữ viết.</p></div>
-<div class="signal fragment"><div class="sig-icon">🎙💬→🌐</div><h3>Xử lí ngôn ngữ</h3><p>Hiểu câu hỏi, dịch, trả lời, tóm tắt, xử lí lời nói.</p></div>
-<div class="signal fragment"><div class="sig-icon">📊→🎯</div><h3>Dự đoán / gợi ý</h3><p>Giao thông, video, sản phẩm, lộ trình, từ tiếp theo.</p></div>
-<div class="signal fragment"><div class="sig-icon">✍🖼🎵</div><h3>Tạo nội dung</h3><p>Văn bản, hình ảnh, âm thanh theo yêu cầu.</p></div>
-</div>
-<div class="rule fragment">Muốn kết luận về một sản phẩm cụ thể, vẫn cần biết rõ tính năng/công nghệ của nó.</div><div class="notebook-line fragment"><strong>✍ HS ghi vở:</strong> Bốn dấu hiệu thường gặp ở tính năng AI: <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>. Đây là dấu hiệu gợi ý, không phải tiêu chí tuyệt đối.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">07 / 17</div>
-</section><section class="page" data-document-role="page" data-index="7" data-label="MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA" data-speaker-notes="Mục tiêu: Mở rộng ví dụ nhưng luyện cách nói chính xác theo 'tên tính năng + chức năng'. Thời lượng: 4 phút. Cách tổ chức: GV chỉ ngẫu nhiên 3–4 thẻ, HS nói theo mẫu 'Tính năng … dùng AI để hỗ trợ …'. Không cần đọc hết sáu thẻ. Câu hỏi gợi mở: Vì sao câu 'bản đồ là AI' kém chính xác hơn 'tính năng dự đoán giao thông dùng AI'? Vì sao 'camera là AI' cũng quá rộng? Dự kiến: Vì một ứng dụng/thiết bị có nhiều chức năng; chỉ một số chức năng có thể dùng AI. Sai lầm thường gặp: Gắn nhãn AI cho toàn bộ thiết bị hoặc thương hiệu. Cách xử lí: Yêu cầu HS đổi câu trả lời sang mẫu 'tính năng + chức năng'. Chốt: Khi nêu ví dụ AI, luôn chỉ rõ chức năng cụ thể. Chuyển ý: Ta luyện cách diễn đạt này bằng một câu ghi nhớ ngắn." id="slide-7">
-<div class="label">KHÁM PHÁ</div>
-<h1>MỘT SỐ TÍNH NĂNG AI QUANH CHÚNG TA</h1>
-<div class="subtitle">Nói về <b>tính năng cụ thể</b>, không gắn nhãn AI cho cả thiết bị.</div>
-<div class="feature-grid">
-<div class="feature-card"><div class="feat-vis">🚗📍→🗺</div><b>Dự đoán giao thông</b><small>Ước tính thời gian và gợi ý tuyến.</small></div>
-<div class="feature-card"><div class="feat-vis">🎙→💬🌐</div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small></div>
-<div class="feature-card"><div class="feat-vis">📷→🙂</div><b>Nhận diện khuôn mặt</b><small>Xác định hoặc xác minh khuôn mặt.</small></div>
-<div class="feature-card fragment"><div class="feat-vis">🎙→✅</div><b>Trợ lí giọng nói</b><small>Hiểu yêu cầu và phản hồi/thực hiện.</small></div>
-<div class="feature-card fragment"><div class="feat-vis">❓→💬</div><b>Chatbot AI</b><small>Hiểu câu hỏi và tạo câu trả lời.</small></div>
-<div class="feature-card fragment"><div class="feat-vis">▶▶→⭐</div><b>Gợi ý nội dung</b><small>Đề xuất nội dung có khả năng phù hợp.</small></div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">08 / 17</div>
-</section><section class="page" data-document-role="page" data-index="8" data-label="CHỐT KIẾN THỨC 2 • GHI VỞ" data-speaker-notes="Mục tiêu: Chốt kĩ năng kể tên và mô tả chức năng của một số tính năng AI; mã yêu cầu 6.C2.2 chỉ dành cho GV, không cần nói với HS. Thời lượng: 60 giây. Cách tổ chức: Gọi 1–2 HS nói lại theo mẫu 'Tính năng … hỗ trợ con người …'; sau đó hiện khung ghi vở. Câu hỏi gợi mở: Nếu em chỉ nói 'YouTube có AI' thì còn thiếu gì? Hãy sửa thành một câu cụ thể hơn. Dự kiến: 'Tính năng gợi ý video đề xuất nội dung có khả năng phù hợp với người dùng'. Sai lầm thường gặp: HS nêu tên ứng dụng thay cho tính năng. Cách xử lí: Hỏi tiếp 'Trong ứng dụng đó, chức năng nào?'. Chốt: Nêu ví dụ AI = tên tính năng + chức năng chính." id="slide-chot-kien-thuc-2">
-<div class="label">CHỐT KIẾN THỨC 2 • GHI VỞ</div>
-<h1>NÓI ĐÚNG: TÊN TÍNH NĂNG + CHỨC NĂNG</h1>
-<div class="subtitle">Kể tên đúng chưa đủ — hãy nói thêm <b>tính năng đó hỗ trợ làm gì</b>.</div>
-<div class="checkpoint-wrap">
-<div class="skill-row">
-<div class="skill-line fragment"><div class="skill-icon">🎙</div><div><b>Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch sang ngôn ngữ khác.</small></div></div>
-<div class="skill-line fragment"><div class="skill-icon">📷</div><div><b>Nhận diện khuôn mặt</b><small>Phân tích hình ảnh để xác định hoặc xác minh khuôn mặt.</small></div></div>
-<div class="skill-line fragment"><div class="skill-icon">💬</div><div><b>Chatbot AI</b><small>Hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên.</small></div></div>
-<div class="skill-line fragment"><div class="skill-icon">▶</div><div><b>Gợi ý nội dung</b><small>Đề xuất video/nội dung có khả năng phù hợp với người dùng.</small></div></div>
-</div>
-<div class="copy-box fragment"><div class="copy-tag">✍ HS GHI VỞ<br/>45 giây</div><div class="copy-text">Khi nêu một ví dụ AI, cần nói rõ <b>tên tính năng</b> và <b>chức năng chính</b> của tính năng đó. Em cần mô tả được ít nhất 3 ví dụ quen thuộc.</div></div>
-</div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">09 / 17</div>
-</section><section class="page" data-document-role="page" data-index="9" data-label="THÁM TỬ AI — 8 TÌNH HUỐNG" data-speaker-notes="Mục tiêu: Luyện phân loại bằng căn cứ và biết dừng lại khi thiếu dữ kiện. Thời lượng: 7 phút. Cách tổ chức: Nhóm 3–4 HS chọn đủ 8 thẻ; trước khi bấm chấm, yêu cầu nhóm chọn 1 thẻ khó nhất và chuẩn bị lí do. Đáp án: Báo thức – Không AI; robot hút bụi chỉ nêu tên – Chưa đủ TT; quạt remote – Không AI; camera nhận diện mặt – Có AI; máy tính bỏ túi – Không AI; dịch giọng nói – Có AI; đèn PIR bật khi có chuyển động – Không AI; gợi ý video cá nhân hóa – Có AI. Câu hỏi gợi mở: Với robot hút bụi, em cần biết thêm điều gì để kết luận? Với đèn PIR, vì sao có cảm biến nhưng vẫn không phải ví dụ AI? Dự kiến: Cần biết robot có nhận dạng vật cản/đồ vật, học bản đồ hoặc thích nghi theo dữ liệu hay chỉ chạy theo quy tắc; cảm biến PIR chỉ phát hiện chuyển động rồi kích hoạt quy tắc bật/tắt. Sai lầm thường gặp: Cho rằng camera, LIDAR hoặc cảm biến tự thân đã là AI. Cách xử lí: Nhắc cảm biến chỉ thu dữ liệu; AI hay không phụ thuộc cách dữ liệu được xử lí. Chốt: Phân loại dựa vào mô tả chức năng, không dựa vào tên thiết bị." id="slide-8">
-<div class="label">LUYỆN TẬP • THỬ THÁCH NHÓM</div>
-<h1>THÁM TỬ AI — 8 TÌNH HUỐNG</h1>
 <div class="subtitle">Phân loại bằng căn cứ: Có AI • Không AI • Chưa đủ thông tin.</div>
-<div class="detect-grid">
-<div><b>⏰ Báo thức theo giờ</b><small>Đúng giờ cài sẵn thì chuông reo.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Báo thức hoạt động theo thời gian/quy tắc cố định.</div></div>
-<div><b>🤖 Robot hút bụi</b><small>Không mô tả cách điều hướng.</small><span class="pill-unk answer-label" style="display:none">Chưa đủ TT</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Chỉ biết tên “robot hút bụi” chưa đủ. Cần biết nó có nhận dạng/ước lượng môi trường hay chỉ chạy theo quy tắc lập trình.</div></div>
-<div><b>🔘 Quạt remote</b><small>Bấm nút nào làm đúng lệnh đó.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Bấm nút nào, quạt thực hiện lệnh tương ứng — không phải bằng chứng AI.</div></div>
-<div><b>📷 Camera nhận diện mặt</b><small>Xác minh khuôn mặt trong hình.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận diện/xác minh khuôn mặt là tính năng AI.</div></div>
-<div><b>🧮 Máy tính bỏ túi</b><small>Tính theo công thức đã lập trình.</small><span class="pill-no answer-label" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Tính toán theo công thức đã lập trình không phải bằng chứng AI.</div></div>
-<div><b>🎙 Dịch giọng nói</b><small>Nhận lời nói và tạo bản dịch.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Nhận lời nói và tạo bản dịch là xử lí ngôn ngữ bằng AI.</div></div>
-<div><b>💡 Đèn cảm ứng</b><small>Cảm biến PIR phát hiện chuyển động rồi bật đèn theo quy tắc.</small><span class="answer-label pill-no" style="display:none">Không AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Cảm biến PIR chỉ thu tín hiệu chuyển động; bật đèn theo quy tắc cố định không phải bằng chứng AI.</div></div>
-<div><b>▶ Gợi ý video</b><small>Đề xuất dựa trên lịch sử và tín hiệu sử dụng của người xem.</small><span class="pill-ai answer-label" style="display:none">Có AI</span><div class="choice-row"><button class="mini-choice" data-value="ai" type="button">Có AI</button><button class="mini-choice" data-value="no" type="button">Không AI</button><button class="mini-choice" data-value="unk" type="button">Chưa đủ TT</button></div><div class="card-feedback" data-reason="1">Gợi ý nội dung dựa trên tín hiệu sử dụng là dấu hiệu mạnh của AI.</div></div>
+<div class="interaction-bar">
+<span id="warmStatus" style="font-weight:700; color:#557086; margin-right:auto;">Đã chọn 0/6</span>
+<button class="action-btn primary" id="warmCheck" type="button">Chấm / Hiện đáp án</button>
+<button class="action-btn" id="warmReset" type="button">Làm lại</button>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">10 / 17</div>
-<div class="interaction-bar"><span class="interaction-status" id="detStatus">Đã chọn 0/8</span><button class="action-btn primary" id="detCheck" type="button">Chấm 8 tình huống</button><button class="action-btn" id="detReset" type="button">Làm lại</button></div></section><section class="page" data-document-role="page" data-index="10" data-label="CĂN CỨ NÀO ĐỦ ĐỂ KẾT LUẬN?" data-speaker-notes="Mục tiêu: Giúp HS hiểu rằng một số thông tin chỉ là dấu hiệu yếu, một số là dấu hiệu điển hình, và có trường hợp phải nói chưa đủ thông tin. Thời lượng: 3 phút. Cách tổ chức: Cho HS xếp nhanh ba ví dụ: 'hẹn giờ', 'nhận diện khuôn mặt', 'chỉ biết tên robot hút bụi'. Câu hỏi gợi mở: Vì sao không nên dùng phần trăm để nói 'thiết bị này 80% là AI'? Khi nào em cần tìm tài liệu chính thức của sản phẩm? Dự kiến: Không có thang điểm phần trăm đơn giản để xác định AI; muốn kết luận chắc hơn cần xem mô tả chức năng/công nghệ. Sai lầm thường gặp: HS coi dấu hiệu AI là thước đo xác suất chính xác. Cách xử lí: Dùng ba nhãn định tính: chưa đủ căn cứ / dấu hiệu điển hình / cần xác minh thêm. Chốt: Đây là quy trình suy luận học tập, không phải máy kiểm định AI." id="slide-9">
-<div class="label">MÔ PHỎNG NHẬN DIỆN</div>
-<h1>CĂN CỨ NÀO ĐỦ ĐỂ KẾT LUẬN?</h1>
-<div class="subtitle">Dùng mô tả định tính — không gắn phần trăm chắc chắn khi chưa có căn cứ.</div>
-<div class="meter-grid">
-<div class="meter weak fragment"><div class="meter-icon">⏲</div><h3>Chưa đủ để kết luận</h3><p>Hẹn giờ • nút bấm • cảm biến đơn giản • chữ “smart”.</p></div>
-<div class="meter strong fragment"><div class="meter-icon">🧠</div><h3>Dấu hiệu AI điển hình</h3><p>Nhận dạng • xử lí ngôn ngữ • dự đoán/gợi ý • tạo nội dung.</p></div>
-<div class="meter unknown fragment"><div class="meter-icon">?</div><h3>Cần xác minh thêm</h3><p>Chỉ biết tên sản phẩm hoặc mô tả chức năng còn quá chung.</p></div>
+<div class="scenario-grid">
+<div class="scenario"><div class="mini-vis">🧮</div><b>Máy tính bỏ túi</b><small>Tính 125 × 24 theo công thức đã lập trình.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="Tính nhanh theo công thức cố định chưa phải bằng chứng AI.">Tính nhanh theo công thức cố định chưa phải bằng chứng AI.</div></div>
+<div class="scenario"><div class="mini-vis">🚗📍</div><b>Gợi ý tuyến đường</b><small>Dự đoán tình trạng giao thông và đề xuất lối đi.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="Dự đoán/gợi ý dựa trên dữ liệu là dấu hiệu AI điển hình.">Dự đoán/gợi ý dựa trên dữ liệu là dấu hiệu AI điển hình.</div></div>
+<div class="scenario"><div class="mini-vis">🚶💡</div><b>Đèn cầu thang tự sáng</b><small>Cảm biến PIR phát hiện chuyển động rồi bật đèn theo quy tắc.</small><div class="tag no answer-label" style="display:none">KHÔNG AI</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="PIR chỉ thu tín hiệu chuyển động; bật đèn theo quy tắc cố định không phải ví dụ AI.">PIR chỉ thu tín hiệu chuyển động; bật đèn theo quy tắc cố định không phải ví dụ AI.</div></div>
+<div class="scenario"><div class="mini-vis">📷🙂</div><b>Mở khóa bằng khuôn mặt</b><small>Phân tích khuôn mặt để xác minh người dùng.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="Nhận dạng/xác minh khuôn mặt là ví dụ điển hình của AI nhận dạng.">Nhận dạng/xác minh khuôn mặt là ví dụ điển hình của AI nhận dạng.</div></div>
+<div class="scenario"><div class="mini-vis">🎙🌐</div><b>Dịch giọng nói</b><small>Nghe tiếng Việt rồi tạo bản dịch sang tiếng Anh.</small><div class="tag ai answer-label" style="display:none">CÓ AI</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="Nhận dạng lời nói và xử lí ngôn ngữ là chức năng AI điển hình.">Nhận dạng lời nói và xử lí ngôn ngữ là chức năng AI điển hình.</div></div>
+<div class="scenario"><div class="mini-vis">🤖</div><b>Robot hút bụi</b><small>Chỉ biết tên sản phẩm là “robot hút bụi”.</small><div class="tag unk answer-label" style="display:none">CHƯA ĐỦ TT</div><div class="choice-row"><button class="mini-choice" data-value="ai">Có AI</button><button class="mini-choice" data-value="no">Không AI</button><button class="mini-choice" data-value="unk">Chưa đủ TT</button></div><div class="card-feedback" data-reason="Chỉ biết tên thiết bị chưa đủ. Cần biết nó nhận biết và xử lí môi trường như thế nào.">Chỉ biết tên thiết bị chưa đủ. Cần biết nó nhận biết và xử lí môi trường như thế nào.</div></div>
 </div>
-<div class="rule fragment">Muốn kết luận chắc hơn, hãy xem <b>mô tả chức năng hoặc tài liệu chính thức</b> của sản phẩm.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">11 / 17</div>
-</section><section class="page" data-document-role="page" data-index="11" data-label="CHỌN ĐÁP ÁN ĐÚNG NHẤT" data-speaker-notes="Mục tiêu: Kiểm tra nhanh hai ngộ nhận trọng tâm sau phần luyện tập. Thời lượng: 3 phút. Cách tổ chức: HS chọn đáp án; trước khi GV xác nhận, gọi một em giải thích bằng từ khóa 'quy tắc cố định', 'xử lí ngôn ngữ' hoặc 'tính năng cụ thể'. Câu hỏi gợi mở: Câu 1 — vì sao tự bật/tắt theo giờ chưa đủ? Câu 2 — chatbot đang thực hiện nhóm chức năng nào trong bốn dấu hiệu? Dự kiến: Hẹn giờ có thể là quy tắc cố định; chatbot xử lí ngôn ngữ và tạo câu trả lời. Sai lầm thường gặp: Chọn theo cảm giác 'thiết bị hiện đại'. Cách xử lí: Yêu cầu chỉ ra một chức năng cụ thể làm căn cứ. Chốt: Câu trả lời đúng phải đi kèm lí do." id="slide-10">
-<div class="label">TRẮC NGHIỆM TƯƠNG TÁC</div>
-<h1>CHỌN ĐÁP ÁN ĐÚNG NHẤT</h1>
-<div class="subtitle">Giải thích bằng “chức năng cụ thể”.</div>
-<div class="quiz-card">
-<div class="qnum">1</div><div class="qtext"><b>Dấu hiệu nào tự nó chưa đủ để khẳng định thiết bị có AI?</b>
-<button class="quiz-option" data-correct="0" type="button">A. Nhận diện khuôn mặt từ hình ảnh</button><button class="quiz-option" data-correct="0" type="button">B. Nhận giọng nói và tạo bản dịch</button><button class="quiz-option" data-correct="1" type="button">C. Tự bật/tắt theo thời gian đã hẹn</button><div class="quiz-feedback" data-bad="Nhận diện khuôn mặt và dịch giọng nói là các dấu hiệu AI rõ hơn trong bối cảnh bài học." data-ok="Tự bật/tắt theo giờ hẹn có thể chỉ là quy tắc cố định; tự động chưa đủ để khẳng định AI.">Chọn một đáp án.</div></div>
+</section><section class="page" data-index="4" data-label="KHÁM PHÁ 4 NHÓM CHỨC NĂNG AI" data-speaker-notes="Mục tiêu: Để HS tự khái quát 4 nhóm chức năng từ ví dụ, thay vì GV cho danh sách trước. Thời lượng: 5 phút. Cách tổ chức: Với mỗi thẻ, chưa bấm Lật ngay. Gọi HS trả lời “Máy đang làm gì?”. Sau 1–2 câu trả lời mới bấm Lật thẻ. Câu hỏi gợi mở: Mở khóa khuôn mặt khác gì camera chỉ ghi hình? Gợi ý tuyến đường khác gì bản đồ chỉ hiển thị đường? AI tạo tranh có “nhận ra” hay đang “tạo mới”? Dự kiến: HS rút ra Nhận dạng – Xử lí ngôn ngữ – Dự đoán/gợi ý – Tạo nội dung. Sai lầm thường gặp: HS coi bốn nhóm này là định nghĩa cứng của mọi AI. Cách xử lí: Nhấn “thường gặp” và “gợi ý”; muốn kết luận sản phẩm cụ thể vẫn cần mô tả chức năng rõ. Chốt: Bốn nhóm là chiếc kính quan sát, không phải máy kiểm định AI. Chuyển ý: Tiếp theo, ta phân biệt ba kiểu tình huống để biết khi nào kết luận và khi nào phải dừng lại.">
+<div class="label">KHÁM PHÁ TỪ TRÒ CHƠI • 5 PHÚT</div>
+<h1>NHỮNG VÍ DỤ CÓ AI ĐANG “LÀM GÌ”?</h1>
+<div class="subtitle">Đừng học thuộc trước. Hãy quan sát ví dụ rồi <b>tự đặt tên nhóm chức năng</b>.</div>
+<div class="discover-grid">
+<div class="discover-card fragment"><div class="discover-example">📷🙂<br/><b>Mở khóa bằng khuôn mặt</b></div><div class="discover-question">Máy đang làm gì với hình ảnh?</div><button class="discover-reveal" type="button">Lật thẻ</button><div class="discover-answer"><b>Nhận dạng</b><br/><small>Nhận biết/xác minh khuôn mặt, vật thể, giọng nói...</small></div></div>
+<div class="discover-card fragment"><div class="discover-example">🎙🌐<br/><b>Dịch giọng nói</b></div><div class="discover-question">Máy đang làm gì với lời nói?</div><button class="discover-reveal" type="button">Lật thẻ</button><div class="discover-answer"><b>Xử lí ngôn ngữ</b><br/><small>Hiểu câu hỏi, dịch, tóm tắt, trả lời...</small></div></div>
+<div class="discover-card fragment"><div class="discover-example">🚗📍<br/><b>Gợi ý tuyến đường</b></div><div class="discover-question">Máy đang làm gì từ dữ liệu giao thông?</div><button class="discover-reveal" type="button">Lật thẻ</button><div class="discover-answer"><b>Dự đoán / gợi ý</b><br/><small>Dự đoán, xếp hạng hoặc đề xuất phương án phù hợp.</small></div></div>
+<div class="discover-card fragment"><div class="discover-example">✍🖼<br/><b>Tạo tranh từ mô tả</b></div><div class="discover-question">Máy tạo ra sản phẩm gì mới?</div><button class="discover-reveal" type="button">Lật thẻ</button><div class="discover-answer"><b>Tạo nội dung</b><br/><small>Tạo văn bản, hình ảnh, âm thanh... theo yêu cầu.</small></div></div>
 </div>
-<div class="quiz-card">
-<div class="qnum">2</div><div class="qtext"><b>Trường hợp nào là ví dụ rõ nhất về tính năng AI?</b>
-<button class="quiz-option" data-correct="0" type="button">A. Đồng hồ reo đúng giờ đã đặt</button><button class="quiz-option" data-correct="1" type="button">B. Chatbot hiểu câu hỏi và tạo câu trả lời</button><button class="quiz-option" data-correct="0" type="button">C. Máy tính bỏ túi thực hiện phép cộng</button><div class="quiz-feedback" data-bad="Đồng hồ báo thức và máy tính bỏ túi thông thường có thể hoạt động theo quy tắc cố định." data-ok="Chatbot hiểu câu hỏi và tạo câu trả lời bằng ngôn ngữ tự nhiên là ví dụ rõ về AI xử lí ngôn ngữ.">Chọn một đáp án.</div></div>
+<div class="rule fragment"><b>Ghi nhớ:</b> Đây là <b>4 nhóm chức năng thường gặp</b> ở AI, không phải “công thức kiểm định” tuyệt đối.</div>
+</section>
+<!-- SLIDE 5: 3 KIỂU TÌNH HUỐNG -->
+<section class="page" data-index="5" data-label="BA KIỂU TÌNH HUỐNG" data-speaker-notes="Mục tiêu: Hệ thống hóa ba kiểu tình huống sau khi HS đã trải nghiệm trò chơi và khám phá 4 nhóm chức năng. Thời lượng: 4 phút. Cách tổ chức: Cho HS đọc ba cột và đặt lại 3 ví dụ ở slide trước vào cột phù hợp. Câu hỏi gợi mở: Vì sao nói “chưa có căn cứ AI” an toàn hơn câu “chắc chắn không thể có AI” khi mô tả chỉ cho thấy quy tắc cố định? Khi nào em buộc phải chọn “Chưa đủ thông tin”? Dự kiến: Cần dựa vào mô tả chức năng hiện có; thiếu mô tả thì chưa nên kết luận. Sai lầm thường gặp: Biến ví dụ trong bài thành quy tắc tuyệt đối cho mọi phiên bản sản phẩm. Cách xử lí: Luôn thêm cụm “trong mô tả này” hoặc “phiên bản thông thường”. Chốt: Công cụ làm gì? → Có dấu hiệu AI nào? → Đã đủ thông tin chưa?">
+<div class="label">TỔNG KẾT KHỞI ĐỘNG</div>
+<h1>BA KIỂU TÌNH HUỐNG THƯỜNG GẶP</h1>
+<div class="subtitle">Đừng hỏi “Có AI hay không?” — Hãy xem <b>cách công cụ đó hoạt động</b>.</div>
+<div class="triple-grid">
+<div class="compare-card fragment"><div class="diagram"><div class="device-box">🧮</div><div class="arrow">→</div><div class="output">3000</div></div><h3>1. Chỉ thấy quy tắc cố định</h3><ul><li>Ví dụ: máy tính bỏ túi, hẹn giờ, quạt remote.</li><li>Thực hiện lệnh/công thức đã thiết kế.</li><li><b>Trong mô tả này chưa có căn cứ AI.</b></li></ul></div>
+<div class="compare-card accent fragment"><div class="diagram"><div class="device-box">🎙</div><div class="arrow">→</div><div class="output">💬</div></div><h3>2. Có chức năng AI điển hình</h3><ul><li>Ví dụ: nhận diện khuôn mặt, dịch giọng nói.</li><li>Có chức năng nhận dạng, ngôn ngữ, gợi ý hoặc tạo nội dung.</li><li><b>Có căn cứ mạnh hơn để nói về AI.</b></li></ul></div>
+<div class="compare-card fragment"><div class="diagram"><div class="device-box">🤖</div><div class="arrow">→</div><div class="output">?</div></div><h3>3. Chưa đủ thông tin</h3><ul><li>Ví dụ: chỉ biết tên “robot hút bụi”.</li><li>Chưa biết nó nhận biết/xử lí môi trường ra sao.</li><li><b>Cần hỏi thêm trước khi kết luận.</b></li></ul></div>
 </div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">12 / 17</div>
-</section><section class="page" data-document-role="page" data-index="12" data-label="CHỐT LUYỆN TẬP • CÔNG THỨC THÁM TỬ AI" data-speaker-notes="Mục tiêu: Chốt quy trình ba câu hỏi dùng cho mọi ví dụ mới. Thời lượng: 60 giây. Cách tổ chức: Nhấn Space hiện lần lượt 3 bước; yêu cầu cả lớp đọc câu 3. Câu hỏi gợi mở: Với một camera lạ chỉ có nhãn 'smart', em đang ở bước nào? Nếu tài liệu nói camera nhận diện người và phân biệt vật thể thì căn cứ thay đổi ra sao? Dự kiến: Ban đầu chưa đủ thông tin; khi có mô tả nhận diện/phân loại thì có căn cứ AI rõ hơn. Sai lầm thường gặp: HS bỏ qua bước 1 và nhảy thẳng tới kết luận. Cách xử lí: Bắt buộc mô tả 'công cụ làm gì?' trước khi phân loại. Chốt: Công cụ làm gì? → Có dấu hiệu AI nào? → Đã đủ thông tin chưa?" id="slide-chot-luyen-tap">
-<div class="label">CHỐT LUYỆN TẬP • CÔNG THỨC THÁM TỬ AI</div>
-<h1>3 CÂU HỎI GIÚP EM KHÔNG KẾT LUẬN VỘI</h1>
-<div class="subtitle">Đây là quy trình đơn giản để dùng cho mọi ví dụ mới.</div>
-<div class="checkpoint-wrap">
-<div class="detective-steps">
-<div class="detective-step fragment"><div class="num">1</div><h3>Công cụ làm gì?</h3><p>Mô tả chức năng thật cụ thể, không chỉ nói tên thiết bị.</p></div>
-<div class="detective-step fragment"><div class="num">2</div><h3>Có dấu hiệu AI nào?</h3><p>Nhận dạng • dự đoán/gợi ý • xử lí ngôn ngữ • tạo nội dung?</p></div>
-<div class="detective-step fragment"><div class="num">3</div><h3>Đã đủ thông tin chưa?</h3><p>Nếu chưa biết rõ tính năng/công nghệ, chưa nên kết luận.</p></div>
+<div class="rule fragment"><b>3 câu hỏi:</b> Công cụ làm gì? → Có dấu hiệu AI nào? → Đã đủ thông tin chưa?</div></section>
+<!-- SLIDE 6: VÍ DỤ TÍNH NĂNG AI -->
+<section class="page" data-index="6" data-label="PHÂN LOẠI 4 NHÓM CHỨC NĂNG AI" data-speaker-notes="Mục tiêu: Luyện nhận biết 4 nhóm chức năng mà không lặp lại câu hỏi Có/Không AI. Thời lượng: 5 phút. Cách tổ chức: HS làm theo cặp; mỗi cặp chọn đủ 6 thẻ. Sau khi chấm, yêu cầu giải thích một thẻ bằng mẫu “Tính năng ... thuộc nhóm ... vì ...”. Câu hỏi gợi mở: Chatbot vừa hiểu câu hỏi vừa tạo câu trả lời, vì sao trong bài này ta xếp trọng tâm vào xử lí ngôn ngữ? Một hệ thống có thể đồng thời dùng nhiều khả năng AI không? Dự kiến: Có; việc phân nhóm ở đây là để nhận diện chức năng nổi bật nhất trong tình huống. Sai lầm thường gặp: Nghĩ mỗi công cụ chỉ thuộc đúng một nhóm duy nhất. Cách xử lí: Nhấn “chức năng nổi bật trong tình huống”, không phải phân loại cứng cả sản phẩm. Chốt: Hãy mô tả AI đang làm việc gì, không chỉ nhớ tên công cụ.">
+<div class="label">LUYỆN TẬP • PHÂN LOẠI CHỨC NĂNG</div>
+<h1>AI ĐANG LÀM VIỆC GÌ?</h1>
+<div class="subtitle">Đọc mô tả rồi chọn nhóm chức năng: <b>Nhận dạng • Ngôn ngữ • Gợi ý • Tạo nội dung</b>.</div>
+<div class="feature-quiz-grid" id="featureQuiz">
+<div class="feature-quiz-card" data-correct="recognition"><div class="feat-vis">📷🙂</div><b>Xác minh khuôn mặt để mở khóa</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Phân tích hình ảnh để xác minh khuôn mặt.</div></div>
+<div class="feature-quiz-card" data-correct="language"><div class="feat-vis">🎙🌐</div><b>Nghe tiếng Việt rồi tạo bản dịch</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Nhận lời nói và xử lí ngôn ngữ để tạo bản dịch.</div></div>
+<div class="feature-quiz-card" data-correct="recommend"><div class="feat-vis">▶⭐</div><b>Đề xuất video dựa trên tín hiệu sử dụng</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Hệ thống gợi ý nội dung có khả năng phù hợp.</div></div>
+<div class="feature-quiz-card" data-correct="generate"><div class="feat-vis">🖼✨</div><b>Tạo tranh theo phần mô tả của người dùng</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Hệ thống tạo ra nội dung mới theo yêu cầu.</div></div>
+<div class="feature-quiz-card" data-correct="language"><div class="feat-vis">❓💬</div><b>Chatbot hiểu câu hỏi và tạo câu trả lời</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Trọng tâm ở đây là xử lí ngôn ngữ tự nhiên.</div></div>
+<div class="feature-quiz-card" data-correct="recommend"><div class="feat-vis">🚗📍</div><b>Dự đoán thời gian và gợi ý tuyến đi</b><div class="category-choices"><button data-value="recognition">Nhận dạng</button><button data-value="language">Ngôn ngữ</button><button data-value="recommend">Gợi ý</button><button data-value="generate">Tạo nội dung</button></div><div class="feature-feedback">Dựa trên dữ liệu để dự đoán và đề xuất phương án.</div></div>
 </div>
-<div class="copy-box fragment"><div class="copy-tag">✍ GHI NHỚ<br/>30–45 giây</div><div class="copy-text">Khi chưa đủ thông tin để xác định có AI hay không, cần <b>tìm hiểu thêm thay vì đoán</b>.</div></div>
+<div class="interaction-bar feature-bar"><span class="interaction-status" id="featureStatus">Đã chọn 0/6</span><button class="action-btn primary" id="featureCheck" type="button">Chấm 6 thẻ</button><button class="action-btn" id="featureReset" type="button">Làm lại</button></div>
+</section>
+<!-- SLIDE 7: GAME 2 - BẮT LỖI SAI -->
+<section class="page" data-index="7" data-label="SỬA CÂU CHO KHOA HỌC" data-speaker-notes="Mục tiêu: Chuyển từ cách nói gắn nhãn cả thiết bị sang cách mô tả tính năng cụ thể. Thời lượng: 5 phút. Cách tổ chức: Mỗi nhóm chọn 1 câu, tự sửa bằng lời trước. Chỉ bấm “Xem cách sửa” sau khi nhóm đã trình bày. Câu hỏi gợi mở: Câu “Camera là AI” thiếu thông tin gì? Câu “YouTube là AI” đang nói về cả nền tảng hay một tính năng? Dự kiến: Cần nói rõ tính năng nhận diện khuôn mặt, gợi ý video... Sai lầm thường gặp: Dùng tên thương hiệu/thiết bị thay cho tên tính năng. Cách xử lí: Cho HS áp dụng mẫu “Tính năng ... hỗ trợ ... bằng cách ...”. Chốt: Nói đúng về AI = nói đúng tính năng + chức năng + căn cứ.">
+<div class="label">THỬ THÁCH NHÓM • NÓI CHO CHÍNH XÁC</div>
+<h1>SỬA CÂU CHO “KHOA HỌC” HƠN</h1>
+<div class="subtitle">Các câu dưới đây nói quá rộng hoặc kết luận vội. Hãy sửa thành câu có <b>tính năng + căn cứ</b>.</div>
+<div class="error-grid">
+<div class="error-card"><div class="statement">YouTube là AI.</div><button class="fix-btn" type="button">Xem cách sửa</button><div class="correction"><b>Sửa:</b> Tính năng <b>gợi ý video</b> có thể dùng AI để đề xuất nội dung có khả năng phù hợp với người xem.</div></div>
+<div class="error-card"><div class="statement">Camera là AI.</div><button class="fix-btn" type="button">Xem cách sửa</button><div class="correction"><b>Sửa:</b> Camera có <b>tính năng nhận diện khuôn mặt</b> là ví dụ rõ về AI nhận dạng.</div></div>
+<div class="error-card"><div class="statement">Thiết bị có Wi-Fi thì chắc chắn có AI.</div><button class="fix-btn" type="button">Xem cách sửa</button><div class="correction"><b>Sửa:</b> Wi-Fi chỉ cho biết khả năng kết nối. Muốn kết luận AI phải xem <b>tính năng cụ thể</b>.</div></div>
+<div class="error-card"><div class="statement">Robot hút bụi chắc chắn là AI.</div><button class="fix-btn" type="button">Xem cách sửa</button><div class="correction"><b>Sửa:</b> Chỉ tên “robot hút bụi” chưa đủ. Cần biết nó có <b>nhận biết/xử lí môi trường</b> hay chỉ chạy theo quy tắc.</div></div>
 </div>
-<div class="page-no" style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">13 / 17</div>
-</section><section class="page" data-document-role="page" data-index="13" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: Vận dụng quy trình vào ví dụ thật quanh HS và luyện nêu căn cứ. Thời lượng: 4 phút. Cách tổ chức: Mỗi nhóm nhập 1 ví dụ, ghi đủ tên tính năng – chức năng – phân loại – lí do; bấm Lưu. GV mở 2–3 ví dụ khác nhau để chữa. Câu hỏi gợi mở: Em đang mô tả thiết bị hay tính năng? Nếu bạn chỉ viết 'TV thông minh' thì em sẽ hỏi thêm câu gì? Dự kiến: Cần hỏi TV có tính năng nào như gợi ý nội dung, nhận giọng nói, nhận dạng... Sai lầm thường gặp: Nêu thương hiệu/tên thiết bị thay cho tính năng; nhập thông tin cá nhân. Cách xử lí: Chỉ lưu ví dụ về công nghệ, không nhập họ tên, tài khoản hay dữ liệu riêng tư. Chốt: Ví dụ tốt phải có tính năng cụ thể và căn cứ rõ." id="slide-12">
+<div class="rule fragment"><b>Mẫu câu tốt:</b> “Tính năng ______ hỗ trợ ______ bằng cách ______.”</div>
+</section>
+<!-- SLIDE 8: SĂN AI QUANH EM -->
+<section class="page" data-index="8" data-label="SĂN AI QUANH EM" data-speaker-notes="Mục tiêu: Vận dụng vào ví dụ thật và luyện nêu căn cứ. Thời lượng: 5 phút. Cách tổ chức: Mỗi nhóm nhập 1 ví dụ; bấm Lưu. GV mở 2–3 ví dụ trong danh sách để cả lớp nhận xét. Câu hỏi gợi mở: Em đang mô tả thiết bị hay tính năng? Nếu bạn chỉ viết “TV thông minh”, em sẽ hỏi thêm gì? Dự kiến: Cần nêu chức năng như nhận giọng nói, gợi ý nội dung, nhận diện... Sai lầm thường gặp: Ghi tên sản phẩm/nhãn hiệu; nhập dữ liệu cá nhân. Cách xử lí: Chỉ lưu ví dụ công nghệ, không lưu họ tên/tài khoản. Dữ liệu chỉ nằm trên trình duyệt máy đang dùng. Chốt: Ví dụ tốt có tên tính năng, chức năng, phân loại và căn cứ.">
 <div class="label">VẬN DỤNG</div>
 <h1>SĂN AI QUANH EM</h1>
-<div class="subtitle">Ghi lại một ví dụ của chính em bằng <b>tính năng + căn cứ</b>.</div>
-<div class="worksheet"><div class="field"><b>Tên tính năng / công cụ</b><input class="hunt-input" id="huntName" placeholder="Ví dụ: mở khóa bằng khuôn mặt trên điện thoại" type="text"/></div><div class="field"><b>Chức năng em quan sát được</b><textarea class="hunt-input" id="huntFunc" placeholder="Ví dụ: camera quét khuôn mặt để xác minh người dùng" rows="2"></textarea></div><div class="field"><b>Em phân loại</b><select class="hunt-input" id="huntClass"><option value="Có AI">Có AI</option><option value="Không AI">Không AI</option><option value="Chưa đủ thông tin">Chưa đủ thông tin</option></select></div><div class="field"><b>Lí do / căn cứ</b><input class="hunt-input" id="huntWhy" placeholder="Em dựa vào tính năng..." type="text"/></div></div>
-<div class="tip">Nếu chỉ viết “TV”, “camera”, “máy lạnh”… thì <b>chưa đủ</b>. Hãy nêu tính năng cụ thể.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">14 / 17</div>
-<div class="hunt-actions"><button class="action-btn primary" id="huntSave" type="button">Lưu ví dụ</button><button class="action-btn" id="huntClear" type="button">Xóa ô nhập</button></div><div class="hunt-list" id="huntList"><div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div></div></section><section class="page" data-document-role="page" data-index="14" data-label="TỔNG HỢP 4 Ý CỐT LÕI" data-speaker-notes="Mục tiêu: Tổng hợp cuối tiết mà không lặp lại toàn bộ bài. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space từng ý; HS tự đánh dấu ✓ vào ý đã có trong vở và chỉ bổ sung ý thiếu. Câu hỏi gợi mở: Trong 4 ý, ý nào giúp em tránh kết luận vội nhất? Ý nào giúp em mô tả AI chính xác hơn? Dự kiến: 'chưa đủ thông tin' giúp tránh đoán; 'tính năng + chức năng' giúp nói chính xác. Chốt: Không cần chép lại toàn bộ nếu vở đã đủ." id="slide-13">
-<div class="label">CHỐT KIẾN THỨC</div>
-<h1>TỔNG HỢP 4 Ý CỐT LÕI</h1>
-<div class="subtitle">Đối chiếu với các phần em đã ghi — không cần chép lại nếu đã đủ.</div>
-<div class="note-grid">
-<div class="note-card fragment"><span>1</span><p>AI xuất hiện trong nhiều <b>tính năng</b>: dịch ngôn ngữ, nhận diện, gợi ý, dự đoán giao thông, chatbot…</p></div>
-<div class="note-card fragment"><span>2</span><p>Không phải mọi thiết bị điện tử, tự động, có cảm biến hoặc “thông minh” đều có AI.</p></div>
-<div class="note-card fragment"><span>3</span><p>Một số tính năng AI hỗ trợ <b>nhận dạng, xử lí ngôn ngữ, dự đoán/gợi ý, tạo nội dung</b>.</p></div>
-<div class="note-card fragment"><span>4</span><p>Khi chưa đủ thông tin, cần <b>tìm hiểu thêm</b> thay vì đoán theo vẻ ngoài.</p></div>
-</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">15 / 17</div>
-</section><section class="page" data-document-role="page" data-index="15" data-label="TRƯỚC KHI RA VỀ…" data-speaker-notes="Mục tiêu: Đánh giá nhanh ba yêu cầu chính: nêu ví dụ, mô tả chức năng, giải thích bằng căn cứ. Thời lượng: 2 phút. Cách tổ chức: HS trả lời cá nhân; câu 1–2 có thể viết cùng một ví dụ, câu 3 bắt buộc có từ 'quy tắc/công thức' hoặc diễn đạt tương đương. Câu hỏi gợi mở: Nếu một HS trả lời 'camera là AI', em sẽ yêu cầu bạn bổ sung gì? Dự kiến: Bổ sung tính năng cụ thể như nhận diện khuôn mặt/vật thể. Đáp án: Câu 3 — Không; tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh AI. Sai lầm thường gặp: Chỉ trả lời 'không' mà không nêu lí do. Cách xử lí: Yêu cầu hoàn thành mẫu 'Không, vì…'." id="slide-14">
-<div class="label">EXIT TICKET • 3 CÂU</div>
-<h1>TRƯỚC KHI RA VỀ…</h1>
-<div class="subtitle">Ba câu kiểm tra xem em đã nắm được cách nhận diện AI chưa.</div>
+<div class="subtitle">Ghi lại một ví dụ của chính em bằng <b>tên tính năng + phân loại + căn cứ</b>.</div>
+<div class="worksheet"><div class="field"><b>Tên tính năng / công cụ</b><input class="hunt-input" id="huntName" placeholder="Ví dụ: mở khóa bằng khuôn mặt" type="text"/></div><div class="field"><b>Chức năng em quan sát được</b><textarea class="hunt-input" id="huntFunc" placeholder="Ví dụ: camera quét khuôn mặt để xác minh người dùng" rows="2"></textarea></div><div class="field"><b>Em phân loại</b><select class="hunt-input" id="huntClass"><option value="Có AI">Có AI</option><option value="Không AI">Không AI</option><option value="Chưa đủ thông tin">Chưa đủ thông tin</option></select></div><div class="field"><b>Lí do / căn cứ</b><input class="hunt-input" id="huntWhy" placeholder="Em dựa vào dấu hiệu..." type="text"/></div></div>
+<div class="tip">Nếu chỉ viết “TV”, “camera”, “máy lạnh”… thì <b>chưa đủ</b>. Hãy nêu tính năng cụ thể. Không nhập họ tên hay dữ liệu cá nhân.</div>
+<div class="hunt-actions"><button class="action-btn primary" id="huntSave" type="button">Lưu ví dụ</button><button class="action-btn" id="huntClear" type="button">Xóa ô nhập</button><button class="action-btn" id="huntClearList" type="button">Xóa danh sách</button></div>
+<div class="hunt-list" id="huntList"><div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div></div>
+</section>
+<!-- SLIDE 9: EXIT TICKET -->
+<section class="page" data-index="9" data-label="EXIT TICKET" data-speaker-notes="Mục tiêu: Đánh giá nhanh ba năng lực: nêu ví dụ, mô tả chức năng và giải thích bằng căn cứ. Thời lượng: 3 phút. Cách tổ chức: HS trả lời cá nhân; chưa bấm gợi ý câu 3 cho đến khi lớp đã trả lời. Câu hỏi gợi mở: Nếu một bạn chỉ nói “Không AI” thì câu trả lời đã đủ chưa? Dự kiến: Chưa; phải nêu lí do là cảm biến kích hoạt quy tắc cố định. Sai lầm thường gặp: Trả lời Có/Không nhưng không có căn cứ. Cách xử lí: Yêu cầu hoàn thành mẫu “Không/Có, vì...”. Chốt: Điểm quan trọng nhất không phải nhãn, mà là căn cứ.">
+<div class="label">EXIT TICKET • TRƯỚC KHI RA VỀ</div>
+<h1>KIỂM TRA NHANH</h1>
+<div class="subtitle">Ba câu hỏi để xác nhận em đã biết cách quan sát như một Thám tử AI.</div>
 <div class="exit-grid">
-<div class="exit"><span>1</span><p>Kể tên một công cụ hoặc tính năng AI em từng gặp.</p></div>
-<div class="exit"><span>2</span><p>Tính năng đó hỗ trợ con người làm gì?</p></div>
-<div class="exit"><span>3</span><p>Một máy tính bỏ túi thông thường tính rất nhanh. Điều đó có đủ để khẳng định nó là AI không? Vì sao?</p></div>
+<div class="exit"><span>1</span><p>Kể tên một công cụ hoặc <b>tính năng AI</b> em từng gặp.</p></div>
+<div class="exit"><span>2</span><p>Tính năng đó sử dụng AI để <b>hỗ trợ con người làm gì</b>?</p></div>
+<div class="exit"><span>3</span><p>Cửa siêu thị dùng cảm biến chuyển động: phát hiện chuyển động thì mở theo quy tắc cố định. Đây có phải ví dụ AI không? Vì sao?</p></div>
 </div>
-<button class="action-btn primary" id="exitReveal" type="button">Hiện gợi ý câu 3</button><div class="answer-strip manual-hidden" id="exitAnswer"><b>Gợi ý câu 3:</b> Không. Tính nhanh theo quy tắc/công thức đã lập trình chưa đủ để chứng minh có AI.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">16 / 17</div>
-</section><section class="page" data-document-role="page" data-index="16" data-label="BẢN ĐỒ “THÁM TỬ AI”" data-speaker-notes="Mục tiêu: Đóng bài bằng quy trình hành động ngắn, dễ nhớ. Thời lượng: 1 phút. Cách tổ chức: Nhấn Space hiện từng nút; mời 2 HS hoàn thành câu 'Khi gặp một thiết bị lạ, em sẽ…'. Câu hỏi gợi mở: Bước nào quan trọng nhất để tránh đoán? Có trường hợp nào em dừng ở 'chưa đủ thông tin' không? Dự kiến: Cần xem chức năng và tìm căn cứ; có thể dừng khi mô tả sản phẩm quá chung. Chốt: Quan sát → xem chức năng → tìm căn cứ → nếu chưa rõ, nói 'chưa đủ thông tin'. Dặn dò: Tìm ở nhà 1 tính năng có AI và 1 trường hợp chưa chắc có AI; ghi tên tính năng – chức năng – lí do." id="slide-15">
-<div class="label">MINDMAP • CUỐI BÀI</div>
+<button class="action-btn primary" id="exitReveal" style="margin-top:20px;" type="button">Hiện gợi ý câu 3</button>
+<div class="answer-strip manual-hidden" id="exitAnswer"><b>Gợi ý câu 3:</b> Không. Trong mô tả này, cảm biến chỉ phát hiện chuyển động rồi kích hoạt quy tắc mở cửa; chưa có căn cứ về chức năng AI.</div>
+</section>
+<!-- SLIDE 10: SƠ ĐỒ TƯ DUY -->
+<section class="page" data-index="10" data-label="SƠ ĐỒ TƯ DUY TƯƠNG TÁC" data-speaker-notes="Mục tiêu: Chốt bài bằng một quy trình hành động mà HS tự hoàn thiện. Thời lượng: 3 phút. Cách tổ chức: Cho HS chọn 4 ô; bấm Kiểm tra. Nếu chưa đúng hết, không đọc đáp án ngay; hỏi nhóm bên cạnh giải thích một ô. Câu hỏi gợi mở: Bước nào giúp em tránh kết luận vội nhất? Vì sao “Wi-Fi” không nằm trong 4 nhóm chức năng? Dự kiến: “Chưa đủ thông tin” là bước giúp tránh đoán; Wi-Fi chỉ là kết nối, không tự chứng minh AI. Chốt: Quan sát → xem chức năng → tìm căn cứ → nếu chưa rõ, nói “Chưa đủ thông tin”. Dặn dò: Tìm ở nhà 1 tính năng có AI và 1 thiết bị chưa đủ thông tin; ghi tên tính năng – chức năng – căn cứ.">
+<div class="label">MINDMAP TỔNG KẾT • TƯƠNG TÁC</div>
 <h1>BẢN ĐỒ “THÁM TỬ AI”</h1>
-<div class="subtitle">Một quy trình 3 bước để không bị đánh lừa bởi vẻ ngoài.</div>
-<div class="mind">
+<div class="subtitle">Chọn cụm từ phù hợp để hoàn thiện 4 bước.</div>
+<div class="mind mind-interactive">
 <div class="mind-center">ĐÂU LÀ<br/>AI?</div>
-<div class="mind-node n1 fragment"><b>1. QUAN SÁT</b><small>Tên/hình dạng chưa đủ</small></div>
-<div class="mind-node n2 fragment"><b>2. XEM CHỨC NĂNG</b><small>Công cụ đang làm gì?</small></div>
-<div class="mind-node n3 fragment"><b>3. TÌM CĂN CỨ</b><small>Nhận dạng • ngôn ngữ • dự đoán • tạo nội dung</small></div>
-<div class="mind-node n4 fragment"><b>NẾU CHƯA RÕ</b><small>Nói “Chưa đủ thông tin”</small></div>
+<div class="mind-node n1"><b>1. QUAN SÁT</b><small>Tên / hình dáng là<select class="mind-select" data-correct="chua-du"><option value="">-- chọn --</option><option value="du">đủ để kết luận</option><option value="chua-du">chưa đủ</option><option value="ai">chắc chắn AI</option></select></small></div>
+<div class="mind-node n2"><b>2. XEM CHỨC NĂNG</b><small>Công cụ đang<select class="mind-select" data-correct="lam-gi"><option value="">-- chọn --</option><option value="ten-gi">tên gì</option><option value="lam-gi">làm gì</option><option value="gia-bao-nhieu">giá bao nhiêu</option></select></small></div>
+<div class="mind-node n3"><b>3. TÌM CĂN CỨ</b><small>Nhận dạng • Ngôn ngữ •<select class="mind-select" data-correct="goi-y"><option value="">-- chọn --</option><option value="goi-y">Dự đoán/gợi ý</option><option value="wifi">Wi-Fi</option><option value="cam-bien">Cảm biến</option></select>• Tạo nội dung</small></div>
+<div class="mind-node n4"><b>NẾU CHƯA RÕ...</b><small>Chọn<select class="mind-select" data-correct="chua-du-tt"><option value="">-- chọn --</option><option value="co-ai">Có AI</option><option value="khong-ai">Không AI</option><option value="chua-du-tt">Chưa đủ thông tin</option></select></small></div>
 </div>
-<div class="final-message fragment">Không đoán AI theo vẻ ngoài. Hãy xem <b>tính năng cụ thể</b>, tìm căn cứ và sẵn sàng nói “chưa đủ thông tin”.</div>
-<div style="position:absolute;right:42px;bottom:24px;font-size:13px;color:#7C95A7;font-weight:800">17 / 17</div>
-</section></div></main><nav aria-label="Điều khiển bài giảng" class="toolbar"><button class="tool-btn" id="prevBtn" title="Slide trước" type="button">←</button><button class="tool-btn" id="nextBtn" title="Slide sau" type="button">→</button><button class="tool-btn" id="revealBtn" title="Hiện nội dung tiếp theo" type="button">✦</button><button class="tool-btn" id="notesBtn" title="Ghi chú giáo viên" type="button">GV</button><button class="tool-btn" id="overviewBtn" title="Tổng quan slide" type="button">▦</button><button class="tool-btn" id="laserBtn" title="Laser Pointer" type="button">●</button><button class="tool-btn" id="fullBtn" title="Toàn màn hình" type="button">⛶</button><button class="tool-btn" id="resetSlideBtn" title="Làm lại slide hiện tại" type="button">↺</button><button class="tool-btn timer-btn" id="timerBtn" title="Bấm: chạy/tạm dừng • Nhấp đúp: đặt lại 45 phút" type="button">⏱ 45:00</button><div id="slideTitle"></div><div id="counter"></div></nav></div><aside id="notesDrawer"><div class="notes-head"><div id="notesSlideTitle"></div><button class="notes-close" id="notesClose" type="button">×</button></div><div class="notes-body" id="notesBody"></div></aside><div id="overviewOverlay"><div class="overview-card"><div class="overview-head"><h2>Tổng quan bài giảng</h2><button class="notes-close" id="overviewClose" type="button">×</button></div><div class="overview-grid" id="overviewGrid"></div></div></div><div id="laserDot"></div><div id="toast"></div><script>
-(function(){
-  'use strict';
-  const slides=[...document.querySelectorAll('.page')];
-  const canvas=document.getElementById('slideCanvas'),stage=document.getElementById('stage');
-  const progressBar=document.getElementById('progressBar'),counter=document.getElementById('counter'),slideTitle=document.getElementById('slideTitle');
-  const notesBody=document.getElementById('notesBody'),notesSlideTitle=document.getElementById('notesSlideTitle');
-  const overview=document.getElementById('overviewOverlay'),overviewGrid=document.getElementById('overviewGrid');
-  let idx=0,laserOn=false,timerSeconds=45*60,timerId=null,timerRunning=false,toastId=null;
+<div class="mind-actions"><span id="mindStatus">Chưa kiểm tra</span><button class="action-btn primary" id="mindCheck" type="button">Kiểm tra sơ đồ</button><button class="action-btn" id="mindReset" type="button">Làm lại</button></div>
+<div class="final-message manual-hidden" id="mindFinal">Không đoán AI theo vẻ ngoài. Hãy xem <b>tính năng cụ thể</b>, tìm căn cứ và sẵn sàng nói <b>“Chưa đủ thông tin”</b>.</div>
+</section>
+</div>
+</main>
+<nav aria-label="Điều khiển bài giảng" class="toolbar">
+<button class="tool-btn" id="prevBtn" title="Slide trước" type="button">←</button>
+<button class="tool-btn" id="nextBtn" title="Slide sau" type="button">→</button>
+<button class="tool-btn" id="revealBtn" title="Hiện nội dung tiếp theo" type="button">✦</button>
+<button class="tool-btn" id="notesBtn" title="Ghi chú giáo viên" type="button">GV</button>
+<button class="tool-btn" id="overviewBtn" title="Tổng quan slide" type="button">▦</button>
+<button class="tool-btn" id="laserBtn" title="Laser pointer" type="button">●</button>
+<button class="tool-btn" id="resetSlideBtn" title="Làm lại slide hiện tại" type="button">↺</button>
+<button class="tool-btn timer-btn" id="timerBtn" title="Bấm: chạy/tạm dừng • Nhấp đúp: đặt lại 45 phút" type="button">⏱ 45:00</button>
+<button class="tool-btn" id="fullBtn" title="Toàn màn hình" type="button">⛶</button>
+<div id="slideTitle"></div><div id="counter"></div>
+</nav>
+</div>
+<aside id="notesDrawer"><div class="notes-head"><div id="notesSlideTitle"></div><button class="notes-close" id="notesClose" type="button">×</button></div><div class="notes-body" id="notesBody"></div></aside>
+<div id="overviewOverlay"><div class="overview-card"><div class="overview-head"><h2>Tổng quan bài giảng</h2><button class="notes-close" id="overviewClose" type="button">×</button></div><div class="overview-grid" id="overviewGrid"></div></div></div>
+<div id="laserDot"></div><div id="toast"></div>
 
-  const $=id=>document.getElementById(id);
-  function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastId);toastId=setTimeout(()=>t.classList.remove('show'),1700)}
-  function scaleStage(){
-    const reserve=document.body.classList.contains('notes-open')&&window.innerWidth>850?390:0;
-    const w=Math.max(320,stage.clientWidth-reserve-20),h=Math.max(220,stage.clientHeight-20);
-    const s=Math.min(w/1280,h/720);
-    canvas.style.transform=`scale(${s})`;
-  }
-  window.addEventListener('resize',scaleStage);
-
-  function initFragments(){document.querySelectorAll('.fragment').forEach(x=>x.classList.add('fragment-hidden'))}
-  function revealNext(){
-    const hidden=[...slides[idx].querySelectorAll('.fragment.fragment-hidden')];
-    if(hidden.length){const x=hidden[0];x.classList.remove('fragment-hidden');x.classList.add('fragment-show');setTimeout(()=>x.classList.remove('fragment-show'),450);return true}
-    return false;
-  }
-  function updateNav(){
-    $('prevBtn').disabled=idx===0;$('nextBtn').disabled=idx===slides.length-1;
-    const hidden=slides[idx].querySelector('.fragment.fragment-hidden');$('revealBtn').classList.toggle('on',!!hidden);
-  }
-  function show(i){
-    idx=Math.max(0,Math.min(slides.length-1,i));
-    slides.forEach((s,n)=>s.classList.toggle('active',n===idx));
-    progressBar.style.width=((idx+1)/slides.length*100)+'%';
-    counter.textContent=`${idx+1} / ${slides.length}`;
-    slideTitle.textContent=slides[idx].dataset.label||'';
-    updateNotes();updateNav();highlightOverview();
-  }
-  function next(){if(!revealNext())show(idx+1)} function prev(){show(idx-1)}
-
-  function formatNotes(text){
-    const labels=['Mục tiêu','Thời lượng','Cách tổ chức','Câu hỏi gợi mở','Câu hỏi','Dự kiến','Sai lầm thường gặp','Cách xử lí','Đáp án/chốt','Đáp án','Chốt','Lưu ý','Chuyển ý','Dặn dò','Hỏi nhanh','Sửa câu 1'];
-    let out=text;
-    labels.forEach(k=>{out=out.replace(new RegExp(k.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+':','g'),'§'+k+':')});
-    return out.split('§').filter(Boolean).map(part=>{
-      const pos=part.indexOf(':');
-      if(pos>0){return `<div class="note-section"><b>${part.slice(0,pos)}:</b>${part.slice(pos+1)}</div>`}
-      return `<div class="note-section">${part}</div>`;
-    }).join('');
-  }
-  function updateNotes(){
-    const s=slides[idx];notesSlideTitle.textContent=`${idx+1}. ${s.dataset.label||'Slide'}`;
-    notesBody.innerHTML=formatNotes(s.dataset.speakerNotes||'Chưa có ghi chú.');
-  }
-  function toggleNotes(force){const on=force!==undefined?force:!document.body.classList.contains('notes-open');document.body.classList.toggle('notes-open',on);$('notesBtn').classList.toggle('on',on);setTimeout(scaleStage,260)}
-
-  function buildOverview(){
-    overviewGrid.innerHTML='';slides.forEach((s,i)=>{const b=document.createElement('button');b.className='overview-item';b.innerHTML=`<strong>SLIDE ${String(i+1).padStart(2,'0')}</strong><span>${s.dataset.label||''}</span>`;b.addEventListener('click',()=>{show(i);overview.classList.remove('show')});overviewGrid.appendChild(b)});
-  }
-  function highlightOverview(){[...overviewGrid.children].forEach((x,i)=>x.classList.toggle('current',i===idx))}
-
-  function formatTime(sec){sec=Math.max(0,sec);return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
-  function timerUI(){const b=$('timerBtn');b.textContent='⏱ '+formatTime(timerSeconds);b.classList.toggle('running',timerRunning&&timerSeconds>300);b.classList.toggle('warning',timerSeconds<=300&&timerSeconds>60);b.classList.toggle('danger',timerSeconds<=60)}
-  function pauseTimer(){timerRunning=false;if(timerId){clearInterval(timerId);timerId=null}timerUI()}
-  function resetTimer(){pauseTimer();timerSeconds=45*60;timerUI();toast('Đã đặt lại đồng hồ 45 phút')}
-  function toggleTimer(){if(timerRunning){pauseTimer();toast('Đã tạm dừng đồng hồ');return}timerRunning=true;timerUI();timerId=setInterval(()=>{timerSeconds--;if(timerSeconds<=0){timerSeconds=0;pauseTimer();toast('Hết 45 phút')}timerUI()},1000)}
-
-  function resetSlide(){
-    const s=slides[idx];s.querySelectorAll('.fragment').forEach(x=>{x.classList.add('fragment-hidden');x.classList.remove('fragment-show')});
-    s.querySelectorAll('.mini-choice,.quiz-option,.tf-btn').forEach(x=>x.classList.remove('selected','good','bad'));
-    s.querySelectorAll('.answer-label').forEach(x=>x.style.display='none');s.querySelectorAll('.card-feedback').forEach(x=>x.classList.remove('show'));
-    s.querySelectorAll('.quiz-feedback').forEach(x=>{x.textContent='Chọn một đáp án.';x.classList.remove('ok','err')});s.querySelectorAll('.tf-feedback').forEach(x=>x.textContent='');
-    if(s.id==='slide-3'){warmSelections.clear();s.querySelectorAll('.scenario').forEach(x=>x.classList.remove('graded'));if($('warmCheck'))$('warmCheck').textContent='Chấm / Hiện đáp án';updateWarmStatus()}
-    if(s.id==='slide-8'){detSelections.clear();updateDetStatus()}
-    if(s.id==='slide-14'){$('exitAnswer')?.classList.add('manual-hidden');$('exitAnswer')?.classList.remove('revealed')}
-    updateNav();toast('Đã làm lại slide hiện tại');
-  }
-
-  // Laser
-  document.addEventListener('pointermove',e=>{if(laserOn){const d=$('laserDot');d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'}});
-  $('laserBtn').addEventListener('click',()=>{laserOn=!laserOn;$('laserDot').style.display=laserOn?'block':'none';$('laserBtn').classList.toggle('on',laserOn)});
-
-  // Toolbar
-  $('prevBtn').addEventListener('click',prev);$('nextBtn').addEventListener('click',next);$('revealBtn').addEventListener('click',()=>{if(!revealNext())toast('Slide này không còn nội dung ẩn')});
-  $('notesBtn').addEventListener('click',()=>toggleNotes());$('notesClose').addEventListener('click',()=>toggleNotes(false));
-  $('overviewBtn').addEventListener('click',()=>{overview.classList.add('show');highlightOverview()});$('overviewClose').addEventListener('click',()=>overview.classList.remove('show'));overview.addEventListener('click',e=>{if(e.target===overview)overview.classList.remove('show')});
-  $('fullBtn').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()});
-  $('resetSlideBtn').addEventListener('click',resetSlide);$('timerBtn').addEventListener('click',toggleTimer);$('timerBtn').addEventListener('dblclick',e=>{e.preventDefault();resetTimer()});
-
-  // Warmup
-  const warmSelections=new Map();
-  function updateWarmStatus(){const e=$('warmStatus');if(e)e.textContent=`Đã chọn ${warmSelections.size}/6`}
-  document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');warmSelections.set(i,btn.dataset.value);updateWarmStatus()}))});
-  $('warmCheck')?.addEventListener('click',()=>{
-    if(warmSelections.size<6){
-      toast(`Còn ${6-warmSelections.size} thẻ chưa chọn`);
-      return;
-    }
-    let score=0;
-    document.querySelectorAll('#slide-3 .scenario').forEach((card,i)=>{
-      const label=card.querySelector('.answer-label');
-      const correct=label.classList.contains('ai')?'ai':label.classList.contains('no')?'no':'unk';
-      const chosen=warmSelections.get(i);
-      const btn=card.querySelector(`.mini-choice[data-value="${chosen}"]`);
-      card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('good','bad'));
-      if(btn){
-        btn.classList.add(chosen===correct?'good':'bad');
-        if(chosen===correct)score++;
-      }
-      label.style.display='inline-block';
-      card.querySelector('.card-feedback').classList.add('show');
-      card.classList.add('graded');
-    });
-    $('warmStatus').textContent=`Kết quả ${score}/6 • Giải thích bằng căn cứ`;
-    $('warmCheck').textContent='Chấm lại / Hiện đáp án';
-    toast(`Kết quả ${score}/6`);
-  });
-  $('warmReset')?.addEventListener('click',()=>{
-    warmSelections.clear();
-    document.querySelectorAll('#slide-3 .scenario').forEach(card=>{
-      card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));
-      card.querySelector('.answer-label').style.display='none';
-      card.querySelector('.card-feedback').classList.remove('show');
-      card.classList.remove('graded');
-    });
-    $('warmCheck').textContent='Chấm / Hiện đáp án';
-    updateWarmStatus();
-  });
-
-  // Detective
-  const detSelections=new Map();
-  function updateDetStatus(){const e=$('detStatus');if(e)e.textContent=`Đã chọn ${detSelections.size}/8`}
-  document.querySelectorAll('#slide-8 .detect-grid > div').forEach((card,i)=>{card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');detSelections.set(i,btn.dataset.value);updateDetStatus()}))});
-  $('detCheck')?.addEventListener('click',()=>{if(detSelections.size<8){toast(`Còn ${8-detSelections.size} tình huống chưa chọn`);return}let score=0;document.querySelectorAll('#slide-8 .detect-grid > div').forEach((card,i)=>{const label=card.querySelector('.answer-label');const correct=label.classList.contains('pill-ai')?'ai':label.classList.contains('pill-no')?'no':'unk';const chosen=detSelections.get(i);const btn=card.querySelector(`.mini-choice[data-value="${chosen}"]`);btn.classList.add(chosen===correct?'good':'bad');if(chosen===correct)score++;label.style.display='inline-block';card.querySelector('.card-feedback').classList.add('show')});$('detStatus').textContent=`Kết quả ${score}/8 • Hãy giải thích ít nhất 1 trường hợp`;toast('Đã chấm 8 tình huống')});
-  $('detReset')?.addEventListener('click',()=>{detSelections.clear();document.querySelectorAll('#slide-8 .detect-grid > div').forEach(card=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));card.querySelector('.answer-label').style.display='none';card.querySelector('.card-feedback').classList.remove('show')});updateDetStatus()});
-
-  // Quiz
-  document.querySelectorAll('.quiz-card').forEach(card=>{card.querySelectorAll('.quiz-option').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.quiz-option').forEach(b=>b.classList.remove('good','bad'));const ok=btn.dataset.correct==='1';btn.classList.add(ok?'good':'bad');const fb=card.querySelector('.quiz-feedback');fb.textContent=ok?fb.dataset.ok:fb.dataset.bad;fb.classList.toggle('ok',ok);fb.classList.toggle('err',!ok)}))});
-
-  // True / False
-  document.querySelectorAll('.tf').forEach(row=>{row.querySelectorAll('.tf-btn').forEach(btn=>btn.addEventListener('click',()=>{row.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('good','bad'));const ok=btn.dataset.correct==='1';btn.classList.add(ok?'good':'bad');row.querySelector('.tf-feedback').textContent=(ok?'✓ Chính xác. ':'✗ Chưa đúng. ')+row.querySelector('.tf-feedback').dataset.explain}))});
-
-  // Hunt AI - local only
-  const huntKey='ai6_canva_interactive_hunts_v1';
-  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function loadHunts(){try{return JSON.parse(localStorage.getItem(huntKey)||'[]')}catch(e){return[]}}
-  function renderHunts(){const box=$('huntList'),arr=loadHunts();box.innerHTML=arr.length?arr.map(x=>`<div class="hunt-item"><b>${escapeHtml(x.name)}</b> — ${escapeHtml(x.cls)}<small>${escapeHtml(x.func)}<br><b>Căn cứ:</b> ${escapeHtml(x.why)}</small></div>`).join(''):'<div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div>'}
-  function clearHunt(){['huntName','huntFunc','huntWhy'].forEach(id=>$(id).value='');$('huntClass').selectedIndex=0}
-  $('huntSave')?.addEventListener('click',()=>{const name=$('huntName').value.trim(),func=$('huntFunc').value.trim(),cls=$('huntClass').value,why=$('huntWhy').value.trim();if(!name||!func||!why){toast('Hãy nhập đủ tên, chức năng và căn cứ');return}const arr=loadHunts();arr.unshift({name,func,cls,why});localStorage.setItem(huntKey,JSON.stringify(arr.slice(0,8)));renderHunts();clearHunt();toast('Đã lưu ví dụ trên máy này')});$('huntClear')?.addEventListener('click',clearHunt);renderHunts();
-
-  // Exit ticket
-  $('exitReveal')?.addEventListener('click',()=>{const a=$('exitAnswer');a.classList.remove('manual-hidden');a.classList.add('revealed')});
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown',e=>{
-    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;
-    if(overview.classList.contains('show')){if(e.key==='Escape')overview.classList.remove('show');return}
-    if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();next();return}
-    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();return}
-    if(e.code==='Space'){e.preventDefault();if(!revealNext())show(idx+1);return}
-    if(e.key==='Home'){show(0);return}if(e.key==='End'){show(slides.length-1);return}
-    if(e.key.toLowerCase()==='g'){toggleNotes();return}if(e.key.toLowerCase()==='o'){overview.classList.add('show');return}
-    if(e.key.toLowerCase()==='l'){$('laserBtn').click();return}if(e.key.toLowerCase()==='r'){resetSlide();return}
-    if(e.key.toLowerCase()==='f'){$('fullBtn').click();return}if(e.key==='Escape'&&document.body.classList.contains('notes-open'))toggleNotes(false);
-  });
-
-  buildOverview();initFragments();timerUI();show(0);scaleStage();
-})();
-</script></body></html>
+<script>(function(){
+'use strict';
+const slides=[...document.querySelectorAll('.page')],canvas=document.getElementById('slideCanvas'),stage=document.getElementById('stage');
+const progressBar=document.getElementById('progressBar'),counter=document.getElementById('counter'),slideTitle=document.getElementById('slideTitle');
+const notesBody=document.getElementById('notesBody'),notesSlideTitle=document.getElementById('notesSlideTitle'),overview=document.getElementById('overviewOverlay'),overviewGrid=document.getElementById('overviewGrid');
+let idx=0,laserOn=false,timerSeconds=45*60,timerId=null,timerRunning=false,toastId=null;const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toastId);toastId=setTimeout(()=>t.classList.remove('show'),1600)}
+function scaleStage(){const reserve=document.body.classList.contains('notes-open')&&window.innerWidth>900?390:0;const w=Math.max(320,stage.clientWidth-reserve-20),h=Math.max(220,stage.clientHeight-20);canvas.style.transform=`scale(${Math.min(w/1280,h/720)})`}window.addEventListener('resize',scaleStage);
+function initFragments(){document.querySelectorAll('.fragment').forEach(x=>x.classList.add('fragment-hidden'))}
+function revealNext(){const hidden=[...slides[idx].querySelectorAll('.fragment.fragment-hidden')];if(hidden.length){const x=hidden[0];x.classList.remove('fragment-hidden');x.classList.add('fragment-show');setTimeout(()=>x.classList.remove('fragment-show'),420);return true}return false}
+function updateNav(){$('prevBtn').disabled=idx===0;$('nextBtn').disabled=idx===slides.length-1;$('revealBtn').classList.toggle('on',!!slides[idx].querySelector('.fragment.fragment-hidden'))}
+function show(i){idx=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>s.classList.toggle('active',n===idx));progressBar.style.width=((idx+1)/slides.length*100)+'%';counter.textContent=`${idx+1} / ${slides.length}`;slideTitle.textContent=slides[idx].dataset.label||'';updateNotes();updateNav();highlightOverview()}
+function next(){if(!revealNext())show(idx+1)}function prev(){show(idx-1)}
+function formatNotes(text){const labels=['Mục tiêu','Thời lượng','Cách tổ chức','Câu hỏi gợi mở','Dự kiến','Sai lầm thường gặp','Cách xử lí','Chốt','Chuyển ý','Dặn dò'];let out=text||'Chưa có ghi chú.';labels.forEach(k=>{out=out.replace(new RegExp(k+':','g'),'§'+k+':')});return out.split('§').filter(Boolean).map(part=>{const p=part.indexOf(':');return p>0?`<div class="note-section"><b>${part.slice(0,p)}:</b>${part.slice(p+1)}</div>`:`<div class="note-section">${part}</div>`}).join('')}
+function updateNotes(){const s=slides[idx];notesSlideTitle.textContent=`${idx+1}. ${s.dataset.label||'Slide'}`;notesBody.innerHTML=formatNotes(s.dataset.speakerNotes||'Chưa có ghi chú.')}
+function toggleNotes(force){const on=force!==undefined?force:!document.body.classList.contains('notes-open');document.body.classList.toggle('notes-open',on);$('notesBtn').classList.toggle('on',on);setTimeout(scaleStage,260)}
+function buildOverview(){overviewGrid.innerHTML='';slides.forEach((s,i)=>{const b=document.createElement('button');b.className='overview-item';b.innerHTML=`<strong>SLIDE ${String(i+1).padStart(2,'0')}</strong><span>${s.dataset.label||''}</span>`;b.addEventListener('click',()=>{show(i);overview.classList.remove('show')});overviewGrid.appendChild(b)})}
+function highlightOverview(){[...overviewGrid.children].forEach((x,i)=>x.classList.toggle('current',i===idx))}
+function formatTime(sec){sec=Math.max(0,sec);return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
+function timerUI(){const b=$('timerBtn');b.textContent='⏱ '+formatTime(timerSeconds);b.classList.toggle('running',timerRunning&&timerSeconds>300);b.classList.toggle('warning',timerSeconds<=300&&timerSeconds>60);b.classList.toggle('danger',timerSeconds<=60)}
+function pauseTimer(){timerRunning=false;if(timerId){clearInterval(timerId);timerId=null}timerUI()}function resetTimer(){pauseTimer();timerSeconds=45*60;timerUI();toast('Đã đặt lại 45 phút')}function toggleTimer(){if(timerRunning){pauseTimer();toast('Đã tạm dừng');return}timerRunning=true;timerUI();timerId=setInterval(()=>{timerSeconds--;if(timerSeconds<=0){timerSeconds=0;pauseTimer();toast('Hết 45 phút')}timerUI()},1000)}
+const warmSelections=new Map();function updateWarm(){if($('warmStatus'))$('warmStatus').textContent=`Đã chọn ${warmSelections.size}/6`}
+document.querySelectorAll('#slide-4 .scenario').forEach((card,i)=>card.querySelectorAll('.mini-choice').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');warmSelections.set(i,btn.dataset.value);updateWarm()})));
+$('warmCheck')?.addEventListener('click',()=>{if(warmSelections.size<6){toast(`Còn ${6-warmSelections.size} thẻ chưa chọn`);return}let score=0;document.querySelectorAll('#slide-4 .scenario').forEach((card,i)=>{const label=card.querySelector('.answer-label'),correct=label.classList.contains('ai')?'ai':label.classList.contains('no')?'no':'unk',chosen=warmSelections.get(i),btn=card.querySelector(`.mini-choice[data-value="${chosen}"]`);card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('good','bad'));const ok=chosen===correct;if(ok)score++;btn?.classList.add(ok?'good':'bad');label.style.display='inline-block';const fb=card.querySelector('.card-feedback'),reason=fb.dataset.reason||fb.textContent;fb.textContent=(ok?'✓ Chính xác. ':'✗ Chưa đúng. ')+reason;fb.classList.add('show')});$('warmStatus').textContent=`Kết quả ${score}/6 • Quan trọng hơn: giải thích được vì sao`;toast(`Kết quả ${score}/6`)});
+$('warmReset')?.addEventListener('click',()=>{warmSelections.clear();document.querySelectorAll('#slide-4 .scenario').forEach(card=>{card.querySelectorAll('.mini-choice').forEach(b=>b.classList.remove('selected','good','bad'));card.querySelector('.answer-label').style.display='none';const fb=card.querySelector('.card-feedback');fb.classList.remove('show');fb.textContent=fb.dataset.reason||fb.textContent.replace(/^.*?\. /,'')});updateWarm()});
+document.querySelectorAll('.discover-reveal').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.discover-card').classList.add('revealed')));
+const featureSelections=new Map();function updateFeature(){if($('featureStatus'))$('featureStatus').textContent=`Đã chọn ${featureSelections.size}/6`}
+document.querySelectorAll('.feature-quiz-card').forEach((card,i)=>card.querySelectorAll('.category-choices button').forEach(btn=>btn.addEventListener('click',()=>{card.querySelectorAll('.category-choices button').forEach(b=>b.classList.remove('selected','good','bad'));btn.classList.add('selected');featureSelections.set(i,btn.dataset.value);updateFeature()})));
+$('featureCheck')?.addEventListener('click',()=>{if(featureSelections.size<6){toast(`Còn ${6-featureSelections.size} thẻ chưa chọn`);return}let score=0;document.querySelectorAll('.feature-quiz-card').forEach((card,i)=>{const chosen=featureSelections.get(i),correct=card.dataset.correct,btn=card.querySelector(`button[data-value="${chosen}"]`),ok=chosen===correct;if(ok)score++;card.querySelectorAll('.category-choices button').forEach(b=>b.classList.remove('good','bad'));btn?.classList.add(ok?'good':'bad');card.classList.add('graded')});$('featureStatus').textContent=`Kết quả ${score}/6`;toast(`Phân loại đúng ${score}/6`)});
+$('featureReset')?.addEventListener('click',()=>{featureSelections.clear();document.querySelectorAll('.feature-quiz-card').forEach(card=>{card.classList.remove('graded');card.querySelectorAll('.category-choices button').forEach(b=>b.classList.remove('selected','good','bad'))});updateFeature()});
+document.querySelectorAll('.error-card .fix-btn').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();btn.closest('.error-card').classList.add('revealed')}));
+const huntKey='ai6_bai1_hunts_v2';function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function loadHunts(){try{return JSON.parse(localStorage.getItem(huntKey)||'[]')}catch(e){return[]}}
+function renderHunts(){const box=$('huntList'),arr=loadHunts();box.innerHTML=arr.length?arr.map(x=>`<div class="hunt-item"><b>${esc(x.name)}</b> — ${esc(x.cls)}<small>${esc(x.func)}<br><b>Căn cứ:</b> ${esc(x.why)}</small></div>`).join(''):'<div class="empty-state">Chưa có ví dụ nào được lưu trên máy này.</div>'}
+function clearHuntInputs(){['huntName','huntFunc','huntWhy'].forEach(id=>{if($(id))$(id).value=''});if($('huntClass'))$('huntClass').selectedIndex=0}
+$('huntSave')?.addEventListener('click',()=>{const name=$('huntName').value.trim(),func=$('huntFunc').value.trim(),cls=$('huntClass').value,why=$('huntWhy').value.trim();if(!name||!func||!why){toast('Hãy nhập đủ tên, chức năng và căn cứ');return}const arr=loadHunts();arr.unshift({name,func,cls,why});localStorage.setItem(huntKey,JSON.stringify(arr.slice(0,10)));renderHunts();clearHuntInputs();toast('Đã lưu ví dụ trên máy này')});$('huntClear')?.addEventListener('click',clearHuntInputs);$('huntClearList')?.addEventListener('click',()=>{if(confirm('Xóa toàn bộ ví dụ đã lưu trên máy này?')){localStorage.removeItem(huntKey);renderHunts();toast('Đã xóa danh sách')}});renderHunts();
+$('exitReveal')?.addEventListener('click',()=>{const a=$('exitAnswer');a.classList.remove('manual-hidden');a.classList.add('revealed')});
+$('mindCheck')?.addEventListener('click',()=>{const sels=[...document.querySelectorAll('.mind-select')];let score=0;sels.forEach(s=>{const ok=s.value===s.dataset.correct;s.classList.toggle('good',ok);s.classList.toggle('bad',!ok);if(ok)score++});$('mindStatus').textContent=`Đúng ${score}/${sels.length}`;if(score===sels.length){$('mindFinal').classList.remove('manual-hidden');$('mindFinal').classList.add('revealed');toast('Hoàn thành bản đồ Thám tử AI')}});$('mindReset')?.addEventListener('click',()=>{document.querySelectorAll('.mind-select').forEach(s=>{s.value='';s.classList.remove('good','bad')});$('mindStatus').textContent='Chưa kiểm tra';$('mindFinal').classList.add('manual-hidden');$('mindFinal').classList.remove('revealed')});
+function resetSlide(){const s=slides[idx];s.querySelectorAll('.fragment').forEach(x=>{x.classList.add('fragment-hidden');x.classList.remove('fragment-show')});if(s.id==='slide-4')$('warmReset')?.click();if(s.querySelector('#featureQuiz'))$('featureReset')?.click();s.querySelectorAll('.discover-card').forEach(c=>c.classList.remove('revealed'));s.querySelectorAll('.error-card').forEach(c=>c.classList.remove('revealed'));if(s.querySelector('#mindCheck'))$('mindReset')?.click();updateNav();toast('Đã làm lại slide hiện tại')}
+document.addEventListener('pointermove',e=>{if(laserOn){const d=$('laserDot');d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'}});$('laserBtn').addEventListener('click',()=>{laserOn=!laserOn;$('laserDot').style.display=laserOn?'block':'none';$('laserBtn').classList.toggle('on',laserOn)});
+$('prevBtn').addEventListener('click',prev);$('nextBtn').addEventListener('click',next);$('revealBtn').addEventListener('click',()=>{if(!revealNext())toast('Slide này không còn nội dung ẩn')});$('notesBtn').addEventListener('click',()=>toggleNotes());$('notesClose').addEventListener('click',()=>toggleNotes(false));$('overviewBtn').addEventListener('click',()=>{overview.classList.add('show');highlightOverview()});$('overviewClose').addEventListener('click',()=>overview.classList.remove('show'));overview.addEventListener('click',e=>{if(e.target===overview)overview.classList.remove('show')});$('resetSlideBtn').addEventListener('click',resetSlide);$('timerBtn').addEventListener('click',toggleTimer);$('timerBtn').addEventListener('dblclick',e=>{e.preventDefault();resetTimer()});$('fullBtn').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()});
+document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if(overview.classList.contains('show')){if(e.key==='Escape')overview.classList.remove('show');return}if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();next();return}if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();return}if(e.code==='Space'){e.preventDefault();if(!revealNext())show(idx+1);return}if(e.key.toLowerCase()==='g'){toggleNotes();return}if(e.key.toLowerCase()==='o'){overview.classList.add('show');highlightOverview();return}if(e.key.toLowerCase()==='l'){$('laserBtn').click();return}if(e.key.toLowerCase()==='r'){resetSlide();return}if(e.key.toLowerCase()==='f'){$('fullBtn').click();return}});
+buildOverview();initFragments();timerUI();show(0);scaleStage();
+})();</script>
+</body>
+</html>
