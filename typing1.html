@@ -803,9 +803,21 @@ function renderLesson() {
 
 function enableTyping() { els.input.disabled = false; els.input.focus(); }
 
+function ensureTimerStarted() {
+  if (!state.started && !state.completed) {
+    state.started = true;
+    state.startTime = performance.now();
+    startTimer();
+  }
+}
+
 els.input.addEventListener("paste", e => { e.preventDefault(); alert("Không được dán văn bản."); });
 els.input.addEventListener("drop", e => { e.preventDefault(); alert("Không được thả văn bản vào ô nhập."); });
-els.input.addEventListener("beforeinput", e => { if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") e.preventDefault(); });
+els.input.addEventListener("beforeinput", e => {
+  if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") { e.preventDefault(); return; }
+  // Bắt đầu tính giờ ngay từ thao tác nhập đầu tiên, kể cả khi đang dùng IME tiếng Việt.
+  if (String(e.inputType || "").startsWith("insert")) ensureTimerStarted();
+});
 
 // Quan trọng với bộ gõ tiếng Việt: không chấm các trạng thái trung gian khi IME đang ghép dấu.
 els.input.addEventListener("compositionstart", () => { state.isComposing = true; });
@@ -823,11 +835,7 @@ function processTypingInput() {
   const lessonText = lessons[state.currentLessonIndex].text;
   const normalizedValue = normalizeTypedValue(els.input.value);
 
-  if (!state.started && normalizedValue.length > 0) {
-    state.started = true;
-    state.startTime = performance.now();
-    startTimer();
-  }
+  if (!state.started && normalizedValue.length > 0) ensureTimerStarted();
 
   const comparison = compareTyping(normalizedValue, lessonText);
   updateTypingHistory(normalizedValue, comparison);
@@ -838,22 +846,46 @@ function processTypingInput() {
   updateTypingMessage(normalizedValue, lessonText, comparison, stats);
   updateLivePresence(stats);
 
-  if (stats.exact) finishGame();
+  if (stats.complete) finishGame();
 }
 
 function updateTypingHistory(value, comparison) {
   const oldValue = Array.from(state.previousTypedValue || "");
   const newValue = Array.from(value || "");
+
+  // Xác định đúng phần vừa được chèn/thay bằng tiền tố + hậu tố chung.
+  // Cách này xử lý được cả gõ ở giữa câu, chọn đoạn rồi thay, và IME sau compositionend.
   let prefix = 0;
   while (prefix < oldValue.length && prefix < newValue.length && oldValue[prefix] === newValue[prefix]) prefix++;
+
   let suffix = 0;
-  while (suffix < oldValue.length - prefix && suffix < newValue.length - prefix && oldValue[oldValue.length - 1 - suffix] === newValue[newValue.length - 1 - suffix]) suffix++;
-  const inserted = Math.max(0, newValue.length - prefix - suffix);
-  state.totalInserted = finiteNumber(state.totalInserted, 0) + inserted;
-  const currentErrors = Math.max(0, finiteNumber(comparison && comparison.errors, 0));
+  while (
+    suffix < oldValue.length - prefix &&
+    suffix < newValue.length - prefix &&
+    oldValue[oldValue.length - 1 - suffix] === newValue[newValue.length - 1 - suffix]
+  ) suffix++;
+
+  const insertedStart = prefix;
+  const insertedEnd = newValue.length - suffix;
+  const inserted = Math.max(0, insertedEnd - insertedStart);
+  state.totalInserted = Math.max(0, finiteNumber(state.totalInserted, 0)) + inserted;
+
+  // Chỉ tính lỗi cho các ký tự MỚI nhập sai tại thời điểm chúng được nhập.
+  // Không tăng lỗi chỉ vì một lỗi cũ làm lệch cả phần văn bản phía sau.
+  const typedStatuses = Array.isArray(comparison?.typedStatuses) ? comparison.typedStatuses : [];
+  let insertedMistakes = 0;
+  for (let i = insertedStart; i < insertedEnd; i++) {
+    if (typedStatuses[i] !== "correct") insertedMistakes++;
+  }
+
+  // Bổ sung phần tăng của khoảng cách chỉnh sửa để bắt lỗi "bỏ thiếu ký tự/đoạn".
+  // Dùng max thay vì cộng để một lỗi không bị tính hai lần.
+  const currentErrors = Math.max(0, finiteNumber(comparison?.errors, 0));
   const previousErrors = Math.max(0, finiteNumber(state.lastCurrentErrors, 0));
-  const errorIncrease = Math.max(0, currentErrors - previousErrors);
-  state.cumulativeMistakes = Math.max(0, finiteNumber(state.cumulativeMistakes, 0)) + errorIncrease;
+  const alignmentIncrease = Math.max(0, currentErrors - previousErrors);
+  const newMistakes = Math.max(insertedMistakes, alignmentIncrease);
+
+  state.cumulativeMistakes = Math.max(0, finiteNumber(state.cumulativeMistakes, 0)) + newMistakes;
   state.lastCurrentErrors = currentErrors;
   state.previousTypedValue = value;
 }
@@ -862,67 +894,123 @@ function normalizeTypedValue(value) {
   return String(value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").normalize("NFC");
 }
 
-function levenshteinDistance(a, b) {
-  const m = a.length, n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  let prev = Array.from({ length: n + 1 }, (_, i) => i);
-  let curr = new Array(n + 1);
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(
-        prev[j] + 1,       // thiếu/thừa một ký tự
-        curr[j - 1] + 1,
-        prev[j - 1] + cost // thay sai một ký tự
-      );
-    }
-    [prev, curr] = [curr, prev];
-  }
-  return prev[n];
-}
-
-function buildTargetStatuses(typed, expectedPrefix) {
-  const m=typed.length,n=expectedPrefix.length;
-  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
-  for(let i=0;i<=m;i++) dp[i][0]=i;
-  for(let j=0;j<=n;j++) dp[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) {
-    const cost=typed[i-1]===expectedPrefix[j-1]?0:1;
-    dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+cost);
-  }
-  const status=new Array(n).fill("incorrect");
-  let i=m,j=n;
-  while(i>0||j>0){
-    if(i>0&&j>0){
-      const cost=typed[i-1]===expectedPrefix[j-1]?0:1;
-      if(dp[i][j]===dp[i-1][j-1]+cost){status[j-1]=cost===0?"correct":"incorrect";i--;j--;continue;}
-    }
-    if(i>0&&dp[i][j]===dp[i-1][j]+1){i--;continue;}
-    if(j>0){status[j-1]="incorrect";j--;continue;}
-  }
-  return status;
-}
-
+/*
+ * Căn chỉnh toàn bộ chuỗi đang gõ với MỘT TIỀN TỐ tối ưu của bài mẫu.
+ * Khác bản cũ chỉ dò ±4 ký tự, thuật toán này vẫn theo đúng vị trí khi học sinh
+ * thiếu/thừa nhiều ký tự. Ma trận được tính một lần cho mỗi lần input và đồng
+ * thời tạo trạng thái cho cả ký tự mẫu lẫn ký tự học sinh đã gõ.
+ */
 function compareTyping(value, target) {
-  const typed = Array.from(value);
-  const expected = Array.from(target);
-  if (!typed.length) return { typedLength:0, correct:0, errors:0, alignedTargetLength:0, targetStatuses:[] };
+  const typed = Array.from(value || "");
+  const expected = Array.from(target || "");
+  const m = typed.length, n = expected.length;
 
-  const radius = 4;
-  const from = Math.max(0, typed.length - radius);
-  const to = Math.min(expected.length, typed.length + radius);
-  let bestDistance = Infinity, bestTargetLength = Math.min(typed.length, expected.length);
-  for (let len=from; len<=to; len++) {
-    const distance=levenshteinDistance(typed, expected.slice(0,len));
-    const better=distance<bestDistance || (distance===bestDistance && Math.abs(len-typed.length)<Math.abs(bestTargetLength-typed.length));
-    if(better){bestDistance=distance;bestTargetLength=len;}
+  if (!m) {
+    return {
+      typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0,
+      targetStatuses: [], typedStatuses: []
+    };
   }
-  const errors=Math.max(0,bestDistance);
-  const correct=Math.max(0,typed.length-errors);
-  const targetStatuses=buildTargetStatuses(typed,expected.slice(0,bestTargetLength));
-  return {typedLength:typed.length,correct,errors,alignedTargetLength:bestTargetLength,targetStatuses};
+
+  // dp = số phép sửa ít nhất; matches = số ký tự đúng nhiều nhất trong các
+  // cách căn chỉnh có cùng số phép sửa. Tiêu chí phụ này rất quan trọng khi
+  // học sinh bỏ thiếu cả một đoạn: ta vẫn bắt lại đúng phần văn bản phía sau.
+  const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+  const matches = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const isMatch = typed[i - 1] === expected[j - 1];
+      const subCost = isMatch ? 0 : 1;
+
+      let bestCost = dp[i - 1][j - 1] + subCost;
+      let bestMatches = matches[i - 1][j - 1] + (isMatch ? 1 : 0);
+
+      const insertCost = dp[i - 1][j] + 1;
+      const insertMatches = matches[i - 1][j];
+      if (insertCost < bestCost || (insertCost === bestCost && insertMatches > bestMatches)) {
+        bestCost = insertCost;
+        bestMatches = insertMatches;
+      }
+
+      const deleteCost = dp[i][j - 1] + 1;
+      const deleteMatches = matches[i][j - 1];
+      if (deleteCost < bestCost || (deleteCost === bestCost && deleteMatches > bestMatches)) {
+        bestCost = deleteCost;
+        bestMatches = deleteMatches;
+      }
+
+      dp[i][j] = bestCost;
+      matches[i][j] = bestMatches;
+    }
+  }
+
+  let bestTargetLength = 0;
+  let bestDistance = dp[m][0];
+  let bestMatches = matches[m][0];
+  for (let j = 1; j <= n; j++) {
+    const distance = dp[m][j];
+    const matchCount = matches[m][j];
+    const currentGap = Math.abs(bestTargetLength - m);
+    const newGap = Math.abs(j - m);
+    if (
+      distance < bestDistance ||
+      (distance === bestDistance && matchCount > bestMatches) ||
+      (distance === bestDistance && matchCount === bestMatches && newGap < currentGap) ||
+      (distance === bestDistance && matchCount === bestMatches && newGap === currentGap && j > bestTargetLength)
+    ) {
+      bestDistance = distance;
+      bestMatches = matchCount;
+      bestTargetLength = j;
+    }
+  }
+
+  const targetStatuses = new Array(bestTargetLength).fill("incorrect");
+  const typedStatuses = new Array(m).fill("incorrect");
+  let i = m, j = bestTargetLength;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0) {
+      const isMatch = typed[i - 1] === expected[j - 1];
+      const subCost = isMatch ? 0 : 1;
+      const expectedMatches = matches[i - 1][j - 1] + (isMatch ? 1 : 0);
+      if (dp[i][j] === dp[i - 1][j - 1] + subCost && matches[i][j] === expectedMatches) {
+        const status = isMatch ? "correct" : "incorrect";
+        typedStatuses[i - 1] = status;
+        targetStatuses[j - 1] = status;
+        i--; j--;
+        continue;
+      }
+    }
+
+    if (i > 0 && dp[i][j] === dp[i - 1][j] + 1 && matches[i][j] === matches[i - 1][j]) {
+      typedStatuses[i - 1] = "incorrect";
+      i--;
+      continue;
+    }
+
+    if (j > 0 && dp[i][j] === dp[i][j - 1] + 1 && matches[i][j] === matches[i][j - 1]) {
+      targetStatuses[j - 1] = "incorrect";
+      j--;
+      continue;
+    }
+
+    // Phòng vệ cho trường hợp dữ liệu số bất thường; tránh vòng lặp vô hạn.
+    if (i > 0) i--;
+    else if (j > 0) j--;
+  }
+
+  const correct = typedStatuses.reduce((sum, status) => sum + (status === "correct" ? 1 : 0), 0);
+  return {
+    typedLength: m,
+    correct,
+    errors: Math.max(0, Number(bestDistance) || 0),
+    alignedTargetLength: bestTargetLength,
+    targetStatuses,
+    typedStatuses
+  };
 }
 
 function updateCharacterRendering(value, target, comparison = null) {
@@ -974,25 +1062,34 @@ function calculateStats(valueOverride = null, comparisonOverride = null) {
     comparison = lesson ? compareTyping(value, lesson.text) : { typedLength: 0, correct: 0, errors: 0, alignedTargetLength: 0 };
   }
 
-  const typedLength = Math.max(0, finiteNumber(comparison && comparison.typedLength, Array.from(value).length));
-  const alignedTargetLength = Math.max(0, finiteNumber(comparison && comparison.alignedTargetLength, typedLength));
-  const currentErrors = Math.max(0, finiteNumber(comparison && comparison.errors, 0));
-  const totalInserted = Math.max(Math.max(0, finiteNumber(state.totalInserted, 0)), typedLength);
+  const typedLength = Math.max(0, finiteNumber(comparison?.typedLength, Array.from(value).length));
+  const alignedTargetLength = Math.max(0, finiteNumber(comparison?.alignedTargetLength, typedLength));
+  const currentErrors = Math.max(0, finiteNumber(comparison?.errors, 0));
+  const totalInserted = Math.max(0, finiteNumber(state.totalInserted, 0));
   const cumulativeMistakes = Math.max(0, finiteNumber(state.cumulativeMistakes, 0));
-  const validKeystrokes = Math.max(0, totalInserted - cumulativeMistakes);
+  const targetLength = lesson ? Array.from(lesson.text).length : 0;
   const minutes = elapsed / 60;
 
+  // Raw WPM: toàn bộ ký tự thực sự đã nhập, kể cả ký tự sau đó bị sửa/xóa.
   const rawWpm = minutes > 0 ? (totalInserted / 5) / minutes : 0;
-  const netWpm = minutes > 0 ? (validKeystrokes / 5) / minutes : 0;
-  const accuracy = totalInserted > 0 ? Math.max(0, Math.min(100, (validKeystrokes / totalInserted) * 100)) : 100;
+
+  // Accuracy không thể được "rửa lỗi" bằng cách xóa đoạn đúng rồi gõ lại nhiều lần.
+  // Mỗi lỗi nhập mới làm tăng cumulativeMistakes; mẫu số dựa trên tiến độ hữu ích + lỗi.
+  const productiveChars = Math.min(targetLength, Math.max(0, finiteNumber(comparison?.correct, 0)));
+  const accuracyBase = productiveChars + cumulativeMistakes;
+  const accuracy = accuracyBase > 0 ? (productiveChars / accuracyBase) * 100 : 100;
+
+  // Net WPM dựa trên lượng nội dung hữu ích đã tiến được, có nhân hệ số chính xác.
+  // Vì vậy xóa/gõ lại phần đúng không thể làm Net WPM tăng giả tạo.
+  const netWpm = minutes > 0 ? ((productiveChars / 5) / minutes) * (accuracy / 100) : 0;
 
   const exact = Boolean(lesson && value === lesson.text);
-  const rawProgress = lesson && Array.from(lesson.text).length
-    ? (alignedTargetLength / Array.from(lesson.text).length) * 100
-    : 0;
-  // Không hiển thị 100% khi văn bản chưa khớp hoàn toàn.
-  // Điều này tránh học sinh tưởng đã xong dù vẫn còn lỗi/thừa ký tự.
-  const progress = exact ? 100 : Math.min(99, Math.max(0, Math.round(rawProgress)));
+
+  // Hoàn thành khi học sinh đã gõ đi hết nội dung bài mẫu, không bắt buộc phải sửa hết lỗi.
+  // Dùng alignedTargetLength thay cho typedLength để tránh hoàn thành sớm nếu học sinh chèn thừa ký tự ở giữa bài.
+  const complete = Boolean(lesson && targetLength > 0 && alignedTargetLength >= targetLength);
+  const rawProgress = targetLength ? (alignedTargetLength / targetLength) * 100 : 0;
+  const progress = complete ? 100 : Math.min(99, Math.max(0, Math.round(rawProgress)));
 
   return {
     elapsed: finiteNumber(elapsed, 0),
@@ -1003,6 +1100,7 @@ function calculateStats(valueOverride = null, comparisonOverride = null) {
     currentErrors: Math.max(0, Math.round(currentErrors)),
     progress,
     exact,
+    complete,
     typedLength
   };
 }
@@ -1029,8 +1127,10 @@ function updateTypingMessage(value, lessonText, comparison, stats) {
   if (!els.typingMessage) return;
   els.typingMessage.className = "typing-message";
 
-  if (stats && stats.exact) {
-    els.typingMessage.textContent = "Đã gõ chính xác toàn bộ nội dung.";
+  if (stats && stats.complete) {
+    els.typingMessage.textContent = stats.exact
+      ? "Đã gõ hết bài và chính xác toàn bộ nội dung."
+      : "Đã gõ hết bài. Kết quả sẽ ghi nhận cả các lỗi đã mắc.";
     els.typingMessage.classList.add("ok");
     return;
   }
@@ -1053,7 +1153,7 @@ function updateTypingMessage(value, lessonText, comparison, stats) {
 async function finishGame() {
   if (state.completed) return;
   const finalStats = calculateStats();
-  if (!finalStats.exact) return;
+  if (!finalStats.complete) return;
 
   state.completed = true;
   state.lastStats = finalStats;
@@ -1118,7 +1218,7 @@ async function saveBestScore(stats) {
         className: state.student.className, studentNo: state.student.studentNo, name: state.student.name,
         answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "", liveActive: false, liveNetWpm: 0, liveRawWpm: 0, liveAccuracy: 100, liveErrors: 0, liveElapsed: 0, liveProgress: 0, liveLessonId: "", liveLessonTitle: "" },
         done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: Date.now(), updatedAt: Date.now(),
-        meta: { appVersion: "9", status: "idle" }
+        meta: { appVersion: "11", status: "idle" }
       };
       if (!sameStudentIdentity(base, state.student) || base.ownerUid !== firebaseUser.uid) return;
       const a = base.answers || {};
@@ -1129,7 +1229,7 @@ async function saveBestScore(stats) {
         a.bestElapsed = Number(safeStats.elapsed.toFixed(1)); a.bestLessonId = lesson.id; a.bestLessonTitle = lesson.title;
       }
       a.liveActive = false; a.liveProgress = 100;
-      base.answers = a; base.done = { "0": true }; base.updatedAt = Date.now(); base.meta = { ...(base.meta || {}), appVersion: "9", status: "completed" };
+      base.answers = a; base.done = { "0": true }; base.updatedAt = Date.now(); base.meta = { ...(base.meta || {}), appVersion: "11", status: "completed" };
       return base;
     });
     if (!tx.committed) return { saved: false, message: "Không thể cập nhật thành tích của phiên này." };
@@ -1175,7 +1275,7 @@ function buildStudentRecord(stats, active) {
     answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "",
       liveActive: Boolean(active), liveNetWpm: Math.max(0, Math.round(finiteNumber(stats && stats.netWpm, 0))), liveRawWpm: Math.max(0, Math.round(finiteNumber(stats && stats.rawWpm, 0))), liveAccuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.accuracy, 100)))), liveErrors: Math.max(0, Math.round(finiteNumber(stats && stats.errors, 0))), liveElapsed: Number(Math.max(0, finiteNumber(stats && stats.elapsed, 0)).toFixed(1)), liveProgress: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.progress, 0)))), liveLessonId: lesson?.id || "", liveLessonTitle: lesson?.title || "" },
     done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: Date.now(), updatedAt: Date.now(),
-    meta: { appVersion: "9", status: active ? "active" : "idle" }
+    meta: { appVersion: "11", status: active ? "active" : "idle" }
   };
 }
 
@@ -1215,7 +1315,7 @@ async function updateLivePresence(stats, force = false) {
         liveLessonTitle: lessons[state.currentLessonIndex]?.title || ""
       });
       if (a.bestNetWpm === undefined) Object.assign(a,{bestNetWpm:0,bestRawWpm:0,bestAccuracy:0,bestErrors:0,bestElapsed:0,bestLessonId:"",bestLessonTitle:""});
-      base.answers=a; base.done=base.done || {"0":false}; base.updatedAt=Date.now(); base.meta={...(base.meta||{}),appVersion:"9",status:"active"}; return base;
+      base.answers=a; base.done=base.done || {"0":false}; base.updatedAt=Date.now(); base.meta={...(base.meta||{}),appVersion:"11",status:"active"}; return base;
     });
   } catch (error) { console.warn("Không cập nhật được trạng thái trực tiếp:", error); }
 }
@@ -1229,7 +1329,7 @@ async function endLivePresence() {
       if (!current || !sameStudentIdentity(current, state.student)) return current;
       const done = current?.done?.["0"] === true;
       current.answers = { ...(current.answers || {}), liveActive: false };
-      current.meta = { ...(current.meta || {}), appVersion: "9", status: done ? "completed" : "idle" };
+      current.meta = { ...(current.meta || {}), appVersion: "11", status: done ? "completed" : "idle" };
       current.updatedAt = Date.now();
       return current;
     });
