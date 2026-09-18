@@ -880,8 +880,21 @@ function isFilledAnswer(v){
   return String(v??"").trim().length>0;
 }
 
+// Firebase Realtime Database có thể trả mảng dạng object {0:true, 2:true, ...}
+// nếu mảng thưa hoặc dữ liệu được tạo từ phiên bản cũ. Chuẩn hóa về mảng thật
+// để tránh lỗi ".filter is not a function" làm hỏng toàn bộ bảng giáo viên.
+function normalizeDoneArray(done){
+  if(Array.isArray(done)){
+    return Array.from({length:activities.length},(_,i)=>Boolean(done[i]));
+  }
+  if(done && typeof done==="object"){
+    return Array.from({length:activities.length},(_,i)=>Boolean(done[i] ?? done[String(i)]));
+  }
+  return Array(activities.length).fill(false);
+}
+
 function calculateAutoScore(record){
-  const a=record?.answers||{};
+  const a=(record && record.answers && typeof record.answers==="object") ? record.answers : {};
   let objectiveEarned=0, objectiveAnswered=0, objectiveCorrect=0;
   AUTO_SCORE_OBJECTIVE.forEach(item=>{
     if(isFilledAnswer(a[item.key])){
@@ -903,7 +916,7 @@ function calculateAutoScore(record){
   });
 
   const total=Math.min(10,objectiveEarned+productEarned);
-  const doneCount=(record?.done||[]).filter(Boolean).length;
+  const doneCount=normalizeDoneArray(record && record.done).filter(Boolean).length;
   return {
     total:Number(total.toFixed(2)),
     objective:Number(objectiveEarned.toFixed(2)),
@@ -1246,8 +1259,12 @@ function startTeacherListener(){
 
   const errorHandler=err=>{
     console.error("Teacher Firebase read error:",err);
+    const code=String(err && err.code || "");
+    const msg=code.includes("PERMISSION_DENIED") || code.includes("permission-denied")
+      ? "Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules."
+      : "Không đọc được dữ liệu Firebase: "+esc(err && err.message ? err.message : code || "Lỗi không xác định");
     document.getElementById("teacherBody").innerHTML=
-      '<tr><td colspan="8">Firebase từ chối đọc dữ liệu. Kiểm tra quyền giáo viên và Rules.</td></tr>';
+      '<tr><td colspan="8" class="small" style="color:#b71c1c">'+msg+'</td></tr>';
   };
 
   resultsRef.on("value",handler,errorHandler);
@@ -1680,22 +1697,34 @@ function formatTeacherDate(value){
 }
 
 function normalizeTeacherRecord(uid,r){
-  if(!r || typeof r!=="object") return null;
+  try{
+    if(!r || typeof r!=="object") return null;
 
-  const className=String(r.className??"").trim();
-  const studentNo=Number(r.studentNo);
-  if(!className || !Number.isFinite(studentNo) || studentNo<=0) return null;
+    const className=String(r.className??"").trim();
+    const studentNo=Number(r.studentNo);
+    if(!className || !Number.isFinite(studentNo) || studentNo<=0) return null;
 
-  return {
-    ...r,
-    uid:String(uid),
-    className,
-    studentNo,
-    name:String(r.name??"").trim() || "(Chưa có tên)",
-    done:Array.isArray(r.done)?r.done:[],
-    updatedAt:Number(r.updatedAt)||0,
-    score:(r.score&&typeof r.score==="object")?r.score:calculateAutoScore(r)
-  };
+    const normalizedDone=normalizeDoneArray(r.done);
+    const normalizedRecord={
+      ...r,
+      uid:String(uid),
+      className,
+      studentNo,
+      name:String(r.name??"").trim() || "(Chưa có tên)",
+      answers:(r.answers&&typeof r.answers==="object")?r.answers:{},
+      done:normalizedDone,
+      updatedAt:Number(r.updatedAt)||0
+    };
+
+    normalizedRecord.score=(r.score&&typeof r.score==="object")
+      ? r.score
+      : calculateAutoScore(normalizedRecord);
+
+    return normalizedRecord;
+  }catch(err){
+    console.warn("Bỏ qua bản ghi Firebase không hợp lệ:",uid,err,r);
+    return null;
+  }
 }
 
 function buildTeacherGroups(entries){
@@ -1822,7 +1851,8 @@ function renderTeacher(){
     );
   }catch(err){
     console.error("renderTeacher error:",err);
-    body.innerHTML='<tr><td colspan="8" class="small" style="color:#b71c1c">Không thể hiển thị danh sách học sinh. Hãy tải lại trang hoặc kiểm tra Console.</td></tr>';
+    const detail=esc(err && err.message ? err.message : String(err||"Lỗi không xác định"));
+    body.innerHTML='<tr><td colspan="8" class="small" style="color:#b71c1c">Không thể hiển thị danh sách học sinh. Chi tiết: '+detail+'</td></tr>';
   }
 }
 document.getElementById("teacherClassFilter").onchange=()=>{
