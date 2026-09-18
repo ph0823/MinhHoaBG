@@ -1373,6 +1373,9 @@ function renderActivity(){
   };
 
   document.getElementById("completeAct").onclick=async()=>{
+    // Chụp lại toàn bộ giá trị đang hiển thị trước khi đánh dấu hoàn thành.
+    // Việc này tránh mất câu trả lời nếu trình duyệt chưa phát input/change cuối cùng.
+    captureVisibleAnswers(card);
     currentRecord.done[currentActivity]=true;
     currentRecord.score=calculateAutoScore(currentRecord);
     await persistCurrent(true);
@@ -1395,6 +1398,29 @@ function renderActivity(){
   updateProgress();
   renderStudentAutoScore();
 }
+function captureVisibleAnswers(root){
+  if(!root || !currentRecord)return;
+  currentRecord.answers=currentRecord.answers||{};
+  const checkboxKeys=new Set();
+
+  root.querySelectorAll("[data-key]").forEach(el=>{
+    const k=el.dataset.key;
+    if(!k)return;
+    if(el.type==="checkbox"){
+      checkboxKeys.add(k);
+    }else if(el.type==="radio"){
+      if(el.checked) currentRecord.answers[k]=el.value;
+    }else{
+      currentRecord.answers[k]=el.value;
+    }
+  });
+
+  checkboxKeys.forEach(k=>{
+    currentRecord.answers[k]=[...root.querySelectorAll(`input[type=checkbox][data-key="${CSS.escape(k)}"]:checked`)].map(x=>x.value);
+  });
+  currentRecord.updatedAt=Date.now();
+}
+
 function bindAnswerEvents(root){
   root.querySelectorAll("[data-key]").forEach(el=>{
     el.addEventListener("input",capture);
@@ -1470,6 +1496,9 @@ async function persistCurrent(forceRemote=false){
 async function saveBeforeActivityChange(){
   clearTimeout(saveTimer);
   clearTimeout(remoteSaveTimer);
+
+  const activityCard=document.getElementById("activityCard");
+  if(activityCard)captureVisibleAnswers(activityCard);
 
   const el=document.getElementById("saveStatus");
   if(el)el.textContent="Đang lưu hoạt động...";
@@ -1727,6 +1756,47 @@ function normalizeTeacherRecord(uid,r){
   }
 }
 
+function isMeaningfulAnswerValue(v){
+  if(Array.isArray(v)) return v.length>0;
+  if(v===null || v===undefined) return false;
+  if(typeof v==="object") return Object.keys(v).length>0;
+  return String(v).trim()!=="";
+}
+
+function mergeStudentRecords(records){
+  // Ưu tiên dữ liệu mới nhất, nhưng KHÔNG để một phiên mới trống
+  // ghi đè câu trả lời đã có ở phiên cũ của cùng Lớp + STT.
+  const newest=[...records].sort((a,b)=>(Number(b.updatedAt)||0)-(Number(a.updatedAt)||0));
+  const base=newest[0]||records[0]||{};
+  const mergedAnswers={};
+
+  newest.forEach(r=>{
+    const ans=(r && r.answers && typeof r.answers==="object") ? r.answers : {};
+    Object.keys(ans).forEach(k=>{
+      if(!Object.prototype.hasOwnProperty.call(mergedAnswers,k) && isMeaningfulAnswerValue(ans[k])){
+        mergedAnswers[k]=ans[k];
+      }
+    });
+  });
+
+  const mergedDone=Array.from({length:activities.length},(_,i)=>
+    records.some(r=>Boolean(normalizeDoneArray(r.done)[i]))
+  );
+
+  const merged={
+    ...base,
+    uid:String(base.uid||""),
+    className:String(base.className||""),
+    studentNo:Number(base.studentNo)||0,
+    name:String(base.name||"(Chưa có tên)"),
+    answers:mergedAnswers,
+    done:mergedDone,
+    updatedAt:Math.max(...records.map(r=>Number(r.updatedAt)||0),0)
+  };
+  merged.score=calculateAutoScore(merged);
+  return merged;
+}
+
 function buildTeacherGroups(entries){
   const map=new Map();
 
@@ -1739,26 +1809,21 @@ function buildTeacherGroups(entries){
   });
 
   return [...map.values()].map(g=>{
-    const records=[...g.records].sort((a,b)=>{
-      const da=(a.done||[]).filter(Boolean).length;
-      const db=(b.done||[]).filter(Boolean).length;
-      return db-da || (b.updatedAt||0)-(a.updatedAt||0);
-    });
-
-    const representative=records[0];
-    const mergedDone=Array.from({length:activities.length},(_,i)=>
-      records.some(r=>Boolean((r.done||[])[i]))
-    );
-    const latestRecord=[...records].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0]||representative;
+    const records=[...g.records].sort((a,b)=>(Number(b.updatedAt)||0)-(Number(a.updatedAt)||0));
+    const mergedRecord=mergeStudentRecords(records);
+    const latestRecord=records[0]||mergedRecord;
+    const reviewRecord=records.find(r=>teacherReviews && teacherReviews[r.uid])||latestRecord;
 
     return {
       ...g,
       records,
-      representative,
-      mergedDone,
-      doneCount:mergedDone.filter(Boolean).length,
-      updatedAt:Math.max(...records.map(r=>Number(r.updatedAt)||0),0),
-      name:String(latestRecord?.name||representative?.name||"(Chưa có tên)"),
+      representative:latestRecord,
+      mergedRecord,
+      reviewUid:String(reviewRecord?.uid||latestRecord?.uid||""),
+      mergedDone:mergedRecord.done,
+      doneCount:mergedRecord.done.filter(Boolean).length,
+      updatedAt:mergedRecord.updatedAt,
+      name:String(latestRecord?.name||mergedRecord?.name||"(Chưa có tên)"),
       hasReview:records.some(r=>Boolean(teacherReviews && teacherReviews[r.uid]))
     };
   }).sort((a,b)=>
@@ -1800,7 +1865,7 @@ function renderTeacher(){
       : groups.filter(g=>g.className===selectedClass);
 
     teacherCurrentGroups=view;
-    teacherCurrentView=view.map(g=>g.representative.uid);
+    teacherCurrentView=view.map(g=>g.key);
 
     // Mỗi Lớp + STT chỉ được tính là 1 học sinh, dù có nhiều UID/phiên cũ.
     document.getElementById("kpiStudents").textContent=view.length;
@@ -1824,26 +1889,26 @@ function renderTeacher(){
     }
 
     body.innerHTML=view.map(g=>{
-      const r=g.representative;
+      const r=g.mergedRecord;
       const multi=g.records.length>1;
 
       return `<tr class="${multi?"duplicate":""}">
         <td>${esc(g.className)}</td>
         <td>${g.studentNo}</td>
         <td>${esc(g.name)}${g.hasReview?'<div class="small" style="color:#2e7d32">✓ Đã nhận xét</div>':""}${multi?`<div class="small">Đã gộp ${g.records.length} phiên theo cùng Lớp + STT</div>`:""}</td>
-        <td><span class="score-pill">${calculateAutoScore(g.representative).total.toFixed(1)}/10</span></td>
+        <td><span class="score-pill">${calculateAutoScore(g.mergedRecord).total.toFixed(1)}/10</span></td>
         <td><span class="score-pill">${Math.round(g.doneCount/activities.length*100)}%</span></td>
         <td>${g.doneCount}/${activities.length}</td>
         <td>${formatTeacherDate(g.updatedAt)}</td>
         <td>
-          <button class="btn light" data-detail="${esc(r.uid)}">Xem</button>
+          <button class="btn light" data-detail-group="${esc(g.key)}">Xem</button>
           <button class="btn danger" data-delete-group="${esc(g.key)}" style="margin-left:5px">Xóa</button>
         </td>
       </tr>`;
     }).join("");
 
-    body.querySelectorAll("[data-detail]").forEach(
-      b=>b.onclick=()=>showDetail(b.dataset.detail)
+    body.querySelectorAll("[data-detail-group]").forEach(
+      b=>b.onclick=()=>showDetail(b.dataset.detailGroup)
     );
 
     body.querySelectorAll("[data-delete-group]").forEach(
@@ -2173,21 +2238,27 @@ function openAdjacentStudent(step){
   showDetail(teacherCurrentView[nextIndex]);
 }
 
-function showDetail(uid){
+function showDetail(groupKey){
   if(!teacherMode)return;
-  const r=(firebaseRecords||{})[uid];
+  const group=teacherCurrentGroups.find(g=>g.key===groupKey);
+  if(!group)return;
+
+  // Hiển thị BẢN GỘP theo Lớp + STT để không mất câu trả lời khi HS
+  // thoát vào lại và phát sinh nhiều anonymous UID.
+  const r=group.mergedRecord;
+  const reviewUid=group.reviewUid || group.representative?.uid || "";
   if(!r)return;
 
-  currentReviewUid=uid;
+  currentReviewUid=groupKey;
   collapseTeacherList();
 
-  const currentIndex=teacherCurrentView.indexOf(uid);
+  const currentIndex=teacherCurrentView.indexOf(groupKey);
   const hasPrev=currentIndex>0;
   const hasNext=currentIndex>=0 && currentIndex<teacherCurrentView.length-1;
 
   const stats=autoReviewStats(r);
-  const review=teacherReviews?.[uid]||{};
-  const doneCount=(r.done||[]).filter(Boolean).length;
+  const review=teacherReviews?.[reviewUid]||{};
+  const doneCount=normalizeDoneArray(r.done).filter(Boolean).length;
 
   document.getElementById("teacherDetail").innerHTML=`
     <div class="review-nav">
@@ -2205,6 +2276,7 @@ function showDetail(uid){
         <div>
           <h2 style="margin:0;color:var(--primary2)">${esc(r.name)}</h2>
           <div class="small">Lớp ${esc(r.className)} · STT ${Number(r.studentNo)} · ${doneCount}/${activities.length} hoạt động</div>
+          ${group.records.length>1?`<div class="small" style="color:#6a1b9a">Đang tổng hợp bài làm từ ${group.records.length} phiên đăng nhập của cùng học sinh.</div>`:""}
         </div>
       </div>
 
@@ -2263,7 +2335,7 @@ function showDetail(uid){
     document.getElementById("teacherDetail").innerHTML="";
     expandTeacherList(true);
   };
-  document.getElementById("saveReviewBtn").onclick=()=>saveTeacherReview(uid);
+  document.getElementById("saveReviewBtn").onclick=()=>saveTeacherReview(reviewUid);
 
   // Đợi DOM cập nhật rồi cuộn đúng tới đầu khung chi tiết.
   requestAnimationFrame(()=>{
