@@ -457,6 +457,7 @@ let authStateUnsubscribe = null, liveHeartbeatId = null, lastLiveWriteAt = 0;
 let firebaseServerTimeOffset = 0;
 let liveDisconnectRef = null;
 let liveRecoveryPromise = null;
+let liveWriteInFlight = null;
 
 // Điều chỉnh cho lớp đông: giảm tần suất ghi, dùng thời gian máy chủ và nới cửa sổ stale.
 const LIVE_WRITE_THROTTLE_MS = 5000;
@@ -464,6 +465,11 @@ const LIVE_HEARTBEAT_MS = 12000;
 const LIVE_STALE_MS = 60000;
 const TEACHER_RENDER_DEBOUNCE_MS = 250;
 const TEACHER_STALE_REFRESH_MS = 5000;
+
+// Tối ưu máy cấu hình thấp / Chrome cũ.
+const TIMER_REFRESH_MS = 200;
+const ALIGN_BASE_BAND = 48;
+const ALIGN_MAX_BAND = 160;
 
 // BÀI GÕ MẪU
 const lessons = [
@@ -494,8 +500,10 @@ const els = {
 
 const state = {
   student: null, currentLessonIndex: -1, previousLessonIndex: -1,
-  started: false, completed: false, startTime: 0, rafId: null, isComposing: false, lastStats: null,
-  previousTypedValue: "", totalInserted: 0, lastComparison: null
+  started: false, completed: false, startTime: 0, timerId: null, inputRafId: null,
+  isComposing: false, lastStats: null,
+  previousTypedValue: "", totalInserted: 0, lastComparison: null,
+  lessonSpans: [], renderedStatuses: [], cursorIndex: -1
 };
 
 function normalizeText(text) { return String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").normalize("NFC").trim(); }
@@ -823,6 +831,8 @@ function loadNewLesson() {
   state.started = state.completed = false;
   state.startTime = 0; state.isComposing = false; state.lastStats = null;
   state.previousTypedValue = ""; state.totalInserted = 0; state.lastComparison = null;
+  state.renderedStatuses = []; state.cursorIndex = -1;
+  if (state.inputRafId !== null) { cancelAnimationFrame(state.inputRafId); state.inputRafId = null; }
   els.input.value = ""; els.input.disabled = true; els.poemDisplay.scrollTop = 0;
   if (els.typingMessage) { els.typingMessage.textContent = ""; els.typingMessage.className = "typing-message"; }
   els.resultSaveStatus.textContent = "";
@@ -832,16 +842,24 @@ function loadNewLesson() {
 
 function renderLesson() {
   const lesson = lessons[state.currentLessonIndex];
-  els.lessonTitle.textContent = `Bài: ${lesson.title} · ${lesson.text.length} ký tự`;
+  const chars = Array.from(lesson.text);
+  els.lessonTitle.textContent = `Bài: ${lesson.title} · ${chars.length} ký tự`;
   els.poemDisplay.innerHTML = "";
   const fragment = document.createDocumentFragment();
-  [...lesson.text].forEach((char, index) => {
+  const spans = new Array(chars.length);
+
+  chars.forEach((char, index) => {
     const span = document.createElement("span");
     span.textContent = char;
     if (index === 0) span.classList.add("char-current");
+    spans[index] = span;
     fragment.appendChild(span);
   });
+
   els.poemDisplay.appendChild(fragment);
+  state.lessonSpans = spans;
+  state.renderedStatuses = [];
+  state.cursorIndex = chars.length ? 0 : -1;
 }
 
 function enableTyping() { els.input.disabled = false; els.input.focus(); }
@@ -866,12 +884,22 @@ els.input.addEventListener("beforeinput", e => {
 els.input.addEventListener("compositionstart", () => { state.isComposing = true; });
 els.input.addEventListener("compositionend", () => {
   state.isComposing = false;
-  processTypingInput();
+  scheduleTypingInput();
 });
 els.input.addEventListener("input", event => {
   if (state.isComposing || event.isComposing) return;
-  processTypingInput();
+  scheduleTypingInput();
 });
+
+// Gom nhiều sự kiện input/IME trong cùng một frame thành một lần xử lý.
+// Điều này tránh xếp hàng nhiều phép so khớp khi học sinh gõ nhanh.
+function scheduleTypingInput() {
+  if (state.completed || state.inputRafId !== null) return;
+  state.inputRafId = requestAnimationFrame(() => {
+    state.inputRafId = null;
+    processTypingInput();
+  });
+}
 
 function processTypingInput() {
   if (state.completed) return;
@@ -918,10 +946,14 @@ function normalizeTypedValue(value) {
 }
 
 /*
- * Căn chỉnh toàn bộ chuỗi đang gõ với MỘT TIỀN TỐ tối ưu của bài mẫu.
- * Khác bản cũ chỉ dò ±4 ký tự, thuật toán này vẫn theo đúng vị trí khi học sinh
- * thiếu/thừa nhiều ký tự. Ma trận được tính một lần cho mỗi lần input và đồng
- * thời tạo trạng thái cho cả ký tự mẫu lẫn ký tự học sinh đã gõ.
+ * So khớp Levenshtein theo "dải" quanh đường chéo thay vì tính toàn bộ ma trận.
+ *
+ * Bản cũ có độ phức tạp O(m*n), cấp phát 2 ma trận Uint16 cho MỖI lần gõ.
+ * Với bài dài, chi phí tăng theo bình phương và dễ làm máy yếu/Chrome cũ khựng.
+ *
+ * Bản này chỉ tính các ô có khả năng liên quan đến vị trí hiện tại:
+ * O(m*band), band mặc định 48 và tự nới khi học sinh gõ dài hơn bài mẫu.
+ * Vẫn hỗ trợ thiếu/thừa ký tự, Backspace và khôi phục vị trí sau lỗi.
  */
 function compareTyping(value, target) {
   const typed = Array.from(value || "");
@@ -935,59 +967,117 @@ function compareTyping(value, target) {
     };
   }
 
-  // dp = số phép sửa ít nhất; matches = số ký tự đúng nhiều nhất trong các
-  // cách căn chỉnh có cùng số phép sửa. Tiêu chí phụ này rất quan trọng khi
-  // học sinh bỏ thiếu cả một đoạn: ta vẫn bắt lại đúng phần văn bản phía sau.
-  const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
-  const matches = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  // Khi gõ vượt cuối bài, nới band theo phần vượt để vẫn căn chỉnh được đến n.
+  const extraPastTarget = Math.max(0, m - n);
+  const band = Math.min(ALIGN_MAX_BAND, Math.max(ALIGN_BASE_BAND, extraPastTarget + 12));
+  const INF = 60000;
+  const cols = n + 1;
+  const directionWidth = band * 2 + 1;
+
+  // Chỉ giữ 2 hàng điểm. Hướng backtrace cũng chỉ lưu trong dải,
+  // nên bộ nhớ giảm từ O(m*n) xuống O(m*band).
+  let prevCost = new Uint16Array(cols);
+  let currCost = new Uint16Array(cols);
+  let prevMatches = new Uint16Array(cols);
+  let currMatches = new Uint16Array(cols);
+  const direction = new Uint8Array((m + 1) * directionWidth);
+  // 1 = chéo/substitution, 2 = ký tự thừa ở typed, 3 = thiếu ký tự target.
+
+  prevCost.fill(INF);
+  prevCost[0] = 0;
+  const firstRowMax = Math.min(n, band);
+  for (let j = 1; j <= firstRowMax; j++) {
+    prevCost[j] = j;
+    direction[j + band] = 3;
+  }
 
   for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
+    currCost.fill(INF);
+    currMatches.fill(0);
+
+    if (i <= band) {
+      currCost[0] = i;
+      direction[i * directionWidth + (band - i)] = 2;
+    }
+
+    const jMin = Math.max(1, i - band);
+    const jMax = Math.min(n, i + band);
+
+    for (let j = jMin; j <= jMax; j++) {
       const isMatch = typed[i - 1] === expected[j - 1];
       const subCost = isMatch ? 0 : 1;
 
-      let bestCost = dp[i - 1][j - 1] + subCost;
-      let bestMatches = matches[i - 1][j - 1] + (isMatch ? 1 : 0);
+      let bestCost = prevCost[j - 1] + subCost;
+      let bestMatches = prevMatches[j - 1] + (isMatch ? 1 : 0);
+      let bestDir = 1;
 
-      const insertCost = dp[i - 1][j] + 1;
-      const insertMatches = matches[i - 1][j];
+      const insertCost = prevCost[j] + 1;
+      const insertMatches = prevMatches[j];
       if (insertCost < bestCost || (insertCost === bestCost && insertMatches > bestMatches)) {
         bestCost = insertCost;
         bestMatches = insertMatches;
+        bestDir = 2;
       }
 
-      const deleteCost = dp[i][j - 1] + 1;
-      const deleteMatches = matches[i][j - 1];
+      const deleteCost = currCost[j - 1] + 1;
+      const deleteMatches = currMatches[j - 1];
       if (deleteCost < bestCost || (deleteCost === bestCost && deleteMatches > bestMatches)) {
         bestCost = deleteCost;
         bestMatches = deleteMatches;
+        bestDir = 3;
       }
 
-      dp[i][j] = bestCost;
-      matches[i][j] = bestMatches;
+      currCost[j] = Math.min(INF, bestCost);
+      currMatches[j] = bestMatches;
+      direction[i * directionWidth + (j - i + band)] = bestDir;
+    }
+
+    [prevCost, currCost] = [currCost, prevCost];
+    [prevMatches, currMatches] = [currMatches, prevMatches];
+  }
+
+  let bestTargetLength = Math.max(0, Math.min(n, m));
+  let bestDistance = INF;
+  let bestMatchCount = 0;
+  const bestJMin = Math.max(0, m - band);
+  const bestJMax = Math.min(n, m + band);
+
+  for (let j = bestJMin; j <= bestJMax; j++) {
+    const distance = prevCost[j];
+    if (distance >= INF) continue;
+    const matchCount = prevMatches[j];
+    const currentGap = Math.abs(bestTargetLength - m);
+    const newGap = Math.abs(j - m);
+
+    if (
+      distance < bestDistance ||
+      (distance === bestDistance && matchCount > bestMatchCount) ||
+      (distance === bestDistance && matchCount === bestMatchCount && newGap < currentGap) ||
+      (distance === bestDistance && matchCount === bestMatchCount && newGap === currentGap && j > bestTargetLength)
+    ) {
+      bestDistance = distance;
+      bestMatchCount = matchCount;
+      bestTargetLength = j;
     }
   }
 
-  let bestTargetLength = 0;
-  let bestDistance = dp[m][0];
-  let bestMatches = matches[m][0];
-  for (let j = 1; j <= n; j++) {
-    const distance = dp[m][j];
-    const matchCount = matches[m][j];
-    const currentGap = Math.abs(bestTargetLength - m);
-    const newGap = Math.abs(j - m);
-    if (
-      distance < bestDistance ||
-      (distance === bestDistance && matchCount > bestMatches) ||
-      (distance === bestDistance && matchCount === bestMatches && newGap < currentGap) ||
-      (distance === bestDistance && matchCount === bestMatches && newGap === currentGap && j > bestTargetLength)
-    ) {
-      bestDistance = distance;
-      bestMatches = matchCount;
-      bestTargetLength = j;
+  // Phòng vệ: nếu dữ liệu lệch quá xa khỏi band, dùng so khớp tuyến tính,
+  // ưu tiên giữ giao diện phản hồi thay vì cấp phát ma trận khổng lồ.
+  if (bestDistance >= INF) {
+    const alignedTargetLength = Math.min(n, m);
+    const targetStatuses = new Array(alignedTargetLength);
+    const typedStatuses = new Array(m).fill("incorrect");
+    let correct = 0;
+
+    for (let k = 0; k < alignedTargetLength; k++) {
+      const ok = typed[k] === expected[k];
+      targetStatuses[k] = ok ? "correct" : "incorrect";
+      typedStatuses[k] = ok ? "correct" : "incorrect";
+      if (ok) correct++;
     }
+
+    const errors = (alignedTargetLength - correct) + Math.abs(m - alignedTargetLength);
+    return { typedLength: m, correct, errors, alignedTargetLength, targetStatuses, typedStatuses };
   }
 
   const targetStatuses = new Array(bestTargetLength).fill("incorrect");
@@ -995,34 +1085,46 @@ function compareTyping(value, target) {
   let i = m, j = bestTargetLength;
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0) {
-      const isMatch = typed[i - 1] === expected[j - 1];
-      const subCost = isMatch ? 0 : 1;
-      const expectedMatches = matches[i - 1][j - 1] + (isMatch ? 1 : 0);
-      if (dp[i][j] === dp[i - 1][j - 1] + subCost && matches[i][j] === expectedMatches) {
-        const status = isMatch ? "correct" : "incorrect";
-        typedStatuses[i - 1] = status;
-        targetStatuses[j - 1] = status;
-        i--; j--;
-        continue;
-      }
+    const offset = j - i + band;
+    const dir = (offset >= 0 && offset < directionWidth)
+      ? direction[i * directionWidth + offset]
+      : 0;
+
+    if (i > 0 && j > 0 && dir === 1) {
+      const ok = typed[i - 1] === expected[j - 1];
+      const status = ok ? "correct" : "incorrect";
+      typedStatuses[i - 1] = status;
+      targetStatuses[j - 1] = status;
+      i--; j--;
+      continue;
     }
 
-    if (i > 0 && dp[i][j] === dp[i - 1][j] + 1 && matches[i][j] === matches[i - 1][j]) {
+    if (i > 0 && dir === 2) {
       typedStatuses[i - 1] = "incorrect";
       i--;
       continue;
     }
 
-    if (j > 0 && dp[i][j] === dp[i][j - 1] + 1 && matches[i][j] === matches[i][j - 1]) {
+    if (j > 0 && dir === 3) {
       targetStatuses[j - 1] = "incorrect";
       j--;
       continue;
     }
 
-    // Phòng vệ cho trường hợp dữ liệu số bất thường; tránh vòng lặp vô hạn.
-    if (i > 0) i--;
-    else if (j > 0) j--;
+    // Ô biên ngoài band: thoát an toàn, không lặp vô hạn.
+    if (i > 0 && j > 0) {
+      const ok = typed[i - 1] === expected[j - 1];
+      const status = ok ? "correct" : "incorrect";
+      typedStatuses[i - 1] = status;
+      targetStatuses[j - 1] = status;
+      i--; j--;
+    } else if (i > 0) {
+      typedStatuses[i - 1] = "incorrect";
+      i--;
+    } else if (j > 0) {
+      targetStatuses[j - 1] = "incorrect";
+      j--;
+    }
   }
 
   const correct = typedStatuses.reduce((sum, status) => sum + (status === "correct" ? 1 : 0), 0);
@@ -1037,27 +1139,55 @@ function compareTyping(value, target) {
 }
 
 function updateCharacterRendering(value, target, comparison = null) {
-  const spans = els.poemDisplay.querySelectorAll("span");
-  const cmp = comparison || compareTyping(value,target);
-  spans.forEach((span,index)=>{
-    span.classList.remove("char-correct","char-incorrect","char-current");
-    const st=cmp.targetStatuses?.[index];
-    if(st==="correct") span.classList.add("char-correct");
-    else if(st==="incorrect") span.classList.add("char-incorrect");
-  });
-  const cursorIndex=Math.min(Number(cmp.alignedTargetLength||0),Math.max(0,spans.length-1));
-  const currentSpan=spans[cursorIndex];
-  if(currentSpan){currentSpan.classList.add("char-current");smartScrollToSpan(currentSpan);}
+  const spans = state.lessonSpans || [];
+  const cmp = comparison || compareTyping(value, target);
+  const nextStatuses = cmp.targetStatuses || [];
+  const previousStatuses = state.renderedStatuses || [];
+  const limit = Math.min(spans.length, Math.max(previousStatuses.length, nextStatuses.length));
+
+  // Chỉ đổi class ở những ký tự thực sự thay đổi trạng thái.
+  for (let index = 0; index < limit; index++) {
+    const prev = previousStatuses[index] || "";
+    const next = nextStatuses[index] || "";
+    if (prev === next) continue;
+
+    const span = spans[index];
+    if (!span) continue;
+    span.classList.toggle("char-correct", next === "correct");
+    span.classList.toggle("char-incorrect", next === "incorrect");
+  }
+
+  state.renderedStatuses = nextStatuses.slice();
+
+  const cursorIndex = spans.length
+    ? Math.min(Number(cmp.alignedTargetLength || 0), spans.length - 1)
+    : -1;
+
+  if (state.cursorIndex !== cursorIndex) {
+    if (state.cursorIndex >= 0 && spans[state.cursorIndex]) {
+      spans[state.cursorIndex].classList.remove("char-current");
+    }
+    if (cursorIndex >= 0 && spans[cursorIndex]) {
+      spans[cursorIndex].classList.add("char-current");
+      smartScrollToSpan(spans[cursorIndex]);
+    }
+    state.cursorIndex = cursorIndex;
+  }
 }
 
 function smartScrollToSpan(span) {
   const container = els.poemDisplay;
   if (!container || !span) return;
-  const containerRect = container.getBoundingClientRect(), spanRect = span.getBoundingClientRect();
-  const relativeTop = spanRect.top - containerRect.top + container.scrollTop;
-  const targetScrollTop = relativeTop - container.clientHeight * 0.35;
-  if (spanRect.top < containerRect.top + container.clientHeight * 0.25 || spanRect.bottom > containerRect.top + container.clientHeight * 0.70) {
-    container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "smooth" });
+
+  // Chỉ đo vị trí của con trỏ; không dùng smooth-scroll để tránh xếp hàng animation.
+  const containerRect = container.getBoundingClientRect();
+  const spanRect = span.getBoundingClientRect();
+  const upperGuard = containerRect.top + container.clientHeight * 0.25;
+  const lowerGuard = containerRect.top + container.clientHeight * 0.70;
+
+  if (spanRect.top < upperGuard || spanRect.bottom > lowerGuard) {
+    const delta = spanRect.top - containerRect.top - container.clientHeight * 0.35;
+    container.scrollTop = Math.max(0, container.scrollTop + delta);
   }
 }
 
@@ -1065,15 +1195,18 @@ function startTimer() {
   stopTimer();
   const tick = () => {
     if (!state.started || state.completed) return;
-    const stats = calculateStats();
-    renderStats(stats);
-    // Trạng thái trực tiếp được gửi theo sự kiện gõ + heartbeat; không gửi trong mỗi frame.
-    state.rafId = requestAnimationFrame(tick);
+    renderStats(calculateStats());
   };
-  state.rafId = requestAnimationFrame(tick);
+  tick();
+  state.timerId = setInterval(tick, TIMER_REFRESH_MS);
 }
 
-function stopTimer() { if (state.rafId !== null) { cancelAnimationFrame(state.rafId); state.rafId = null; } }
+function stopTimer() {
+  if (state.timerId !== null) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+}
 
 function calculateStats(valueOverride = null, comparisonOverride = null) {
   const now = performance.now();
@@ -1241,7 +1374,7 @@ async function saveBestScore(stats) {
         className: state.student.className, studentNo: state.student.studentNo, name: state.student.name,
         answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "", liveActive: false, liveNetWpm: 0, liveRawWpm: 0, liveAccuracy: 100, liveErrors: 0, liveElapsed: 0, liveProgress: 0, liveLessonId: "", liveLessonTitle: "" },
         done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-        meta: { appVersion: "13", status: "idle" }
+        meta: { appVersion: "14", status: "idle" }
       };
       if (!sameStudentIdentity(base, state.student) || base.ownerUid !== firebaseUser.uid) return;
       const a = base.answers || {};
@@ -1252,7 +1385,7 @@ async function saveBestScore(stats) {
         a.bestElapsed = Number(safeStats.elapsed.toFixed(1)); a.bestLessonId = lesson.id; a.bestLessonTitle = lesson.title;
       }
       a.liveActive = false; a.liveProgress = 100;
-      base.answers = a; base.done = { "0": true }; base.updatedAt = serverTimestamp(); base.meta = { ...(base.meta || {}), appVersion: "13", status: "completed" };
+      base.answers = a; base.done = { "0": true }; base.updatedAt = serverTimestamp(); base.meta = { ...(base.meta || {}), appVersion: "14", status: "completed" };
       return base;
     });
     if (!tx.committed) return { saved: false, message: "Không thể cập nhật thành tích của phiên này." };
@@ -1298,7 +1431,7 @@ function buildStudentRecord(stats, active) {
     answers: { bestNetWpm: 0, bestRawWpm: 0, bestAccuracy: 0, bestErrors: 0, bestElapsed: 0, bestLessonId: "", bestLessonTitle: "",
       liveActive: Boolean(active), liveNetWpm: Math.max(0, Math.round(finiteNumber(stats && stats.netWpm, 0))), liveRawWpm: Math.max(0, Math.round(finiteNumber(stats && stats.rawWpm, 0))), liveAccuracy: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.accuracy, 100)))), liveErrors: Math.max(0, Math.round(finiteNumber(stats && stats.errors, 0))), liveElapsed: Number(Math.max(0, finiteNumber(stats && stats.elapsed, 0)).toFixed(1)), liveProgress: Math.max(0, Math.min(100, Math.round(finiteNumber(stats && stats.progress, 0)))), liveLessonId: lesson?.id || "", liveLessonTitle: lesson?.title || "" },
     done: { "0": false }, ownerUid: firebaseUser.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-    meta: { appVersion: "13", status: active ? "active" : "idle" }
+    meta: { appVersion: "14", status: active ? "active" : "idle" }
   };
 }
 
@@ -1360,9 +1493,10 @@ async function updateLivePresence(stats, force = false, skipRecovery = false) {
   if (!ref || !state.student || state.completed) return false;
   const now = Date.now();
   if (!force && now - lastLiveWriteAt < LIVE_WRITE_THROTTLE_MS) return true;
+  if (liveWriteInFlight) return true;
   lastLiveWriteAt = now;
   try {
-    const tx = await ref.transaction(current => {
+    const writePromise = ref.transaction(current => {
       if (state.completed) return;
       const base = current || buildStudentRecord(stats, true);
       if (!sameStudentIdentity(base, state.student) || base.ownerUid !== firebaseUser.uid) return;
@@ -1382,14 +1516,18 @@ async function updateLivePresence(stats, force = false, skipRecovery = false) {
       base.answers = a;
       base.done = base.done || {"0":false};
       base.updatedAt = serverTimestamp();
-      base.meta = {...(base.meta||{}), appVersion:"13", status:"active"};
+      base.meta = {...(base.meta||{}), appVersion:"14", status:"active"};
       return base;
     });
+    liveWriteInFlight = writePromise;
+    const tx = await writePromise;
+    if (liveWriteInFlight === writePromise) liveWriteInFlight = null;
 
     if (tx.committed) return true;
     if (!state.completed && !skipRecovery) return recoverLiveSessionAfterCollision();
     return false;
   } catch (error) {
+    liveWriteInFlight = null;
     console.warn("Không cập nhật được trạng thái trực tiếp:", error);
     return false;
   }
@@ -1405,7 +1543,7 @@ async function endLivePresence() {
       if (!current || !sameStudentIdentity(current, state.student)) return current;
       const done = current?.done?.["0"] === true;
       current.answers = { ...(current.answers || {}), liveActive: false };
-      current.meta = { ...(current.meta || {}), appVersion: "13", status: done ? "completed" : "idle" };
+      current.meta = { ...(current.meta || {}), appVersion: "14", status: done ? "completed" : "idle" };
       current.updatedAt = serverTimestamp();
       return current;
     });
