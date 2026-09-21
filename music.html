@@ -626,7 +626,7 @@ body{
         <span class="drive-dot" aria-hidden="true"></span>
         <span>Chưa kết nối Drive</span>
       </div>
-      <button id="driveLogin" class="auth-button" type="button">
+      <button id="driveLogin" class="auth-button" type="button" disabled>
         🔐 <span class="auth-text">Kết nối Drive</span>
       </button>
       <button id="driveLogout" class="auth-button secondary" type="button" hidden>
@@ -766,8 +766,8 @@ const API_RETRIES = 3, RETRY_BASE_MS = 650, RETRY_MAX_MS = 15000, REQUEST_TIMEOU
 const RECOVERY_PROBE_BASE_MS = 1200, RECOVERY_PROBE_MAX_MS = 12000, RECOVERY_PROBE_TIMEOUT_MS = 8000;
 const STREAM_WATCHDOG_INTERVAL_MS = 1500, STREAM_STALL_THRESHOLD_MS = 12000, STREAM_LOW_BUFFER_SECONDS = 18;
 const INITIAL_CHUNKS_BEFORE_PLAY = 2, PREFETCH_SECONDS = 45;
-const CACHE_DB_NAME = 'gdrive-music-chunks-v6', CACHE_STORE_NAME = 'chunks', CACHE_DB_VERSION = 1;
-const MAX_CACHE_ENTRIES = 320, PLAYBACK_UI_INTERVAL_MS = 250, RECOVERY_BUFFER_TARGET_SECONDS = 300;
+const CACHE_DB_NAME = 'gdrive-music-chunks-v6', CACHE_STORE_NAME = 'chunks', CACHE_DB_VERSION = 2;
+const MAX_CACHE_ENTRIES = 180, PLAYBACK_UI_INTERVAL_MS = 350, RECOVERY_BUFFER_TARGET_SECONDS = 300;
 
 const IS_TV_DEVICE = /web0s|webos|netcast|smarttv|tizen|hbbtv|aftb|aftm|aftt/i.test(navigator.userAgent || '');
 const IS_MOBILE_DEVICE = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '');
@@ -786,7 +786,7 @@ const CROSSFADE_FAILSAFE_PADDING_MS = 360;
  * độ trễ play() nhưng không cắt mất phần đuôi bài hát quá sớm.
  */
 const CROSSFADE_TRIGGER_SECONDS = CROSSFADE_MS / 1000 + 0.18;
-const TRANSITION_MONITOR_INTERVAL_MS = IS_TV_DEVICE ? 110 : 70;
+const TRANSITION_MONITOR_INTERVAL_MS = IS_TV_DEVICE ? 140 : IS_MOBILE_DEVICE ? 120 : 100;
 const DOWNLOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 3 : 5;
 const PRELOAD_CONCURRENCY = IS_TV_DEVICE ? 2 : IS_MOBILE_DEVICE ? 2 : 4;
 
@@ -924,6 +924,14 @@ let playerOwnerSeed = 0;
 class RetryableRequestError extends Error { constructor(message, status = 0) { super(message); this.name = 'RetryableRequestError'; this.status = status; } }
 
 document.addEventListener('DOMContentLoaded', init);
+
+function scheduleIdleTask(task, fallbackDelay = 1200) {
+  if (typeof window.requestIdleCallback === 'function') {
+    return window.requestIdleCallback(() => task(), { timeout: Math.max(1000, fallbackDelay) });
+  }
+  return window.setTimeout(task, fallbackDelay);
+}
+
 function activeAudio() { return players[activePlayerIndex]; }
 function standbyAudio() { return players[1 - activePlayerIndex]; }
 
@@ -1199,7 +1207,7 @@ function init() {
   startConnectionDiagnostics();
   startVisualizer();
   startStreamWatchdog();
-  openChunkDb().then(() => pruneChunkCache()).catch(() => {});
+  scheduleIdleTask(() => openChunkDb().then(() => pruneChunkCache()).catch(() => {}), 1800);
   pruneSavedPositions();
   initializeGoogleDriveAuth();
 }
@@ -1275,7 +1283,7 @@ async function ensureAudioEffects() {
 }
 
 function startVisualizer() {
-  if (visualizerFrame) return;
+  if (visualizerFrame || document.hidden) return;
 
   const canvas = els.visualizer;
   const context = canvas.getContext('2d', {
@@ -1283,9 +1291,27 @@ function startVisualizer() {
     desynchronized: true
   });
 
-  const render = () => {
+  let lastDrawAt = 0;
+
+  const render = now => {
+    if (document.hidden) {
+      visualizerFrame = 0;
+      return;
+    }
+
+    const player = activeAudio();
+    const playing = Boolean(player && !player.paused && !player.ended);
+    const targetFps = playing
+      ? (IS_TV_DEVICE ? 24 : IS_MOBILE_DEVICE ? 24 : 30)
+      : 8;
+    const minFrameMs = 1000 / targetFps;
+
+    if (!lastDrawAt || now - lastDrawAt >= minFrameMs) {
+      lastDrawAt = now;
+      drawVisualizerScene(canvas, context);
+    }
+
     visualizerFrame = requestAnimationFrame(render);
-    drawVisualizerScene(canvas, context);
   };
 
   visualizerFrame = requestAnimationFrame(render);
@@ -1952,7 +1978,12 @@ function handleGlobalKeyboard(event) {
   }
 }
 function handleDocumentVisibility() {
-  if (document.hidden) { stopVisualizer(); return; }
+  if (document.hidden) {
+    stopVisualizer();
+    stopPlaybackUiTicker();
+    return;
+  }
+
   startVisualizer();
   if (!activeAudio().paused && activeAudio().src) startPlaybackUiTicker();
   syncPlaybackUi();
@@ -2278,69 +2309,66 @@ async function apiOnce(action, params, externalSignal) {
   );
 }
 
-function waitForGoogleIdentityServices(timeout = 12000) {
+function waitForGoogleIdentityServices(timeout = 15000) {
   return new Promise((resolve, reject) => {
-    const startedAt = Date.now();
+    const startedAt = performance.now();
 
-    const timer = window.setInterval(() => {
+    const check = () => {
       if (
         window.google &&
-        google.accounts &&
-        google.accounts.oauth2
+        window.google.accounts &&
+        window.google.accounts.oauth2
       ) {
-        clearInterval(timer);
         resolve();
         return;
       }
 
-      if (Date.now() - startedAt > timeout) {
-        clearInterval(timer);
-        reject(
-          new Error(
-            'Không tải được dịch vụ đăng nhập Google.'
-          )
-        );
+      if (performance.now() - startedAt >= timeout) {
+        reject(new Error('Không tải được dịch vụ đăng nhập Google.'));
+        return;
       }
-    }, 100);
+
+      window.setTimeout(check, 120);
+    };
+
+    check();
   });
 }
 
 async function initializeGoogleDriveAuth() {
-  els.folderTitle.textContent =
-    'Chưa kết nối Google Drive';
+  googleAuthReady = false;
+  googleTokenClient = null;
+  els.driveLogin.disabled = true;
 
+  els.folderTitle.textContent = 'Đang khởi tạo Google Drive...';
   els.fileList.innerHTML =
-    '<li class="empty">Nhấn “Kết nối Drive” để tải thư viện trực tiếp.</li>';
+    '<li class="empty">Đang tải dịch vụ đăng nhập Google...</li>';
 
   try {
     await waitForGoogleIdentityServices();
 
-    googleTokenClient =
-      google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: GOOGLE_DRIVE_SCOPE,
-        callback: handleGoogleTokenResponse,
-        error_callback: error => {
-          console.error(
-            'Google OAuth error:',
-            error
-          );
-
-          els.driveLogin.disabled = false;
-
-          showToast(
-            'Đăng nhập Google không thành công hoặc đã bị hủy.',
-            true
-          );
-        }
-      });
+    googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_DRIVE_SCOPE,
+      callback: handleGoogleTokenResponse,
+      error_callback: error => {
+        console.error('Google OAuth error:', error);
+        els.driveLogin.disabled = false;
+        showToast('Đăng nhập Google không thành công hoặc đã bị hủy.', true);
+      }
+    });
 
     googleAuthReady = true;
+    els.driveLogin.disabled = false;
+    els.folderTitle.textContent = 'Chưa kết nối Google Drive';
+    els.fileList.innerHTML =
+      '<li class="empty">Nhấn “Kết nối Drive” để tải thư viện trực tiếp.</li>';
   } catch (error) {
     googleAuthReady = false;
+    googleTokenClient = null;
     els.driveLogin.disabled = true;
-
-    showToast(error.message, true);
+    els.folderTitle.textContent = 'Không thể tải Google Drive';
+    showToast(error && error.message ? error.message : 'Không tải được dịch vụ đăng nhập Google.', true);
   }
 }
 
@@ -2814,7 +2842,7 @@ function startConnectionDiagnostics() {
   connectionDiagnosticTimer =
     window.setInterval(
       updateNetworkDiagnostics,
-      1000
+      2000
     );
 
   updateNetworkDiagnostics();
@@ -2891,20 +2919,48 @@ function cancelDiagnosticCandidate() {}
 let db = null;
 
 function openChunkDb() {
-  return new Promise((resolve, reject) => {
+  if (db) return Promise.resolve(db);
+  if (cacheDbPromise) return cacheDbPromise;
+
+  cacheDbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
-    request.onupgradeneeded = (e) => {
-      let database = e.target.result;
+
+    request.onupgradeneeded = event => {
+      const database = event.target.result;
+      let store;
+
       if (!database.objectStoreNames.contains(CACHE_STORE_NAME)) {
-        database.createObjectStore(CACHE_STORE_NAME, { keyPath: 'id' });
+        store = database.createObjectStore(CACHE_STORE_NAME, { keyPath: 'id' });
+      } else {
+        store = event.target.transaction.objectStore(CACHE_STORE_NAME);
+      }
+
+      if (!store.indexNames.contains('timestamp')) {
+        store.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
-    request.onsuccess = (e) => {
-      db = e.target.result;
+
+    request.onsuccess = event => {
+      db = event.target.result;
+      db.onversionchange = () => {
+        try { db.close(); } catch (_) {}
+        db = null;
+        cacheDbPromise = null;
+      };
       resolve(db);
     };
-    request.onerror = (e) => reject(e.target.error);
+
+    request.onerror = event => {
+      cacheDbPromise = null;
+      reject(event.target.error);
+    };
+
+    request.onblocked = () => {
+      console.warn('IndexedDB đang bị một tab cũ giữ kết nối.');
+    };
   });
+
+  return cacheDbPromise;
 }
 
 
@@ -2918,25 +2974,51 @@ function createChunkCacheKey(file, info, index) {
 
 async function pruneChunkCache() {
   const database = db || await openChunkDb();
-  const records = await new Promise((resolve, reject) => {
+  const maximumAge = 30 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - maximumAge;
+
+  const metadata = await new Promise((resolve, reject) => {
     const tx = database.transaction(CACHE_STORE_NAME, 'readonly');
-    const request = tx.objectStore(CACHE_STORE_NAME).getAll();
-    request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+    const store = tx.objectStore(CACHE_STORE_NAME);
+    const index = store.index('timestamp');
+    const items = [];
+    const request = index.openKeyCursor();
+
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) {
+        resolve(items);
+        return;
+      }
+
+      items.push({
+        id: cursor.primaryKey,
+        timestamp: Number(cursor.key || 0)
+      });
+      cursor.continue();
+    };
+
     request.onerror = () => reject(request.error || new Error('Không thể kiểm tra bộ đệm.'));
   });
-  if (!records.length) return;
-  const now = Date.now();
-  const maximumAge = 30 * 24 * 60 * 60 * 1000;
-  const expired = records.filter(record => !Number(record.timestamp || 0) || now - Number(record.timestamp || 0) > maximumAge);
-  const expiredIds = new Set(expired.map(record => record.id));
-  const remaining = records.filter(record => !expiredIds.has(record.id)).sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
-  const idsToDelete = [...new Set([...expiredIds, ...remaining.slice(MAX_CACHE_ENTRIES).map(record => record.id)])];
+
+  if (!metadata.length) return;
+
+  const expiredIds = metadata
+    .filter(item => !item.timestamp || item.timestamp < cutoff)
+    .map(item => item.id);
+
+  const valid = metadata.filter(item => item.timestamp && item.timestamp >= cutoff);
+  const overflowCount = Math.max(0, valid.length - MAX_CACHE_ENTRIES);
+  const overflowIds = overflowCount ? valid.slice(0, overflowCount).map(item => item.id) : [];
+  const idsToDelete = [...new Set([...expiredIds, ...overflowIds])];
+
   if (!idsToDelete.length) return;
+
   await new Promise((resolve, reject) => {
     const tx = database.transaction(CACHE_STORE_NAME, 'readwrite');
     const store = tx.objectStore(CACHE_STORE_NAME);
     idsToDelete.forEach(id => store.delete(id));
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error || new Error('Không thể dọn bộ đệm.'));
     tx.onabort = () => reject(tx.error || new Error('Dọn bộ đệm bị hủy.'));
   });
@@ -2964,7 +3046,7 @@ async function saveChunkToCache(file, info, index, bytes) {
     tx.onabort = () => reject(tx.error || new Error('Thao tác lưu bộ đệm bị hủy.'));
   });
   cacheWriteCount++;
-  if (cacheWriteCount % 20 === 0) pruneChunkCache().catch(() => {});
+  if (cacheWriteCount % 40 === 0) scheduleIdleTask(() => pruneChunkCache().catch(() => {}), 1600);
 }
 
 async function getChunkFromCache(file, info, index) {
@@ -6432,7 +6514,6 @@ function syncPlaybackUi() {
   } else updateSeekProgressVisual(player);
   savePosition();
   if (Math.floor(current) % 2 === 0) updateMediaSessionPosition();
-  transitionMonitorTimer = 0;
 }
 
 function updateMetadata() {
