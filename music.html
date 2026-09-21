@@ -790,6 +790,7 @@ const MAX_CACHE_ENTRIES = 180, PLAYBACK_UI_INTERVAL_MS = 350, RECOVERY_BUFFER_TA
 const IS_TV_DEVICE = /web0s|webos|netcast|smarttv|tizen|hbbtv|aftb|aftm|aftt/i.test(navigator.userAgent || '');
 const IS_MOBILE_DEVICE = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '');
 const IS_MEMORY_CONSTRAINED_DEVICE = IS_TV_DEVICE || IS_MOBILE_DEVICE;
+const TV_SINGLE_AUDIO_MODE = IS_TV_DEVICE; // webOS TV: chỉ dùng một media element tại một thời điểm.
 const MSE_MIME = 'audio/mpeg';
 
 /* Tối ưu chuyển bài liền mạch */
@@ -883,6 +884,10 @@ let googleAccessToken = '';
 let googleTokenExpiresAt = 0;
 let googleAuthReady = false;
 let driveRootName = 'Thư viện nhạc';
+let screenWakeLock = null;
+let tvAutoNextGuard = false;
+let tvLastProgressAt = 0;
+let tvLastProgressTime = 0;
 
 
 let audioContext = null, analyserNode = null, bassFilterNode = null, trebleFilterNode = null;
@@ -1222,9 +1227,14 @@ function init() {
   configurePlayers();
   bindNetworkEvents();
   initializeMediaSession();
+  if (IS_TV_DEVICE) {
+    els.mode.hidden = false;
+    els.mode.textContent = 'LG webOS • chế độ 1 luồng âm thanh • visualizer Canvas';
+  }
   startConnectionDiagnostics();
   startVisualizer();
   startStreamWatchdog();
+  bindTvKeepAwake();
   scheduleIdleTask(() => openChunkDb().then(() => pruneChunkCache()).catch(() => {}), 1800);
   pruneSavedPositions();
   initializeGoogleDriveAuth();
@@ -1234,6 +1244,20 @@ function init() {
 // TỐI ƯU HÓA AUDIO ROUTING & VISUALIZER[cite: 5]
 // ========================
 async function ensureAudioEffects() {
+  /*
+   * LG webOS TV không hỗ trợ chính thức createMediaElementSource() cho <audio>.
+   * Trên TV giữ âm thanh đi trực tiếp qua HTMLAudioElement; visualizer dùng dữ liệu
+   * tổng hợp nhẹ để vẫn có chuyển động mà không cần <video> hay Web Audio routing.
+   */
+  if (TV_SINGLE_AUDIO_MODE) {
+    audioEffectsAvailable = false;
+    analyserNode = null;
+    frequencyData = null;
+    mediaSourceNodes = [];
+    updateEffectUi();
+    return;
+  }
+
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) {
     audioEffectsAvailable = false; disableUnsupportedAudioEffects('Không hỗ trợ'); return;
@@ -1300,6 +1324,55 @@ async function ensureAudioEffects() {
   if (audioContext && audioContext.state === 'suspended') { try { await audioContext.resume(); } catch (_) {} }
 }
 
+async function requestScreenWakeLock() {
+  if (!IS_TV_DEVICE || !('wakeLock' in navigator) || document.hidden) return;
+  if (screenWakeLock) return;
+  try {
+    screenWakeLock = await navigator.wakeLock.request('screen');
+    screenWakeLock.addEventListener('release', () => { screenWakeLock = null; });
+  } catch (_) {
+    screenWakeLock = null;
+  }
+}
+
+async function releaseScreenWakeLock() {
+  const lock = screenWakeLock;
+  screenWakeLock = null;
+  if (!lock) return;
+  try { await lock.release(); } catch (_) {}
+}
+
+function bindTvKeepAwake() {
+  if (!IS_TV_DEVICE) return;
+
+  /* Hỗ trợ một số thiết bị LG/NetCast cũ nếu API tồn tại; webOS mới bỏ qua an toàn. */
+  try {
+    if (typeof window.NetCastSetScreenSaver === 'function') {
+      window.NetCastSetScreenSaver('disabled');
+    }
+  } catch (_) {}
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && shouldBePlaying && activeAudio() && !activeAudio().paused) {
+      requestScreenWakeLock();
+      startVisualizer();
+    }
+  });
+}
+
+function getTvSyntheticSpectrumLevel(index, count, nowSeconds) {
+  const player = activeAudio();
+  if (!IS_TV_DEVICE || !player || player.paused || player.ended) return 0.04;
+  const t = Number(player.currentTime || 0);
+  const x = index / Math.max(1, count - 1);
+  const center = 1 - Math.abs(x * 2 - 1);
+  const beat = 0.5 + 0.5 * Math.sin(t * 6.2 + Math.sin(t * 0.73) * 1.8);
+  const ripple = 0.5 + 0.5 * Math.sin(nowSeconds * 4.1 + index * 0.58 + Math.sin(t * 1.37));
+  const slow = 0.5 + 0.5 * Math.sin(t * 1.65 + index * 0.13);
+  const envelope = 0.22 + 0.46 * beat + 0.22 * ripple + 0.10 * slow;
+  return Math.max(0.06, Math.min(0.92, envelope * (0.68 + center * 0.32)));
+}
+
 function startVisualizer() {
   if (visualizerFrame || document.hidden) return;
 
@@ -1320,7 +1393,7 @@ function startVisualizer() {
     const player = activeAudio();
     const playing = Boolean(player && !player.paused && !player.ended);
     const targetFps = playing
-      ? (IS_TV_DEVICE ? 24 : IS_MOBILE_DEVICE ? 24 : 30)
+      ? (IS_TV_DEVICE ? 18 : IS_MOBILE_DEVICE ? 24 : 30)
       : 8;
     const minFrameMs = 1000 / targetFps;
 
@@ -1489,7 +1562,9 @@ function drawWaveVisualizer(canvas, context) {
     const normalized = index / Math.max(1, barCount - 1);
     let level;
 
-    if (playing && frequencyData) {
+    if (playing && IS_TV_DEVICE) {
+      level = getTvSyntheticSpectrumLevel(index, barCount, now);
+    } else if (playing && frequencyData) {
       const mirrored = 1 - Math.abs(normalized * 2 - 1);
       const curved = Math.pow(normalized, 1.42);
       const sourceIndex = Math.min(frequencyData.length - 1, Math.floor(curved * frequencyData.length * 0.72));
@@ -1605,9 +1680,18 @@ function drawLedVisualizer(canvas, context) {
     analyserNode.getByteFrequencyData(frequencyData);
   }
 
-  const bassEnergy = playing ? getLedBandEnergy(frequencyData, 0.002, 0.055) : 0.055;
-  const midEnergy = playing ? getLedBandEnergy(frequencyData, 0.055, 0.24) : 0.045;
-  const trebleEnergy = playing ? getLedBandEnergy(frequencyData, 0.24, 0.7) : 0.035;
+  const syntheticBase = playing && IS_TV_DEVICE
+    ? getTvSyntheticSpectrumLevel(4, 12, seconds)
+    : 0;
+  const bassEnergy = playing
+    ? (IS_TV_DEVICE ? Math.min(1, syntheticBase * 1.08) : getLedBandEnergy(frequencyData, 0.002, 0.055))
+    : 0.055;
+  const midEnergy = playing
+    ? (IS_TV_DEVICE ? Math.min(1, getTvSyntheticSpectrumLevel(7, 15, seconds) * 0.86) : getLedBandEnergy(frequencyData, 0.055, 0.24))
+    : 0.045;
+  const trebleEnergy = playing
+    ? (IS_TV_DEVICE ? Math.min(1, getTvSyntheticSpectrumLevel(11, 18, seconds) * 0.72) : getLedBandEnergy(frequencyData, 0.24, 0.7))
+    : 0.035;
   const totalEnergy = Math.min(1, bassEnergy * 0.52 + midEnergy * 0.31 + trebleEnergy * 0.17);
 
   ledBassAverage += (bassEnergy - ledBassAverage) * (playing ? 0.025 : 0.06);
@@ -5266,10 +5350,98 @@ function updateCurrentTrackUi(
   updateNetworkDiagnostics();
 }
 
+async function openAudioTvSingle(file, options = {}) {
+  if (!file || !file.id) return;
+  const autoplay = options.autoplay !== false;
+  shouldBePlaying = autoplay;
+  const requestToken = ++loadToken;
+
+  if (manualLoadController) {
+    try { manualLoadController.abort(); } catch (_) {}
+  }
+  cancelTransitionKeepCurrent();
+  clearStandby();
+  manualLoadController = new AbortController();
+  const controller = manualLoadController;
+  const signal = controller.signal;
+
+  /* webOS: chỉ audioA được phép giữ media pipeline. */
+  activePlayerIndex = 0;
+  const player = players[0];
+  const other = players[1];
+  claimPlayer(1);
+  try { other.pause(); } catch (_) {}
+  try { other.removeAttribute('src'); other.load(); } catch (_) {}
+  playerStreamSessions[1] = null;
+  if (playerObjectUrls[1]) {
+    try { URL.revokeObjectURL(playerObjectUrls[1]); } catch (_) {}
+    playerObjectUrls[1] = '';
+  }
+
+  const ownerToken = claimPlayer(0);
+  try { player.pause(); } catch (_) {}
+  releasePlayer(0, true);
+  activePlayerIndex = 0;
+  claimPlayer(0);
+  playerOwnerTokens[0] = ownerToken;
+
+  resetTimeDisplay();
+  els.trackTitle.textContent = file.name;
+  els.trackSub.textContent = 'webOS TV • đang chuẩn bị bài hát...';
+  els.play.disabled = true;
+  setLoading(true, `Đang chuẩn bị ${file.name}`, 0);
+
+  try {
+    const info = await getFileInfoCached(file, signal);
+    const prepared = await prepareTrackPlayer(file, info, 0, controller, {
+      concurrency: DOWNLOAD_CONCURRENCY,
+      ownerToken,
+      autoplay: false,
+      onProgress: (completed, total, fileInfo, background) => {
+        if (requestToken !== loadToken || signal.aborted) return;
+        const percent = Math.round(completed / Math.max(1, total) * 100);
+        setLoading(true, background ? `Đang phát • tải nền ${percent}%` : `Đang chuẩn bị ${percent}%`, percent);
+      }
+    });
+
+    if (requestToken !== loadToken || signal.aborted || !isPlayerOwner(0, ownerToken)) return;
+
+    restoreTrackPosition(file, player);
+    applyPlayerPreferences(player);
+    activePlayerIndex = 0;
+    updateCurrentTrackUi(file, info);
+    els.play.disabled = false;
+    els.seek.disabled = false;
+
+    if (autoplay) {
+      setPlayerOutputLevel(0, getUserVolume());
+      await player.play();
+      await waitForPlaybackStart(player, signal);
+      requestScreenWakeLock();
+    }
+
+    setLoading(false);
+    showMode(prepared.mode === 'progressive'
+      ? 'webOS TV • phát một luồng âm thanh • tải nền'
+      : 'webOS TV • phát một luồng âm thanh ổn định');
+    startPlaybackUiTicker();
+    updateNetworkDiagnostics();
+  } catch (error) {
+    if (!isAbortError(error)) showToast('Không thể phát bài hát: ' + error.message, true);
+    setLoading(false);
+    els.play.disabled = !player.src;
+  } finally {
+    if (manualLoadController === controller) manualLoadController = null;
+  }
+}
+
 async function openAudio(
   file,
   options = {}
 ) {
+  if (TV_SINGLE_AUDIO_MODE) {
+    return openAudioTvSingle(file, options);
+  }
   if (!file || !file.id) return;
 
   const autoplay =
@@ -5673,6 +5845,7 @@ async function openAudio(
 
 function scheduleNextPreload() {
   clearTimeout(preloadTimer);
+  if (TV_SINGLE_AUDIO_MODE) return;
 
   if (
     !els.autoNext.checked ||
@@ -5710,6 +5883,7 @@ function getRelativeTrack(step) {
 async function prepareNextTrack(
   force = false
 ) {
+  if (TV_SINGLE_AUDIO_MODE) return;
   if (
     !els.autoNext.checked ||
     transitionInProgress ||
@@ -6364,6 +6538,18 @@ async function startSeamlessNext() {
 
   if (!nextTrack) return;
 
+  if (TV_SINGLE_AUDIO_MODE) {
+    if (tvAutoNextGuard) return;
+    tvAutoNextGuard = true;
+    try {
+      clearSavedTrackPosition(activeFileId);
+      await openAudioTvSingle(nextTrack, { autoplay: true });
+    } finally {
+      window.setTimeout(() => { tvAutoNextGuard = false; }, 350);
+    }
+    return;
+  }
+
   if (
     standbyState.ready &&
     standbyState.track &&
@@ -6396,9 +6582,11 @@ function togglePlay() {
     els.play.textContent = '⏸';
     els.visualizerWrap.classList.add('playing');
     startPlaybackUiTicker();
+    if (IS_TV_DEVICE) requestScreenWakeLock();
   } else {
     shouldBePlaying = false;
     player.pause();
+    if (IS_TV_DEVICE) releaseScreenWakeLock();
     els.play.textContent = '▶';
     els.visualizerWrap.classList.remove('playing');
   }
@@ -6411,6 +6599,11 @@ async function playRelative(step) {
     getRelativeTrack(step);
 
   if (!target) return;
+
+  if (TV_SINGLE_AUDIO_MODE) {
+    await openAudioTvSingle(target, { autoplay: true });
+    return;
+  }
 
   if (
     step === 1 &&
@@ -6533,7 +6726,10 @@ function updateMediaSessionPlaybackState() {
 
 function configurePlayers() {
   players.forEach((player, index) => {
-    player.preload = 'auto';
+    player.preload = (TV_SINGLE_AUDIO_MODE && index === 1) ? 'none' : 'auto';
+    if (TV_SINGLE_AUDIO_MODE && index === 1) {
+      player.muted = true;
+    }
     player.playsInline = true;
     player.addEventListener('loadedmetadata', () => { if (index === activePlayerIndex) { updateMetadata(); updateMediaSessionPosition(); } });
     player.addEventListener('durationchange', () => { if (index === activePlayerIndex) { updateMetadata(); updateMediaSessionPosition(); } });
@@ -6544,6 +6740,7 @@ function configurePlayers() {
       els.play.textContent = '⏸';
       els.visualizerWrap.classList.add('playing');
       startPlaybackUiTicker();
+      if (IS_TV_DEVICE) requestScreenWakeLock();
       updateMediaSessionPlaybackState();
       updateMediaSessionPosition();
     });
@@ -6557,6 +6754,7 @@ function configurePlayers() {
       if (index !== activePlayerIndex || transitionInProgress) return;
       els.play.textContent = '▶';
       els.visualizerWrap.classList.remove('playing');
+      if (IS_TV_DEVICE && !shouldBePlaying) releaseScreenWakeLock();
       updateMediaSessionPlaybackState();
       updateMediaSessionPosition();
     });
@@ -6645,9 +6843,27 @@ function monitorSeamlessTransition() {
     return;
   }
 
-  const remaining =
-    duration -
-    Number(player.currentTime || 0);
+  const currentTime = Number(player.currentTime || 0);
+  const remaining = duration - currentTime;
+
+  if (TV_SINGLE_AUDIO_MODE) {
+    const now = Date.now();
+    if (currentTime > tvLastProgressTime + 0.08) {
+      tvLastProgressTime = currentTime;
+      tvLastProgressAt = now;
+    }
+
+    /*
+     * webOS đôi khi không phát sự kiện ended ổn định. Chuyển bài dự phòng khi
+     * đã sát cuối hoặc khi media đứng ở cuối quá lâu.
+     */
+    const nearEnd = remaining <= 0.45;
+    const stalledAtEnd = remaining <= 1.2 && tvLastProgressAt && now - tvLastProgressAt > 1800;
+    if ((nearEnd || stalledAtEnd) && !tvAutoNextGuard) {
+      startSeamlessNext();
+    }
+    return;
+  }
 
   if (
     remaining <=
@@ -6878,6 +7094,18 @@ function cleanupEverything() {
   }
   if (audioContext) { try { audioContext.close(); } catch (_) {} audioContext = null; }
 }
+
+
+window.addEventListener('pagehide', () => {
+  if (IS_TV_DEVICE) {
+    releaseScreenWakeLock();
+    try {
+      if (typeof window.NetCastSetScreenSaver === 'function') {
+        window.NetCastSetScreenSaver('enabled');
+      }
+    } catch (_) {}
+  }
+});
 
 </script>
 </body>
