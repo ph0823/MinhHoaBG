@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v3.0 Google Drive</title>
+<title>Trình nhạc Nguyên Nhi</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
@@ -5182,6 +5182,7 @@ function updateCurrentTrackUi(
   syncActiveListSelection();
   updateButtons();
   updateMetadata();
+  updateMediaSessionMetadata(file, info || {});
   updateNetworkDiagnostics();
 }
 
@@ -6416,7 +6417,6 @@ function restorePreferences() {
     updateEffectUi();
   }
 
-  updateMediaSessionMetadata(file, info || {});
 }
 
 
