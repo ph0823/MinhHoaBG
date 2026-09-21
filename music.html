@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v3.1 Google Drive Multi-Platform</title>
+<title>Trình nhạc - v1</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- COOP cho OAuth popup phải cấu hình ở HTTP server: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
 <style>
@@ -1360,17 +1360,225 @@ function bindTvKeepAwake() {
   });
 }
 
-function getTvSyntheticSpectrumLevel(index, count, nowSeconds) {
+/* ===== VISUAL ENGINE: FFT thật khi hỗ trợ, time-locked spectrum trên webOS ===== */
+const visualEngineState = {
+  trackKey: '',
+  previousBars: [],
+  smoothedBars: [],
+  fluxAverage: 0.02,
+  beatPulse: 0
+};
+
+function visualHash32(input) {
+  let h = 2166136261 >>> 0;
+  const s = String(input || '');
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h += h << 13; h ^= h >>> 7;
+  h += h << 3; h ^= h >>> 17;
+  h += h << 5;
+  return h >>> 0;
+}
+
+function visualRandom(seed, a = 0, b = 0) {
+  let x = (seed ^ Math.imul((a + 1) >>> 0, 0x9E3779B1) ^ Math.imul((b + 1) >>> 0, 0x85EBCA77)) >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x7feb352d);
+  x ^= x >>> 15;
+  x = Math.imul(x, 0x846ca68b);
+  x ^= x >>> 16;
+  return (x >>> 0) / 4294967295;
+}
+
+function visualSmoothstep(x) {
+  x = Math.max(0, Math.min(1, x));
+  return x * x * (3 - 2 * x);
+}
+
+function getVisualTrackKey() {
+  const track = currentTrack || {};
+  return String(track.id || activeFileId || track.name || els.trackTitle.textContent || 'track');
+}
+
+function resetVisualEngineIfTrackChanged() {
+  const key = getVisualTrackKey();
+  if (visualEngineState.trackKey === key) return;
+  visualEngineState.trackKey = key;
+  visualEngineState.previousBars = [];
+  visualEngineState.smoothedBars = [];
+  visualEngineState.fluxAverage = 0.02;
+  visualEngineState.beatPulse = 0;
+}
+
+function buildProceduralTvSpectrum(count, player) {
+  const t = Math.max(0, Number(player && player.currentTime || 0));
+  const seed = visualHash32(getVisualTrackKey());
+
+  const bpm = 82 + Math.floor(visualRandom(seed, 11) * 68);
+  const beatDuration = 60 / bpm;
+  const beatFloat = t / beatDuration;
+  const beatIndex = Math.floor(beatFloat);
+  const beatPhase = beatFloat - beatIndex;
+
+  const sectionBeats = 16 + (visualRandom(seed, 21) > 0.55 ? 16 : 0);
+  const sectionFloat = beatFloat / sectionBeats;
+  const sectionIndex = Math.floor(sectionFloat);
+  const sectionPhase = visualSmoothstep(sectionFloat - sectionIndex);
+
+  const sectionA = 0.50 + visualRandom(seed, 1000 + sectionIndex) * 0.46;
+  const sectionB = 0.50 + visualRandom(seed, 1000 + sectionIndex + 1) * 0.46;
+  const sectionEnergy = sectionA + (sectionB - sectionA) * sectionPhase;
+
+  const beatAccent = (beatIndex % 4 === 0 ? 1.20 : 1.0) * (beatIndex % 8 === 0 ? 1.10 : 1.0);
+  const attack = Math.exp(-beatPhase * 7.8);
+  const halfPhase = (beatPhase + 0.5) % 1;
+  const halfBeat = Math.exp(-halfPhase * 10.5) * 0.22;
+  const transient = Math.min(1, (attack * beatAccent + halfBeat) * sectionEnergy);
+
+  const interp = visualSmoothstep(beatPhase);
+  const bars = new Array(count);
+  const profileMode = Math.floor(visualRandom(seed, 3000 + sectionIndex) * 4);
+
+  for (let i = 0; i < count; i++) {
+    const x = i / Math.max(1, count - 1);
+    const prevRnd = visualRandom(seed, beatIndex, i);
+    const nextRnd = visualRandom(seed, beatIndex + 1, i);
+    const movingRnd = prevRnd + (nextRnd - prevRnd) * interp;
+
+    const slowA = visualRandom(seed, sectionIndex * 7 + i, 77);
+    const slowB = visualRandom(seed, (sectionIndex + 1) * 7 + i, 77);
+    const sectionRnd = slowA + (slowB - slowA) * sectionPhase;
+
+    let profile;
+    if (profileMode === 0) {
+      profile = 0.95 - x * 0.42;
+    } else if (profileMode === 1) {
+      profile = 0.62 + Math.exp(-Math.pow((x - 0.46) / 0.26, 2)) * 0.42;
+    } else if (profileMode === 2) {
+      profile = 0.56 + x * 0.32;
+    } else {
+      profile = 0.72 + Math.exp(-Math.pow((x - 0.22) / 0.20, 2)) * 0.24
+                     + Math.exp(-Math.pow((x - 0.70) / 0.18, 2)) * 0.18;
+    }
+
+    const lowBeatWeight = 1.0 - x * 0.62;
+    const microTransient = Math.max(0, visualRandom(seed, beatIndex * 3 + (i % 5), 91) - 0.62) *
+      (0.14 + (1 - x) * 0.16);
+
+    let level =
+      0.055 +
+      sectionEnergy * 0.18 +
+      movingRnd * 0.31 +
+      sectionRnd * 0.16 +
+      transient * lowBeatWeight * 0.42 +
+      microTransient;
+
+    bars[i] = Math.max(0.025, Math.min(1, level * profile));
+  }
+
+  const bassEnd = Math.max(1, Math.floor(count * 0.24));
+  const midEnd = Math.max(bassEnd + 1, Math.floor(count * 0.62));
+  const avg = (from, to) => {
+    let sum = 0;
+    for (let i = from; i < to; i++) sum += bars[i] || 0;
+    return sum / Math.max(1, to - from);
+  };
+
+  const bass = avg(0, bassEnd);
+  const mid = avg(bassEnd, midEnd);
+  const treble = avg(midEnd, count);
+  const total = Math.min(1, bass * 0.45 + mid * 0.35 + treble * 0.20);
+  return { bars, bass, mid, treble, total, beat: transient, bpm, realAudio: false };
+}
+
+function buildRealAudioSpectrum(count) {
+  analyserNode.getByteFrequencyData(frequencyData);
+  const bins = frequencyData.length;
+  const sampleRate = audioContext && audioContext.sampleRate ? audioContext.sampleRate : 48000;
+  const nyquist = sampleRate / 2;
+  const minHz = 45;
+  const maxHz = Math.min(16000, nyquist * 0.95);
+  const bars = new Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const p0 = i / count;
+    const p1 = (i + 1) / count;
+    const hz0 = minHz * Math.pow(maxHz / minHz, p0);
+    const hz1 = minHz * Math.pow(maxHz / minHz, p1);
+    const b0 = Math.max(0, Math.min(bins - 1, Math.floor(hz0 / nyquist * bins)));
+    const b1 = Math.max(b0 + 1, Math.min(bins, Math.ceil(hz1 / nyquist * bins)));
+
+    let sum = 0, peak = 0;
+    for (let b = b0; b < b1; b++) {
+      const v = frequencyData[b] / 255;
+      sum += v;
+      if (v > peak) peak = v;
+    }
+    const avg = sum / Math.max(1, b1 - b0);
+    bars[i] = Math.min(1, Math.pow(avg * 0.72 + peak * 0.48, 0.78));
+  }
+
+  if (visualEngineState.previousBars.length !== count) {
+    visualEngineState.previousBars = new Array(count).fill(0);
+    visualEngineState.smoothedBars = new Array(count).fill(0);
+  }
+
+  let flux = 0;
+  for (let i = 0; i < count; i++) {
+    flux += Math.max(0, bars[i] - visualEngineState.previousBars[i]);
+    visualEngineState.previousBars[i] = bars[i];
+  }
+  flux /= Math.max(1, count);
+
+  visualEngineState.fluxAverage += (flux - visualEngineState.fluxAverage) * 0.045;
+  const threshold = visualEngineState.fluxAverage * 1.55 + 0.012;
+  if (flux > threshold) {
+    visualEngineState.beatPulse = Math.min(1, visualEngineState.beatPulse + 0.55 + flux * 1.8);
+  }
+  visualEngineState.beatPulse *= 0.84;
+
+  for (let i = 0; i < count; i++) {
+    const current = visualEngineState.smoothedBars[i] || 0;
+    const target = bars[i];
+    const alpha = target > current ? 0.55 : 0.20;
+    visualEngineState.smoothedBars[i] = current + (target - current) * alpha;
+  }
+
+  const smoothed = visualEngineState.smoothedBars.slice();
+  const bassEnd = Math.max(1, Math.floor(count * 0.24));
+  const midEnd = Math.max(bassEnd + 1, Math.floor(count * 0.62));
+  const avg = (from, to) => {
+    let sum = 0;
+    for (let i = from; i < to; i++) sum += smoothed[i] || 0;
+    return sum / Math.max(1, to - from);
+  };
+
+  const bass = avg(0, bassEnd);
+  const mid = avg(bassEnd, midEnd);
+  const treble = avg(midEnd, count);
+  const total = Math.min(1, bass * 0.46 + mid * 0.34 + treble * 0.20);
+  return { bars: smoothed, bass, mid, treble, total, beat: visualEngineState.beatPulse, bpm: 0, realAudio: true };
+}
+
+function getVisualSpectrumSnapshot(count) {
+  resetVisualEngineIfTrackChanged();
   const player = activeAudio();
-  if (!IS_TV_DEVICE || !player || player.paused || player.ended) return 0.04;
-  const t = Number(player.currentTime || 0);
-  const x = index / Math.max(1, count - 1);
-  const center = 1 - Math.abs(x * 2 - 1);
-  const beat = 0.5 + 0.5 * Math.sin(t * 6.2 + Math.sin(t * 0.73) * 1.8);
-  const ripple = 0.5 + 0.5 * Math.sin(nowSeconds * 4.1 + index * 0.58 + Math.sin(t * 1.37));
-  const slow = 0.5 + 0.5 * Math.sin(t * 1.65 + index * 0.13);
-  const envelope = 0.22 + 0.46 * beat + 0.22 * ripple + 0.10 * slow;
-  return Math.max(0.06, Math.min(0.92, envelope * (0.68 + center * 0.32)));
+  const playing = Boolean(player && !player.paused && !player.ended);
+
+  if (!playing) {
+    const bars = Array.from({ length: count }, (_, i) => {
+      const x = i / Math.max(1, count - 1);
+      return 0.035 + 0.018 * (1 - Math.abs(x * 2 - 1));
+    });
+    return { bars, bass: 0.05, mid: 0.045, treble: 0.04, total: 0.045, beat: 0, bpm: 0, realAudio: false };
+  }
+
+  if (!IS_TV_DEVICE && analyserNode && frequencyData && audioContext) {
+    return buildRealAudioSpectrum(count);
+  }
+  return buildProceduralTvSpectrum(count, player);
 }
 
 function startVisualizer() {
@@ -1473,7 +1681,6 @@ function drawWaveVisualizer(canvas, context) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const width = Math.max(1, Math.floor(rect.width * dpr));
   const height = Math.max(1, Math.floor(rect.height * dpr));
-
   const sidePadding = 18 * dpr;
   const centerY = height * 0.5;
   const maxHalfHeight = height * 0.42;
@@ -1485,16 +1692,16 @@ function drawWaveVisualizer(canvas, context) {
     canvasGradientCache.height = height;
 
     const barGrad = context.createLinearGradient(0, centerY - maxHalfHeight, 0, centerY + maxHalfHeight);
-    barGrad.addColorStop(0, '#00e5ff');
-    barGrad.addColorStop(0.44, '#1ed760');
-    barGrad.addColorStop(0.5, '#f4fff7');
-    barGrad.addColorStop(0.56, '#1ed760');
-    barGrad.addColorStop(1, '#00b8d4');
+    barGrad.addColorStop(0, '#22e7ff');
+    barGrad.addColorStop(0.36, '#79ff9a');
+    barGrad.addColorStop(0.5, '#ffffff');
+    barGrad.addColorStop(0.64, '#5cff83');
+    barGrad.addColorStop(1, '#00aeca');
     canvasGradientCache.waveBar = barGrad;
 
     const lineGradActive = context.createLinearGradient(sidePadding, 0, width - sidePadding, 0);
     lineGradActive.addColorStop(0, 'rgba(30,215,96,0)');
-    lineGradActive.addColorStop(0.5, 'rgba(255,255,255,.42)');
+    lineGradActive.addColorStop(0.5, 'rgba(255,255,255,.52)');
     lineGradActive.addColorStop(1, 'rgba(0,229,255,0)');
     canvasGradientCache.waveLineActive = lineGradActive;
 
@@ -1509,37 +1716,22 @@ function drawWaveVisualizer(canvas, context) {
 
   const player = activeAudio();
   const playing = Boolean(player && !player.paused && !player.ended);
-  const now = performance.now() * 0.001;
+  const barCount = IS_MOBILE_DEVICE ? 48 : (width > 1600 ? 92 : 72);
+  const snapshot = getVisualSpectrumSnapshot(barCount);
+  const energy = snapshot.total;
+  const beat = snapshot.beat;
 
-  if (playing && analyserNode && frequencyData) {
-    analyserNode.getByteFrequencyData(frequencyData);
-  }
-
-  const barCount = IS_MOBILE_DEVICE ? 46 : (width > 1600 ? 86 : 68);
-  const gap = (IS_MOBILE_DEVICE ? 2.4 : 3.2) * dpr;
-  const usableWidth = Math.max(1, width - sidePadding * 2);
-  const barWidth = Math.max(2 * dpr, (usableWidth - gap * (barCount - 1)) / barCount);
-
-  let energy = 0;
-  if (playing && frequencyData) {
-    const energyBins = Math.min(48, frequencyData.length);
-    for (let index = 0; index < energyBins; index++) {
-      energy += frequencyData[index] / 255;
-    }
-    energy /= Math.max(1, energyBins);
-  }
-
-  const aura = context.createRadialGradient(width * 0.5, centerY, 0, width * 0.5, centerY, Math.max(width, height) * 0.52);
-  aura.addColorStop(0, `rgba(30,215,96,${playing ? 0.08 + energy * 0.13 : 0.035})`);
-  aura.addColorStop(0.46, `rgba(0,229,255,${playing ? 0.025 + energy * 0.07 : 0.012})`);
+  const aura = context.createRadialGradient(width * 0.5, centerY, 0, width * 0.5, centerY, Math.max(width, height) * 0.56);
+  aura.addColorStop(0, `rgba(30,215,96,${playing ? 0.07 + energy * 0.16 + beat * 0.05 : 0.03})`);
+  aura.addColorStop(0.44, `rgba(0,229,255,${playing ? 0.02 + snapshot.treble * 0.09 : 0.01})`);
   aura.addColorStop(1, 'rgba(0,0,0,0)');
   context.fillStyle = aura;
   context.fillRect(0, 0, width, height);
 
   context.save();
-  context.strokeStyle = 'rgba(255,255,255,.055)';
-  context.lineWidth = Math.max(1, dpr * 0.65);
-  context.beginPath(); 
+  context.strokeStyle = 'rgba(255,255,255,.045)';
+  context.lineWidth = Math.max(1, dpr * 0.55);
+  context.beginPath();
   for (let row = 1; row < 4; row++) {
     const y = height * row / 4;
     context.moveTo(sidePadding, y);
@@ -1548,51 +1740,40 @@ function drawWaveVisualizer(canvas, context) {
   context.stroke();
   context.restore();
 
-  context.save();
-  context.fillStyle = canvasGradientCache.waveBar;
-  const enableWaveGlow = !IS_TV_DEVICE;
-  context.shadowColor = enableWaveGlow ? (playing ? 'rgba(30,215,96,.46)' : 'rgba(30,215,96,.12)') : 'transparent';
-  context.shadowBlur = enableWaveGlow ? (playing ? 11 + energy * 18 : 5) * dpr : 0;
-  context.beginPath();
-
+  const gap = (IS_MOBILE_DEVICE ? 2.1 : 2.8) * dpr;
+  const usableWidth = Math.max(1, width - sidePadding * 2);
+  const barWidth = Math.max(2 * dpr, (usableWidth - gap * (barCount - 1)) / barCount);
   const roundedRadius = Math.min(barWidth / 2, 4 * dpr);
   const hasRoundRect = typeof context.roundRect === 'function';
 
-  for (let index = 0; index < barCount; index++) {
-    const normalized = index / Math.max(1, barCount - 1);
-    let level;
+  context.save();
+  context.fillStyle = canvasGradientCache.waveBar;
+  const enableGlow = !IS_TV_DEVICE;
+  context.shadowColor = enableGlow ? `rgba(30,215,96,${0.20 + energy * 0.38})` : 'transparent';
+  context.shadowBlur = enableGlow ? (7 + energy * 15 + beat * 9) * dpr : 0;
 
-    if (playing && IS_TV_DEVICE) {
-      level = getTvSyntheticSpectrumLevel(index, barCount, now);
-    } else if (playing && frequencyData) {
-      const mirrored = 1 - Math.abs(normalized * 2 - 1);
-      const curved = Math.pow(normalized, 1.42);
-      const sourceIndex = Math.min(frequencyData.length - 1, Math.floor(curved * frequencyData.length * 0.72));
-      const nearbyIndex = Math.min(frequencyData.length - 1, sourceIndex + 2);
-      const sample = Math.max(frequencyData[sourceIndex] || 0, (frequencyData[nearbyIndex] || 0) * 0.88);
-      level = Math.pow(sample / 255, 1.08) * (0.76 + mirrored * 0.24);
-    } else {
-      level = 0.035 + (Math.sin(now * 1.25 + index * 0.37) + 1) * 0.012;
-    }
+  for (let index = 0; index < barCount; index++) {
+    const raw = snapshot.bars[index] || 0;
+    const xNorm = index / Math.max(1, barCount - 1);
+    const frequencyWeight = 0.86 + (1 - xNorm) * snapshot.bass * 0.16 + xNorm * snapshot.treble * 0.08;
+    const transientLift = beat * (0.12 + (1 - xNorm) * 0.16);
+    const level = Math.max(0.025, Math.min(1, raw * frequencyWeight + transientLift));
 
     const halfHeight = Math.max(2.5 * dpr, level * maxHalfHeight);
     const x = sidePadding + index * (barWidth + gap);
     const y = centerY - halfHeight;
     const fullHeight = halfHeight * 2;
 
-    if (hasRoundRect) {
-      context.roundRect(x, y, barWidth, fullHeight, roundedRadius);
-    } else {
-      context.rect(x, y, barWidth, fullHeight);
-    }
+    context.beginPath();
+    if (hasRoundRect) context.roundRect(x, y, barWidth, fullHeight, roundedRadius);
+    else context.rect(x, y, barWidth, fullHeight);
+    context.fill();
   }
-
-  context.fill();
   context.restore();
 
   context.save();
   context.strokeStyle = playing ? canvasGradientCache.waveLineActive : canvasGradientCache.waveLineIdle;
-  context.lineWidth = dpr;
+  context.lineWidth = Math.max(dpr, dpr * (1 + beat * 0.7));
   context.beginPath();
   context.moveTo(sidePadding, centerY);
   context.lineTo(width - sidePadding, centerY);
@@ -1673,175 +1854,110 @@ function drawLedVisualizer(canvas, context) {
 
   const player = activeAudio();
   const playing = Boolean(player && !player.paused && !player.ended);
-  const now = performance.now();
-  const seconds = now * 0.001;
+  const compact = width < 700 * dpr;
+  const columns = compact ? 24 : (width > 1500 ? 42 : 34);
+  const segments = compact ? 11 : 15;
+  const snapshot = getVisualSpectrumSnapshot(columns);
 
-  if (playing && analyserNode && frequencyData) {
-    analyserNode.getByteFrequencyData(frequencyData);
-  }
+  const bassEnergy = snapshot.bass;
+  const midEnergy = snapshot.mid;
+  const trebleEnergy = snapshot.treble;
+  const totalEnergy = snapshot.total;
 
-  const syntheticBase = playing && IS_TV_DEVICE
-    ? getTvSyntheticSpectrumLevel(4, 12, seconds)
-    : 0;
-  const bassEnergy = playing
-    ? (IS_TV_DEVICE ? Math.min(1, syntheticBase * 1.08) : getLedBandEnergy(frequencyData, 0.002, 0.055))
-    : 0.055;
-  const midEnergy = playing
-    ? (IS_TV_DEVICE ? Math.min(1, getTvSyntheticSpectrumLevel(7, 15, seconds) * 0.86) : getLedBandEnergy(frequencyData, 0.055, 0.24))
-    : 0.045;
-  const trebleEnergy = playing
-    ? (IS_TV_DEVICE ? Math.min(1, getTvSyntheticSpectrumLevel(11, 18, seconds) * 0.72) : getLedBandEnergy(frequencyData, 0.24, 0.7))
-    : 0.035;
-  const totalEnergy = Math.min(1, bassEnergy * 0.52 + midEnergy * 0.31 + trebleEnergy * 0.17);
-
-  ledBassAverage += (bassEnergy - ledBassAverage) * (playing ? 0.025 : 0.06);
-  const beatThreshold = Math.max(0.115, ledBassAverage * 1.42);
-  if (playing && bassEnergy > beatThreshold && bassEnergy > 0.22) {
-    ledBeatPulse = Math.min(1, ledBeatPulse + 0.34 + bassEnergy * 0.42);
-  }
-  ledBeatPulse *= playing ? 0.89 : 0.78;
-  ledEnergyTrail += (totalEnergy - ledEnergyTrail) * (totalEnergy > ledEnergyTrail ? 0.25 : 0.055);
+  ledBassAverage += (bassEnergy - ledBassAverage) * (playing ? 0.06 : 0.04);
+  ledBeatPulse += (snapshot.beat - ledBeatPulse) * (snapshot.beat > ledBeatPulse ? 0.55 : 0.18);
+  ledEnergyTrail += (totalEnergy - ledEnergyTrail) * (totalEnergy > ledEnergyTrail ? 0.28 : 0.075);
 
   const padding = (IS_MOBILE_DEVICE ? 9 : 17) * dpr;
-  const panelX = padding;
-  const panelY = padding;
-  const panelWidth = width - padding * 2;
-  const panelHeight = height - padding * 2;
+  const panelX = padding, panelY = padding;
+  const panelWidth = width - padding * 2, panelHeight = height - padding * 2;
   const radius = (IS_MOBILE_DEVICE ? 15 : 21) * dpr;
-  const pulseScale = 1 + ledBeatPulse * 0.006;
 
   context.save();
-  context.translate(width * 0.5, height * 0.5);
-  context.scale(pulseScale, pulseScale);
-  context.translate(-width * 0.5, -height * 0.5);
-  const enableLedGlow = !IS_TV_DEVICE;
-  context.shadowColor = enableLedGlow
-    ? (playing ? `rgba(71,255,116,${0.16 + ledEnergyTrail * 0.28 + ledBeatPulse * 0.22})` : 'rgba(0,0,0,.38)')
-    : 'transparent';
-  context.shadowBlur = enableLedGlow ? (playing ? 20 + ledEnergyTrail * 30 + ledBeatPulse * 22 : 11) * dpr : 0;
   context.fillStyle = '#020503';
   ledRoundedRect(context, panelX, panelY, panelWidth, panelHeight, radius);
   context.fill();
-  context.restore();
 
   context.save();
   ledRoundedRect(context, panelX, panelY, panelWidth, panelHeight, radius);
   context.clip();
 
-  const panelGradient = context.createLinearGradient(0, panelY, 0, panelY + panelHeight);
-  panelGradient.addColorStop(0, `rgba(13,25,16,${0.96 + ledEnergyTrail * 0.03})`);
-  panelGradient.addColorStop(0.48, 'rgba(3,8,5,.995)');
-  panelGradient.addColorStop(1, 'rgba(0,2,1,1)');
-  context.fillStyle = panelGradient;
+  const bg = context.createLinearGradient(0, panelY, 0, panelY + panelHeight);
+  bg.addColorStop(0, 'rgba(12,23,15,.98)');
+  bg.addColorStop(0.50, 'rgba(3,8,5,.995)');
+  bg.addColorStop(1, 'rgba(0,2,1,1)');
+  context.fillStyle = bg;
   context.fillRect(panelX, panelY, panelWidth, panelHeight);
 
-  /* Nhịp bass tạo quầng sáng lan rộng phía sau các cột LED. */
-  const pulseGlow = context.createRadialGradient(
-    panelX + panelWidth * 0.5,
-    panelY + panelHeight * 0.7,
-    0,
-    panelX + panelWidth * 0.5,
-    panelY + panelHeight * 0.7,
-    panelWidth * 0.56
-  );
-  pulseGlow.addColorStop(0, `rgba(47,255,101,${0.025 + ledEnergyTrail * 0.13 + ledBeatPulse * 0.12})`);
-  pulseGlow.addColorStop(0.5, `rgba(24,230,255,${0.01 + trebleEnergy * 0.055})`);
-  pulseGlow.addColorStop(1, 'rgba(0,0,0,0)');
-  context.fillStyle = pulseGlow;
+  const glow = context.createRadialGradient(panelX + panelWidth * 0.5, panelY + panelHeight * 0.7, 0,
+    panelX + panelWidth * 0.5, panelY + panelHeight * 0.7, panelWidth * 0.58);
+  glow.addColorStop(0, `rgba(47,255,101,${0.025 + totalEnergy * 0.13 + ledBeatPulse * 0.12})`);
+  glow.addColorStop(0.5, `rgba(24,230,255,${0.01 + trebleEnergy * 0.055})`);
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  context.fillStyle = glow;
   context.fillRect(panelX, panelY, panelWidth, panelHeight);
 
   const grid = createLedGridPattern(context, dpr);
   if (grid) {
-    context.globalAlpha = playing ? 0.72 + ledEnergyTrail * 0.22 : 0.48;
+    context.globalAlpha = playing ? 0.58 + totalEnergy * 0.28 : 0.42;
     context.fillStyle = grid;
     context.fillRect(panelX, panelY, panelWidth, panelHeight);
     context.globalAlpha = 1;
   }
 
-  /* Vệt quét chuyển động giúp mặt LED không bị phẳng. */
-  const scanY = panelY + ((seconds * (playing ? 0.115 + totalEnergy * 0.075 : 0.035)) % 1) * panelHeight;
-  const scanBeam = context.createLinearGradient(0, scanY - 28 * dpr, 0, scanY + 28 * dpr);
-  scanBeam.addColorStop(0, 'rgba(80,255,126,0)');
-  scanBeam.addColorStop(0.5, `rgba(111,255,148,${playing ? 0.035 + totalEnergy * 0.075 : 0.018})`);
-  scanBeam.addColorStop(1, 'rgba(80,255,126,0)');
-  context.fillStyle = scanBeam;
-  context.fillRect(panelX, scanY - 28 * dpr, panelWidth, 56 * dpr);
-
-  const compact = width < 700 * dpr;
-  const headerHeight = (compact ? 60 : 76) * dpr;
-  const headerTop = panelY + (compact ? 10 : 13) * dpr;
-  const green = '#62ff82';
-  const dimGreen = 'rgba(103,255,139,.34)';
+  const headerHeight = (compact ? 58 : 74) * dpr;
+  const headerTop = panelY + (compact ? 9 : 12) * dpr;
+  const labelX = panelX + 14 * dpr;
+  const meterX = panelX + (compact ? 47 : 58) * dpr;
+  const meterWidth = (compact ? 38 : 54) * dpr;
+  const meterHeight = (compact ? 5 : 6) * dpr;
+  const meterData = [
+    ['BASS', bassEnergy, '#59ff72'],
+    ['MID', midEnergy, '#d9ff54'],
+    ['HIGH', trebleEnergy, '#32e9ff']
+  ];
 
   context.save();
   context.textBaseline = 'middle';
   context.font = `850 ${compact ? 8 : 10}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  context.fillStyle = dimGreen;
-  context.fillText('BASS', panelX + 14 * dpr, headerTop + 9 * dpr);
-  context.fillText('MID', panelX + 14 * dpr, headerTop + 27 * dpr);
-  context.fillText('HIGH', panelX + 14 * dpr, headerTop + 45 * dpr);
-
-  const meterX = panelX + (compact ? 47 : 55) * dpr;
-  const meterWidth = (compact ? 35 : 48) * dpr;
-  const meterHeight = (compact ? 5 : 6) * dpr;
-  const meters = [bassEnergy, midEnergy, trebleEnergy];
-  const meterColors = ['#59ff72', '#d9ff54', '#32e9ff'];
-
-  meters.forEach((energy, index) => {
-    const y = headerTop + (7 + index * 18) * dpr;
-    context.fillStyle = 'rgba(105,255,139,.105)';
-    ledRoundedRect(context, meterX, y, meterWidth, meterHeight, meterHeight / 2);
+  meterData.forEach(([label, value, color], idx) => {
+    const y = headerTop + (8 + idx * 18) * dpr;
+    context.fillStyle = 'rgba(145,255,167,.38)';
+    context.fillText(label, labelX, y);
+    context.fillStyle = 'rgba(105,255,139,.10)';
+    ledRoundedRect(context, meterX, y - meterHeight / 2, meterWidth, meterHeight, meterHeight / 2);
     context.fill();
-    context.fillStyle = meterColors[index];
-    context.shadowColor = meterColors[index];
-    context.shadowBlur = playing ? (4 + energy * 10) * dpr : 0;
-    ledRoundedRect(context, meterX, y, meterWidth * Math.max(0.035, energy), meterHeight, meterHeight / 2);
+    context.fillStyle = color;
+    context.shadowColor = IS_TV_DEVICE ? 'transparent' : color;
+    context.shadowBlur = IS_TV_DEVICE ? 0 : (3 + value * 8) * dpr;
+    ledRoundedRect(context, meterX, y - meterHeight / 2, meterWidth * Math.max(0.03, value), meterHeight, meterHeight / 2);
     context.fill();
-    context.shadowBlur = 0;
   });
-
-  const playX = panelX + (compact ? 101 : 126) * dpr;
-  const playY = headerTop + (compact ? 13 : 14) * dpr;
-  context.shadowColor = 'rgba(96,255,132,.8)';
-  context.shadowBlur = playing ? (7 + ledBeatPulse * 12) * dpr : 2 * dpr;
-  context.fillStyle = playing ? green : 'rgba(98,255,130,.28)';
-  context.beginPath();
-  context.moveTo(playX, playY);
-  context.lineTo(playX, playY + (compact ? 25 : 31) * dpr);
-  context.lineTo(playX + (compact ? 19 : 24) * dpr, playY + (compact ? 12.5 : 15.5) * dpr);
-  context.closePath();
-  context.fill();
   context.restore();
 
   const elapsed = formatTime(player && Number.isFinite(player.currentTime) ? player.currentTime : 0);
   context.save();
   context.textAlign = 'right';
   context.textBaseline = 'middle';
-  context.font = `900 ${compact ? 25 : 43}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  context.shadowColor = !IS_TV_DEVICE ? 'rgba(86,255,121,.72)' : 'transparent';
-  context.shadowBlur = !IS_TV_DEVICE ? (playing ? (10 + totalEnergy * 17 + ledBeatPulse * 9) * dpr : 4 * dpr) : 0;
-  context.fillStyle = playing ? green : 'rgba(98,255,130,.43)';
-  context.fillText(elapsed, panelX + panelWidth - 17 * dpr, headerTop + (compact ? 22 : 25) * dpr);
-  context.restore();
-
-  context.save();
-  context.fillStyle = `rgba(145,255,167,${playing ? 0.42 + totalEnergy * 0.25 : 0.32})`;
+  context.font = `900 ${compact ? 24 : 40}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  context.fillStyle = playing ? '#62ff82' : 'rgba(98,255,130,.43)';
+  context.fillText(elapsed, panelX + panelWidth - 17 * dpr, headerTop + (compact ? 21 : 24) * dpr);
   context.font = `800 ${compact ? 7 : 9}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  context.textAlign = 'right';
-  context.fillText('DYNAMIC LED SPECTRUM', panelX + panelWidth - 18 * dpr, headerTop + (compact ? 43 : 53) * dpr);
+  context.fillStyle = 'rgba(145,255,167,.44)';
+  const modeLabel = snapshot.realAudio ? 'LIVE FFT SPECTRUM' :
+    (IS_TV_DEVICE ? `TIME-LOCKED • ${snapshot.bpm || '--'} BPM` : 'DYNAMIC SPECTRUM');
+  context.fillText(modeLabel, panelX + panelWidth - 18 * dpr, headerTop + (compact ? 42 : 51) * dpr);
   context.restore();
 
-  const columns = compact ? 22 : (width > 1500 ? 38 : 32);
-  const segments = compact ? 10 : 14;
   const chartLeft = panelX + 15 * dpr;
   const chartRight = panelX + panelWidth - 15 * dpr;
   const chartTop = panelY + headerHeight;
   const chartBottom = panelY + panelHeight - 17 * dpr;
   const chartHeight = Math.max(30 * dpr, chartBottom - chartTop);
-  const columnGap = (compact ? 2.6 : 3.6) * dpr;
+  const columnGap = (compact ? 2.4 : 3.2) * dpr;
   const columnWidth = Math.max(3 * dpr, (chartRight - chartLeft - columnGap * (columns - 1)) / columns);
-  const segmentGap = (compact ? 2.2 : 2.75) * dpr;
-  const segmentHeight = Math.max(2.35 * dpr, (chartHeight - segmentGap * (segments - 1)) / segments);
+  const segmentGap = (compact ? 2.0 : 2.5) * dpr;
+  const segmentHeight = Math.max(2.2 * dpr, (chartHeight - segmentGap * (segments - 1)) / segments);
 
   if (ledLevels.length !== columns) {
     ledLevels = new Array(columns).fill(0);
@@ -1851,185 +1967,62 @@ function drawLedVisualizer(canvas, context) {
     ledPreviousTargets = new Array(columns).fill(0);
   }
 
-  /* Đường chân phổ và phản xạ nhẹ. */
-  const floorGlow = context.createLinearGradient(chartLeft, 0, chartRight, 0);
-  floorGlow.addColorStop(0, 'rgba(53,255,103,0)');
-  floorGlow.addColorStop(0.5, `rgba(86,255,126,${0.13 + ledEnergyTrail * 0.24})`);
-  floorGlow.addColorStop(1, 'rgba(38,233,255,0)');
-  context.fillStyle = floorGlow;
-  context.fillRect(chartLeft, chartBottom + 3 * dpr, chartRight - chartLeft, Math.max(1, dpr));
-
+  const now = performance.now();
   for (let column = 0; column < columns; column++) {
     const normalized = column / Math.max(1, columns - 1);
-    let targetLevel;
+    let targetLevel = Math.min(1,
+      (snapshot.bars[column] || 0) +
+      ledBeatPulse * (0.20 * (1 - normalized) + 0.035) +
+      trebleEnergy * normalized * 0.05
+    );
 
-    if (playing && frequencyData && frequencyData.length) {
-      const curved = Math.pow(normalized, 1.58);
-      const sourcePosition = curved * frequencyData.length * 0.69;
-      const centerIndex = Math.min(frequencyData.length - 1, Math.floor(sourcePosition));
-      let weighted = 0;
-      let weight = 0;
-
-      /*
-       * Chỉ lấy vùng tần số hẹp hơn. Nhờ vậy các cột liền nhau không còn
-       * nhận gần như cùng một mức năng lượng và hình LED có độ trồi sụt rõ.
-       */
-      for (let offset = -1; offset <= 2; offset++) {
-        const index = Math.max(0, Math.min(frequencyData.length - 1, centerIndex + offset));
-        const localWeight = offset === 0 ? 1.35 : (offset === 1 ? 1 : 0.62);
-        weighted += (frequencyData[index] / 255) * localWeight;
-        weight += localWeight;
-      }
-
-      const rawLevel = weighted / Math.max(0.001, weight);
-      const leftIndex = Math.max(0, centerIndex - 4);
-      const rightIndex = Math.min(frequencyData.length - 1, centerIndex + 4);
-      const localContrast = Math.abs(
-        (frequencyData[leftIndex] || 0) - (frequencyData[rightIndex] || 0)
-      ) / 255;
-
-      /* Nén phần thấp, đẩy mạnh phần cao để biên độ nhảy lớn hơn. */
-      targetLevel = Math.pow(Math.max(0, rawLevel - 0.035), 0.58) * 1.18;
-
-      /* Tạo chênh lệch tự nhiên giữa các cột, mạnh hơn khi bài hát giàu năng lượng. */
-      const columnSeparation =
-        1 +
-        Math.sin(column * 1.87 + seconds * 10.5) * (0.10 + totalEnergy * 0.13) +
-        Math.sin(column * 3.21 - seconds * 7.2) * (0.045 + trebleEnergy * 0.09);
-
-      const musicalShape = 0.78 + Math.sin(normalized * Math.PI) * 0.22;
-      const transientBoost = Math.max(0, rawLevel - (ledPreviousTargets[column] || 0)) * 1.9;
-      const beatKick = ledBeatPulse * (0.10 + (1 - normalized) * 0.22);
-
-      targetLevel = Math.min(
-        1,
-        targetLevel * musicalShape * columnSeparation +
-        localContrast * (0.16 + totalEnergy * 0.24) +
-        transientBoost +
-        beatKick
-      );
-
-      ledPreviousTargets[column] = rawLevel;
-    } else {
-      targetLevel = 0.045 + (Math.sin(seconds * 1.2 + column * 0.67) + 1) * 0.018;
-    }
-
-    /*
-     * Lò xo tốc độ cao: cột bật lên nhanh, rơi đủ nhanh để tạo khoảng trống
-     * rõ rệt trước nhịp kế tiếp. Đây là phần quyết định cảm giác sôi động.
-     */
-    const level = ledLevels[column];
+    const level = ledLevels[column] || 0;
     const velocity = ledVelocities[column] || 0;
     const rising = targetLevel > level;
-    const stiffness = rising ? 0.46 : 0.19;
-    const damping = rising ? 0.54 : 0.66;
-    const nextVelocity = velocity * damping + (targetLevel - level) * stiffness;
-    const smoothLevel = Math.max(0, Math.min(1, level + nextVelocity));
+    const stiffness = rising ? 0.52 : 0.20;
+    const damping = rising ? 0.50 : 0.69;
+
+    let nextVelocity = (velocity + (targetLevel - level) * stiffness) * damping;
+    let nextLevel = Math.max(0.015, Math.min(1, level + nextVelocity));
     ledVelocities[column] = nextVelocity;
-    ledLevels[column] = smoothLevel;
+    ledLevels[column] = nextLevel;
 
-    const activeSegments = Math.max(playing ? 1 : 0, Math.min(segments, Math.ceil(smoothLevel * segments)));
-
-    if (activeSegments >= ledPeaks[column]) {
-      ledPeaks[column] = activeSegments;
-      ledPeakHoldUntil[column] = now + 330 + bassEnergy * 260;
-    } else if (now > ledPeakHoldUntil[column]) {
-      ledPeaks[column] = Math.max(activeSegments, ledPeaks[column] - 0.11);
+    if (nextLevel >= (ledPeaks[column] || 0)) {
+      ledPeaks[column] = nextLevel;
+      ledPeakHoldUntil[column] = now + 240;
+    } else if (now > (ledPeakHoldUntil[column] || 0)) {
+      ledPeaks[column] = Math.max(nextLevel, (ledPeaks[column] || 0) - 0.028);
     }
 
-    const peakSegment = Math.max(0, Math.min(segments - 1, Math.round(ledPeaks[column]) - 1));
+    const activeSegments = Math.max(0, Math.round(nextLevel * segments));
     const x = chartLeft + column * (columnWidth + columnGap);
 
-    for (let segment = 0; segment < segments; segment++) {
-      const y = chartBottom - (segment + 1) * segmentHeight - segment * segmentGap;
-      const ratio = (segment + 1) / segments;
-      const lit = segment < activeSegments;
-      let color;
-      let dimColor;
+    for (let s = 0; s < segments; s++) {
+      const y = chartBottom - (s + 1) * segmentHeight - s * segmentGap;
+      const active = s < activeSegments;
+      const ratio = s / Math.max(1, segments - 1);
+      if (!active) context.fillStyle = 'rgba(73,115,80,.10)';
+      else if (ratio < 0.58) context.fillStyle = `rgba(86,255,118,${0.55 + nextLevel * 0.42})`;
+      else if (ratio < 0.82) context.fillStyle = `rgba(218,255,73,${0.60 + nextLevel * 0.37})`;
+      else context.fillStyle = `rgba(50,233,255,${0.62 + nextLevel * 0.34})`;
 
-      if (ratio > 0.87) {
-        color = column % 3 === 0 ? '#ff4776' : '#ff6250';
-        dimColor = 'rgba(255,82,85,.085)';
-      } else if (ratio > 0.68) {
-        color = '#e9ff51';
-        dimColor = 'rgba(231,255,75,.075)';
-      } else if (ratio < 0.24 && normalized > 0.55) {
-        color = '#30eaff';
-        dimColor = 'rgba(48,234,255,.065)';
-      } else {
-        color = segment % 2 ? '#44f568' : '#6aff82';
-        dimColor = 'rgba(78,255,112,.062)';
-      }
-
-      const brightness = lit ? 0.72 + Math.min(0.28, smoothLevel * 0.32) : 1;
-      context.save();
-      context.globalAlpha = brightness;
-      context.fillStyle = lit ? color : dimColor;
-      if (lit) {
-        context.shadowColor = color;
-        context.shadowBlur = (ratio > 0.84 ? 6 + ledBeatPulse * 4 : 3.5 + totalEnergy * 4) * dpr;
-      }
-
-      const corner = Math.min(2.2 * dpr, segmentHeight * 0.28);
-      ledRoundedRect(context, x, y, columnWidth, segmentHeight, corner);
+      ledRoundedRect(context, x, y, columnWidth, segmentHeight, Math.min(2 * dpr, segmentHeight / 2));
       context.fill();
-
-      if (lit) {
-        context.globalAlpha = 0.34;
-        context.fillStyle = '#ffffff';
-        ledRoundedRect(
-          context,
-          x + columnWidth * 0.16,
-          y + segmentHeight * 0.12,
-          columnWidth * 0.68,
-          Math.max(0.7 * dpr, segmentHeight * 0.16),
-          corner
-        );
-        context.fill();
-      }
-      context.restore();
     }
 
-    if (playing && ledPeaks[column] > 0) {
-      const peakY = chartBottom - (peakSegment + 1) * segmentHeight - peakSegment * segmentGap;
-      const peakColor = peakSegment / segments > 0.82 ? '#ff8b75' : '#f3ff83';
-      context.save();
-      context.fillStyle = peakColor;
-      context.shadowColor = peakColor;
-      context.shadowBlur = (6 + ledBeatPulse * 7) * dpr;
-      ledRoundedRect(context, x, peakY, columnWidth, Math.max(1.45 * dpr, segmentHeight * 0.24), 1.2 * dpr);
-      context.fill();
-      context.restore();
-    }
+    const peakY = chartBottom - (ledPeaks[column] || 0) * chartHeight;
+    context.fillStyle = 'rgba(232,255,238,.72)';
+    context.fillRect(x, peakY, columnWidth, Math.max(1, 1.2 * dpr));
   }
 
-  /* Hạt sáng rất nhẹ xuất hiện theo nhịp, không dùng random để tránh nhấp nháy. */
-  if (playing && ledBeatPulse > 0.08) {
-    context.save();
-    for (let particle = 0; particle < (compact ? 4 : 7); particle++) {
-      const phase = seconds * (0.38 + particle * 0.028) + particle * 1.73;
-      const px = chartLeft + ((Math.sin(phase) + 1) * 0.5) * (chartRight - chartLeft);
-      const py = chartTop + ((Math.cos(phase * 1.31) + 1) * 0.5) * chartHeight * 0.72;
-      const alpha = ledBeatPulse * (0.05 + (particle % 3) * 0.025);
-      context.fillStyle = `rgba(${particle % 2 ? '86,255,128' : '48,234,255'},${alpha})`;
-      context.shadowColor = context.fillStyle;
-      context.shadowBlur = 8 * dpr;
-      context.beginPath();
-      context.arc(px, py, (0.7 + particle % 2 * 0.45) * dpr, 0, Math.PI * 2);
-      context.fill();
-    }
-    context.restore();
-  }
+  const floor = context.createLinearGradient(chartLeft, 0, chartRight, 0);
+  floor.addColorStop(0, 'rgba(53,255,103,0)');
+  floor.addColorStop(0.5, `rgba(86,255,126,${0.12 + bassEnergy * 0.30 + ledBeatPulse * 0.24})`);
+  floor.addColorStop(1, 'rgba(38,233,255,0)');
+  context.fillStyle = floor;
+  context.fillRect(chartLeft, chartBottom + 3 * dpr, chartRight - chartLeft, Math.max(1, 1.4 * dpr));
 
   context.restore();
-
-  context.save();
-  context.strokeStyle = playing
-    ? `rgba(102,255,139,${0.24 + ledEnergyTrail * 0.28 + ledBeatPulse * 0.16})`
-    : 'rgba(93,255,111,.14)';
-  context.lineWidth = dpr;
-  ledRoundedRect(context, panelX + 0.5 * dpr, panelY + 0.5 * dpr, panelWidth - dpr, panelHeight - dpr, radius);
-  context.stroke();
   context.restore();
 }
 
