@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phiếu học tập số - Tin học 9 - Bài 3: Thực hành đánh giá chất lượng thông tin</title>
+<style>
+:root{
+  --primary:#1565c0;--primary2:#0d47a1;--success:#2e7d32;--warning:#ef6c00;
+  --danger:#c62828;--purple:#6a1b9a;--pink:#d81b60;--bg:#f4f7fb;--card:#fff;
+  --text:#263238;--muted:#607d8b;--border:#d7e0e8;--soft:#edf6ff;
+  --t1:#1565c0;--t1soft:#e3f2fd;--t2:#ef6c00;--t2soft:#fff3e0
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}.hidden{display:none!important}
+.app{max-width:1180px;margin:auto;padding:16px}
+.header{background:linear-gradient(135deg,#e3f2fd,#fff8e1);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+.header h1{margin:0;color:var(--primary2);font-size:clamp(1.35rem,4vw,2rem)}
+.header h2{margin:6px 0 0;color:#c2185b;font-size:clamp(1.05rem,3vw,1.45rem)}
+.header p{margin:7px 0 0;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 4px 15px rgba(0,0,0,.04)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-weight:700}
+input,select,textarea{width:100%;border:1.5px solid #b9c7d4;border-radius:9px;padding:9px 10px;background:#fff}
+textarea{min-height:82px;resize:vertical}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:700;background:var(--primary);color:#fff;cursor:pointer}
+.btn.secondary{background:#546e7a}.btn.success{background:var(--success)}.btn.warning{background:var(--warning)}
+.btn.light{background:#edf3f8;color:#263238}.btn.danger{background:var(--danger)}.btn:disabled{opacity:.55;cursor:not-allowed}
+.topbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef3f8;font-size:.9rem}
+.badge.t1{background:var(--t1soft);color:var(--t1);font-weight:800}
+.badge.t2{background:var(--t2soft);color:var(--t2);font-weight:800}
+.small{font-size:.86rem;color:var(--muted)}
+.progress-shell{height:10px;background:#e0e7ee;border-radius:999px;overflow:hidden}
+.progress-bar{height:100%;background:var(--success);width:0;transition:.2s}
+.session-strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.session-box{border-radius:13px;padding:12px 14px;border:2px solid}
+.session-box.t1{background:var(--t1soft);border-color:#90caf9;color:#0d47a1}
+.session-box.t2{background:var(--t2soft);border-color:#ffcc80;color:#e65100}
+.session-box b{font-size:1.05rem}
+.nav{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}
+.nav button{border:1px solid var(--border);background:#fff;border-radius:10px;padding:9px 6px;font-weight:800;color:#455a64}
+.nav button[data-session="1"]{border-top:4px solid var(--t1)}
+.nav button[data-session="2"]{border-top:4px solid var(--t2)}
+.nav button.active{background:#f7fbff;outline:2px solid #90caf9}
+.nav button.done{background:#e8f5e9;border-color:#81c784;color:#1b5e20}
+.activity h2{margin-top:0;color:var(--primary2)}
+.session-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;margin:-3px 0 13px}
+.session-head.t1{background:var(--t1soft);border-left:6px solid var(--t1)}
+.session-head.t2{background:var(--t2soft);border-left:6px solid var(--t2)}
+.goal{border-left:5px solid var(--primary);background:#eef6ff;padding:10px 12px;border-radius:0 9px 9px 0;margin:9px 0 14px;line-height:1.45}
+.subtask{border:1px solid var(--border);border-radius:11px;padding:13px;margin:11px 0;background:#fcfdff}
+.subtask h3{margin:0 0 9px}
+.notice{background:#fff8e1;border:1px solid #ffe0b2;border-radius:9px;padding:10px 12px;color:#7a4a00;line-height:1.45}
+.info{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:9px;padding:10px 12px;color:#1b5e20;line-height:1.45}
+.option{display:block;padding:8px 10px;border:1px solid #e4e9ee;border-radius:8px;margin:7px 0;background:#fff}
+.option input{width:auto;margin-right:8px}
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.footer-actions{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:14px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--border);padding:8px;vertical-align:top}th{background:#edf5ff}
+.teacher-table td,.teacher-table th{font-size:.9rem}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:12px 0}
+.kpi>div{background:#f7f9fb;border:1px solid var(--border);border-radius:11px;padding:11px;text-align:center}
+.kpi strong{display:block;font-size:1.25rem;color:var(--primary2)}
+.teacher-login{margin-top:12px;padding:13px;border:1px solid var(--border);border-radius:11px;background:#f8fbff}
+.status-error{padding:9px 11px;border-radius:8px;background:#ffebee;color:#b71c1c;margin-top:9px}
+.status-pill{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:800;font-size:.82rem}
+.status-complete{background:#e8f5e9;color:#1b5e20}.status-partial{background:#fff3e0;color:#e65100}.status-empty{background:#eceff1;color:#546e7a}
+.demo-banner{margin-bottom:12px;padding:11px 13px;border-radius:11px;background:#ede7f6;border:1px solid #b39ddb;color:#4527a0;font-weight:800}
+.demo-mode #activityCard{border:2px solid #b39ddb}.demo-mode .progress-bar{background:#7e57c2}
+.review{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;white-space:pre-wrap}
+.browser-warning{margin-top:10px;padding:10px;border-radius:9px;background:#fff3cd;border:1px solid #ffcc80;color:#7a4a00}
+.feedback{margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid #bbdefb;background:#f4f9ff;color:#0d47a1;line-height:1.45}
+.feedback.ok{border-color:#a5d6a7;background:#f1f8e9;color:#1b5e20}.feedback.warn{border-color:#ffe0b2;background:#fff8e1;color:#8a4b00}
+.criteria{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.criteria>div{padding:9px;border-radius:9px;border:1px solid #d5e6f5;background:#f8fbff}
+.criteria b{display:block;color:#0d47a1;margin-bottom:3px}
+.source-card{border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0;background:#fff}
+.source-grid{display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .8fr .8fr;gap:5px;align-items:center}
+.source-grid.header{background:#edf5ff;border-radius:8px;padding:7px;font-weight:800}
+.source-grid>div{padding:4px}
+.score-select{padding:7px 5px}
+.lesson-note{border:1px dashed #b0bec5;background:#fafafa;border-radius:10px;padding:10px 12px}
+@media(max-width:850px){
+  .grid2,.grid3,.check-grid{grid-template-columns:1fr}
+  .nav{grid-template-columns:repeat(3,1fr)}
+  .kpi{grid-template-columns:repeat(2,1fr)}
+  .criteria{grid-template-columns:1fr 1fr}
+  .source-grid{grid-template-columns:1fr}
+  .source-grid.header{display:none}
+  .session-strip{grid-template-columns:1fr}
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>PHIẾU HỌC TẬP SỐ - TIN HỌC 9</h1>
+    <h2>Bài 3. Thực hành: Đánh giá chất lượng thông tin</h2>
+    <p><b>Chủ đề:</b> Tìm kiếm, đánh giá và ra quyết định dựa trên thông tin · <b>Thời lượng:</b> 2 tiết</p>
+  </div>
+
+  <section id="loginScreen" class="card">
+    <h2>Thông tin học sinh</h2>
+    <div class="grid2">
+      <div class="field"><label>Lớp</label><select id="studentClass"><option value="">-- Chọn lớp --</option></select></div>
+      <div class="field"><label>STT</label><select id="studentNo"><option value="">-- Chọn STT --</option></select></div>
+      <div class="field" style="grid-column:1/-1"><label>Họ và tên</label><input id="studentName" maxlength="60" placeholder="Nhập họ và tên"></div>
+    </div>
+    <div class="session-strip">
+      <div class="session-box t1"><b>TIẾT 1 — TÌM KIẾM THEO MỤC ĐÍCH, YÊU CẦU</b><br><span class="small">Xác định mục tiêu → từ khóa/prompt → tìm kiếm và ghi nhật kí nguồn tin.</span></div>
+      <div class="session-box t2"><b>TIẾT 2 — ĐÁNH GIÁ CHẤT LƯỢNG & RA QUYẾT ĐỊNH</b><br><span class="small">Đánh giá 4 tiêu chí → so sánh nguồn → xếp hạng và đưa ra quyết định.</span></div>
+    </div>
+    <div id="browserWarning" class="browser-warning hidden"></div>
+    <div class="topbar" style="margin-top:12px">
+      <button class="btn success" id="startBtn">Bắt đầu / Tiếp tục</button>
+      <button class="btn secondary" id="teacherBtn">Giáo viên</button>
+    </div>
+    <div id="teacherLoginPanel" class="teacher-login hidden">
+      <h3 style="margin-top:0">Đăng nhập giáo viên</h3>
+      <div class="grid2">
+        <div class="field"><label>Email</label><input id="teacherEmail" type="email" autocomplete="username"></div>
+        <div class="field"><label>Mật khẩu</label><input id="teacherPassword" type="password" autocomplete="current-password"></div>
+      </div>
+      <div class="topbar" style="margin-top:10px"><button class="btn" id="teacherLoginBtn">Đăng nhập</button><button class="btn light" id="teacherCancelBtn">Hủy</button></div>
+      <div id="teacherLoginStatus" class="status-error hidden"></div>
+    </div>
+  </section>
+
+  <section id="studentScreen" class="hidden">
+    <div id="demoBanner" class="demo-banner hidden">CHẾ ĐỘ DEMO · Dữ liệu không được lưu</div>
+    <div class="card">
+      <div class="topbar">
+        <span class="badge" id="studentBadge"></span>
+        <span class="badge" id="saveStatus">Đã lưu</span>
+        <span class="badge t1">Tiết 1: Hoạt động 1–3</span>
+        <span class="badge t2">Tiết 2: Hoạt động 4–6</span>
+        <button class="btn light" id="changeStudentBtn">Đổi học sinh</button>
+      </div>
+      <div class="small" style="margin-top:10px">Tiến độ toàn bộ phiếu</div>
+      <div class="progress-shell"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="nav" id="activityNav"></div>
+    </div>
+    <div class="card activity" id="activityCard"></div>
+  </section>
+
+  <section id="teacherScreen" class="card hidden">
+    <div class="topbar" style="justify-content:space-between"><h2 style="margin:0">Kết quả học sinh — Bài 3</h2><button class="btn light" id="teacherLogoutBtn">Đăng xuất</button></div>
+    <div class="topbar" style="margin-top:10px">
+      <select id="teacherClassFilter" style="max-width:180px"><option value="all">Tất cả lớp</option></select>
+      <button class="btn" id="exportCsvBtn">Xuất CSV</button>
+      <button class="btn warning" id="demoBtn">Demo cho học sinh</button>
+      <span class="small">Demo có sẵn bài mẫu, không lưu dữ liệu.</span>
+    </div>
+    <div class="kpi">
+      <div><strong id="kpiStudents">0</strong>Học sinh</div>
+      <div><strong id="kpiCompleted">0</strong>Hoàn thành 2 tiết</div>
+      <div><strong id="kpiT1">0</strong>Hoàn thành Tiết 1</div>
+      <div><strong id="kpiT2">0</strong>Hoàn thành Tiết 2</div>
+    </div>
+    <div class="table-wrap"><table class="teacher-table">
+      <thead><tr><th>Lớp</th><th>STT</th><th>Họ tên</th><th>Trạng thái</th><th>Tiết 1</th><th>Tiết 2</th><th>Cập nhật</th><th>Chi tiết</th></tr></thead>
+      <tbody id="teacherBody"></tbody>
+    </table></div>
+    <div id="teacherDetail"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+var WORKSHEET_ID="tin9_bai3_danh_gia_chat_luong_tt_v1";
+var STORAGE_KEY="worksheet_"+WORKSHEET_ID+"_local";
+var SESSION_KEY="worksheet_"+WORKSHEET_ID+"_session";
+var firebaseConfig={apiKey:"AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",authDomain:"luyen-go.firebaseapp.com",databaseURL:"https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"luyen-go",storageBucket:"luyen-go.firebasestorage.app",messagingSenderId:"79498233127",appId:"1:79498233127:web:a6c2e2bab71ba737ca9502"};
+var TEACHERS_PATH="app_secure/teachers";
+var RESULTS_PATH="worksheets/"+WORKSHEET_ID+"/results";
+var database=null,firebaseUser=null,ownResultRef=null,teacherMode=false,resultsRef=null,teacherListener=null,firebaseRecords={};
+var currentRecord=null,currentKey=null,currentActivity=0,saveTimer=null,demoMode=false;
+
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(s){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[s]})}
+function allData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}catch(e){return {}}}
+function saveAll(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+function studentKey(cls,no){return String(cls).replace(/[^0-9A-Za-z._-]/g,"_")+"_"+String(no).padStart(2,"0")}
+function getVal(k){return currentRecord&&currentRecord.answers?currentRecord.answers[k]||"":""}
+function inputText(k,ph){return '<input data-key="'+k+'" value="'+esc(getVal(k))+'" placeholder="'+esc(ph||"")+'">'}
+function textArea(k,ph){return '<textarea data-key="'+k+'" placeholder="'+esc(ph||"")+'">'+esc(getVal(k))+'</textarea>'}
+function selectScore(k){var cur=String(getVal(k)||"");return '<select class="score-select" data-key="'+k+'"><option value="">--</option><option value="3" '+(cur==="3"?"selected":"")+'>3 - Tốt</option><option value="2" '+(cur==="2"?"selected":"")+'>2 - Đạt</option><option value="1" '+(cur==="1"?"selected":"")+'>1 - Chưa đạt</option></select>'}
+function hasText(v){return String(v==null?"":v).trim()!==""}
+function sessionOf(index){return index<3?1:2}
+function sessionLabel(index){return sessionOf(index)===1?"TIẾT 1":"TIẾT 2"}
+function activityStatus(record,index){
+  var a=record&&record.answers?record.answers:{},need=[],touched=0;
+  function req(k,label){if(hasText(a[k]))touched++;else need.push(label)}
+  if(index===0){
+    req("t1_problem","vấn đề cần giải quyết");req("t1_goal","mục đích tìm kiếm");
+    req("t1_info","thông tin cần tìm");req("t1_scope","phạm vi tìm kiếm");
+  }else if(index===1){
+    req("t1_kw1","từ khóa 1");req("t1_kw2","từ khóa 2");req("t1_kw3","từ khóa 3");req("t1_prompt","prompt cho AI chatbot");
+  }else if(index===2){
+    for(var i=1;i<=3;i++){req("src"+i+"_name","nguồn "+i);req("src"+i+"_url","địa chỉ nguồn "+i);req("src"+i+"_summary","nội dung nguồn "+i)}
+    req("authority_note","xác minh thẩm quyền nguồn");
+  }else if(index===3){
+    for(var s=1;s<=3;s++){req("e"+s+"_new","tính mới nguồn "+s);req("e"+s+"_acc","tính chính xác nguồn "+s);req("e"+s+"_full","tính đầy đủ nguồn "+s);req("e"+s+"_use","tính sử dụng được nguồn "+s);req("e"+s+"_comment","nhận xét nguồn "+s)}
+  }else if(index===4){
+    req("compare","so sánh các nguồn");req("best_source","nguồn phù hợp nhất");req("best_reason","lí do chọn nguồn");
+    req("rank1","nguyện vọng 1");req("rank2","nguyện vọng 2");req("rank3","nguyện vọng 3");
+  }else if(index===5){
+    req("decision","quyết định cuối cùng");req("decision_reason","lí do quyết định");req("lesson","bài học rút ra");
+  }
+  return {complete:need.length===0,status:touched===0?"empty":(need.length===0?"complete":"partial"),missing:need,touched:touched};
+}
+function overallAssessment(record){
+  var items=[];for(var i=0;i<6;i++)items.push(activityStatus(record,i));
+  var c=items.filter(function(x){return x.complete}).length;
+  var t1=items.slice(0,3).filter(function(x){return x.complete}).length;
+  var t2=items.slice(3,6).filter(function(x){return x.complete}).length;
+  return {items:items,completeCount:c,t1:t1,t2:t2,status:c===6?"complete":(c===0?"empty":"partial")};
+}
+function statusLabel(status){return status==="complete"?"Đã làm đủ":(status==="empty"?"Không làm gì":"Chưa làm đủ")}
+function statusHtml(status){return '<span class="status-pill status-'+status+'">'+statusLabel(status)+'</span>'}
+
+var activities=[
+{title:"T1.1 Mục đích & yêu cầu",session:1,render:function(){return sessionHead(0)+
+'<h2>Hoạt động 1. Xác định mục đích và yêu cầu tìm kiếm</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Xác định rõ vấn đề cần giải quyết, mục đích tìm kiếm và những thông tin cần thu thập trước khi bắt đầu tìm trên Internet.</div>'+
+'<div class="notice"><b>Tình huống:</b> Em chuẩn bị lựa chọn môi trường học tập sau khi kết thúc bậc THCS. Hãy tìm hiểu 3 trường THPT em quan tâm tại địa phương để chuẩn bị đăng kí nguyện vọng.</div>'+
+'<div class="subtask"><h3>1. Vấn đề em cần giải quyết</h3>'+textArea("t1_problem","Ví dụ: Chọn trường THPT phù hợp với năng lực, sở thích và điều kiện đi lại...")+'</div>'+
+'<div class="grid2"><div class="subtask"><h3>2. Mục đích tìm kiếm</h3>'+textArea("t1_goal","Em cần biết điều gì để có thể ra quyết định?")+'</div><div class="subtask"><h3>3. Thông tin cần tìm</h3>'+textArea("t1_info","Điểm chuẩn, chỉ tiêu, thế mạnh môn học, hoạt động giáo dục, khoảng cách...")+'</div></div>'+
+'<div class="subtask"><h3>4. Phạm vi tìm kiếm</h3>'+textArea("t1_scope","Địa phương, năm học, số trường cần khảo sát, loại nguồn ưu tiên...")+'</div>'
+}},
+{title:"T1.2 Từ khóa & Prompt",session:1,render:function(){return sessionHead(1)+
+'<h2>Hoạt động 2. Viết từ khóa tìm kiếm và câu lệnh Prompt</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Biết chuyển yêu cầu thông tin thành từ khóa cụ thể và viết prompt rõ ràng để AI chatbot hỗ trợ khoanh vùng phạm vi tìm kiếm.</div>'+
+'<div class="grid3"><div class="subtask"><h3>Từ khóa 1</h3>'+inputText("t1_kw1","Ví dụ: tuyển sinh lớp 10 + địa phương")+'</div><div class="subtask"><h3>Từ khóa 2</h3>'+inputText("t1_kw2","Ví dụ: điểm chuẩn THPT + tên trường")+'</div><div class="subtask"><h3>Từ khóa 3</h3>'+inputText("t1_kw3","Ví dụ: hoạt động ngoại khóa + tên trường")+'</div></div>'+
+'<div class="subtask"><h3>Prompt cho AI chatbot</h3><div class="notice">Gợi ý cấu trúc: <b>Bối cảnh + nhiệm vụ + phạm vi + thông tin cần có + yêu cầu nguồn kiểm chứng</b>.</div>'+textArea("t1_prompt","Ví dụ: Em là học sinh lớp 9 tại... Hãy gợi ý các trường THPT gần..., chỉ nêu tên trường và thông tin định hướng; yêu cầu em kiểm chứng lại ở website Sở GDĐT/nhà trường trước khi sử dụng.")+'</div>'+
+'<div class="lesson-note"><b>Mẹo:</b> Dùng từ khóa cụ thể, có tên địa phương, năm học hoặc cụm “tuyển sinh lớp 10”; ưu tiên website chính thức và ghi lại đường dẫn để kiểm chứng.</div>'
+}},
+{title:"T1.3 Nhật kí nguồn tin",session:1,render:function(){var h=sessionHead(2)+
+'<h2>Hoạt động 3. Thực hiện tìm kiếm và ghi nhật kí nguồn tin</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Tìm tối thiểu 3 nguồn, lưu lại nội dung tóm tắt và nhận biết nguồn thẩm quyền phù hợp với từng loại thông tin.</div>';
+for(var i=1;i<=3;i++)h+='<div class="source-card"><h3>Nguồn '+i+'</h3><div class="grid2"><div class="field"><label>Tên website / nguồn</label>'+inputText("src"+i+"_name","Tên nguồn")+'</div><div class="field"><label>Địa chỉ URL / tên miền</label>'+inputText("src"+i+"_url","https://...")+'</div><div class="field"><label>Tác giả / tổ chức cung cấp</label>'+inputText("src"+i+"_author","Sở GDĐT, trường THPT, báo điện tử...")+'</div><div class="field"><label>Ngày đăng / cập nhật</label>'+inputText("src"+i+"_date","Ngày/tháng/năm")+'</div></div><div class="field" style="margin-top:8px"><label>Nội dung chính tìm được</label>'+textArea("src"+i+"_summary","Tóm tắt 2-3 ý quan trọng...")+'</div></div>';
+h+='<div class="subtask"><h3>Xác minh thẩm quyền nguồn tin</h3><div class="info"><b>Gợi ý:</b> Thông tin tuyển sinh lớp 10 ưu tiên website Sở GDĐT; hoạt động, cơ sở vật chất ưu tiên website chính thức của trường; vị trí trường có thể đối chiếu bản đồ số; thành tích nên kiểm tra nguồn chính thống và thời điểm công bố.</div>'+textArea("authority_note","Ghi nguồn nào em cho là thẩm quyền nhất cho từng loại thông tin và lí do...")+'</div>';
+return h}},
+{title:"T2.1 Đánh giá 4 tiêu chí",session:2,render:function(){var h=sessionHead(3)+
+'<h2>Hoạt động 4. Đánh giá chất lượng thông tin theo 4 tiêu chí</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Đánh giá từng nguồn theo <b>Tính mới – Tính chính xác – Tính đầy đủ – Tính sử dụng được</b>.</div>'+
+'<div class="criteria"><div><b>Tính mới</b>Thông tin có được cập nhật gần đây, còn phù hợp với thời điểm hiện tại?</div><div><b>Tính chính xác</b>Có thể kiểm chứng; nguồn, số liệu, tên gọi có rõ ràng?</div><div><b>Tính đầy đủ</b>Có đủ khía cạnh cần thiết để hiểu vấn đề?</div><div><b>Tính sử dụng được</b>Có liên quan và phù hợp trực tiếp với mục đích tìm kiếm?</div></div>'+
+'<div class="notice">Chấm theo thang: <b>3 = Tốt, 2 = Đạt, 1 = Chưa đạt.</b> Không chỉ chấm điểm; cần ghi nhận xét ngắn.</div>'+
+'<div class="source-grid header"><div>Nguồn</div><div>Tính mới</div><div>Chính xác</div><div>Đầy đủ</div><div>Sử dụng được</div><div>Nhận xét</div></div>';
+for(var i=1;i<=3;i++)h+='<div class="source-grid source-card"><div><b>Nguồn '+i+'</b><div class="small">'+esc(getVal("src"+i+"_name")||"Chưa nhập ở Tiết 1")+'</div></div><div>'+selectScore("e"+i+"_new")+'</div><div>'+selectScore("e"+i+"_acc")+'</div><div>'+selectScore("e"+i+"_full")+'</div><div>'+selectScore("e"+i+"_use")+'</div><div>'+inputText("e"+i+"_comment","Ưu điểm / hạn chế")+'</div></div>';
+return h}},
+{title:"T2.2 So sánh & xếp hạng",session:2,render:function(){return sessionHead(4)+
+'<h2>Hoạt động 5. So sánh nguồn và sắp xếp danh sách ưu tiên</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Dựa trên kết quả đánh giá để chọn nguồn đáng tin hơn và sắp xếp 3 trường/nguyện vọng theo thứ tự ưu tiên.</div>'+
+'<div class="subtask"><h3>1. So sánh các nguồn</h3>'+textArea("compare","Nguồn nào mới hơn? Nguồn nào chính xác hơn? Nguồn nào đầy đủ và dùng được hơn? Nêu ít nhất 2 điểm so sánh.")+'</div>'+
+'<div class="grid2"><div class="subtask"><h3>2. Nguồn phù hợp nhất</h3>'+inputText("best_source","Tên nguồn / website")+'</div><div class="subtask"><h3>3. Lí do lựa chọn</h3>'+textArea("best_reason","Giải thích dựa trên 4 tiêu chí...")+'</div></div>'+
+'<div class="subtask"><h3>4. Xếp hạng 3 nguyện vọng / trường THPT</h3><div class="grid3"><div class="field"><label>Nguyện vọng 1</label>'+inputText("rank1","Tên trường")+'</div><div class="field"><label>Nguyện vọng 2</label>'+inputText("rank2","Tên trường")+'</div><div class="field"><label>Nguyện vọng 3</label>'+inputText("rank3","Tên trường")+'</div></div>'+textArea("rank_reason","Nêu ngắn gọn tiêu chí em dùng để sắp xếp: năng lực, sở thích, khoảng cách, điểm chuẩn, thế mạnh môn học...")+'</div>'
+}},
+{title:"T2.3 Quyết định & bài học",session:2,render:function(){return sessionHead(5)+
+'<h2>Hoạt động 6. Đưa ra quyết định và rút ra bài học</h2>'+
+'<div class="goal"><b>Mục tiêu:</b> Sử dụng thông tin đã kiểm chứng để đưa ra quyết định phù hợp; giải thích được căn cứ và rút kinh nghiệm cho những lần tìm kiếm sau.</div>'+
+'<div class="subtask"><h3>1. Quyết định của em</h3>'+textArea("decision","Em ưu tiên trường nào / lựa chọn nào? Hoặc em cần tìm thêm thông tin gì trước khi quyết định?")+'</div>'+
+'<div class="subtask"><h3>2. Lí do quyết định</h3>'+textArea("decision_reason","Nêu căn cứ từ nguồn tin, 4 tiêu chí chất lượng và điều kiện cá nhân...")+'</div>'+
+'<div class="subtask"><h3>3. Bài học rút ra</h3>'+textArea("lesson","Viết 3-5 câu: em đã học được gì về tìm kiếm, kiểm chứng, đánh giá và sử dụng thông tin?")+'</div>'+
+'<div class="info"><b>Ghi nhớ:</b> Thông tin từ AI chatbot hoặc Internet cần được đối chiếu, kiểm chứng trước khi dùng để ra quyết định. Nguồn chính thống không thay thế cho việc xem xét tính mới, tính đầy đủ và mức độ phù hợp với mục tiêu của em.</div>'
+}}
+];
+
+function sessionHead(index){var s=sessionOf(index);return '<div class="session-head t'+s+'"><b>'+sessionLabel(index)+' · '+(s===1?'Tìm kiếm theo mục đích, yêu cầu':'Đánh giá chất lượng & ra quyết định')+'</b><span class="badge t'+s+'">Hoạt động '+(index+1)+'/6</span></div>'}
+
+function defaultRecord(cls,no,name){return {className:cls,studentNo:Number(no),name:name,answers:{},done:[false,false,false,false,false,false],activitySaved:[false,false,false,false,false,false],ownerUid:firebaseUser?firebaseUser.uid:"",createdAt:Date.now(),updatedAt:Date.now(),meta:{worksheetId:WORKSHEET_ID,version:"1"}}}
+function updateProgress(){var n=currentRecord.done.filter(Boolean).length;document.getElementById("progressBar").style.width=(n/activities.length*100)+"%"}
+function renderNav(){
+  var nav=document.getElementById("activityNav");
+  nav.innerHTML=activities.map(function(a,i){return '<button data-act="'+i+'" data-session="'+a.session+'" class="'+(i===currentActivity?"active ":"")+(currentRecord.done[i]?"done":"")+'"><div class="small">'+(a.session===1?"TIẾT 1":"TIẾT 2")+'</div>'+(i+1)+'</button>'}).join("");
+  Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=function(){persistCurrent(false);currentActivity=Number(b.getAttribute("data-act"));renderActivity()}});
+}
+function bindAnswers(root){Array.prototype.forEach.call(root.querySelectorAll("[data-key]"),function(el){el.addEventListener("change",capture);el.addEventListener("input",capture)})}
+function capture(e){var el=e.target,k=el.getAttribute("data-key");currentRecord.answers[k]=el.value;currentRecord.updatedAt=Date.now();if(demoMode){document.getElementById("saveStatus").textContent="DEMO · Không lưu";return}document.getElementById("saveStatus").textContent="Đang lưu...";clearTimeout(saveTimer);saveTimer=setTimeout(function(){persistCurrent(false)},350)}
+function renderActivity(){
+  renderNav();
+  var card=document.getElementById("activityCard");
+  card.innerHTML=activities[currentActivity].render()+'<div id="activityFeedback"></div><div class="footer-actions"><button class="btn light" id="prevAct" '+(currentActivity===0?"disabled":"")+'>← Trước</button><div class="topbar"><button class="btn success" id="completeAct">'+((currentRecord.activitySaved||[])[currentActivity]?"Đã lưu trả lời ✓":"Lưu trả lời")+'</button><button class="btn" id="nextAct" '+(currentActivity===activities.length-1?"disabled":"")+'>Tiếp →</button></div></div>';
+  bindAnswers(card);
+  document.getElementById("prevAct").onclick=function(){if(currentActivity>0){persistCurrent(false);currentActivity--;renderActivity()}};
+  document.getElementById("nextAct").onclick=function(){if(currentActivity<activities.length-1){persistCurrent(false);currentActivity++;renderActivity()}};
+  document.getElementById("completeAct").onclick=function(){
+    currentRecord.activitySaved=currentRecord.activitySaved||[false,false,false,false,false,false];
+    currentRecord.activitySaved[currentActivity]=true;
+    var st=activityStatus(currentRecord,currentActivity);currentRecord.done[currentActivity]=st.complete;
+    persistCurrent(true);renderNav();updateProgress();
+    var box=document.getElementById("activityFeedback");
+    box.className="feedback "+(st.complete?"ok":"warn");
+    box.textContent=st.complete?"Đã lưu. Em đã làm đủ hoạt động này.":"Đã lưu. Em còn thiếu: "+st.missing.join("; ")+".";
+    document.getElementById("completeAct").textContent="Đã lưu trả lời ✓";
+  };
+  updateProgress();
+}
+function readSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){return null}}
+function writeSession(cls,no,uid){localStorage.setItem(SESSION_KEY,JSON.stringify({className:String(cls),studentNo:Number(no),uid:String(uid),updatedAt:Date.now()}))}
+function clearSession(){localStorage.removeItem(SESSION_KEY)}
+
+async function ensureAnonymous(){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);var auth=firebase.auth();if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut();if(!auth.currentUser)await auth.signInAnonymously();firebaseUser=auth.currentUser;database=firebase.database();ownResultRef=database.ref(RESULTS_PATH+"/"+firebaseUser.uid);teacherMode=false}
+function remotePayload(record){
+  var meta=Object.assign({},record.meta||{});meta.worksheetId=WORKSHEET_ID;meta.version="1";meta.activitySaved=(record.activitySaved||[]).map(function(x){return x?1:0}).join(",");
+  return {className:String(record.className||""),studentNo:Number(record.studentNo||0),name:String(record.name||""),answers:record.answers||{},done:(record.done||[]).map(Boolean),ownerUid:firebaseUser?firebaseUser.uid:String(record.ownerUid||""),createdAt:Number(record.createdAt||Date.now()),updatedAt:firebase.database.ServerValue.TIMESTAMP,meta:meta};
+}
+function hydrateRecord(record){
+  if(!record||typeof record!=="object")return record;var meta=record.meta||{};record.answers=record.answers||{};
+  record.done=Array.from({length:activities.length},function(_,i){return Boolean((record.done||[])[i])});
+  if(!Array.isArray(record.activitySaved)){var saved=String(meta.activitySaved||"").split(",");record.activitySaved=Array.from({length:activities.length},function(_,i){return saved[i]==="1"||Boolean(record.done[i])})}
+  return record;
+}
+async function syncRemote(){if(teacherMode||!ownResultRef||!currentRecord)return;currentRecord.ownerUid=firebaseUser.uid;currentRecord.updatedAt=Date.now();await ownResultRef.set(remotePayload(currentRecord))}
+async function persistCurrent(remote){
+  if(demoMode){var ds=document.getElementById("saveStatus");if(ds)ds.textContent="DEMO · Không lưu";return true}
+  if(!currentRecord||!currentKey)return;currentRecord.updatedAt=Date.now();var d=allData();d[currentKey]=currentRecord;saveAll(d);
+  document.getElementById("saveStatus").textContent="Đã lưu trên máy";
+  if(remote){try{await syncRemote();document.getElementById("saveStatus").textContent="Đã lưu · Đã đồng bộ"}catch(e){document.getElementById("saveStatus").textContent="Đã lưu trên máy"}}
+  else{clearTimeout(saveTimer);saveTimer=setTimeout(function(){syncRemote().then(function(){document.getElementById("saveStatus").textContent="Đã lưu · Đã đồng bộ"}).catch(function(){document.getElementById("saveStatus").textContent="Đã lưu trên máy"})},450)}
+}
+async function enterStudent(){
+  var cls=document.getElementById("studentClass").value,no=document.getElementById("studentNo").value,name=document.getElementById("studentName").value.trim().replace(/\s+/g," ");
+  if(!cls||!no||!name){alert("Vui lòng chọn lớp, STT và nhập họ tên.");return}
+  var btn=document.getElementById("startBtn");btn.disabled=true;btn.textContent="Đang mở...";
+  try{
+    await ensureAnonymous();var auth=firebase.auth(),session=readSession();
+    if(auth.currentUser&&auth.currentUser.isAnonymous&&session&&!(session.uid===auth.currentUser.uid&&session.className===String(cls)&&Number(session.studentNo)===Number(no))){
+      await auth.signOut();await auth.signInAnonymously();firebaseUser=auth.currentUser;database=firebase.database();ownResultRef=database.ref(RESULTS_PATH+"/"+firebaseUser.uid)
+    }
+    writeSession(cls,no,firebaseUser.uid);var key=studentKey(cls,no),d=allData(),local=d[key]||null,remote=null;
+    try{var snap=await ownResultRef.once("value");remote=snap.val();if(remote)remote=hydrateRecord(remote)}catch(e){}
+    var chosen=local;if(remote&&remote.className===cls&&Number(remote.studentNo)===Number(no)){if(!local||Number(remote.updatedAt||0)>=Number(local.updatedAt||0))chosen=remote}
+    currentRecord=hydrateRecord(chosen||defaultRecord(cls,no,name));currentRecord.className=cls;currentRecord.studentNo=Number(no);currentRecord.name=name;currentRecord.ownerUid=firebaseUser.uid;
+    currentKey=key;currentActivity=currentRecord.done.indexOf(false);if(currentActivity<0)currentActivity=5;
+    await persistCurrent(true);document.getElementById("loginScreen").classList.add("hidden");document.getElementById("studentScreen").classList.remove("hidden");document.getElementById("studentBadge").textContent=cls+" · STT "+no+" · "+name;renderActivity();
+  }catch(e){console.error(e);alert("Không thể mở phiếu. Hãy kiểm tra kết nối mạng.")}finally{btn.disabled=false;btn.textContent="Bắt đầu / Tiếp tục"}
+}
+async function changeStudent(){if(demoMode&&teacherMode){exitTeacherDemo();return}try{await persistCurrent(true)}catch(e){}try{var auth=firebase.auth();if(auth.currentUser&&auth.currentUser.isAnonymous)await auth.signOut()}catch(e){}clearSession();currentRecord=null;currentKey=null;firebaseUser=null;ownResultRef=null;document.getElementById("studentScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");await ensureAnonymous()}
+
+function buildDemoRecord(){return {
+ className:"DEMO",studentNo:0,name:"BÀI MẪU THAM KHẢO",answers:{
+  t1_problem:"Lựa chọn trường THPT phù hợp sau khi kết thúc bậc THCS.",
+  t1_goal:"So sánh 3 trường dựa trên điểm chuẩn, thế mạnh môn học, hoạt động giáo dục và khoảng cách đi lại.",
+  t1_info:"Điểm chuẩn 3 năm gần nhất; chỉ tiêu; nhóm môn thế mạnh; hoạt động ngoại khóa; vị trí trường.",
+  t1_scope:"Các trường THPT trong địa phương, ưu tiên thông tin của năm học gần nhất.",
+  t1_kw1:"tuyển sinh lớp 10 + tên địa phương",t1_kw2:"điểm chuẩn THPT + tên trường",t1_kw3:"hoạt động ngoại khóa + tên trường",
+  t1_prompt:"Em là học sinh lớp 9. Hãy gợi ý 3 trường THPT gần khu vực em ở, liệt kê những thông tin em cần kiểm tra để chọn nguyện vọng. Không khẳng định số liệu nếu không có nguồn; yêu cầu em kiểm chứng tại website Sở GDĐT và website chính thức của trường.",
+  src1_name:"Website Sở GDĐT",src1_url:"https://...edu.vn",src1_author:"Sở Giáo dục và Đào tạo",src1_date:"Cập nhật năm nay",src1_summary:"Thông tin tuyển sinh lớp 10, chỉ tiêu và lịch thi.",
+  src2_name:"Website trường THPT A",src2_url:"https://...",src2_author:"Trường THPT A",src2_date:"Cập nhật gần đây",src2_summary:"Hoạt động giáo dục, câu lạc bộ và cơ sở vật chất.",
+  src3_name:"Bản đồ số / nguồn chính thống khác",src3_url:"https://...",src3_author:"Dịch vụ bản đồ / cơ quan cung cấp",src3_date:"Hiện hành",src3_summary:"Vị trí trường và khoảng cách dự kiến.",
+  authority_note:"Tuyển sinh: ưu tiên Sở GDĐT; hoạt động và cơ sở vật chất: website trường; vị trí: đối chiếu bản đồ số.",
+  e1_new:"3",e1_acc:"3",e1_full:"3",e1_use:"3",e1_comment:"Nguồn chính thống, phù hợp nhất cho thông tin tuyển sinh.",
+  e2_new:"3",e2_acc:"3",e2_full:"2",e2_use:"3",e2_comment:"Phù hợp để tìm hoạt động và đặc điểm của trường.",
+  e3_new:"3",e3_acc:"2",e3_full:"2",e3_use:"3",e3_comment:"Hữu ích cho vị trí; cần đối chiếu thêm.",
+  compare:"Nguồn 1 có thẩm quyền cao nhất về tuyển sinh. Nguồn 2 chi tiết hơn về hoạt động của trường. Nguồn 3 phù hợp khi xem vị trí và khoảng cách.",
+  best_source:"Website Sở GDĐT",best_reason:"Có tính chính xác và thẩm quyền cao đối với chỉ tiêu, lịch thi và điểm chuẩn.",
+  rank1:"THPT A",rank2:"THPT B",rank3:"THPT C",rank_reason:"Xếp theo mức phù hợp năng lực, khoảng cách và thông tin tuyển sinh.",
+  decision:"Ưu tiên THPT A, nhưng tiếp tục kiểm tra thông tin tuyển sinh mới nhất trước khi đăng kí.",decision_reason:"Phù hợp năng lực và sở thích; nguồn tuyển sinh đã được kiểm chứng từ website chính thức.",lesson:"Không dùng một nguồn duy nhất. Cần xác định đúng mục đích, chọn nguồn thẩm quyền, kiểm tra tính mới và đối chiếu thông tin trước khi quyết định."
+ },done:[true,true,true,true,true,true],activitySaved:[true,true,true,true,true,true],createdAt:Date.now(),updatedAt:Date.now(),meta:{worksheetId:WORKSHEET_ID,version:"1"}
+}}
+function startTeacherDemo(){
+  if(!teacherMode){alert("Cần đăng nhập giáo viên trước khi mở Demo.");return}
+  demoMode=true;currentKey=null;currentActivity=0;currentRecord=buildDemoRecord();
+  document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.add("hidden");document.getElementById("studentScreen").classList.remove("hidden");document.getElementById("studentScreen").classList.add("demo-mode");document.getElementById("demoBanner").classList.remove("hidden");document.getElementById("studentBadge").textContent="GIÁO VIÊN · DEMO BÀI MẪU";document.getElementById("saveStatus").textContent="DEMO · Không lưu";document.getElementById("changeStudentBtn").textContent="Thoát Demo";renderActivity()
+}
+function exitTeacherDemo(){demoMode=false;currentKey=null;currentRecord=null;currentActivity=0;document.getElementById("studentScreen").classList.add("hidden");document.getElementById("studentScreen").classList.remove("demo-mode");document.getElementById("demoBanner").classList.add("hidden");document.getElementById("changeStudentBtn").textContent="Đổi học sinh";document.getElementById("teacherScreen").classList.remove("hidden");document.getElementById("saveStatus").textContent="Đã lưu";renderTeacher()}
+
+async function teacherLogin(){
+  var email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value,status=document.getElementById("teacherLoginStatus");
+  if(!email||!password){status.textContent="Vui lòng nhập email và mật khẩu.";status.classList.remove("hidden");return}
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);var auth=firebase.auth();if(auth.currentUser)await auth.signOut();
+    var cred=await auth.signInWithEmailAndPassword(email,password);database=firebase.database();var role=await database.ref(TEACHERS_PATH+"/"+cred.user.uid).once("value");
+    if(role.val()!==true){await auth.signOut();throw new Error("Tài khoản chưa được cấp quyền giáo viên.")}
+    firebaseUser=cred.user;teacherMode=true;resultsRef=database.ref(RESULTS_PATH);document.getElementById("loginScreen").classList.add("hidden");document.getElementById("studentScreen").classList.add("hidden");document.getElementById("teacherScreen").classList.remove("hidden");startTeacherListener();
+  }catch(e){status.textContent=e.message||"Đăng nhập thất bại.";status.classList.remove("hidden")}
+}
+function startTeacherListener(){if(teacherListener&&resultsRef)resultsRef.off("value",teacherListener);teacherListener=function(snap){firebaseRecords=snap.val()||{};renderTeacher()};resultsRef.on("value",teacherListener,function(err){console.error(err);document.getElementById("teacherBody").innerHTML='<tr><td colspan="8">Không đọc được dữ liệu. Kiểm tra quyền giáo viên và Firebase Rules.</td></tr>'})}
+function normalizeRecords(){return Object.keys(firebaseRecords||{}).map(function(uid){var r=hydrateRecord(Object.assign({},firebaseRecords[uid]||{}));if(!r||!r.className||!r.studentNo)return null;return Object.assign({},r,{uid:uid})}).filter(Boolean)}
+function buildTeacherGroups(entries){var map={};entries.forEach(function(r){var key=studentKey(r.className,r.studentNo);if(!map[key])map[key]={key:key,className:r.className,studentNo:Number(r.studentNo),records:[]};map[key].records.push(r)});return Object.keys(map).map(function(k){var g=map[k];g.records.sort(function(a,b){return overallAssessment(b).completeCount-overallAssessment(a).completeCount||Number(b.updatedAt||0)-Number(a.updatedAt||0)});g.representative=g.records[0];g.updatedAt=Math.max.apply(null,g.records.map(function(r){return Number(r.updatedAt)||0}));return g}).sort(function(a,b){return a.className.localeCompare(b.className,"vi",{numeric:true})||a.studentNo-b.studentNo})}
+function renderTeacher(){
+  var groups=buildTeacherGroups(normalizeRecords()),filter=document.getElementById("teacherClassFilter"),prev=filter.value||"all",classes=[];
+  groups.forEach(function(g){if(classes.indexOf(g.className)<0)classes.push(g.className)});classes.sort(function(a,b){return a.localeCompare(b,"vi",{numeric:true})});
+  filter.innerHTML='<option value="all">Tất cả lớp</option>'+classes.map(function(c){return "<option>"+esc(c)+"</option>"}).join("");filter.value=classes.indexOf(prev)>=0?prev:"all";
+  var view=filter.value==="all"?groups:groups.filter(function(g){return g.className===filter.value});
+  document.getElementById("kpiStudents").textContent=view.length;
+  document.getElementById("kpiCompleted").textContent=view.filter(function(g){return overallAssessment(g.representative).status==="complete"}).length;
+  document.getElementById("kpiT1").textContent=view.filter(function(g){return overallAssessment(g.representative).t1===3}).length;
+  document.getElementById("kpiT2").textContent=view.filter(function(g){return overallAssessment(g.representative).t2===3}).length;
+  document.getElementById("teacherBody").innerHTML=view.length?view.map(function(g){var r=g.representative,o=overallAssessment(r);return '<tr><td>'+esc(g.className)+'</td><td>'+g.studentNo+'</td><td>'+esc(r.name||"")+(g.records.length>1?'<div class="small">Đã gộp '+g.records.length+' phiên</div>':"")+'</td><td>'+statusHtml(o.status)+'</td><td>'+o.t1+'/3</td><td>'+o.t2+'/3</td><td>'+new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")+'</td><td><button class="btn light" data-detail="'+esc(g.key)+'">Xem</button><button class="btn danger" data-delete="'+esc(g.key)+'" style="margin-left:5px">Xóa</button></td></tr>'}).join(""):'<tr><td colspan="8">Chưa có dữ liệu.</td></tr>';
+  Array.prototype.forEach.call(document.querySelectorAll("[data-detail]"),function(b){b.onclick=function(){showDetail(b.getAttribute("data-detail"))}});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-delete]"),function(b){b.onclick=function(){deleteStudentGroup(b.getAttribute("data-delete"))}});
+}
+function showDetail(groupKey){
+  var groups=buildTeacherGroups(normalizeRecords()),g=null;groups.forEach(function(x){if(x.key===groupKey)g=x});if(!g)return;var r=g.representative,a=r.answers||{},o=overallAssessment(r);
+  var rows=o.items.map(function(x,i){return '<tr><td>'+(i<3?"Tiết 1":"Tiết 2")+' · Hoạt động '+(i+1)+'</td><td>'+statusHtml(x.status)+'</td><td>'+(x.missing.length?esc(x.missing.join("; ")):"—")+'</td></tr>'}).join("");
+  var review='<b>TIẾT 1</b>\nMục đích: '+esc(a.t1_goal||"")+'\nThông tin cần tìm: '+esc(a.t1_info||"")+'\nTừ khóa: '+esc([a.t1_kw1,a.t1_kw2,a.t1_kw3].filter(Boolean).join(" | "))+'\nPrompt: '+esc(a.t1_prompt||"")+'\nNguồn 1: '+esc(a.src1_name||"")+' · '+esc(a.src1_url||"")+'\nNguồn 2: '+esc(a.src2_name||"")+' · '+esc(a.src2_url||"")+'\nNguồn 3: '+esc(a.src3_name||"")+' · '+esc(a.src3_url||"")+'\n\n<b>TIẾT 2</b>\nSo sánh: '+esc(a.compare||"")+'\nNguồn phù hợp nhất: '+esc(a.best_source||"")+'\nLí do: '+esc(a.best_reason||"")+'\nNguyện vọng: '+esc([a.rank1,a.rank2,a.rank3].filter(Boolean).join(" → "))+'\nQuyết định: '+esc(a.decision||"")+'\nBài học: '+esc(a.lesson||"");
+  document.getElementById("teacherDetail").innerHTML='<div class="card" style="margin-top:14px"><div class="topbar" style="justify-content:space-between"><h3 style="margin:0">'+esc(r.name||"")+' · '+esc(r.className)+' · STT '+Number(r.studentNo)+'</h3><button class="btn light" id="closeDetailBtn">Đóng</button></div><p><b>Trạng thái:</b> '+statusHtml(o.status)+' · <b>Tiết 1:</b> '+o.t1+'/3 · <b>Tiết 2:</b> '+o.t2+'/3</p><div class="table-wrap"><table><thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thiếu / cần bổ sung</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="review">'+review+'</div></div>';
+  document.getElementById("closeDetailBtn").onclick=function(){document.getElementById("teacherDetail").innerHTML=""};document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"})
+}
+async function deleteStudentGroup(groupKey){
+  if(!teacherMode||!database)return;var groups=buildTeacherGroups(normalizeRecords()),g=null;groups.forEach(function(x){if(x.key===groupKey)g=x});if(!g)return;var r=g.representative;
+  if(!confirm("Xóa toàn bộ dữ liệu của "+r.className+" · STT "+r.studentNo+" · "+(r.name||"")+"?"))return;
+  try{await Promise.all(g.records.map(function(x){return database.ref(RESULTS_PATH+"/"+x.uid).remove()}));var d=allData();delete d[studentKey(r.className,r.studentNo)];saveAll(d);document.getElementById("teacherDetail").innerHTML=""}catch(e){console.error(e);alert("Không xóa được dữ liệu. Kiểm tra Firebase Rules.")}
+}
+async function teacherLogout(){demoMode=false;try{if(resultsRef&&teacherListener)resultsRef.off("value",teacherListener);await firebase.auth().signOut()}catch(e){}teacherMode=false;firebaseRecords={};document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("teacherDetail").innerHTML="";await ensureAnonymous()}
+function exportCsv(){
+  var groups=buildTeacherGroups(normalizeRecords()),rows=[["Lớp","STT","Họ tên","Trạng thái","Tiết 1","Tiết 2","Nguyện vọng 1","Nguyện vọng 2","Nguyện vọng 3","Quyết định","Cập nhật"]];
+  groups.forEach(function(g){var r=g.representative,o=overallAssessment(r),a=r.answers||{};rows.push([r.className,r.studentNo,r.name,statusLabel(o.status),o.t1+"/3",o.t2+"/3",a.rank1||"",a.rank2||"",a.rank3||"",a.decision||"",new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")])});
+  var csv="\uFEFF"+rows.map(function(row){return row.map(function(x){return '"'+String(x==null?"":x).replace(/"/g,'""')+'"'}).join(",")}).join("\n");
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ket_qua_tin9_bai3.csv";a.click();setTimeout(function(){URL.revokeObjectURL(url)},500)
+}
+
+(function initUI(){
+  var cls=document.getElementById("studentClass");for(var i=1;i<=16;i++){var o=document.createElement("option");o.textContent="9."+i;cls.appendChild(o)}
+  var no=document.getElementById("studentNo");for(var j=1;j<=50;j++){var n=document.createElement("option");n.value=j;n.textContent=j;no.appendChild(n)}
+  var m=(navigator.userAgent||"").match(/Chrome\/(\d+)/);if(m&&Number(m[1])<75){var w=document.getElementById("browserWarning");w.textContent="Trình duyệt Chrome "+m[1]+" quá cũ. Nên nâng cấp lên Chrome 75 trở lên.";w.classList.remove("hidden")}
+})();
+
+document.getElementById("startBtn").onclick=enterStudent;
+document.getElementById("changeStudentBtn").onclick=changeStudent;
+document.getElementById("teacherBtn").onclick=function(){document.getElementById("teacherLoginPanel").classList.remove("hidden")};
+document.getElementById("teacherCancelBtn").onclick=function(){document.getElementById("teacherLoginPanel").classList.add("hidden");document.getElementById("teacherLoginStatus").classList.add("hidden")};
+document.getElementById("teacherLoginBtn").onclick=teacherLogin;
+document.getElementById("teacherLogoutBtn").onclick=teacherLogout;
+document.getElementById("demoBtn").onclick=startTeacherDemo;
+document.getElementById("teacherClassFilter").onchange=renderTeacher;
+document.getElementById("exportCsvBtn").onclick=exportCsv;
+document.getElementById("teacherPassword").addEventListener("keydown",function(e){if(e.key==="Enter")teacherLogin()});
+window.addEventListener("beforeunload",function(){if(currentRecord&&currentKey&&!teacherMode&&!demoMode){var d=allData();d[currentKey]=currentRecord;saveAll(d)}});
+ensureAnonymous().catch(function(e){console.error(e)});
+</script>
+</body>
+</html>
