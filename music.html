@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v3.1 Google Drive Multi-Platform</title>
+<title>Trình nhạc - v4 Mobile Dynamic Stage</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- COOP cho OAuth popup phải cấu hình ở HTTP server: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
 <style>
@@ -623,6 +623,48 @@ body{
   .auth-button .auth-text{display:none}
 }
 
+
+/* ===== MOBILE DYNAMIC MUSIC STAGE v4 ===== */
+.visualizer-mode-icon.pulse::before{
+  content:'';width:14px;height:14px;border-radius:50%;
+  border:2px solid currentColor;box-shadow:0 0 0 3px rgba(255,255,255,.06),inset 0 0 0 3px rgba(255,255,255,.08)
+}
+#visualModePulse{display:none}
+.visualizer-wrap[data-visualizer-mode="pulse"]{
+  background:
+    radial-gradient(circle at 50% 55%,rgba(30,215,96,.15),transparent 34%),
+    radial-gradient(circle at 50% 54%,rgba(38,233,255,.06),transparent 58%),
+    linear-gradient(165deg,#101613,#050706 72%);
+  border-color:rgba(101,255,145,.18)
+}
+@media(max-width:820px){
+  #visualModePulse{display:inline-flex}
+  .visualizer-wrap{
+    height:clamp(165px,25vh,215px)!important;
+    border-radius:19px!important;
+    margin-bottom:6px;
+  }
+  .visualizer-toolbar{
+    top:8px!important;right:8px!important;padding:3px!important;
+    border-radius:999px!important;background:rgba(5,8,6,.68)!important
+  }
+  .visualizer-mode-label{display:none!important}
+  .visualizer-mode{
+    min-width:36px!important;width:36px!important;height:32px!important;padding:0!important;
+    border-radius:999px!important;font-size:0!important;gap:0!important
+  }
+  .visualizer-mode-icon{width:18px!important;height:16px!important}
+  .visualizer-live{left:8px!important;top:8px!important;width:32px!important;height:32px!important;padding:0!important;justify-content:center!important;border-radius:999px!important}
+  .visualizer-live span:last-child{display:none!important}
+  .title{margin-top:12px!important}
+  .sub{margin-bottom:12px!important}
+  .controls{margin:14px 0!important}
+}
+@media(max-width:430px){
+  .visualizer-wrap{height:180px!important;border-radius:18px!important}
+  .player{padding-left:9px!important;padding-right:9px!important}
+}
+
 </style>
 </head>
 <body>
@@ -686,6 +728,10 @@ body{
               <button id="visualModeLed" class="visualizer-mode" type="button" data-visual-mode="led" aria-pressed="false" title="Các ô LED xếp tầng">
                 <span class="visualizer-mode-icon led" aria-hidden="true"></span>
                 <span>LED</span>
+              </button>
+              <button id="visualModePulse" class="visualizer-mode" type="button" data-visual-mode="pulse" aria-pressed="false" title="Nhịp năng lượng - cao trào">
+                <span class="visualizer-mode-icon pulse" aria-hidden="true"></span>
+                <span>Pulse</span>
               </button>
             </div>
           </div>
@@ -865,7 +911,7 @@ const els = {
   bufferedStatus:$('bufferedStatus'), prev:$('prev'), play:$('play'), next:$('next'),
   volume:$('volume'), speed:$('speed'), autoNext:$('autoNext'),
   visualizerWrap:$('visualizerWrap'), visualizer:$('visualizer'),
-  visualModeWave:$('visualModeWave'), visualModeLed:$('visualModeLed'),
+  visualModeWave:$('visualModeWave'), visualModeLed:$('visualModeLed'), visualModePulse:$('visualModePulse'),
   effectPreset:$('effectPreset'), bassBoost:$('bassBoost'), bassValue:$('bassValue'),
   echoLevel:$('echoLevel'), echoValue:$('echoValue'), effectBadge:$('effectBadge'),
   loading:$('loading'), mode:$('mode'), networkDiagnostics:$('networkDiagnostics'),
@@ -908,6 +954,50 @@ const canvasGradientCache = {
 
 let ledGridPattern = null, ledGridPatternDpr = 0;
 let ledBassAverage = 0.08, ledBeatPulse = 0, ledEnergyTrail = 0;
+
+/* Mobile Dynamic Stage: giữ TV/desktop renderer cũ nguyên vẹn. */
+const mobileVisualState = {
+  quality: 2, renderAvgMs: 8, sampleCount: 0, lastQualityChangeAt: 0,
+  energyAvg: 0.08, energySlow: 0.08, climax: 0, pulse: 0, phase: 0
+};
+function mobileVisualDpr(){
+  if (!IS_MOBILE_DEVICE) return Math.min(2, window.devicePixelRatio || 1);
+  const cap = mobileVisualState.quality >= 2 ? 1.5 : mobileVisualState.quality === 1 ? 1.3 : 1.1;
+  return Math.min(cap, window.devicePixelRatio || 1);
+}
+function mobileBandCount(high=32, medium=28, low=22){
+  return mobileVisualState.quality >= 2 ? high : mobileVisualState.quality === 1 ? medium : low;
+}
+function updateMobileVisualQuality(costMs){
+  if (!IS_MOBILE_DEVICE || !Number.isFinite(costMs)) return;
+  mobileVisualState.renderAvgMs += (costMs - mobileVisualState.renderAvgMs) * 0.06;
+  mobileVisualState.sampleCount++;
+  if (mobileVisualState.sampleCount < 70) return;
+  const now = performance.now();
+  if (now - mobileVisualState.lastQualityChangeAt < 7000) return;
+  let next = mobileVisualState.quality;
+  if (mobileVisualState.renderAvgMs > 24 && next > 0) next--;
+  else if (mobileVisualState.renderAvgMs < 12 && next < 2) next++;
+  if (next !== mobileVisualState.quality) {
+    mobileVisualState.quality = next;
+    mobileVisualState.lastQualityChangeAt = now;
+    canvasGradientCache.width = 0;
+    ledGridPattern = null;
+  }
+}
+function updateMobileMusicDynamics(snapshot){
+  const energy = Math.max(0, Math.min(1, snapshot.total || 0));
+  mobileVisualState.energyAvg += (energy - mobileVisualState.energyAvg) * 0.12;
+  mobileVisualState.energySlow += (energy - mobileVisualState.energySlow) * 0.025;
+  const lift = Math.max(0, energy - mobileVisualState.energySlow);
+  const climaxTarget = Math.max(0, Math.min(1,
+    lift * 2.5 + Math.max(0, energy - 0.50) * 1.25 + (snapshot.beat || 0) * 0.20
+  ));
+  mobileVisualState.climax += (climaxTarget - mobileVisualState.climax) * (climaxTarget > mobileVisualState.climax ? 0.28 : 0.055);
+  mobileVisualState.pulse += ((snapshot.beat || 0) - mobileVisualState.pulse) * ((snapshot.beat || 0) > mobileVisualState.pulse ? 0.48 : 0.12);
+  mobileVisualState.phase += 0.035 + energy * 0.035;
+  return mobileVisualState;
+}
 
 const effectState = { preset: 'off', bass: 0, treble: 0, echo: 0, feedback: 0, delay: 0.18, compressorRatio: 1, master: 1 };
 const EFFECT_PRESETS = {
@@ -1603,13 +1693,15 @@ function startVisualizer() {
     const player = activeAudio();
     const playing = Boolean(player && !player.paused && !player.ended);
     const targetFps = playing
-      ? (IS_TV_DEVICE ? 18 : IS_MOBILE_DEVICE ? 24 : 30)
-      : 8;
+      ? (IS_TV_DEVICE ? 18 : IS_MOBILE_DEVICE ? (mobileVisualState.quality === 0 ? 20 : 24) : 30)
+      : (IS_MOBILE_DEVICE ? 6 : 8);
     const minFrameMs = 1000 / targetFps;
 
     if (!lastDrawAt || now - lastDrawAt >= minFrameMs) {
       lastDrawAt = now;
+      const drawStarted = IS_MOBILE_DEVICE ? performance.now() : 0;
       drawVisualizerScene(canvas, context);
+      if (IS_MOBILE_DEVICE) updateMobileVisualQuality(performance.now() - drawStarted);
     }
 
     visualizerFrame = requestAnimationFrame(render);
@@ -1619,7 +1711,8 @@ function startVisualizer() {
 }
 
 function setVisualizerMode(mode, options = {}) {
-  const nextMode = mode === 'led' ? 'led' : 'wave';
+  let nextMode = mode === 'led' ? 'led' : mode === 'pulse' ? 'pulse' : 'wave';
+  if (nextMode === 'pulse' && !IS_MOBILE_DEVICE) nextMode = 'wave';
   const persist = options.persist !== false;
   const announce = options.announce === true;
 
@@ -1632,44 +1725,221 @@ function setVisualizerMode(mode, options = {}) {
   ledBassAverage = 0.08;
   ledBeatPulse = 0;
   ledEnergyTrail = 0;
+  mobileVisualState.energyAvg = 0.08;
+  mobileVisualState.energySlow = 0.08;
+  mobileVisualState.climax = 0;
+  mobileVisualState.pulse = 0;
 
   els.visualizerWrap.dataset.visualizerMode = nextMode;
-  els.visualizerWrap.setAttribute(
-    'aria-label',
-    nextMode === 'led'
-      ? 'Hiệu ứng phổ âm dạng các ô LED xếp tầng'
-      : 'Hiệu ứng sóng âm dạng mềm'
-  );
+  const labels = {
+    wave: 'Hiệu ứng sóng âm mềm dạng ribbon',
+    led: 'Hiệu ứng phổ âm LED gọn theo nhịp',
+    pulse: 'Hiệu ứng nhịp năng lượng và cao trào'
+  };
+  els.visualizerWrap.setAttribute('aria-label', labels[nextMode]);
 
   [
     [els.visualModeWave, 'wave'],
-    [els.visualModeLed, 'led']
+    [els.visualModeLed, 'led'],
+    [els.visualModePulse, 'pulse']
   ].forEach(([button, value]) => {
+    if (!button) return;
     const active = value === nextMode;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
 
-  if (persist) {
-    localStorage.setItem('audio_visualizer_mode', nextMode);
-  }
-
+  if (persist) localStorage.setItem('audio_visualizer_mode', nextMode);
   if (announce) {
-    showToast(
-      nextMode === 'led'
-        ? 'Đã bật phổ LED xếp tầng'
-        : 'Đã bật sóng âm mềm'
-    );
+    showToast(nextMode === 'led' ? 'Đã bật phổ LED gọn' : nextMode === 'pulse' ? 'Đã bật Nhịp năng lượng' : 'Đã bật Sóng ribbon');
   }
 }
 
 function drawVisualizerScene(canvas, context) {
+  if (visualizerMode === 'pulse' && IS_MOBILE_DEVICE) {
+    drawPulseVisualizer(canvas, context);
+    return;
+  }
   if (visualizerMode === 'led') {
     drawLedVisualizer(canvas, context);
     return;
   }
-
   drawWaveVisualizer(canvas, context);
+}
+
+function prepareMobileCanvas(canvas){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = mobileVisualDpr();
+  const width = Math.max(1, Math.floor(rect.width * dpr));
+  const height = Math.max(1, Math.floor(rect.height * dpr));
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width; canvas.height = height;
+  }
+  return {width,height,dpr};
+}
+
+function mobileRoundRect(context,x,y,w,h,r){
+  context.beginPath();
+  if (typeof context.roundRect === 'function') context.roundRect(x,y,w,h,r);
+  else context.rect(x,y,w,h);
+}
+
+function drawMobileWaveVisualizer(canvas, context) {
+  const {width,height,dpr}=prepareMobileCanvas(canvas);
+  context.clearRect(0,0,width,height);
+  const player=activeAudio();
+  const playing=Boolean(player && !player.paused && !player.ended);
+  const count=mobileBandCount(32,28,22);
+  const snapshot=getVisualSpectrumSnapshot(count);
+  const dyn=updateMobileMusicDynamics(snapshot);
+  const cx=width*.5, cy=height*.57;
+  const side=14*dpr;
+  const maxAmp=height*(.13 + dyn.climax*.055);
+
+  const aura=context.createRadialGradient(cx,cy,0,cx,cy,width*.48);
+  aura.addColorStop(0,`rgba(30,215,96,${playing ? .045 + snapshot.total*.10 + dyn.climax*.08 : .025})`);
+  aura.addColorStop(.45,`rgba(38,233,255,${playing ? .015 + snapshot.treble*.06 : .008})`);
+  aura.addColorStop(1,'rgba(0,0,0,0)');
+  context.fillStyle=aura; context.fillRect(0,0,width,height);
+
+  // đường ribbon trên/dưới, biên độ có giới hạn để nhạc nhẹ thật sự nhẹ
+  const drawRibbon=(sign,alpha)=>{
+    context.beginPath();
+    for(let i=0;i<count;i++){
+      const x=side+(width-side*2)*(i/Math.max(1,count-1));
+      const raw=snapshot.bars[i]||0;
+      const shaped=Math.pow(Math.max(0,raw),1.45);
+      const amp=(height*.022 + shaped*maxAmp + dyn.pulse*height*.018*(1-i/count*.55))*sign;
+      const y=cy+amp;
+      if(i===0) context.moveTo(x,y); else context.lineTo(x,y);
+    }
+    context.strokeStyle=`rgba(112,255,157,${alpha})`;
+    context.lineWidth=(1.5+snapshot.total*1.7)*dpr;
+    context.lineJoin='round'; context.lineCap='round'; context.stroke();
+  };
+  drawRibbon(-1,.82); drawRibbon(1,.42);
+
+  // đường trung tâm + glow beat, không kéo full chiều cao
+  const grad=context.createLinearGradient(side,0,width-side,0);
+  grad.addColorStop(0,'rgba(30,215,96,0)'); grad.addColorStop(.5,`rgba(255,255,255,${.16+dyn.pulse*.34})`); grad.addColorStop(1,'rgba(38,233,255,0)');
+  context.strokeStyle=grad; context.lineWidth=Math.max(1,dpr); context.beginPath(); context.moveTo(side,cy); context.lineTo(width-side,cy); context.stroke();
+
+  if(playing && dyn.climax>.18){
+    context.save(); context.globalAlpha=Math.min(.55,dyn.climax*.55);
+    context.strokeStyle='rgba(92,255,137,.8)'; context.lineWidth=1.3*dpr;
+    context.beginPath(); context.ellipse(cx,cy,width*(.12+dyn.climax*.10),height*(.20+dyn.climax*.09),0,0,Math.PI*2); context.stroke(); context.restore();
+  }
+}
+
+function drawMobileLedVisualizer(canvas, context) {
+  const {width,height,dpr}=prepareMobileCanvas(canvas);
+  context.clearRect(0,0,width,height);
+  const player=activeAudio();
+  const playing=Boolean(player && !player.paused && !player.ended);
+  const columns=mobileBandCount(24,22,18), segments=mobileVisualState.quality===0?8:9;
+  const snapshot=getVisualSpectrumSnapshot(columns);
+  const dyn=updateMobileMusicDynamics(snapshot);
+  const pad=12*dpr, chartW=width-pad*2;
+  const chartH=height*(.34 + dyn.climax*.045);
+  const bottom=height-17*dpr, top=bottom-chartH;
+  const gap=2.5*dpr, colW=Math.max(2.5*dpr,(chartW-gap*(columns-1))/columns);
+  const segGap=2*dpr, segH=Math.max(2*dpr,(chartH-segGap*(segments-1))/segments);
+
+  const glow=context.createRadialGradient(width*.5,bottom,0,width*.5,bottom,width*.46);
+  glow.addColorStop(0,`rgba(45,255,100,${.04+snapshot.total*.11+dyn.climax*.12})`); glow.addColorStop(1,'rgba(0,0,0,0)');
+  context.fillStyle=glow; context.fillRect(0,0,width,height);
+
+  if(ledLevels.length!==columns){ ledLevels=new Array(columns).fill(0); ledVelocities=new Array(columns).fill(0); ledPeaks=new Array(columns).fill(0); ledPeakHoldUntil=new Array(columns).fill(0); }
+  const now=performance.now();
+  for(let i=0;i<columns;i++){
+    const raw=snapshot.bars[i]||0;
+    const shaped=Math.pow(raw,1.45); // nén chiều cao: tránh cột luôn chạm trần
+    const target=Math.min(.92, .045 + shaped*.62 + dyn.pulse*(.09*(1-i/columns*.5)) + dyn.climax*.08);
+    const cur=ledLevels[i]||0, vel=ledVelocities[i]||0;
+    const rising=target>cur;
+    const nv=(vel+(target-cur)*(rising?.48:.17))*(rising?.52:.72);
+    const level=Math.max(.025,Math.min(1,cur+nv));
+    ledVelocities[i]=nv; ledLevels[i]=level;
+    if(level>=(ledPeaks[i]||0)){ledPeaks[i]=level;ledPeakHoldUntil[i]=now+300;} else if(now>(ledPeakHoldUntil[i]||0)) ledPeaks[i]=Math.max(level,(ledPeaks[i]||0)-.025);
+    const activeSeg=Math.round(level*segments);
+    const x=pad+i*(colW+gap);
+    for(let seg=0;seg<segments;seg++){
+      const y=bottom-(seg+1)*segH-seg*segGap;
+      const on=seg<activeSeg, ratio=seg/Math.max(1,segments-1);
+      context.fillStyle=!on?'rgba(73,115,80,.09)':ratio<.6?`rgba(86,255,118,${.45+level*.42})`:ratio<.82?`rgba(218,255,73,${.50+level*.38})`:`rgba(50,233,255,${.55+level*.35})`;
+      mobileRoundRect(context,x,y,colW,segH,Math.min(segH/2,2*dpr)); context.fill();
+    }
+    const peakY=bottom-(ledPeaks[i]||0)*chartH;
+    context.fillStyle='rgba(238,255,242,.68)'; context.fillRect(x,peakY,colW,Math.max(1,dpr));
+  }
+  context.fillStyle=`rgba(92,255,137,${.12+dyn.pulse*.26})`; context.fillRect(pad,bottom+4*dpr,chartW,Math.max(1,dpr));
+
+  // nhãn năng lượng nhỏ giúp cảm nhận cao trào mà không chiếm không gian
+  context.save(); context.font=`700 ${9*dpr}px system-ui,sans-serif`; context.fillStyle='rgba(255,255,255,.42)'; context.textAlign='left';
+  context.fillText(dyn.climax>.52?'CAO TRÀO':snapshot.total>.34?'NĂNG LƯỢNG':'NHỊP NHẸ',pad,22*dpr); context.restore();
+}
+
+function drawPulseVisualizer(canvas, context) {
+  const {width,height,dpr}=prepareMobileCanvas(canvas);
+  context.clearRect(0,0,width,height);
+  const player=activeAudio();
+  const playing=Boolean(player && !player.paused && !player.ended);
+  const snapshot=getVisualSpectrumSnapshot(mobileBandCount(24,20,18));
+  const dyn=updateMobileMusicDynamics(snapshot);
+  const cx=width*.5, cy=height*.56;
+  const minSide=Math.min(width,height);
+  const core=minSide*(.085 + snapshot.bass*.035 + dyn.pulse*.025);
+  const outer=core*(1.85 + snapshot.mid*.28 + dyn.climax*.46);
+
+  const bg=context.createRadialGradient(cx,cy,0,cx,cy,minSide*.72);
+  bg.addColorStop(0,`rgba(30,215,96,${.075+snapshot.total*.14+dyn.climax*.10})`);
+  bg.addColorStop(.35,`rgba(38,233,255,${.018+snapshot.treble*.075})`);
+  bg.addColorStop(1,'rgba(0,0,0,0)'); context.fillStyle=bg; context.fillRect(0,0,width,height);
+
+  // shockwave: chỉ rõ khi beat/climax tăng
+  if(playing && (dyn.pulse>.12 || dyn.climax>.18)){
+    const shockR=outer*(1.15+dyn.pulse*.75+dyn.climax*.35);
+    context.save(); context.globalAlpha=Math.min(.52,dyn.pulse*.38+dyn.climax*.28);
+    context.strokeStyle='#63ff91'; context.lineWidth=(1.1+dyn.climax*1.4)*dpr; context.beginPath(); context.arc(cx,cy,shockR,0,Math.PI*2); context.stroke(); context.restore();
+  }
+
+  // outer ring biến dạng nhẹ theo mid/high
+  context.save(); context.beginPath();
+  const points=mobileBandCount(34,28,22);
+  for(let i=0;i<=points;i++){
+    const a=(i/points)*Math.PI*2;
+    const idx=i%snapshot.bars.length;
+    const local=snapshot.bars[idx]||0;
+    const r=outer*(1 + Math.pow(local,1.5)*.10 + Math.sin(a*3+dyn.phase)*.015);
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    if(i===0)context.moveTo(x,y);else context.lineTo(x,y);
+  }
+  context.closePath(); context.strokeStyle=`rgba(101,255,148,${.42+snapshot.mid*.35})`; context.lineWidth=(1.2+snapshot.mid*1.4)*dpr;
+  context.shadowColor='rgba(30,215,96,.5)'; context.shadowBlur=(4+dyn.climax*12)*dpr; context.stroke(); context.restore();
+
+  // core orb
+  const orb=context.createRadialGradient(cx-core*.25,cy-core*.30,core*.08,cx,cy,core*1.2);
+  orb.addColorStop(0,'rgba(255,255,255,.98)'); orb.addColorStop(.18,'rgba(168,255,193,.96)'); orb.addColorStop(.55,`rgba(30,215,96,${.80+snapshot.bass*.15})`); orb.addColorStop(1,'rgba(6,72,37,.25)');
+  context.fillStyle=orb; context.beginPath(); context.arc(cx,cy,core,0,Math.PI*2); context.fill();
+
+  // particles treble: số lượng tự giảm trên máy yếu
+  if(mobileVisualState.quality>0 && playing){
+    const particleCount=mobileVisualState.quality>=2?12:8;
+    context.save();
+    for(let i=0;i<particleCount;i++){
+      const a=(i/particleCount)*Math.PI*2 + dyn.phase*(.35+(i%3)*.08);
+      const orbit=outer*(1.35 + .18*Math.sin(dyn.phase*.7+i*1.9));
+      const twinkle=Math.max(0,.18 + snapshot.treble*.65 + Math.sin(dyn.phase*2+i)*.18);
+      const pr=(.9+twinkle*1.6)*dpr;
+      const x=cx+Math.cos(a)*orbit, y=cy+Math.sin(a)*orbit*.62;
+      context.globalAlpha=Math.min(.85,.20+twinkle*.72+dyn.climax*.15); context.fillStyle=i%3===0?'#dffff0':'#42efff';
+      context.beginPath(); context.arc(x,y,pr,0,Math.PI*2); context.fill();
+    }
+    context.restore();
+  }
+
+  context.save(); context.font=`800 ${9*dpr}px system-ui,sans-serif`; context.textAlign='center'; context.fillStyle=`rgba(255,255,255,${.30+dyn.climax*.34})`;
+  context.fillText(dyn.climax>.55?'CAO TRÀO':snapshot.total>.36?'ĐANG LÊN NHỊP':'FLOW',cx,height-15*dpr); context.restore();
 }
 
 
@@ -1679,6 +1949,7 @@ let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
 
 function drawWaveVisualizer(canvas, context) {
+  if (IS_MOBILE_DEVICE) { drawMobileWaveVisualizer(canvas, context); return; }
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const width = Math.max(1, Math.floor(rect.width * dpr));
@@ -1841,6 +2112,7 @@ function ledRoundedRect(context, x, y, width, height, radius) {
 }
 
 function drawLedVisualizer(canvas, context) {
+  if (IS_MOBILE_DEVICE) { drawMobileLedVisualizer(canvas, context); return; }
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const width = Math.max(1, Math.floor(rect.width * dpr));
@@ -2163,6 +2435,7 @@ function bindEvents() {
   els.next.addEventListener('click', async () => { await ensureAudioEffects().catch(() => {}); playRelative(1); });
   els.visualModeWave.addEventListener('click', () => setVisualizerMode('wave', { announce: true }));
   els.visualModeLed.addEventListener('click', () => setVisualizerMode('led', { announce: true }));
+  if (els.visualModePulse) els.visualModePulse.addEventListener('click', () => setVisualizerMode('pulse', { announce: true }));
   els.effectPreset.addEventListener('change', async () => { await ensureAudioEffects().catch(() => {}); applyEffectPreset(els.effectPreset.value, true); });
   els.bassBoost.addEventListener('input', async () => { await ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.bass = Number(els.bassBoost.value); effectState.treble = 0; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
   els.echoLevel.addEventListener('input', async () => { await ensureAudioEffects().catch(() => {}); els.effectPreset.value = 'custom'; effectState.preset = 'custom'; effectState.echo = Number(els.echoLevel.value) / 100; effectState.feedback = Math.min(.32, effectState.echo * .82); effectState.delay = .2; effectState.compressorRatio = 3; effectState.master = .92; updateEffectNodes(); updateEffectUi(); saveEffectPreferences(); });
@@ -6773,7 +7046,7 @@ function restorePreferences() {
   setVisualizerMode(
     savedVisualizerMode === 'led'
       ? 'led'
-      : 'wave',
+      : (savedVisualizerMode === 'pulse' && IS_MOBILE_DEVICE ? 'pulse' : 'wave'),
     { persist: false, announce: false }
   );
 
