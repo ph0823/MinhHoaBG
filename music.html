@@ -785,7 +785,9 @@ body{
               Cài đặt sẵn
               <select id="effectPreset">
                 <option value="off">Tắt hiệu ứng</option>
+                <option value="soft">Sâu lắng</option>
                 <option value="bass">Tăng âm trầm</option>
+                <option value="dance">Remix / Dance</option>
                 <option value="vocal">Rõ giọng hát</option>
                 <option value="concert">Sân khấu</option>
                 <option value="custom">Tùy chỉnh</option>
@@ -961,7 +963,7 @@ const canvasGradientCache = {
 let ledGridPattern = null, ledGridPatternDpr = 0;
 let ledBassAverage = 0.08, ledBeatPulse = 0, ledEnergyTrail = 0;
 
-/* Mobile Dynamic Stage: giữ TV/desktop renderer cũ nguyên vẹn. */
+/* Adaptive Dynamic Stage v6: TV giữ renderer cũ; desktop/mobile dùng FFT thật và dynamics riêng. */
 const mobileVisualState = {
   quality: 2, renderAvgMs: 8, sampleCount: 0, lastQualityChangeAt: 0,
   energyAvg: 0.08, energySlow: 0.08, energyFloor: 0.035, energyCeil: 0.34,
@@ -1126,9 +1128,11 @@ function mobileMusicMoodLabel(dyn){
 const effectState = { preset: 'off', bass: 0, treble: 0, echo: 0, feedback: 0, delay: 0.18, compressorRatio: 1, master: 1 };
 const EFFECT_PRESETS = {
   off: { label: 'Tắt', bass: 0, treble: 0, echo: 0, feedback: 0, delay: 0.18, compressorRatio: 1, master: 1 },
-  bass: { label: 'Âm trầm', bass: 8, treble: 1, echo: 0.02, feedback: 0.04, delay: 0.16, compressorRatio: 3, master: 0.92 },
-  vocal: { label: 'Giọng hát', bass: -2, treble: 5, echo: 0.015, feedback: 0.025, delay: 0.13, compressorRatio: 2.5, master: 0.96 },
-  concert: { label: 'Sân khấu', bass: 3, treble: 2, echo: 0.26, feedback: 0.22, delay: 0.22, compressorRatio: 3.5, master: 0.88 },
+  soft: { label: 'Sâu lắng', bass: 2, treble: -1, echo: 0.055, feedback: 0.055, delay: 0.19, compressorRatio: 1.8, master: 0.96 },
+  bass: { label: 'Âm trầm', bass: 6, treble: 1, echo: 0.018, feedback: 0.035, delay: 0.16, compressorRatio: 2.8, master: 0.92 },
+  dance: { label: 'Remix / Dance', bass: 5, treble: 2, echo: 0.025, feedback: 0.035, delay: 0.145, compressorRatio: 3.8, master: 0.88 },
+  vocal: { label: 'Giọng hát', bass: -2, treble: 4, echo: 0.015, feedback: 0.025, delay: 0.13, compressorRatio: 2.4, master: 0.96 },
+  concert: { label: 'Sân khấu', bass: 3, treble: 2, echo: 0.24, feedback: 0.20, delay: 0.22, compressorRatio: 3.4, master: 0.88 },
 };
 
 const networkState = { offline: !navigator.onLine, retrying: 0, failures: 0, lastSuccessAt: 0, lastFailureAt: 0, urgent: false, recovering: false, recoveryCycle: 0, recoveryMessage: '' };
@@ -1490,7 +1494,7 @@ async function ensureAudioEffects() {
       analyserNode = audioContext.createAnalyser();
       analyserNode.fftSize = 2048;
       // Giảm làm mượt để LED bám nhịp nhanh và dồn dập hơn.
-      analyserNode.smoothingTimeConstant = 0.48;
+      analyserNode.smoothingTimeConstant = IS_MOBILE_DEVICE ? 0.28 : 0.24;
       frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
       masterGainNode = audioContext.createGain();
 
@@ -1582,7 +1586,22 @@ const visualEngineState = {
   previousBars: [],
   smoothedBars: [],
   fluxAverage: 0.02,
-  beatPulse: 0
+  beatPulse: 0,
+  previousBands: { sub: 0, kick: 0, lowMid: 0, mid: 0, presence: 0, high: 0 },
+  bandFluxAverage: { kick: 0.01, snare: 0.01, hats: 0.01 },
+  kickPulse: 0,
+  snarePulse: 0,
+  hatsPulse: 0,
+  intensity: 0.12,
+  climax: 0,
+  energySlow: 0.08
+};
+
+/* Desktop renderer riêng. TV không sử dụng state này. */
+const desktopVisualState = {
+  displayBars: [], floors: [], velocities: [], levels: [], peaks: [], peakHold: [],
+  energyFloor: 0.035, energyCeil: 0.34, lastEnergy: 0.08, transientAvg: 0.01,
+  character: 0.15, climax: 0, phase: 0
 };
 
 function visualHash32(input) {
@@ -1626,6 +1645,26 @@ function resetVisualEngineIfTrackChanged() {
   visualEngineState.smoothedBars = [];
   visualEngineState.fluxAverage = 0.02;
   visualEngineState.beatPulse = 0;
+  visualEngineState.previousBands = { sub: 0, kick: 0, lowMid: 0, mid: 0, presence: 0, high: 0 };
+  visualEngineState.bandFluxAverage = { kick: 0.01, snare: 0.01, hats: 0.01 };
+  visualEngineState.kickPulse = 0;
+  visualEngineState.snarePulse = 0;
+  visualEngineState.hatsPulse = 0;
+  visualEngineState.intensity = 0.12;
+  visualEngineState.climax = 0;
+  visualEngineState.energySlow = 0.08;
+  desktopVisualState.displayBars = [];
+  desktopVisualState.floors = [];
+  desktopVisualState.velocities = [];
+  desktopVisualState.levels = [];
+  desktopVisualState.peaks = [];
+  desktopVisualState.peakHold = [];
+  desktopVisualState.energyFloor = 0.035;
+  desktopVisualState.energyCeil = 0.34;
+  desktopVisualState.lastEnergy = 0.08;
+  desktopVisualState.transientAvg = 0.01;
+  desktopVisualState.character = 0.15;
+  desktopVisualState.climax = 0;
 }
 
 function buildProceduralTvSpectrum(count, player) {
@@ -1718,6 +1757,19 @@ function buildRealAudioSpectrum(count) {
   const maxHz = Math.min(16000, nyquist * 0.95);
   const bars = new Array(count);
 
+  const hzEnergy = (fromHz, toHz) => {
+    const b0 = Math.max(0, Math.min(bins - 1, Math.floor(fromHz / nyquist * bins)));
+    const b1 = Math.max(b0 + 1, Math.min(bins, Math.ceil(toHz / nyquist * bins)));
+    let sum = 0, peak = 0, weight = 0;
+    for (let b = b0; b < b1; b++) {
+      const v = frequencyData[b] / 255;
+      const w = 1 - ((b - b0) / Math.max(1, b1 - b0 - 1)) * 0.12;
+      sum += v * w; weight += w; if (v > peak) peak = v;
+    }
+    const avg = weight ? sum / weight : 0;
+    return Math.min(1, Math.pow(avg * 0.76 + peak * 0.34, 0.88));
+  };
+
   for (let i = 0; i < count; i++) {
     const p0 = i / count;
     const p1 = (i + 1) / count;
@@ -1725,7 +1777,6 @@ function buildRealAudioSpectrum(count) {
     const hz1 = minHz * Math.pow(maxHz / minHz, p1);
     const b0 = Math.max(0, Math.min(bins - 1, Math.floor(hz0 / nyquist * bins)));
     const b1 = Math.max(b0 + 1, Math.min(bins, Math.ceil(hz1 / nyquist * bins)));
-
     let sum = 0, peak = 0;
     for (let b = b0; b < b1; b++) {
       const v = frequencyData[b] / 255;
@@ -1733,7 +1784,8 @@ function buildRealAudioSpectrum(count) {
       if (v > peak) peak = v;
     }
     const avg = sum / Math.max(1, b1 - b0);
-    bars[i] = Math.min(1, Math.pow(avg * 0.72 + peak * 0.48, 0.78));
+    // Ít nén hơn bản cũ để giữ khác biệt thật giữa các dải tần.
+    bars[i] = Math.min(1, Math.pow(avg * 0.70 + peak * 0.38, 0.92));
   }
 
   if (visualEngineState.previousBars.length !== count) {
@@ -1747,18 +1799,46 @@ function buildRealAudioSpectrum(count) {
     visualEngineState.previousBars[i] = bars[i];
   }
   flux /= Math.max(1, count);
+  visualEngineState.fluxAverage += (flux - visualEngineState.fluxAverage) * 0.05;
+  const threshold = visualEngineState.fluxAverage * 1.42 + 0.008;
+  if (flux > threshold) visualEngineState.beatPulse = Math.min(1, visualEngineState.beatPulse + 0.44 + flux * 2.0);
+  visualEngineState.beatPulse *= 0.80;
 
-  visualEngineState.fluxAverage += (flux - visualEngineState.fluxAverage) * 0.045;
-  const threshold = visualEngineState.fluxAverage * 1.55 + 0.012;
-  if (flux > threshold) {
-    visualEngineState.beatPulse = Math.min(1, visualEngineState.beatPulse + 0.55 + flux * 1.8);
-  }
-  visualEngineState.beatPulse *= 0.84;
+  // Sáu vùng tần số thật để phân biệt kick/snare/hi-hat.
+  const bands = {
+    sub: hzEnergy(45, 80),
+    kick: hzEnergy(80, 170),
+    lowMid: hzEnergy(170, 500),
+    mid: hzEnergy(500, 2500),
+    presence: hzEnergy(2500, 6000),
+    high: hzEnergy(6000, Math.min(14500, nyquist * 0.9))
+  };
+  const prev = visualEngineState.previousBands;
+  const kickFlux = Math.max(0, bands.kick - prev.kick) + Math.max(0, bands.sub - prev.sub) * 0.55;
+  const snareFlux = Math.max(0, bands.lowMid - prev.lowMid) * 0.38 + Math.max(0, bands.mid - prev.mid) * 0.62;
+  const hatsFlux = Math.max(0, bands.presence - prev.presence) * 0.45 + Math.max(0, bands.high - prev.high) * 0.75;
+  visualEngineState.previousBands = { ...bands };
 
+  const pulseFromFlux = (kind, value, scale, decay) => {
+    const avgKey = kind === 'kick' ? 'kick' : kind === 'snare' ? 'snare' : 'hats';
+    const pulseKey = kind === 'kick' ? 'kickPulse' : kind === 'snare' ? 'snarePulse' : 'hatsPulse';
+    const avg = visualEngineState.bandFluxAverage[avgKey];
+    visualEngineState.bandFluxAverage[avgKey] += (value - avg) * 0.055;
+    const base = visualEngineState.bandFluxAverage[avgKey];
+    if (value > base * 1.55 + 0.008) {
+      visualEngineState[pulseKey] = Math.min(1, visualEngineState[pulseKey] + 0.42 + value * scale);
+    }
+    visualEngineState[pulseKey] *= decay;
+  };
+  pulseFromFlux('kick', kickFlux, 3.2, 0.76);
+  pulseFromFlux('snare', snareFlux, 2.7, 0.80);
+  pulseFromFlux('hats', hatsFlux, 2.5, 0.83);
+
+  // Renderer smoothing: attack nhanh, release vừa. Không làm phẳng phổ như trước.
   for (let i = 0; i < count; i++) {
     const current = visualEngineState.smoothedBars[i] || 0;
     const target = bars[i];
-    const alpha = target > current ? 0.55 : 0.20;
+    const alpha = target > current ? 0.70 : 0.13;
     visualEngineState.smoothedBars[i] = current + (target - current) * alpha;
   }
 
@@ -1770,12 +1850,31 @@ function buildRealAudioSpectrum(count) {
     for (let i = from; i < to; i++) sum += smoothed[i] || 0;
     return sum / Math.max(1, to - from);
   };
-
   const bass = avg(0, bassEnd);
   const mid = avg(bassEnd, midEnd);
   const treble = avg(midEnd, count);
-  const total = Math.min(1, bass * 0.46 + mid * 0.34 + treble * 0.20);
-  return { bars: smoothed, bass, mid, treble, total, beat: visualEngineState.beatPulse, bpm: 0, realAudio: true };
+  const total = Math.min(1, bass * 0.43 + mid * 0.35 + treble * 0.22);
+
+  visualEngineState.energySlow += (total - visualEngineState.energySlow) * 0.025;
+  const transientActivity = Math.min(1,
+    visualEngineState.kickPulse * 0.42 + visualEngineState.snarePulse * 0.30 +
+    visualEngineState.hatsPulse * 0.16 + visualEngineState.beatPulse * 0.22);
+  const spectralSpread = Math.min(1, Math.max(0, (bands.presence + bands.high) * 0.45 + Math.abs(bands.kick - bands.mid) * 0.7));
+  const intensityTarget = Math.min(1, transientActivity * 0.58 + total * 0.23 + spectralSpread * 0.19);
+  visualEngineState.intensity += (intensityTarget - visualEngineState.intensity) * (intensityTarget > visualEngineState.intensity ? 0.18 : 0.035);
+  const climaxTarget = Math.min(1, Math.max(0, total - visualEngineState.energySlow) * 2.2 + visualEngineState.intensity * 0.52 + visualEngineState.kickPulse * 0.20);
+  visualEngineState.climax += (climaxTarget - visualEngineState.climax) * (climaxTarget > visualEngineState.climax ? 0.20 : 0.035);
+
+  return {
+    bars: smoothed, bass, mid, treble, total,
+    beat: visualEngineState.beatPulse, bpm: 0, realAudio: true,
+    bands,
+    kick: visualEngineState.kickPulse,
+    snare: visualEngineState.snarePulse,
+    hats: visualEngineState.hatsPulse,
+    intensity: visualEngineState.intensity,
+    climax: visualEngineState.climax
+  };
 }
 
 function getVisualSpectrumSnapshot(count) {
@@ -1795,6 +1894,77 @@ function getVisualSpectrumSnapshot(count) {
     return buildRealAudioSpectrum(count);
   }
   return buildProceduralTvSpectrum(count, player);
+}
+
+function updateDesktopDynamics(snapshot) {
+  const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
+  const energy = clamp01(snapshot.total);
+  const floorAlpha = energy < desktopVisualState.energyFloor ? 0.075 : 0.004;
+  const ceilAlpha = energy > desktopVisualState.energyCeil ? 0.085 : 0.003;
+  desktopVisualState.energyFloor += (energy - desktopVisualState.energyFloor) * floorAlpha;
+  desktopVisualState.energyCeil += (energy - desktopVisualState.energyCeil) * ceilAlpha;
+  desktopVisualState.energyCeil = Math.max(desktopVisualState.energyCeil, desktopVisualState.energyFloor + 0.11);
+  const span = Math.max(0.11, desktopVisualState.energyCeil - desktopVisualState.energyFloor);
+  const norm = clamp01((energy - desktopVisualState.energyFloor) / span);
+  const transient = Math.max(0, energy - desktopVisualState.lastEnergy);
+  desktopVisualState.lastEnergy = energy;
+  desktopVisualState.transientAvg += (transient - desktopVisualState.transientAvg) * 0.05;
+  const onset = clamp01(transient / Math.max(0.008, desktopVisualState.transientAvg * 2.4));
+  const target = clamp01((snapshot.intensity || 0) * 0.68 + onset * 0.18 + norm * 0.14);
+  desktopVisualState.character += (target - desktopVisualState.character) * (target > desktopVisualState.character ? 0.20 : 0.032);
+  const climaxTarget = clamp01((snapshot.climax || 0) * 0.78 + Math.max(0, norm - 0.58) * 0.44);
+  desktopVisualState.climax += (climaxTarget - desktopVisualState.climax) * (climaxTarget > desktopVisualState.climax ? 0.22 : 0.035);
+  desktopVisualState.phase += 0.018 + desktopVisualState.character * 0.035;
+  return { normalizedEnergy: norm, onset, character: desktopVisualState.character, climax: desktopVisualState.climax };
+}
+
+function buildDesktopDisplayBars(snapshot, dyn, count) {
+  const src = snapshot.bars || [];
+  if (desktopVisualState.displayBars.length !== count) {
+    desktopVisualState.displayBars = new Array(count).fill(0.025);
+    desktopVisualState.floors = new Array(count).fill(0.02);
+  }
+  const result = new Array(count).fill(0.02);
+  const regions = [[0, Math.floor(count*.27)], [Math.floor(count*.27), Math.floor(count*.66)], [Math.floor(count*.66), count]];
+  const regional = regions.map(([a,b]) => {
+    let min=1,max=0;
+    for(let i=a;i<b;i++){const v=Math.max(0,Math.min(1,Number(src[i]||0)));min=Math.min(min,v);max=Math.max(max,v);}
+    return {a,b,min,max,span:Math.max(0.055,max-min)};
+  });
+  const lively = Math.max(0, Math.min(1, dyn.character || 0));
+  for (let i=0;i<count;i++) {
+    const raw=Math.max(0,Math.min(1,Number(src[i]||0)));
+    const floor=desktopVisualState.floors[i]||0.02;
+    desktopVisualState.floors[i]=floor+(raw-floor)*(raw<floor?0.065:0.0035);
+    const reg=regional.find(r=>i>=r.a&&i<r.b)||regional[1];
+    const relative=Math.max(0,Math.min(1,(raw-reg.min)/reg.span));
+    const left=Number(src[Math.max(0,i-1)]||raw), right=Number(src[Math.min(count-1,i+1)]||raw);
+    const detail=Math.max(-0.25,Math.min(0.25,raw-(left+raw+right)/3));
+    const x=i/Math.max(1,count-1);
+    // High cần gain hiển thị cao hơn vì năng lượng vật lý tự nhiên thấp hơn bass.
+    const freqGain=x<.28?1.00:x<.66?1.07:1.22;
+    let target=(Math.max(0,raw-desktopVisualState.floors[i]*.68)*.46 + relative*(.38+lively*.12) + detail*(.62+lively*.52))*freqGain;
+    const kickShape=Math.exp(-Math.pow((x-.08)/.15,2));
+    const snareShape=Math.exp(-Math.pow((x-.48)/.20,2));
+    const hatsShape=Math.exp(-Math.pow((x-.86)/.16,2));
+    target += (snapshot.kick||0)*kickShape*(.07+lively*.10);
+    target += (snapshot.snare||0)*snareShape*(.035+lively*.055);
+    target += (snapshot.hats||0)*hatsShape*(.025+lively*.05);
+    target=Math.pow(Math.max(0,target), lively>.58?0.82:1.02);
+    target*=.52+(dyn.normalizedEnergy||0)*.34+lively*.18;
+    target=Math.max(.015,Math.min(.98,target));
+    const cur=desktopVisualState.displayBars[i]||0;
+    const alpha=target>cur ? (.48+lively*.28) : (.07+lively*.09);
+    result[i]=desktopVisualState.displayBars[i]=cur+(target-cur)*alpha;
+  }
+  return result;
+}
+
+function dynamicsLabel(snapshot, dyn){
+  if ((dyn.climax||0)>.60) return 'CAO TRÀO';
+  if ((dyn.character||0)>.60) return 'SÔI ĐỘNG';
+  if ((dyn.character||0)>.32) return 'CÓ NHỊP';
+  return 'NHẸ NHÀNG';
 }
 
 function startVisualizer() {
@@ -1817,7 +1987,7 @@ function startVisualizer() {
     const player = activeAudio();
     const playing = Boolean(player && !player.paused && !player.ended);
     const targetFps = playing
-      ? (IS_TV_DEVICE ? 18 : IS_MOBILE_DEVICE ? (mobileVisualState.quality === 0 ? 20 : 24) : 30)
+      ? (IS_TV_DEVICE ? 18 : IS_MOBILE_DEVICE ? (mobileVisualState.quality === 0 ? 22 : 30) : 45)
       : (IS_MOBILE_DEVICE ? 6 : 8);
     const minFrameMs = 1000 / targetFps;
 
@@ -2130,7 +2300,7 @@ let cachedWaveAura = null;
 let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
 
-function drawWaveVisualizer(canvas, context) {
+function drawLegacyWaveVisualizer(canvas, context) {
   if (IS_MOBILE_DEVICE) { drawMobileWaveVisualizer(canvas, context); return; }
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -2236,6 +2406,41 @@ function drawWaveVisualizer(canvas, context) {
   context.restore();
 }
 
+function drawDesktopWaveVisualizer(canvas, context) {
+  const rect=canvas.getBoundingClientRect();
+  const dpr=Math.min(1.75,window.devicePixelRatio||1);
+  const width=Math.max(1,Math.floor(rect.width*dpr)), height=Math.max(1,Math.floor(rect.height*dpr));
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+  context.clearRect(0,0,width,height);
+  const playing=Boolean(activeAudio()&&!activeAudio().paused&&!activeAudio().ended);
+  const count=width>1600?84:68;
+  const snapshot=getVisualSpectrumSnapshot(count);
+  const dyn=updateDesktopDynamics(snapshot);
+  const bars=buildDesktopDisplayBars(snapshot,dyn,count);
+  const side=20*dpr, cy=height*.54, maxAmp=height*(.24+dyn.character*.08);
+  const aura=context.createRadialGradient(width*.5,cy,0,width*.5,cy,width*.48);
+  aura.addColorStop(0,`rgba(30,215,96,${playing?.035+dyn.normalizedEnergy*.10+dyn.climax*.09:.02})`);
+  aura.addColorStop(.52,`rgba(38,233,255,${playing?.012+(snapshot.hats||0)*.06:.006})`);aura.addColorStop(1,'rgba(0,0,0,0)');
+  context.fillStyle=aura;context.fillRect(0,0,width,height);
+  const gap=2.6*dpr, usable=width-side*2, bw=Math.max(2*dpr,(usable-gap*(count-1))/count);
+  const grad=context.createLinearGradient(0,cy-maxAmp,0,cy+maxAmp);grad.addColorStop(0,'#25eaff');grad.addColorStop(.35,'#8dff72');grad.addColorStop(.5,'#f6fff8');grad.addColorStop(.68,'#65ff8c');grad.addColorStop(1,'#00b9d4');
+  context.save();context.fillStyle=grad;context.shadowColor='rgba(30,215,96,.42)';context.shadowBlur=(5+dyn.character*13+dyn.climax*9)*dpr;
+  for(let i=0;i<count;i++){
+    const level=bars[i]||0; const x=side+i*(bw+gap); const half=Math.max(2*dpr,level*maxAmp);
+    context.beginPath(); if(context.roundRect) context.roundRect(x,cy-half,bw,half*2,Math.min(bw/2,3*dpr)); else context.rect(x,cy-half,bw,half*2); context.fill();
+  }
+  context.restore();
+  const kick=snapshot.kick||0,snare=snapshot.snare||0;
+  context.save();context.strokeStyle=`rgba(255,255,255,${.10+kick*.22+snare*.10})`;context.lineWidth=(1+kick*1.5)*dpr;context.beginPath();context.moveTo(side,cy);context.lineTo(width-side,cy);context.stroke();context.restore();
+  context.save();context.font=`800 ${10*dpr}px system-ui,sans-serif`;context.fillStyle='rgba(255,255,255,.38)';context.fillText(dynamicsLabel(snapshot,dyn),side,22*dpr);context.restore();
+}
+
+function drawWaveVisualizer(canvas, context) {
+  if (IS_MOBILE_DEVICE) { drawMobileWaveVisualizer(canvas, context); return; }
+  if (IS_TV_DEVICE) { drawLegacyWaveVisualizer(canvas, context); return; }
+  drawDesktopWaveVisualizer(canvas, context);
+}
+
 function createLedGridPattern(context, dpr) {
   if (
     ledGridPattern &&
@@ -2293,7 +2498,7 @@ function ledRoundedRect(context, x, y, width, height, radius) {
   }
 }
 
-function drawLedVisualizer(canvas, context) {
+function drawLegacyLedVisualizer(canvas, context) {
   if (IS_MOBILE_DEVICE) { drawMobileLedVisualizer(canvas, context); return; }
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -2480,6 +2685,48 @@ function drawLedVisualizer(canvas, context) {
 
   context.restore();
   context.restore();
+}
+
+function drawDesktopLedVisualizer(canvas, context) {
+  const rect=canvas.getBoundingClientRect();
+  const dpr=Math.min(1.75,window.devicePixelRatio||1);
+  const width=Math.max(1,Math.floor(rect.width*dpr)),height=Math.max(1,Math.floor(rect.height*dpr));
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;ledGridPattern=null;}
+  context.clearRect(0,0,width,height);
+  const playing=Boolean(activeAudio()&&!activeAudio().paused&&!activeAudio().ended);
+  const columns=width>1650?44:40, segments=16;
+  const snapshot=getVisualSpectrumSnapshot(columns), dyn=updateDesktopDynamics(snapshot), displayBars=buildDesktopDisplayBars(snapshot,dyn,columns);
+  const pad=17*dpr,panelX=pad,panelY=pad,panelW=width-pad*2,panelH=height-pad*2,radius=21*dpr;
+  context.save();context.fillStyle='#020503';ledRoundedRect(context,panelX,panelY,panelW,panelH,radius);context.fill();context.save();ledRoundedRect(context,panelX,panelY,panelW,panelH,radius);context.clip();
+  const bg=context.createLinearGradient(0,panelY,0,panelY+panelH);bg.addColorStop(0,'rgba(10,22,14,.99)');bg.addColorStop(.5,'rgba(3,8,5,.995)');bg.addColorStop(1,'rgba(0,2,1,1)');context.fillStyle=bg;context.fillRect(panelX,panelY,panelW,panelH);
+  const glow=context.createRadialGradient(panelX+panelW*.5,panelY+panelH*.72,0,panelX+panelW*.5,panelY+panelH*.72,panelW*.58);glow.addColorStop(0,`rgba(47,255,101,${.018+dyn.normalizedEnergy*.08+(snapshot.kick||0)*.11+dyn.climax*.10})`);glow.addColorStop(.55,`rgba(24,230,255,${.008+(snapshot.hats||0)*.05})`);glow.addColorStop(1,'rgba(0,0,0,0)');context.fillStyle=glow;context.fillRect(panelX,panelY,panelW,panelH);
+  const grid=createLedGridPattern(context,dpr);if(grid){context.globalAlpha=playing?.40+dyn.normalizedEnergy*.20:.30;context.fillStyle=grid;context.fillRect(panelX,panelY,panelW,panelH);context.globalAlpha=1;}
+  const headerH=72*dpr, headerTop=panelY+12*dpr;
+  const meterData=[['BASS',snapshot.bass,'#59ff72'],['MID',snapshot.mid,'#d9ff54'],['HIGH',snapshot.treble,'#32e9ff']];
+  context.save();context.textBaseline='middle';context.font=`850 ${10*dpr}px ui-monospace,monospace`;
+  meterData.forEach(([label,value,color],idx)=>{const y=headerTop+(8+idx*18)*dpr;context.fillStyle='rgba(145,255,167,.36)';context.fillText(label,panelX+14*dpr,y);context.fillStyle='rgba(105,255,139,.09)';ledRoundedRect(context,panelX+58*dpr,y-3*dpr,54*dpr,6*dpr,3*dpr);context.fill();context.fillStyle=color;ledRoundedRect(context,panelX+58*dpr,y-3*dpr,54*dpr*Math.max(.03,value),6*dpr,3*dpr);context.fill();});context.restore();
+  context.save();context.textAlign='right';context.textBaseline='middle';context.font=`900 ${36*dpr}px ui-monospace,monospace`;context.fillStyle=playing?'#62ff82':'rgba(98,255,130,.43)';context.fillText(formatTime(activeAudio().currentTime||0),panelX+panelW-17*dpr,headerTop+23*dpr);context.font=`800 ${9*dpr}px ui-monospace,monospace`;context.fillStyle='rgba(145,255,167,.44)';context.fillText(`${dynamicsLabel(snapshot,dyn)} • K ${Math.round((snapshot.kick||0)*99)} S ${Math.round((snapshot.snare||0)*99)} H ${Math.round((snapshot.hats||0)*99)}`,panelX+panelW-18*dpr,headerTop+50*dpr);context.restore();
+  const left=panelX+15*dpr,right=panelX+panelW-15*dpr,top=panelY+headerH,bottom=panelY+panelH-17*dpr,chartH=Math.max(30*dpr,bottom-top);
+  const gap=3*dpr,cw=Math.max(3*dpr,(right-left-gap*(columns-1))/columns),sgap=2.35*dpr,sh=Math.max(2.2*dpr,(chartH-sgap*(segments-1))/segments);
+  if(desktopVisualState.levels.length!==columns){desktopVisualState.levels=new Array(columns).fill(0);desktopVisualState.velocities=new Array(columns).fill(0);desktopVisualState.peaks=new Array(columns).fill(0);desktopVisualState.peakHold=new Array(columns).fill(0);}
+  const now=performance.now(), lively=dyn.character||0;
+  for(let i=0;i<columns;i++){
+    const target=displayBars[i]||0,cur=desktopVisualState.levels[i]||0,vel=desktopVisualState.velocities[i]||0,rising=target>cur;
+    const stiffness=rising?(.42+lively*.34):(.10+lively*.10), damping=rising?.50:.67-lively*.08;
+    const nv=(vel+(target-cur)*stiffness)*damping,level=Math.max(.012,Math.min(.99,cur+nv));desktopVisualState.velocities[i]=nv;desktopVisualState.levels[i]=level;
+    if(level>=(desktopVisualState.peaks[i]||0)){desktopVisualState.peaks[i]=level;desktopVisualState.peakHold[i]=now+(lively>.58?140:260);}else if(now>(desktopVisualState.peakHold[i]||0))desktopVisualState.peaks[i]=Math.max(level,(desktopVisualState.peaks[i]||0)-(lively>.58?.045:.024));
+    const active=Math.max(0,Math.round(level*segments)),x=left+i*(cw+gap);
+    for(let j=0;j<segments;j++){const y=bottom-(j+1)*sh-j*sgap,ratio=j/(segments-1),on=j<active;context.fillStyle=!on?'rgba(73,115,80,.065)':ratio<.58?`rgba(86,255,118,${.43+level*.50})`:ratio<.82?`rgba(218,255,73,${.48+level*.45})`:`rgba(50,233,255,${.53+level*.42})`;ledRoundedRect(context,x,y,cw,sh,Math.min(2*dpr,sh/2));context.fill();}
+    const py=bottom-(desktopVisualState.peaks[i]||0)*chartH;context.fillStyle=`rgba(235,255,240,${.50+lively*.28})`;context.fillRect(x,py,cw,Math.max(1,1.1*dpr));
+  }
+  const floor=context.createLinearGradient(left,0,right,0);floor.addColorStop(0,'rgba(53,255,103,0)');floor.addColorStop(.5,`rgba(86,255,126,${.05+(snapshot.kick||0)*.42})`);floor.addColorStop(1,'rgba(38,233,255,0)');context.fillStyle=floor;context.fillRect(left,bottom+3*dpr,right-left,Math.max(1,1.5*dpr));
+  context.restore();context.restore();
+}
+
+function drawLedVisualizer(canvas, context) {
+  if (IS_MOBILE_DEVICE) { drawMobileLedVisualizer(canvas, context); return; }
+  if (IS_TV_DEVICE) { drawLegacyLedVisualizer(canvas, context); return; }
+  drawDesktopLedVisualizer(canvas, context);
 }
 
 // ========================
