@@ -36,6 +36,14 @@ input,select,textarea{width:100%;border:1.5px solid #b9cbd8;border-radius:11px;p
 .teacher-login{margin-top:12px;padding:13px;border:1px solid var(--border);border-radius:11px;background:#f8fbff}.status-error{padding:9px 11px;border-radius:8px;background:#ffebee;color:#b71c1c;margin-top:9px}.status-pill{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:800;font-size:.82rem}.status-complete{background:#e8f5e9;color:#1b5e20}.status-partial{background:#fff3e0;color:#e65100}.status-empty{background:#eceff1;color:#546e7a}.demo-banner{margin-bottom:12px;padding:11px 13px;border-radius:11px;background:#ede7f6;border:1px solid #b39ddb;color:#4527a0;font-weight:800}.demo-mode #activityCard{border:2px solid #b39ddb}.demo-mode .progress-bar{background:#7e57c2}.review{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;white-space:pre-wrap}.browser-warning{margin-top:10px;padding:10px;border-radius:9px;background:#fff3cd;border:1px solid #ffcc80;color:#7a4a00}.feedback{margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid #bbdefb;background:#f4f9ff;color:#0d47a1;line-height:1.45}.feedback.ok{border-color:#a5d6a7;background:#f1f8e9;color:#1b5e20}.feedback.warn{border-color:#ffe0b2;background:#fff8e1;color:#8a4b00}
 #loginScreen{position:relative;overflow:hidden}#loginScreen:before{content:"🧭";position:absolute;right:22px;top:16px;font-size:3.1rem;opacity:.12;transform:rotate(8deg)}#activityCard{overflow:hidden;position:relative}#activityCard:after{content:"";position:absolute;right:-80px;bottom:-80px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#dff1ff,transparent 70%);pointer-events:none}.footer-actions{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:14px;position:sticky;bottom:8px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);padding:10px 0 2px;z-index:8}
 @media(max-width:850px){.grid2,.grid3{grid-template-columns:1fr}.nav{grid-template-columns:repeat(3,1fr);position:static}.kpi{grid-template-columns:repeat(2,1fr)}.criteria{grid-template-columns:1fr 1fr}.source-grid{grid-template-columns:1fr}.source-grid.header{display:none}.session-strip{grid-template-columns:1fr}.footer-actions{position:static}}
+
+.detail-card{position:relative;scroll-margin-top:84px;outline:none}
+.detail-card:focus{box-shadow:0 0 0 3px rgba(21,101,192,.18),0 8px 24px rgba(0,0,0,.08)}
+.detail-floating-nav{position:sticky;top:10px;z-index:50;display:flex;justify-content:center;gap:8px;align-items:center;margin:10px auto 14px;padding:8px 10px;width:max-content;max-width:calc(100% - 16px);background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.12);backdrop-filter:blur(8px)}
+.detail-floating-nav .btn{min-width:112px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.detail-floating-nav .btn:disabled{box-shadow:none}
+@media(max-width:760px){.detail-floating-nav{top:6px;width:100%;max-width:100%;border-radius:14px}.detail-floating-nav .btn{min-width:0;flex:1;padding:10px 8px}}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -193,7 +201,7 @@ var activities=[
 function scenarioHtml(){return '<div class="notice"><b>Dữ liệu tình huống học tập — THPT Bà Điểm:</b> Nguồn A: Cổng thông tin Sở GDĐT, cập nhật 20/5/2026, có văn bản, nêu tuyển 810 học sinh và điểm chuẩn 19 điểm. Nguồn B: diễn đàn cá nhân, đăng 8/2023, dùng biệt danh, không dẫn nguồn. Nguồn C: website chính thức của trường, cập nhật 15/4/2026, giới thiệu CLB STEM, Tin học, Tiếng Anh nhưng thẻ nguồn này chưa nêu chỉ tiêu/điểm chuẩn. <b>Các số liệu chỉ dùng cho tình huống học tập, không thay thông báo tuyển sinh thực tế.</b></div>'}
 function sessionHead(index){var s=sessionOf(index);return '<div class="session-head t'+s+'"><b>'+sessionLabel(index)+' · '+(s===1?'Tìm kiếm theo mục đích, yêu cầu':'Đánh giá chất lượng & ra quyết định')+'</b><span class="badge t'+s+'">Hoạt động '+localActNo(index)+'/4</span></div>'}
 
-function defaultRecord(cls,no,name){return {className:cls,studentNo:Number(no),name:name,answers:{_lessonChoice:"1"},done:[false,false,false,false,false,false,false,false],activitySaved:[false,false,false,false,false,false,false,false],ownerUid:firebaseUser?firebaseUser.uid:"",createdAt:Date.now(),updatedAt:Date.now(),meta:{worksheetId:WORKSHEET_ID,version:"2"}}}
+function defaultRecord(cls,no,name){return {className:cls,studentNo:Number(no),name:name,answers:{_lessonChoice:"1"},done:[false,false,false,false,false,false,false,false],activitySaved:[false,false,false,false,false,false,false,false],ownerUid:firebaseUser?firebaseUser.uid:"",createdAt:Date.now(),updatedAt:Date.now(),meta:{worksheetId:WORKSHEET_ID,version:"2.1"}}}
 function updateProgress(){var ids=sessionIds(currentSession),n=ids.filter(function(i){return activityStatus(currentRecord,i).complete}).length;document.getElementById("progressBar").style.width=(n/4*100)+"%";document.getElementById("progressLabel").textContent="Tiến độ Tiết "+currentSession+": "+n+"/4 hoạt động"}
 function renderNav(){var nav=document.getElementById("activityNav"),ids=sessionIds(currentSession);nav.innerHTML=ids.map(function(i){var st=activityStatus(currentRecord,i);return '<button data-act="'+i+'" data-session="'+activities[i].session+'" class="'+(i===currentActivity?"active ":"")+(st.complete?"done":"")+'"><div class="small">TIẾT '+currentSession+'</div>HĐ '+localActNo(i)+'</button>'}).join("");Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=function(){persistCurrent(false);currentActivity=Number(b.getAttribute("data-act"));renderActivity()}})}
 function bindAnswers(root){Array.prototype.forEach.call(root.querySelectorAll("[data-key]"),function(el){el.addEventListener("change",capture);if(el.type!=="checkbox")el.addEventListener("input",capture)})}
@@ -268,7 +276,7 @@ function clearSession(){localStorage.removeItem(SESSION_KEY)}
 
 async function ensureAnonymous(){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);var auth=firebase.auth();if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut();if(!auth.currentUser)await auth.signInAnonymously();firebaseUser=auth.currentUser;database=firebase.database();ownResultRef=database.ref(RESULTS_PATH+"/"+firebaseUser.uid);teacherMode=false}
 function remotePayload(record){
-  var meta=Object.assign({},record.meta||{});meta.worksheetId=WORKSHEET_ID;meta.version="2";meta.activitySaved=(record.activitySaved||[]).map(function(x){return x?1:0}).join(",");
+  var meta=Object.assign({},record.meta||{});meta.worksheetId=WORKSHEET_ID;meta.version="2.1";meta.activitySaved=(record.activitySaved||[]).map(function(x){return x?1:0}).join(",");
   return {className:String(record.className||""),studentNo:Number(record.studentNo||0),name:String(record.name||""),answers:record.answers||{},done:(record.done||[]).map(Boolean),ownerUid:firebaseUser?firebaseUser.uid:String(record.ownerUid||""),createdAt:Number(record.createdAt||Date.now()),updatedAt:firebase.database.ServerValue.TIMESTAMP,meta:meta};
 }
 function hydrateRecord(record){
@@ -304,7 +312,7 @@ function buildDemoRecord(){
   ["new","acc","full","use"].forEach(function(c){a["t2_eval_A_"+c]="Có minh chứng phù hợp";a["t2_eval_B_"+c]="Hạn chế";a["t2_eval_C_"+c]="Phù hợp một phần";a["t2_eval_overall_"+c]="Cần chọn theo mục đích"});a.t2_admission_source="A vì có văn bản tuyển sinh.";a.t2_activity_source="C vì là website chính thức của trường.";a.t2_avoid_source="B vì cũ và không dẫn nguồn.";a.t2_missing_info="Khoảng cách và mức phù hợp cá nhân.";
   a.ai_flag_source=true;a.ai_flag_number=true;a.ai_flag_decide=true;var st=[["A","confirm","Nguồn A nêu 810 học sinh.","keep"],["A","confirm","Nguồn A nêu 19 điểm.","keep"],["C","insufficient","Nguồn C cho biết có STEM nhưng không chứng minh 'nhất khu vực'.","more"]];for(var c=1;c<=3;c++){a["ai_claim"+c+"_source"]=st[c-1][0];a["ai_claim"+c+"_status"]=st[c-1][1];a["ai_claim"+c+"_evidence"]=st[c-1][2];a["ai_claim"+c+"_action"]=st[c-1][3]}a.ai_rewrite="Có thể xác nhận các số liệu theo nguồn A của tình huống; tuy nhiên chưa đủ căn cứ để nói hoạt động STEM nhiều nhất khu vực.";
   a.t2_decision="learn_more";a.t2_decision_reason="Cần thêm dữ liệu phù hợp cá nhân.";a.t2_basis1="Nguồn A: thông tin tuyển sinh có căn cứ.";a.t2_basis2="Nguồn C: hoạt động từ website trường.";a.t2_need_more="Khoảng cách và thế mạnh môn học.";a.t2_final_text="Em sẽ tiếp tục tìm hiểu THPT Bà Điểm. Nguồn A hỗ trợ thông tin tuyển sinh trong tình huống. Nguồn C hỗ trợ thông tin hoạt động. Chưa đủ căn cứ cho khẳng định 'nhiều nhất khu vực'. Em cần kiểm tra thêm trước khi quyết định.";a.t2_quick1="Không có nguồn.";a.t2_quick2="Đối chiếu nguồn độc lập có thẩm quyền.";a.t2_quick3="Không tin ngay; kiểm chứng.";
-  r.done=[true,true,true,true,true,true,true,true];r.activitySaved=[true,true,true,true,true,true,true,true];r.meta.version="2";return r
+  r.done=[true,true,true,true,true,true,true,true];r.activitySaved=[true,true,true,true,true,true,true,true];r.meta.version="2.1";return r
 }
 function startTeacherDemo(){
   if(!teacherMode){alert("Cần đăng nhập giáo viên trước khi mở Demo.");return}
@@ -375,7 +383,7 @@ function mergeTeacherRecords(records){
     className:latest.className||"",studentNo:Number(latest.studentNo||0),name:"",
     answers:{},done:Array(8).fill(false),activitySaved:Array(8).fill(false),
     ownerUid:latest.ownerUid||"",createdAt:0,updatedAt:0,
-    meta:{worksheetId:WORKSHEET_ID,version:"2"}
+    meta:{worksheetId:WORKSHEET_ID,version:"2.1"}
   };
   var created=[];
   ordered.forEach(function(r){
@@ -496,30 +504,51 @@ function answerRowsHtml(a,keys){
   }).join("");
 }
 
-function showDetail(groupKey){
-  var groups=buildTeacherGroups(normalizeRecords()),g=null;
-  groups.forEach(function(x){if(x.key===groupKey)g=x});
-  if(!g)return;
+function getTeacherViewGroups(){
+  var groups=buildTeacherGroups(normalizeRecords()),
+      filter=document.getElementById("teacherClassFilter"),
+      v=filter?filter.value:"all";
+  return v==="all"?groups:groups.filter(function(g){return g.className===v});
+}
 
-  var r=g.representative,a=r.answers||{},o=overallAssessment(r);
+function showDetail(groupKey){
+  var groups=getTeacherViewGroups(),
+      idx=groups.findIndex(function(g){return g.key===groupKey});
+  if(idx>=0)renderDetailAt(groups,idx);
+}
+
+function renderDetailAt(groups,idx){
+  var g=groups[idx],r=g.representative,a=r.answers||{},o=overallAssessment(r);
+
   var activityRows=o.items.map(function(x,i){
     return '<tr><td>Tiết '+sessionOf(i)+' · Hoạt động '+localActNo(i)+'</td>'+
       '<td>'+statusHtml(x.status)+'</td>'+
       '<td>'+(x.missing.length?esc(x.missing.join("; ")):"—")+'</td></tr>';
   }).join("");
 
-  var t1keys=Object.keys(a).filter(function(k){return k.indexOf("t1_")===0||k.indexOf("plan")===0||k.indexOf("src")===0||k.indexOf("cmp")===0});
-  var t2keys=Object.keys(a).filter(function(k){return k.indexOf("t2_")===0||k.indexOf("ai_")===0});
-  var t1rows=answerRowsHtml(a,t1keys);
-  var t2rows=answerRowsHtml(a,t2keys);
+  var t1keys=Object.keys(a).filter(function(k){
+    return k.indexOf("t1_")===0||k.indexOf("plan")===0||k.indexOf("src")===0||k.indexOf("cmp")===0
+  });
+  var t2keys=Object.keys(a).filter(function(k){
+    return k.indexOf("t2_")===0||k.indexOf("ai_")===0
+  });
 
-  document.getElementById("teacherDetail").innerHTML=
-    '<div class="card" style="margin-top:14px">'+
+  var t1rows=answerRowsHtml(a,t1keys),
+      t2rows=answerRowsHtml(a,t2keys),
+      detail=document.getElementById("teacherDetail");
+
+  detail.innerHTML=
+    '<div class="card detail-card" id="teacherDetailCard" tabindex="-1" style="margin-top:14px">'+
       '<div class="topbar" style="justify-content:space-between">'+
         '<h3 style="margin:0">'+esc(r.name||"")+' · '+esc(r.className)+' · STT '+Number(r.studentNo)+'</h3>'+
-        '<button class="btn light" id="closeDetailBtn">Đóng</button>'+
+        '<span class="small">'+(idx+1)+'/'+groups.length+' học sinh</span>'+
       '</div>'+
-      '<p><b>Trạng thái:</b> '+recordStatusHtml(o)+' · <b>Tiết 1:</b> '+o.t1+'/4 · <b>Tiết 2:</b> '+o.t2+'/4</p>'+
+      '<div class="detail-floating-nav" aria-label="Điều hướng bài làm học sinh">'+
+        '<button class="btn light" id="prevStudentBtn" '+(idx===0?'disabled':'')+'>← Trước</button>'+
+        '<button class="btn light" id="closeDetailBtn">Đóng chi tiết</button>'+
+        '<button class="btn light" id="nextStudentBtn" '+(idx===groups.length-1?'disabled':'')+'>Sau →</button>'+
+      '</div>'+
+      '<p><b>Trạng thái:</b> '+recordStatusHtml(o)+' · <b>Tiết 1:</b> '+o.t1+'/4 · <b>Tiết 2:</b> '+o.t2+'/4 · <b>Số phiên:</b> '+g.records.length+'</p>'+
       '<h3>Tiến độ theo hoạt động</h3>'+
       '<div class="table-wrap"><table><thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thiếu / cần bổ sung</th></tr></thead><tbody>'+activityRows+'</tbody></table></div>'+
       '<h3 style="margin-top:16px">Bài làm Tiết 1</h3>'+
@@ -528,8 +557,27 @@ function showDetail(groupKey){
       '<div class="table-wrap"><table><thead><tr><th>Yêu cầu</th><th>Câu trả lời của học sinh</th></tr></thead><tbody>'+(t2rows||'<tr><td colspan="2">Chưa có câu trả lời Tiết 2.</td></tr>')+'</tbody></table></div>'+
     '</div>';
 
-  document.getElementById("closeDetailBtn").onclick=function(){document.getElementById("teacherDetail").innerHTML=""};
-  document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"});
+  document.getElementById("closeDetailBtn").onclick=function(){
+    detail.innerHTML="";
+    var body=document.getElementById("teacherBody");
+    if(body&&body.focus)body.focus();
+  };
+  document.getElementById("prevStudentBtn").onclick=function(){
+    if(idx>0)renderDetailAt(groups,idx-1);
+  };
+  document.getElementById("nextStudentBtn").onclick=function(){
+    if(idx<groups.length-1)renderDetailAt(groups,idx+1);
+  };
+
+  var card=document.getElementById("teacherDetailCard");
+  requestAnimationFrame(function(){
+    if(card){
+      card.scrollIntoView({behavior:"smooth",block:"start"});
+      setTimeout(function(){
+        try{card.focus({preventScroll:true})}catch(e){card.focus()}
+      },250);
+    }
+  });
 }
 async function deleteStudentGroup(groupKey){
   if(!teacherMode||!database)return;var groups=buildTeacherGroups(normalizeRecords()),g=null;groups.forEach(function(x){if(x.key===groupKey)g=x});if(!g)return;var r=g.representative;
@@ -562,7 +610,7 @@ document.getElementById("teacherCancelBtn").onclick=function(){document.getEleme
 document.getElementById("teacherLoginBtn").onclick=teacherLogin;
 document.getElementById("teacherLogoutBtn").onclick=teacherLogout;
 document.getElementById("demoBtn").onclick=startTeacherDemo;
-document.getElementById("teacherClassFilter").onchange=renderTeacher;
+document.getElementById("teacherClassFilter").onchange=function(){document.getElementById("teacherDetail").innerHTML="";renderTeacher()};
 document.getElementById("exportCsvBtn").onclick=exportCsv;
 document.getElementById("teacherPassword").addEventListener("keydown",function(e){if(e.key==="Enter")teacherLogin()});
 window.addEventListener("beforeunload",function(){if(currentRecord&&currentKey&&!teacherMode&&!demoMode){var d=allData();d[currentKey]=currentRecord;saveAll(d)}});

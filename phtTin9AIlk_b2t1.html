@@ -57,7 +57,7 @@
 <script>
 "use strict";
 const WORKSHEET_ID="tin9_ai_bai2";
-const VERSION="4.1";
+const VERSION="4.2";
 const STORAGE_KEY="worksheet_"+WORKSHEET_ID+"_v4";
 const SESSION_KEY="worksheet_"+WORKSHEET_ID+"_session_v4";
 const RESULTS_PATH="worksheets/"+WORKSHEET_ID+"/results";
@@ -154,22 +154,125 @@ function clearRound(){if(roundTimer)clearInterval(roundTimer);roundTimer=null;ro
 function startRound(type,seconds){clearRound();roundType=type;roundDeadline=now()+seconds*1000;const id=type==='career'?'careerTimer':type==='map'?'mapTimer':'promptTimer';const tick=()=>{const left=Math.max(0,(roundDeadline-now())/1000),el=document.getElementById(id);if(el)el.textContent=Math.ceil(left);if(left<=0){clearRound();if(type==='career')answerCareer('',true);if(type==='map')answerMap('',true);if(type==='prompt')answerPrompt('',true)}};tick();roundTimer=setInterval(tick,150)}
 function disableAndMark(selector,choice,right){document.querySelectorAll(selector).forEach(b=>{b.disabled=true;const v=b.dataset.career||b.dataset.map||b.dataset.prompt;if(v===right)b.classList.add('correct');if(choice&&v===choice&&choice!==right)b.classList.add('wrong')})}
 function nextAfter(ms,fn){setTimeout(()=>{fn();renderActivity()},ms)}
-function answerCareer(choice,timeout=false){if(roundType!=='career')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a1_game_idx||0),score:Number(a.a1_game_score||0)},q=CAREER_GAME[Math.min(s.idx,9)],ok=choice===q.answer;disableAndMark('[data-career]',choice,q.answer);if(ok)s.score++;s.idx++;a.a1_game_idx=String(s.idx);a.a1_game_score=String(s.score);a.a1_game_started='1';if(s.idx>=10)a.a1_game_done='1';scheduleSave(false);nextAfter(700,()=>{})}
-function answerMap(choice,timeout=false){if(roundType!=='map')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a3_game_idx||0),score:Number(a.a3_score||0)},q=MAP_GAME_ITEMS[Math.min(s.idx,9)],ok=choice===q.answer;disableAndMark('[data-map]',choice,q.answer);a['a3_'+q.id]=choice||'timeout';if(ok)s.score++;s.idx++;a.a3_game_idx=String(s.idx);a.a3_score=String(s.score);a.a3_game_started='1';if(s.idx>=10)a.a3_game_done='1';scheduleSave(false);nextAfter(700,()=>{})}
-function answerPrompt(choice,timeout=false){if(roundType!=='prompt')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a4_game_idx||0),score:Number(a.a4_score||0)},q=PROMPT_GAME[Math.min(s.idx,5)],ok=choice===q.a;disableAndMark('[data-prompt]',choice,q.a);a['a4_'+q.id]=choice||'timeout';if(ok)s.score++;s.idx++;a.a4_game_idx=String(s.idx);a.a4_score=String(s.score);a.a4_game_started='1';if(s.idx>=PROMPT_GAME.length)a.a4_game_done='1';scheduleSave(false);nextAfter(700,()=>{})}
+function answerCareer(choice,timeout=false){if(roundType!=='career')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a1_game_idx||0),score:Number(a.a1_game_score||0)},q=CAREER_GAME[Math.min(s.idx,9)],ok=choice===q.answer;disableAndMark('[data-career]',choice,q.answer);if(ok)s.score++;s.idx++;a.a1_game_idx=String(s.idx);a.a1_game_score=String(s.score);a.a1_game_started='1';if(s.idx>=10)a.a1_game_done='1';touch();updateNextButtonState();scheduleSave(false);nextAfter(700,()=>{})}
+function answerMap(choice,timeout=false){if(roundType!=='map')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a3_game_idx||0),score:Number(a.a3_score||0)},q=MAP_GAME_ITEMS[Math.min(s.idx,9)],ok=choice===q.answer;disableAndMark('[data-map]',choice,q.answer);a['a3_'+q.id]=choice||'timeout';if(ok)s.score++;s.idx++;a.a3_game_idx=String(s.idx);a.a3_score=String(s.score);a.a3_game_started='1';if(s.idx>=10)a.a3_game_done='1';touch();updateNextButtonState();scheduleSave(false);nextAfter(700,()=>{})}
+function answerPrompt(choice,timeout=false){if(roundType!=='prompt')return;clearRound();const a=currentRecord.answers,s={idx:Number(a.a4_game_idx||0),score:Number(a.a4_game_score||0)},q=PROMPT_GAME[Math.min(s.idx,5)],ok=choice===q.a;disableAndMark('[data-prompt]',choice,q.a);a['a4_'+q.id]=choice||'timeout';if(ok)s.score++;s.idx++;a.a4_game_idx=String(s.idx);a.a4_score=String(s.score);a.a4_game_started='1';if(s.idx>=PROMPT_GAME.length)a.a4_game_done='1';touch();updateNextButtonState();scheduleSave(false);nextAfter(700,()=>{})}
 
 function canBuildPrompt(){const a=currentRecord.answers||{};return safeArray(a.a5_interests).length&&safeArray(a.a5_strengths).length&&safeArray(a.a5_values).length&&safeArray(a.a5_subjects).length&&hasText(a.a5_career)}
-function makeSafePrompt(){if(!canBuildPrompt()){alert('Hãy chọn đủ 4 nhóm thông tin và nhập nghề/lĩnh vực muốn khám phá.');return}const a=currentRecord.answers;a.a5_prompt=`Bạn là chuyên gia hướng nghiệp. Hãy giúp một học sinh lớp 9 tìm hiểu về ${String(a.a5_career).trim()}. Hãy trình bày: (1) công việc chính; (2) kỹ năng và môn học liên quan; (3) ba câu hỏi học sinh nên tự kiểm chứng trước khi quyết định. Không yêu cầu hay suy đoán dữ liệu cá nhân nhạy cảm và không kết luận chỉ có một nghề phù hợp nhất.`;scheduleSave(false);renderActivity()}
+function makeSafePrompt(){if(!canBuildPrompt()){alert('Hãy chọn đủ 4 nhóm thông tin và nhập nghề/lĩnh vực muốn khám phá.');return}const a=currentRecord.answers;a.a5_prompt=`Bạn là chuyên gia hướng nghiệp. Hãy giúp một học sinh lớp 9 tìm hiểu về ${String(a.a5_career).trim()}. Hãy trình bày: (1) công việc chính; (2) kỹ năng và môn học liên quan; (3) ba câu hỏi học sinh nên tự kiểm chứng trước khi quyết định. Không yêu cầu hay suy đoán dữ liệu cá nhân nhạy cảm và không kết luận chỉ có một nghề phù hợp nhất.`;touch();updateNextButtonState();scheduleSave(false);renderActivity()}
 
 function updateProgress(){const o=overallAssessment(currentRecord);document.getElementById('progressBar').style.width=(o.completeCount/6*100)+'%'}
 function renderNav(){const nav=document.getElementById('activityNav');nav.innerHTML=activities.map((a,i)=>`<button data-act="${i}" class="${i===currentActivity?'active ':''}${activityAssessment(currentRecord,i).complete?'done':''}">${i+1}</button>`).join('');nav.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{currentActivity=Number(b.dataset.act);touch();scheduleSave(false);renderActivity()})}
 function bindAnswers(root){root.querySelectorAll('[data-key]').forEach(el=>{el.addEventListener('input',capture);el.addEventListener('change',capture)})}
-function capture(e){if(submittedAtOf(currentRecord))return;const el=e.target,k=el.dataset.key;if(!k)return;if(el.type==='checkbox'){const max=Number(el.dataset.max||99),arr=[...document.querySelectorAll(`input[type=checkbox][data-key="${k}"]:checked`)].map(x=>x.value);if(arr.length>max){el.checked=false;alert('Em chỉ chọn tối đa '+max+' phương án.');return}currentRecord.answers[k]=arr}else currentRecord.answers[k]=el.value;touch();setSaveStatus('Đang chờ đồng bộ...','warn');scheduleSave(false)}
+function updateNextButtonState(){
+  const btn=document.getElementById('nextAct');
+  if(!btn||!currentRecord)return;
+  const locked=Boolean(submittedAtOf(currentRecord));
+  if(locked){btn.disabled=true;btn.title='Phiếu đã nộp và bị khóa.';return}
+  const a=activityAssessment(currentRecord,currentActivity);
+  btn.disabled=a.touched<=0;
+  btn.title=a.touched>0
+    ?(currentActivity===activities.length-1?'Lưu hoạt động cuối.':'Lưu hoạt động rồi chuyển sang hoạt động tiếp theo.')
+    :'Hãy hoàn thành ít nhất một ô/yêu cầu trong hoạt động này trước khi bấm Tiếp.';
+}
+function capture(e){
+  if(submittedAtOf(currentRecord))return;
+  const el=e.target,k=el.dataset.key;
+  if(!k)return;
+  if(el.type==='checkbox'){
+    const max=Number(el.dataset.max||99),
+      arr=[...document.querySelectorAll(`input[type=checkbox][data-key="${k}"]:checked`)].map(x=>x.value);
+    if(arr.length>max){el.checked=false;alert('Em chỉ chọn tối đa '+max+' phương án.');return}
+    currentRecord.answers[k]=arr
+  }else currentRecord.answers[k]=el.value;
+  touch();
+  updateNextButtonState();
+  setSaveStatus('Đang chờ đồng bộ...','warn');
+  scheduleSave(false)
+}
 function touch(){if(!currentRecord)return;currentRecord.updatedAt=now();currentRecord.meta=currentRecord.meta||{};currentRecord.meta.currentActivity=currentActivity;currentRecord.meta.liveStatus='online';currentRecord.meta.lastSeenAt=now()}
-function renderActivity(){clearRound();renderNav();const card=document.getElementById('activityCard'),locked=Boolean(submittedAtOf(currentRecord));card.classList.toggle('locked',locked);card.innerHTML=activities[currentActivity].render()+`<div id="activityFeedback"></div><div class="footer-actions"><button class="btn light" id="prevAct" ${currentActivity===0?'disabled':''}>← Trước</button><div class="topbar"><button class="btn success" id="saveAct" ${locked?'disabled':''}>${locked?'Đã nộp · Đã khóa':'Lưu trả lời'}</button><button class="btn" id="nextAct" ${currentActivity===5?'disabled':''}>Tiếp →</button></div></div>`;bindAnswers(card);bindExtras();document.getElementById('prevAct').onclick=()=>{if(currentActivity>0){currentActivity--;touch();scheduleSave(false);renderActivity()}};document.getElementById('nextAct').onclick=()=>{if(currentActivity<5){currentActivity++;touch();scheduleSave(false);renderActivity()}};document.getElementById('saveAct').onclick=async()=>{const idx=currentActivity;if(idx===4&&!hasText(currentRecord.answers.a5_prompt)&&canBuildPrompt())makeSafePrompt();currentRecord.activitySaved[idx]=true;const assess=activityAssessment(currentRecord,idx);const ok=await persistCurrent(true);const box=document.getElementById('activityFeedback');box.className='feedback '+(assess.complete?'ok':'warn');box.textContent=assess.complete?'Đã lưu. Hoạt động đã đủ nội dung.':'Đã lưu nhưng còn thiếu: '+assess.missing.join('; ')+(assess.note?' · '+assess.note:'')+(ok?'':' · Chưa đồng bộ Firebase.');updateProgress();renderNav()};updateProgress()}
-function bindExtras(){const a=currentRecord.answers||{};let b=document.getElementById('careerStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a1_game_started:'1',a1_game_idx:'0',a1_game_score:'0',a1_game_done:''});scheduleSave(false);renderActivity()};b=document.getElementById('careerResetBtn');if(b)b.onclick=()=>{['a1_game_started','a1_game_idx','a1_game_score','a1_game_done'].forEach(k=>a[k]='');scheduleSave(false);renderActivity()};document.querySelectorAll('[data-career]').forEach(x=>x.onclick=()=>answerCareer(x.dataset.career,false));if(document.getElementById('careerTimer'))startRound('career',10);
- b=document.getElementById('mapStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a3_game_started:'1',a3_game_idx:'0',a3_score:'0',a3_game_done:''});MAP_GAME_ITEMS.forEach(q=>delete a['a3_'+q.id]);scheduleSave(false);renderActivity()};b=document.getElementById('mapResetBtn');if(b)b.onclick=()=>{['a3_game_started','a3_game_idx','a3_score','a3_game_done'].forEach(k=>a[k]='');MAP_GAME_ITEMS.forEach(q=>delete a['a3_'+q.id]);scheduleSave(false);renderActivity()};document.querySelectorAll('[data-map]').forEach(x=>x.onclick=()=>answerMap(x.dataset.map,false));if(document.getElementById('mapTimer'))startRound('map',10);
- b=document.getElementById('promptStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a4_game_started:'1',a4_game_idx:'0',a4_score:'0',a4_game_done:''});PROMPT_GAME.forEach(q=>delete a['a4_'+q.id]);scheduleSave(false);renderActivity()};b=document.getElementById('promptResetBtn');if(b)b.onclick=()=>{['a4_game_started','a4_game_idx','a4_score','a4_game_done'].forEach(k=>a[k]='');PROMPT_GAME.forEach(q=>delete a['a4_'+q.id]);scheduleSave(false);renderActivity()};document.querySelectorAll('[data-prompt]').forEach(x=>x.onclick=()=>answerPrompt(x.dataset.prompt,false));if(document.getElementById('promptTimer'))startRound('prompt',12);
+function renderActivity(){
+  clearRound();
+  renderNav();
+  const card=document.getElementById('activityCard'),
+        locked=Boolean(submittedAtOf(currentRecord)),
+        isLast=currentActivity===activities.length-1;
+
+  card.classList.toggle('locked',locked);
+  card.innerHTML=activities[currentActivity].render()+
+    `<div id="activityFeedback"></div>
+     <div class="footer-actions">
+       <button class="btn light" id="prevAct" ${currentActivity===0?'disabled':''}>← Trước</button>
+       <div class="topbar">
+         <button class="btn" id="nextAct">${locked?'Đã nộp · Đã khóa':(isLast?'Lưu hoạt động cuối ✓':'Tiếp →')}</button>
+       </div>
+     </div>`;
+
+  bindAnswers(card);
+  bindExtras();
+
+  document.getElementById('prevAct').onclick=()=>{
+    if(currentActivity>0){
+      currentActivity--;
+      touch();
+      scheduleSave(false);
+      renderActivity()
+    }
+  };
+
+  document.getElementById('nextAct').onclick=async()=>{
+    if(locked)return;
+    const idx=currentActivity;
+    let assess=activityAssessment(currentRecord,idx);
+
+    if(assess.touched<=0){
+      const box=document.getElementById('activityFeedback');
+      box.className='feedback warn';
+      box.textContent='Em hãy hoàn thành ít nhất một ô/yêu cầu trong hoạt động này trước khi bấm Tiếp.';
+      updateNextButtonState();
+      return;
+    }
+
+    // HĐ5: nếu HS đã chọn đủ dữ liệu hồ sơ và nhập nghề, tự tạo prompt trước khi lưu.
+    if(idx===4&&!hasText(currentRecord.answers.a5_prompt)&&canBuildPrompt()){
+      const a=currentRecord.answers;
+      a.a5_prompt=`Bạn là chuyên gia hướng nghiệp. Hãy giúp một học sinh lớp 9 tìm hiểu về ${String(a.a5_career).trim()}. Hãy trình bày: (1) công việc chính; (2) kỹ năng và môn học liên quan; (3) ba câu hỏi học sinh nên tự kiểm chứng trước khi quyết định. Không yêu cầu hay suy đoán dữ liệu cá nhân nhạy cảm và không kết luận chỉ có một nghề phù hợp nhất.`;
+      touch();
+      assess=activityAssessment(currentRecord,idx);
+    }
+
+    currentRecord.activitySaved[idx]=true;
+    const btn=document.getElementById('nextAct');
+    btn.disabled=true;
+    btn.textContent='Đang lưu...';
+
+    const ok=await persistCurrent(true);
+    updateProgress();
+    renderNav();
+
+    if(!isLast){
+      currentActivity++;
+      touch();
+      scheduleSave(false);
+      renderActivity();
+      return;
+    }
+
+    const box=document.getElementById('activityFeedback');
+    box.className='feedback '+(assess.complete?'ok':'warn');
+    box.textContent=assess.complete
+      ?'Đã lưu hoạt động cuối. Em có thể kiểm tra lại và nộp phiếu cho giáo viên.'
+      :'Đã lưu nhưng còn thiếu: '+assess.missing.join('; ')+(assess.note?' · '+assess.note:'')+(ok?'':' · Chưa đồng bộ Firebase.');
+    btn.textContent='Đã lưu hoạt động cuối ✓';
+    btn.disabled=true;
+  };
+
+  updateProgress();
+  updateNextButtonState();
+}
+function bindExtras(){const a=currentRecord.answers||{};let b=document.getElementById('careerStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a1_game_started:'1',a1_game_idx:'0',a1_game_score:'0',a1_game_done:''});touch();updateNextButtonState();scheduleSave(false);renderActivity()};b=document.getElementById('careerResetBtn');if(b)b.onclick=()=>{['a1_game_started','a1_game_idx','a1_game_score','a1_game_done'].forEach(k=>a[k]='');scheduleSave(false);renderActivity()};document.querySelectorAll('[data-career]').forEach(x=>x.onclick=()=>answerCareer(x.dataset.career,false));if(document.getElementById('careerTimer'))startRound('career',10);
+ b=document.getElementById('mapStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a3_game_started:'1',a3_game_idx:'0',a3_score:'0',a3_game_done:''});MAP_GAME_ITEMS.forEach(q=>delete a['a3_'+q.id]);touch();updateNextButtonState();scheduleSave(false);renderActivity()};b=document.getElementById('mapResetBtn');if(b)b.onclick=()=>{['a3_game_started','a3_game_idx','a3_score','a3_game_done'].forEach(k=>a[k]='');MAP_GAME_ITEMS.forEach(q=>delete a['a3_'+q.id]);scheduleSave(false);renderActivity()};document.querySelectorAll('[data-map]').forEach(x=>x.onclick=()=>answerMap(x.dataset.map,false));if(document.getElementById('mapTimer'))startRound('map',10);
+ b=document.getElementById('promptStartBtn');if(b)b.onclick=()=>{Object.assign(a,{a4_game_started:'1',a4_game_idx:'0',a4_score:'0',a4_game_done:''});PROMPT_GAME.forEach(q=>delete a['a4_'+q.id]);touch();updateNextButtonState();scheduleSave(false);renderActivity()};b=document.getElementById('promptResetBtn');if(b)b.onclick=()=>{['a4_game_started','a4_game_idx','a4_score','a4_game_done'].forEach(k=>a[k]='');PROMPT_GAME.forEach(q=>delete a['a4_'+q.id]);scheduleSave(false);renderActivity()};document.querySelectorAll('[data-prompt]').forEach(x=>x.onclick=()=>answerPrompt(x.dataset.prompt,false));if(document.getElementById('promptTimer'))startRound('prompt',12);
  b=document.getElementById('makePromptBtn');if(b)b.onclick=makeSafePrompt;b=document.getElementById('submitWorksheetBtn');if(b)b.onclick=submitWorksheet}
 
 function firebaseAvailable(){return typeof firebase!=='undefined'&&firebase?.auth&&firebase?.database}
@@ -188,7 +291,7 @@ async function enterStudent(){const cls=document.getElementById('studentClass').
 async function submitWorksheet(){if(!currentRecord||demoMode||submittedAtOf(currentRecord))return;const o=overallAssessment(currentRecord);let msg=`Em đã hoàn thành ${o.completeCount}/6 hoạt động.`;if(o.completeCount<6){msg+='\n\nCòn thiếu:\n'+o.items.map((x,i)=>!x.complete?`HĐ${i+1}: ${x.missing.join('; ')}${x.note?' · '+x.note:''}`:'').filter(Boolean).join('\n')}msg+='\n\nSau khi nộp thành công, phiếu sẽ bị khóa. Em có chắc muốn nộp?';if(!confirm(msg))return;try{clearTimeout(saveTimer);const ts=now();setSubmittedAt(currentRecord,ts);touch();const payload=remotePayload(currentRecord);payload.submittedAt=ts;payload.meta.submittedAt=ts;await ownRef.set(payload);lastRemoteSignature=signature({...payload,updatedAt:0});saveLocal();stopHeartbeat();setSaveStatus('Đã nộp · đã khóa','ok');alert('Đã nộp phiếu thành công.');renderActivity()}catch(e){setSubmittedAt(currentRecord,null);saveLocal();console.error(e);alert('Chưa nộp được. Bài vẫn còn trên máy. Hãy kiểm tra mạng/Firebase Rules rồi thử lại.') }}
 async function changeStudent(){if(demoMode&&teacherMode){exitTeacherDemo();return}stopHeartbeat();clearRound();try{if(currentRecord&&!submittedAtOf(currentRecord)){currentRecord.meta.liveStatus='offline';currentRecord.meta.lastSeenAt=now();saveLocal();await syncRemote(true)}}catch{}try{const auth=await initFirebase();if(auth.currentUser?.isAnonymous)await auth.signOut()}catch{}clearSession();currentRecord=null;currentKey=null;firebaseUser=null;ownRef=null;firebaseReady=false;document.getElementById('studentScreen').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden')}
 
-async function teacherLogin(){stopHeartbeat();const email=document.getElementById('teacherEmail').value.trim(),password=document.getElementById('teacherPassword').value,status=document.getElementById('teacherLoginStatus');if(!email||!password){status.textContent='Vui lòng nhập email và mật khẩu.';status.classList.remove('hidden');return}try{const auth=await initFirebase();if(auth.currentUser)await auth.signOut();const cred=await auth.signInWithEmailAndPassword(email,password);const role=(await database.ref(TEACHERS_PATH+'/'+cred.user.uid).once('value')).val();if(role!==true){await auth.signOut();throw new Error('Tài khoản chưa được cấp quyền giáo viên.')}firebaseUser=cred.user;teacherMode=true;firebaseReady=true;resultsRef=database.ref(RESULTS_PATH);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('studentScreen').classList.add('hidden');document.getElementById('teacherScreen').classList.remove('hidden');startTeacherListener()}catch(e){status.textContent=e.message||'Đăng nhập thất bại.';status.classList.remove('hidden')}}
+async function teacherLogin(){stopHeartbeat();const email=document.getElementById('teacherEmail').value.trim(),password=document.getElementById('teacherPassword').value,status=document.getElementById('teacherLoginStatus');status.classList.add('hidden');status.textContent='';if(!email||!password){status.textContent='Vui lòng nhập email và mật khẩu.';status.classList.remove('hidden');return}try{const auth=await initFirebase();if(auth.currentUser)await auth.signOut();const cred=await auth.signInWithEmailAndPassword(email,password);const role=(await database.ref(TEACHERS_PATH+'/'+cred.user.uid).once('value')).val();if(role!==true){await auth.signOut();throw new Error('Tài khoản chưa được cấp quyền giáo viên.')}firebaseUser=cred.user;teacherMode=true;firebaseReady=true;resultsRef=database.ref(RESULTS_PATH);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('studentScreen').classList.add('hidden');document.getElementById('teacherScreen').classList.remove('hidden');startTeacherListener()}catch(e){status.textContent=e.message||'Đăng nhập thất bại.';status.classList.remove('hidden')}}
 function scheduleTeacherRender(){clearTimeout(teacherRenderTimer);teacherRenderTimer=setTimeout(renderTeacher,120)}
 function startTeacherListener(){stopTeacherListener();firebaseRecords={};teacherHandlers={add:s=>{firebaseRecords[s.key]=s.val();scheduleTeacherRender()},change:s=>{firebaseRecords[s.key]=s.val();scheduleTeacherRender()},remove:s=>{delete firebaseRecords[s.key];scheduleTeacherRender()}};resultsRef.on('child_added',teacherHandlers.add,err=>teacherReadError(err));resultsRef.on('child_changed',teacherHandlers.change);resultsRef.on('child_removed',teacherHandlers.remove)}
 function teacherReadError(err){console.error(err);document.getElementById('teacherBody').innerHTML='<tr><td colspan="9">Không đọc được dữ liệu. Kiểm tra Firebase Rules và quyền giáo viên.</td></tr>'}
