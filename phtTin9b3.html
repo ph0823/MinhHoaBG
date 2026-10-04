@@ -197,8 +197,70 @@ function defaultRecord(cls,no,name){return {className:cls,studentNo:Number(no),n
 function updateProgress(){var ids=sessionIds(currentSession),n=ids.filter(function(i){return activityStatus(currentRecord,i).complete}).length;document.getElementById("progressBar").style.width=(n/4*100)+"%";document.getElementById("progressLabel").textContent="Tiến độ Tiết "+currentSession+": "+n+"/4 hoạt động"}
 function renderNav(){var nav=document.getElementById("activityNav"),ids=sessionIds(currentSession);nav.innerHTML=ids.map(function(i){var st=activityStatus(currentRecord,i);return '<button data-act="'+i+'" data-session="'+activities[i].session+'" class="'+(i===currentActivity?"active ":"")+(st.complete?"done":"")+'"><div class="small">TIẾT '+currentSession+'</div>HĐ '+localActNo(i)+'</button>'}).join("");Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=function(){persistCurrent(false);currentActivity=Number(b.getAttribute("data-act"));renderActivity()}})}
 function bindAnswers(root){Array.prototype.forEach.call(root.querySelectorAll("[data-key]"),function(el){el.addEventListener("change",capture);if(el.type!=="checkbox")el.addEventListener("input",capture)})}
-function capture(e){var el=e.target,k=el.getAttribute("data-key");currentRecord.answers[k]=el.type==="checkbox"?el.checked:el.value;currentRecord.updatedAt=Date.now();if(demoMode){document.getElementById("saveStatus").textContent="DEMO · Không lưu";return}document.getElementById("saveStatus").textContent="Đang lưu...";clearTimeout(saveTimer);saveTimer=setTimeout(function(){persistCurrent(false)},350)}
-function renderActivity(){renderNav();updateProgress();var card=document.getElementById("activityCard"),ids=sessionIds(currentSession),pos=ids.indexOf(currentActivity);card.innerHTML=activities[currentActivity].render()+'<div id="activityFeedback"></div><div class="footer-actions"><button class="btn light" id="prevAct" '+(pos<=0?"disabled":"")+'>← Trước</button><div class="topbar"><button class="btn success" id="completeAct">'+((currentRecord.activitySaved||[])[currentActivity]?"Đã lưu trả lời ✓":"Lưu trả lời")+'</button><button class="btn" id="nextAct" '+(pos>=3?"disabled":"")+'>Tiếp →</button></div></div>';bindAnswers(card);document.getElementById("prevAct").onclick=function(){if(pos>0){persistCurrent(false);currentActivity=ids[pos-1];renderActivity()}};document.getElementById("nextAct").onclick=function(){if(pos<3){persistCurrent(false);currentActivity=ids[pos+1];renderActivity()}};document.getElementById("completeAct").onclick=function(){currentRecord.activitySaved=currentRecord.activitySaved||Array(8).fill(false);currentRecord.activitySaved[currentActivity]=true;var st=activityStatus(currentRecord,currentActivity);currentRecord.done[currentActivity]=st.complete;persistCurrent(true);renderNav();updateProgress();var box=document.getElementById("activityFeedback");box.className="feedback "+(st.complete?"ok":"warn");box.textContent=st.complete?"Đã lưu. Em đã làm đủ hoạt động này.":"Đã lưu. Em còn thiếu: "+st.missing.join("; ")+".";document.getElementById("completeAct").textContent="Đã lưu trả lời ✓"}}
+function updateNextButtonState(){
+  var btn=document.getElementById("nextAct");
+  if(!btn||!currentRecord)return;
+  var st=activityStatus(currentRecord,currentActivity);
+  btn.disabled=st.touched<=0;
+  btn.title=st.touched>0?"Lưu hoạt động rồi tiếp tục":"Hãy hoàn thành ít nhất một ô yêu cầu trước khi bấm Tiếp.";
+}
+function capture(e){
+  var el=e.target,k=el.getAttribute("data-key");
+  currentRecord.answers[k]=el.type==="checkbox"?el.checked:el.value;
+  currentRecord.updatedAt=Date.now();
+  updateNextButtonState();
+  if(demoMode){document.getElementById("saveStatus").textContent="DEMO · Không lưu";return}
+  document.getElementById("saveStatus").textContent="Đang lưu...";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){persistCurrent(false)},350)
+}
+function renderActivity(){
+  renderNav();updateProgress();
+  var card=document.getElementById("activityCard"),ids=sessionIds(currentSession),pos=ids.indexOf(currentActivity);
+  var nextLabel=pos>=ids.length-1?"Hoàn tất tiết ✓":"Tiếp →";
+  card.innerHTML=activities[currentActivity].render()+
+    '<div id="activityFeedback"></div>'+
+    '<div class="footer-actions"><button class="btn light" id="prevAct" '+(pos<=0?"disabled":"")+'>← Trước</button>'+
+    '<div class="topbar"><button class="btn" id="nextAct">'+nextLabel+'</button></div></div>';
+  bindAnswers(card);
+
+  document.getElementById("prevAct").onclick=function(){
+    if(pos>0){persistCurrent(false);currentActivity=ids[pos-1];renderActivity()}
+  };
+
+  document.getElementById("nextAct").onclick=async function(){
+    var st=activityStatus(currentRecord,currentActivity);
+    if(st.touched<=0){
+      var box=document.getElementById("activityFeedback");
+      box.className="feedback warn";
+      box.textContent="Em hãy hoàn thành ít nhất một ô yêu cầu trong hoạt động này trước khi bấm Tiếp.";
+      updateNextButtonState();
+      return;
+    }
+
+    currentRecord.activitySaved=currentRecord.activitySaved||Array(8).fill(false);
+    currentRecord.activitySaved[currentActivity]=true;
+    currentRecord.done[currentActivity]=st.complete;
+
+    var btn=document.getElementById("nextAct");
+    btn.disabled=true;btn.textContent="Đang lưu...";
+    await persistCurrent(true);
+
+    if(pos<ids.length-1){
+      currentActivity=ids[pos+1];
+      renderActivity();
+    }else{
+      renderNav();updateProgress();
+      var box=document.getElementById("activityFeedback");
+      box.className="feedback "+(st.complete?"ok":"warn");
+      box.textContent=st.complete
+        ?"Đã lưu. Em đã hoàn thành hoạt động cuối của Tiết "+currentSession+"."
+        :"Đã lưu. Hoạt động cuối vẫn còn thiếu: "+st.missing.join("; ")+". Em có thể bổ sung thêm.";
+      btn.textContent="Đã lưu ✓";
+    }
+  };
+  updateNextButtonState();
+}
 function switchSession(s){if(!currentRecord)return;persistCurrent(false);currentSession=s;currentRecord.answers._lessonChoice=String(s);currentActivity=firstIncomplete(currentRecord,s);renderActivity()}
 function readSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){return null}}
 function writeSession(cls,no,uid,lesson){localStorage.setItem(SESSION_KEY,JSON.stringify({className:String(cls),studentNo:Number(no),uid:String(uid),lesson:Number(lesson),updatedAt:Date.now()}))}
@@ -261,36 +323,220 @@ async function teacherLogin(){
     firebaseUser=cred.user;teacherMode=true;resultsRef=database.ref(RESULTS_PATH);document.getElementById("loginScreen").classList.add("hidden");document.getElementById("studentScreen").classList.add("hidden");document.getElementById("teacherScreen").classList.remove("hidden");startTeacherListener();
   }catch(e){status.textContent=e.message||"Đăng nhập thất bại.";status.classList.remove("hidden")}
 }
-function startTeacherListener(){if(teacherListener&&resultsRef)resultsRef.off("value",teacherListener);teacherListener=function(snap){firebaseRecords=snap.val()||{};renderTeacher()};resultsRef.on("value",teacherListener,function(err){console.error(err);document.getElementById("teacherBody").innerHTML='<tr><td colspan="8">Không đọc được dữ liệu. Kiểm tra quyền giáo viên và Firebase Rules.</td></tr>'})}
-function normalizeRecords(){return Object.keys(firebaseRecords||{}).map(function(uid){var r=hydrateRecord(Object.assign({},firebaseRecords[uid]||{}));if(!r||!r.className||!r.studentNo)return null;return Object.assign({},r,{uid:uid})}).filter(Boolean)}
-function buildTeacherGroups(entries){var map={};entries.forEach(function(r){var key=studentKey(r.className,r.studentNo);if(!map[key])map[key]={key:key,className:r.className,studentNo:Number(r.studentNo),records:[]};map[key].records.push(r)});return Object.keys(map).map(function(k){var g=map[k];g.records.sort(function(a,b){return overallAssessment(b).completeCount-overallAssessment(a).completeCount||Number(b.updatedAt||0)-Number(a.updatedAt||0)});g.representative=g.records[0];g.updatedAt=Math.max.apply(null,g.records.map(function(r){return Number(r.updatedAt)||0}));return g}).sort(function(a,b){return a.className.localeCompare(b.className,"vi",{numeric:true})||a.studentNo-b.studentNo})}
+var teacherHandlers=null,teacherRenderTimer=null;
+
+function scheduleTeacherRender(){
+  clearTimeout(teacherRenderTimer);
+  teacherRenderTimer=setTimeout(renderTeacher,100);
+}
+function stopTeacherListener(){
+  if(resultsRef&&teacherHandlers){
+    resultsRef.off("child_added",teacherHandlers.add);
+    resultsRef.off("child_changed",teacherHandlers.change);
+    resultsRef.off("child_removed",teacherHandlers.remove);
+  }
+  teacherHandlers=null;
+}
+function teacherReadError(err){
+  console.error("Teacher read error:",err);
+  document.getElementById("teacherBody").innerHTML='<tr><td colspan="8">Không đọc được dữ liệu. Kiểm tra quyền giáo viên và Firebase Rules.</td></tr>';
+}
+function startTeacherListener(){
+  stopTeacherListener();
+  firebaseRecords={};
+  teacherHandlers={
+    add:function(s){firebaseRecords[s.key]=s.val();scheduleTeacherRender()},
+    change:function(s){firebaseRecords[s.key]=s.val();scheduleTeacherRender()},
+    remove:function(s){delete firebaseRecords[s.key];scheduleTeacherRender()}
+  };
+  resultsRef.on("child_added",teacherHandlers.add,teacherReadError);
+  resultsRef.on("child_changed",teacherHandlers.change);
+  resultsRef.on("child_removed",teacherHandlers.remove);
+}
+
+function normalizeRecords(){
+  return Object.keys(firebaseRecords||{}).map(function(uid){
+    var raw=firebaseRecords[uid];
+    if(!raw||typeof raw!=="object")return null;
+    var r=hydrateRecord(Object.assign({},raw));
+    var cls=String(r.className||"").trim(),no=Number(r.studentNo||0);
+    if(!cls||!Number.isFinite(no)||no<=0)return null;
+    r.uid=uid;r.className=cls;r.studentNo=no;r.name=String(r.name||"").trim();
+    r.updatedAt=Number(r.updatedAt||r.createdAt||0);
+    r.createdAt=Number(r.createdAt||r.updatedAt||0);
+    return r;
+  }).filter(Boolean);
+}
+
+function mergeTeacherRecords(records){
+  var ordered=records.slice().sort(function(a,b){return Number(a.updatedAt||0)-Number(b.updatedAt||0)});
+  var latest=ordered[ordered.length-1]||{};
+  var merged={
+    className:latest.className||"",studentNo:Number(latest.studentNo||0),name:"",
+    answers:{},done:Array(8).fill(false),activitySaved:Array(8).fill(false),
+    ownerUid:latest.ownerUid||"",createdAt:0,updatedAt:0,
+    meta:{worksheetId:WORKSHEET_ID,version:"2"}
+  };
+  var created=[];
+  ordered.forEach(function(r){
+    if(hasText(r.name))merged.name=String(r.name).trim();
+    Object.keys(r.answers||{}).forEach(function(k){
+      var v=r.answers[k];
+      if(v===true||hasText(v))merged.answers[k]=v;
+    });
+    for(var i=0;i<8;i++){
+      merged.done[i]=merged.done[i]||Boolean((r.done||[])[i]);
+      merged.activitySaved[i]=merged.activitySaved[i]||Boolean((r.activitySaved||[])[i]);
+    }
+    if(Number(r.createdAt||0)>0)created.push(Number(r.createdAt));
+    merged.updatedAt=Math.max(merged.updatedAt,Number(r.updatedAt||0));
+  });
+  merged.createdAt=created.length?Math.min.apply(null,created):merged.updatedAt;
+  return hydrateRecord(merged);
+}
+
+function buildTeacherGroups(entries){
+  var map={};
+  entries.forEach(function(r){
+    var key=studentKey(r.className,r.studentNo);
+    if(!map[key])map[key]={key:key,className:r.className,studentNo:Number(r.studentNo),records:[]};
+    map[key].records.push(r);
+  });
+  return Object.keys(map).map(function(k){
+    var g=map[k];
+    g.representative=mergeTeacherRecords(g.records);
+    g.updatedAt=Math.max.apply(null,g.records.map(function(r){return Number(r.updatedAt)||0}));
+    return g;
+  }).sort(function(a,b){
+    return a.className.localeCompare(b.className,"vi",{numeric:true})||a.studentNo-b.studentNo
+  });
+}
+
+function recordStatusHtml(o){
+  return statusHtml(o.status);
+}
+
 function renderTeacher(){
   var groups=buildTeacherGroups(normalizeRecords()),filter=document.getElementById("teacherClassFilter"),prev=filter.value||"all",classes=[];
-  groups.forEach(function(g){if(classes.indexOf(g.className)<0)classes.push(g.className)});classes.sort(function(a,b){return a.localeCompare(b,"vi",{numeric:true})});
-  filter.innerHTML='<option value="all">Tất cả lớp</option>'+classes.map(function(c){return "<option>"+esc(c)+"</option>"}).join("");filter.value=classes.indexOf(prev)>=0?prev:"all";
+  groups.forEach(function(g){if(classes.indexOf(g.className)<0)classes.push(g.className)});
+  classes.sort(function(a,b){return a.localeCompare(b,"vi",{numeric:true})});
+  filter.innerHTML='<option value="all">Tất cả lớp</option>'+classes.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join("");
+  filter.value=classes.indexOf(prev)>=0?prev:"all";
+
   var view=filter.value==="all"?groups:groups.filter(function(g){return g.className===filter.value});
   document.getElementById("kpiStudents").textContent=view.length;
-  document.getElementById("kpiCompleted").textContent=view.filter(function(g){return overallAssessment(g.representative).status==="complete"}).length;
+  document.getElementById("kpiCompleted").textContent=view.filter(function(g){var o=overallAssessment(g.representative);return o.t1===4&&o.t2===4}).length;
   document.getElementById("kpiT1").textContent=view.filter(function(g){return overallAssessment(g.representative).t1===4}).length;
   document.getElementById("kpiT2").textContent=view.filter(function(g){return overallAssessment(g.representative).t2===4}).length;
-  document.getElementById("teacherBody").innerHTML=view.length?view.map(function(g){var r=g.representative,o=overallAssessment(r);return '<tr><td>'+esc(g.className)+'</td><td>'+g.studentNo+'</td><td>'+esc(r.name||"")+(g.records.length>1?'<div class="small">Đã gộp '+g.records.length+' phiên</div>':"")+'</td><td>'+statusHtml(o.status)+'</td><td>'+o.t1+'/4</td><td>'+o.t2+'/4</td><td>'+new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")+'</td><td><button class="btn light" data-detail="'+esc(g.key)+'">Xem</button><button class="btn danger" data-delete="'+esc(g.key)+'" style="margin-left:5px">Xóa</button></td></tr>'}).join(""):'<tr><td colspan="8">Chưa có dữ liệu.</td></tr>';
-  Array.prototype.forEach.call(document.querySelectorAll("[data-detail]"),function(b){b.onclick=function(){showDetail(b.getAttribute("data-detail"))}});
-  Array.prototype.forEach.call(document.querySelectorAll("[data-delete]"),function(b){b.onclick=function(){deleteStudentGroup(b.getAttribute("data-delete"))}});
+
+  document.getElementById("teacherBody").innerHTML=view.length?view.map(function(g){
+    var r=g.representative,o=overallAssessment(r);
+    return '<tr>'+
+      '<td>'+esc(g.className)+'</td>'+
+      '<td>'+g.studentNo+'</td>'+
+      '<td>'+esc(r.name||"")+(g.records.length>1?'<div class="small">Đã gộp '+g.records.length+' phiên</div>':"")+'</td>'+
+      '<td>'+recordStatusHtml(o)+'</td>'+
+      '<td>'+o.t1+'/4</td><td>'+o.t2+'/4</td>'+
+      '<td>'+new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")+'</td>'+
+      '<td><button class="btn light" data-detail="'+esc(g.key)+'">Xem bài</button>'+
+      '<button class="btn danger" data-delete="'+esc(g.key)+'" style="margin-left:5px">Xóa</button></td>'+
+    '</tr>';
+  }).join(""):'<tr><td colspan="8">Chưa có dữ liệu học sinh trong worksheet <b>'+esc(WORKSHEET_ID)+'</b>.</td></tr>';
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-detail]"),function(b){
+    b.onclick=function(){showDetail(b.getAttribute("data-detail"))}
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-delete]"),function(b){
+    b.onclick=function(){deleteStudentGroup(b.getAttribute("data-delete"))}
+  });
 }
+
+var ANSWER_LABELS={
+  t1_goal:"Mục đích tìm kiếm",t1_need1:"Nhu cầu: điểm chuẩn/chỉ tiêu",t1_need2:"Nhu cầu: kết quả học tập/đầu ra",
+  t1_need3:"Nhu cầu: môn thế mạnh",t1_need4:"Nhu cầu: hoạt động ngoại khóa",t1_need5:"Nhu cầu: khoảng cách",
+  t1_keep_source:"Nguồn giữ lại",t1_keep_reason:"Lí do giữ nguồn",t1_better_query:"Truy vấn cải thiện",
+  t1_added_factor:"Yếu tố đã thêm",t1_best_work:"Điều làm tốt nhất",
+  t2_h1_choice:"Nguồn chọn nhanh",t2_h1_reason:"Lí do chọn",t2_h1_q1:"Nguồn cập nhật mới hơn",
+  t2_h1_q2:"Nguồn có tổ chức rõ",t2_h1_q3:"Nguồn thiếu căn cứ",t2_h1_q4:"Nguồn phù hợp tuyển sinh",
+  t2_h1_conclusion:"Kết luận nhanh",t2_admission_source:"Nguồn kiểm tra tuyển sinh",
+  t2_activity_source:"Nguồn tìm hoạt động/thế mạnh",t2_avoid_source:"Nguồn không dùng làm căn cứ chính",
+  t2_missing_info:"Thông tin còn thiếu",ai_rewrite:"Kết luận sau kiểm chứng AI",t2_decision:"Quyết định",
+  t2_decision_reason:"Lí do quyết định",t2_basis1:"Căn cứ 1",t2_basis2:"Căn cứ 2",
+  t2_need_more:"Điều cần kiểm tra thêm",t2_final_text:"Kết luận cuối"
+};
+
+function answerLabel(k){
+  if(ANSWER_LABELS[k])return ANSWER_LABELS[k];
+  var m=k.match(/^plan(\d+)_(need|kw|priority|adjust)$/);
+  if(m)return "Kế hoạch "+m[1]+" · "+({need:"Nhu cầu",kw:"Từ khóa",priority:"Nguồn ưu tiên",adjust:"Điều chỉnh"}[m[2]]);
+  m=k.match(/^src(\d+)_(name|url|date|summary)$/);
+  if(m)return "Nguồn "+m[1]+" · "+({name:"Tên nguồn",url:"URL",date:"Ngày cập nhật",summary:"Tóm tắt"}[m[2]]);
+  m=k.match(/^cmp([12])_(provider|fresh|evidence|need)$/);
+  if(m)return "So sánh nguồn "+m[1]+" · "+({provider:"Đơn vị cung cấp",fresh:"Độ mới",evidence:"Căn cứ",need:"Nhu cầu phù hợp"}[m[2]]);
+  m=k.match(/^t2_eval_([ABC])_(new|acc|full|use)$/);
+  if(m)return "Nguồn "+m[1]+" · "+({new:"Tính mới",acc:"Tính chính xác",full:"Tính đầy đủ",use:"Tính sử dụng được"}[m[2]]);
+  m=k.match(/^t2_eval_overall_(new|acc|full|use)$/);
+  if(m)return "Kết luận · "+({new:"Tính mới",acc:"Tính chính xác",full:"Tính đầy đủ",use:"Tính sử dụng được"}[m[1]]);
+  m=k.match(/^ai_claim(\d+)_(source|status|evidence|action)$/);
+  if(m)return "AI khẳng định "+m[1]+" · "+({source:"Nguồn đối chiếu",status:"Trạng thái",evidence:"Minh chứng",action:"Cách xử lí"}[m[2]]);
+  return k;
+}
+function displayAnswer(v){
+  if(v===true)return "✓ Có";
+  if(v===false)return "Không";
+  if(v==null)return "";
+  var map={confirm:"Xác nhận",insufficient:"Chưa đủ",conflict:"Mâu thuẫn",keep:"Giữ",more:"Tìm thêm",remove:"Loại/sửa",priority:"Đưa vào danh sách ưu tiên",learn_more:"Tiếp tục tìm hiểu",not_enough:"Chưa đủ thông tin để quyết định"};
+  return map[String(v)]||String(v);
+}
+function answerRowsHtml(a,keys){
+  return keys.map(function(k){
+    var v=a[k];
+    if(!(v===true||hasText(v)))return "";
+    return '<tr><td style="width:32%"><b>'+esc(answerLabel(k))+'</b></td><td>'+esc(displayAnswer(v))+'</td></tr>';
+  }).join("");
+}
+
 function showDetail(groupKey){
-  var groups=buildTeacherGroups(normalizeRecords()),g=null;groups.forEach(function(x){if(x.key===groupKey)g=x});if(!g)return;
+  var groups=buildTeacherGroups(normalizeRecords()),g=null;
+  groups.forEach(function(x){if(x.key===groupKey)g=x});
+  if(!g)return;
+
   var r=g.representative,a=r.answers||{},o=overallAssessment(r);
-  var rows=o.items.map(function(x,i){return '<tr><td>Tiết '+sessionOf(i)+' · Hoạt động '+localActNo(i)+'</td><td>'+statusHtml(x.status)+'</td><td>'+(x.missing.length?esc(x.missing.join("; ")):"—")+'</td></tr>'}).join("");
-  var review='<b>TIẾT 1</b>\\nMục đích: '+esc(a.t1_goal||'')+'\\nNguồn 1: '+esc(a.src1_name||'')+' · '+esc(a.src1_url||'')+'\\nNguồn 2: '+esc(a.src2_name||'')+' · '+esc(a.src2_url||'')+'\\nNguồn 3: '+esc(a.src3_name||'')+' · '+esc(a.src3_url||'')+'\\nNguồn giữ lại: '+esc(a.t1_keep_source||'')+'\\nTruy vấn cải thiện: '+esc(a.t1_better_query||'')+'\\n\\n<b>TIẾT 2</b>\\nChọn nhanh: '+esc(a.t2_h1_choice||'')+' · '+esc(a.t2_h1_reason||'')+'\\nNguồn tuyển sinh: '+esc(a.t2_admission_source||'')+'\\nNguồn hoạt động: '+esc(a.t2_activity_source||'')+'\\nKết luận AI: '+esc(a.ai_rewrite||'')+'\\nQuyết định: '+esc(a.t2_decision||'')+'\\nKết luận cuối: '+esc(a.t2_final_text||'');
-  document.getElementById("teacherDetail").innerHTML='<div class="card" style="margin-top:14px"><div class="topbar" style="justify-content:space-between"><h3 style="margin:0">'+esc(r.name||"")+' · '+esc(r.className)+' · STT '+Number(r.studentNo)+'</h3><button class="btn light" id="closeDetailBtn">Đóng</button></div><p><b>Trạng thái:</b> '+recordStatusHtml(o)+' · <b>Tiết 1:</b> '+o.t1+'/4 · <b>Tiết 2:</b> '+o.t2+'/4</p><div class="table-wrap"><table><thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thiếu / cần bổ sung</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="review">'+review+'</div></div>';
-  document.getElementById("closeDetailBtn").onclick=function(){document.getElementById("teacherDetail").innerHTML=""};document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"})
+  var activityRows=o.items.map(function(x,i){
+    return '<tr><td>Tiết '+sessionOf(i)+' · Hoạt động '+localActNo(i)+'</td>'+
+      '<td>'+statusHtml(x.status)+'</td>'+
+      '<td>'+(x.missing.length?esc(x.missing.join("; ")):"—")+'</td></tr>';
+  }).join("");
+
+  var t1keys=Object.keys(a).filter(function(k){return k.indexOf("t1_")===0||k.indexOf("plan")===0||k.indexOf("src")===0||k.indexOf("cmp")===0});
+  var t2keys=Object.keys(a).filter(function(k){return k.indexOf("t2_")===0||k.indexOf("ai_")===0});
+  var t1rows=answerRowsHtml(a,t1keys);
+  var t2rows=answerRowsHtml(a,t2keys);
+
+  document.getElementById("teacherDetail").innerHTML=
+    '<div class="card" style="margin-top:14px">'+
+      '<div class="topbar" style="justify-content:space-between">'+
+        '<h3 style="margin:0">'+esc(r.name||"")+' · '+esc(r.className)+' · STT '+Number(r.studentNo)+'</h3>'+
+        '<button class="btn light" id="closeDetailBtn">Đóng</button>'+
+      '</div>'+
+      '<p><b>Trạng thái:</b> '+recordStatusHtml(o)+' · <b>Tiết 1:</b> '+o.t1+'/4 · <b>Tiết 2:</b> '+o.t2+'/4</p>'+
+      '<h3>Tiến độ theo hoạt động</h3>'+
+      '<div class="table-wrap"><table><thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thiếu / cần bổ sung</th></tr></thead><tbody>'+activityRows+'</tbody></table></div>'+
+      '<h3 style="margin-top:16px">Bài làm Tiết 1</h3>'+
+      '<div class="table-wrap"><table><thead><tr><th>Yêu cầu</th><th>Câu trả lời của học sinh</th></tr></thead><tbody>'+(t1rows||'<tr><td colspan="2">Chưa có câu trả lời Tiết 1.</td></tr>')+'</tbody></table></div>'+
+      '<h3 style="margin-top:16px">Bài làm Tiết 2</h3>'+
+      '<div class="table-wrap"><table><thead><tr><th>Yêu cầu</th><th>Câu trả lời của học sinh</th></tr></thead><tbody>'+(t2rows||'<tr><td colspan="2">Chưa có câu trả lời Tiết 2.</td></tr>')+'</tbody></table></div>'+
+    '</div>';
+
+  document.getElementById("closeDetailBtn").onclick=function(){document.getElementById("teacherDetail").innerHTML=""};
+  document.getElementById("teacherDetail").scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function deleteStudentGroup(groupKey){
   if(!teacherMode||!database)return;var groups=buildTeacherGroups(normalizeRecords()),g=null;groups.forEach(function(x){if(x.key===groupKey)g=x});if(!g)return;var r=g.representative;
   if(!confirm("Xóa toàn bộ dữ liệu của "+r.className+" · STT "+r.studentNo+" · "+(r.name||"")+"?"))return;
   try{await Promise.all(g.records.map(function(x){return database.ref(RESULTS_PATH+"/"+x.uid).remove()}));var d=allData();delete d[studentKey(r.className,r.studentNo)];saveAll(d);document.getElementById("teacherDetail").innerHTML=""}catch(e){console.error(e);alert("Không xóa được dữ liệu. Kiểm tra Firebase Rules.")}
 }
-async function teacherLogout(){demoMode=false;try{if(resultsRef&&teacherListener)resultsRef.off("value",teacherListener);await firebase.auth().signOut()}catch(e){}teacherMode=false;firebaseRecords={};document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("teacherDetail").innerHTML="";await ensureAnonymous()}
+async function teacherLogout(){demoMode=false;try{stopTeacherListener();await firebase.auth().signOut()}catch(e){}teacherMode=false;firebaseRecords={};document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("teacherDetail").innerHTML="";await ensureAnonymous()}
 function exportCsv(){
   var groups=buildTeacherGroups(normalizeRecords()),rows=[["Lớp","STT","Họ tên","Trạng thái","Tiết 1","Tiết 2","Nguồn tuyển sinh","Nguồn hoạt động","Quyết định","Kết luận AI","Cập nhật"]];
   groups.forEach(function(g){var r=g.representative,o=overallAssessment(r),a=r.answers||{};rows.push([r.className,r.studentNo,r.name,statusLabel(o.status),o.t1+"/4",o.t2+"/4",a.t2_admission_source||"",a.t2_activity_source||"",a.t2_decision||"",a.ai_rewrite||"",new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")])});
