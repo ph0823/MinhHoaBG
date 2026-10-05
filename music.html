@@ -819,7 +819,7 @@ body{
 // 1) Thư mục phải chia sẻ: “Bất kỳ ai có đường liên kết” → Người xem.
 // 2) Tạo Browser API key trong Google Cloud, bật Google Drive API.
 // 3) Giới hạn API key theo domain triển khai và chỉ cho phép Google Drive API.
-const GOOGLE_API_KEY = 'PAIzaSyCE90_1SizqjxOphMThzOQ3cidhGiIxl_Q';
+const GOOGLE_API_KEY = 'AIzaSyCE90_1SizqjxOphMThzOQ3cidhGiIxl_Q';
 const GOOGLE_ROOT_FOLDER_ID = '1tWWXnMQr3RlaSfDkGzZDiwUM-ctrdwWc';
 // Chỉ điền nếu đường link chia sẻ có tham số resourcekey=...
 const GOOGLE_ROOT_RESOURCE_KEY = '';
@@ -3113,7 +3113,6 @@ async function api(
 }
 
 async function apiOnce(action, params, externalSignal) {
-  requireGoogleDriveToken();
 
   if (action === 'list') {
     return driveListFolder(
