@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
-<title>Trình nhạc - v5 Adaptive Music Dynamics</title>
+<title>Trình nhạc - v5.1 Clean Mobile + Opera</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- COOP cho OAuth popup phải cấu hình ở HTTP server: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
 <style>
@@ -639,6 +639,8 @@ body{
 }
 @media(max-width:820px){
   #visualModePulse{display:inline-flex}
+  /* Mobile: bỏ menu Sóng/LED/Pulse khỏi vùng hiệu ứng để dành toàn bộ diện tích cho canvas. */
+  .visualizer-toolbar{display:none!important}
   .visualizer-wrap{
     height:clamp(165px,25vh,215px)!important;
     border-radius:19px!important;
@@ -841,6 +843,7 @@ const MAX_CACHE_ENTRIES = 180, PLAYBACK_UI_INTERVAL_MS = 350, RECOVERY_BUFFER_TA
 
 const IS_TV_DEVICE = /web0s|webos|netcast|smarttv|tizen|hbbtv|aftb|aftm|aftt/i.test(navigator.userAgent || '');
 const IS_MOBILE_DEVICE = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '');
+const IS_OPERA_BROWSER = /(?:OPR\/|Opera)/i.test(navigator.userAgent || '');
 const IS_MEMORY_CONSTRAINED_DEVICE = IS_TV_DEVICE || IS_MOBILE_DEVICE;
 const TV_SINGLE_AUDIO_MODE = IS_TV_DEVICE; // webOS TV: chỉ dùng một media element tại một thời điểm.
 const MSE_MIME = 'audio/mpeg';
@@ -2223,8 +2226,7 @@ function drawMobileLedVisualizer(canvas, context) {
   context.save();
   context.font=`800 ${9*dpr}px system-ui,sans-serif`;
   context.fillStyle=`rgba(255,255,255,${.28+lively*.20})`;
-  context.textAlign='left';
-  context.fillText(mobileMusicMoodLabel(dyn),pad,21*dpr);
+  /* Không hiển thị nhãn suy đoán như “Có nhịp”, “Sôi động”, “Cao trào”. */
   context.textAlign='right';
   context.fillStyle='rgba(145,255,167,.34)';
   context.fillText(`B ${Math.round(snapshot.bass*99)}  M ${Math.round(snapshot.mid*99)}  H ${Math.round(snapshot.treble*99)}`,width-pad,21*dpr);
@@ -2290,8 +2292,7 @@ function drawPulseVisualizer(canvas, context) {
     context.restore();
   }
 
-  context.save(); context.font=`800 ${9*dpr}px system-ui,sans-serif`; context.textAlign='center'; context.fillStyle=`rgba(255,255,255,${.30+dyn.climax*.34})`;
-  context.fillText(dyn.climax>.55?'CAO TRÀO':snapshot.total>.36?'ĐANG LÊN NHỊP':'FLOW',cx,height-15*dpr); context.restore();
+  /* Mobile Pulse: giữ hiệu ứng thuần hình ảnh, không chèn nhãn trạng thái lên canvas. */
 }
 
 
@@ -2432,7 +2433,7 @@ function drawDesktopWaveVisualizer(canvas, context) {
   context.restore();
   const kick=snapshot.kick||0,snare=snapshot.snare||0;
   context.save();context.strokeStyle=`rgba(255,255,255,${.10+kick*.22+snare*.10})`;context.lineWidth=(1+kick*1.5)*dpr;context.beginPath();context.moveTo(side,cy);context.lineTo(width-side,cy);context.stroke();context.restore();
-  context.save();context.font=`800 ${10*dpr}px system-ui,sans-serif`;context.fillStyle='rgba(255,255,255,.38)';context.fillText(dynamicsLabel(snapshot,dyn),side,22*dpr);context.restore();
+  /* Desktop Wave: không chèn nhãn “Có nhịp/Sôi động/Cao trào” lên hiệu ứng. */
 }
 
 function drawWaveVisualizer(canvas, context) {
@@ -2705,7 +2706,7 @@ function drawDesktopLedVisualizer(canvas, context) {
   const meterData=[['BASS',snapshot.bass,'#59ff72'],['MID',snapshot.mid,'#d9ff54'],['HIGH',snapshot.treble,'#32e9ff']];
   context.save();context.textBaseline='middle';context.font=`850 ${10*dpr}px ui-monospace,monospace`;
   meterData.forEach(([label,value,color],idx)=>{const y=headerTop+(8+idx*18)*dpr;context.fillStyle='rgba(145,255,167,.36)';context.fillText(label,panelX+14*dpr,y);context.fillStyle='rgba(105,255,139,.09)';ledRoundedRect(context,panelX+58*dpr,y-3*dpr,54*dpr,6*dpr,3*dpr);context.fill();context.fillStyle=color;ledRoundedRect(context,panelX+58*dpr,y-3*dpr,54*dpr*Math.max(.03,value),6*dpr,3*dpr);context.fill();});context.restore();
-  context.save();context.textAlign='right';context.textBaseline='middle';context.font=`900 ${36*dpr}px ui-monospace,monospace`;context.fillStyle=playing?'#62ff82':'rgba(98,255,130,.43)';context.fillText(formatTime(activeAudio().currentTime||0),panelX+panelW-17*dpr,headerTop+23*dpr);context.font=`800 ${9*dpr}px ui-monospace,monospace`;context.fillStyle='rgba(145,255,167,.44)';context.fillText(`${dynamicsLabel(snapshot,dyn)} • K ${Math.round((snapshot.kick||0)*99)} S ${Math.round((snapshot.snare||0)*99)} H ${Math.round((snapshot.hats||0)*99)}`,panelX+panelW-18*dpr,headerTop+50*dpr);context.restore();
+  context.save();context.textAlign='right';context.textBaseline='middle';context.font=`900 ${36*dpr}px ui-monospace,monospace`;context.fillStyle=playing?'#62ff82':'rgba(98,255,130,.43)';context.fillText(formatTime(activeAudio().currentTime||0),panelX+panelW-17*dpr,headerTop+23*dpr);context.font=`800 ${9*dpr}px ui-monospace,monospace`;context.fillStyle='rgba(145,255,167,.44)';context.fillText(`K ${Math.round((snapshot.kick||0)*99)}  S ${Math.round((snapshot.snare||0)*99)}  H ${Math.round((snapshot.hats||0)*99)}`,panelX+panelW-18*dpr,headerTop+50*dpr);context.restore();
   const left=panelX+15*dpr,right=panelX+panelW-15*dpr,top=panelY+headerH,bottom=panelY+panelH-17*dpr,chartH=Math.max(30*dpr,bottom-top);
   const gap=3*dpr,cw=Math.max(3*dpr,(right-left-gap*(columns-1))/columns),sgap=2.35*dpr,sh=Math.max(2.2*dpr,(chartH-sgap*(segments-1))/segments);
   if(desktopVisualState.levels.length!==columns){desktopVisualState.levels=new Array(columns).fill(0);desktopVisualState.velocities=new Array(columns).fill(0);desktopVisualState.peaks=new Array(columns).fill(0);desktopVisualState.peakHold=new Array(columns).fill(0);}
@@ -2938,7 +2939,16 @@ function updateEffectUi() {
 }
 function saveEffectPreferences() { localStorage.setItem('audio_effect_preset', effectState.preset); localStorage.setItem('audio_effect_bass', String(effectState.bass)); localStorage.setItem('audio_effect_echo', String(effectState.echo)); }
 function stopVisualizer() { if (visualizerFrame) { cancelAnimationFrame(visualizerFrame); visualizerFrame = 0; } }
-function showMode(text) { els.mode.hidden = false; els.mode.textContent = text; }
+function showMode(text) {
+  /* Các trạng thái kỹ thuật chỉ hữu ích trên TV; desktop/mobile giữ giao diện sạch. */
+  if (!IS_TV_DEVICE) {
+    els.mode.hidden = true;
+    els.mode.textContent = '';
+    return;
+  }
+  els.mode.hidden = false;
+  els.mode.textContent = text;
+}
 function setLoading(visible, text = '', percent = 0) {
   if (!visible && (networkState.offline || networkState.retrying > 0)) { showRecoveryStatus(networkState.offline ? 'Mất kết nối' : 'Đường truyền chập chờn'); return; }
   els.status.hidden = !visible; if (!visible) return; const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
@@ -2971,7 +2981,13 @@ function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, character 
 // =========================================================
 
 function createAbortError() {
-  return new DOMException('Đã hủy thao tác.', 'AbortError');
+  try {
+    return new DOMException('Đã hủy thao tác.', 'AbortError');
+  } catch (_) {
+    const error = new Error('Đã hủy thao tác.');
+    error.name = 'AbortError';
+    return error;
+  }
 }
 
 function throwIfAborted(signal) {
@@ -3170,6 +3186,25 @@ async function apiOnce(action, params, externalSignal) {
   );
 }
 
+function loadGoogleIdentityServicesFallback() {
+  if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+    return Promise.resolve();
+  }
+  if (document.querySelector('script[data-gis-fallback="1"]')) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.gisFallback = '1';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Không tải được Google Identity Services.'));
+    document.head.appendChild(script);
+  });
+}
+
 function waitForGoogleIdentityServices(timeout = 15000) {
   return new Promise((resolve, reject) => {
     const startedAt = performance.now();
@@ -3185,7 +3220,18 @@ function waitForGoogleIdentityServices(timeout = 15000) {
       }
 
       if (performance.now() - startedAt >= timeout) {
-        reject(new Error('Không tải được dịch vụ đăng nhập Google.'));
+        loadGoogleIdentityServicesFallback()
+          .then(() => {
+            window.setTimeout(() => {
+              if (window.google && window.google.accounts && window.google.accounts.oauth2) resolve();
+              else reject(new Error(IS_OPERA_BROWSER
+                ? 'Opera chưa tải được dịch vụ đăng nhập Google. Hãy tắt Trình chặn quảng cáo/Trình theo dõi cho trang này rồi tải lại.'
+                : 'Không tải được dịch vụ đăng nhập Google.'));
+            }, 900);
+          })
+          .catch(() => reject(new Error(IS_OPERA_BROWSER
+            ? 'Opera đang chặn dịch vụ đăng nhập Google. Hãy cho phép accounts.google.com rồi tải lại trang.'
+            : 'Không tải được dịch vụ đăng nhập Google.')));
         return;
       }
 
@@ -4573,10 +4619,12 @@ function canUseProgressiveStreaming(info) {
     mime === 'audio/mpeg' ||
     mime === 'audio/mp3';
 
-  return (
-    isMp3 &&
-    MediaSource.isTypeSupported(MSE_MIME)
-  );
+  if (!isMp3 || !MediaSource.isTypeSupported(MSE_MIME)) return false;
+
+  /* Opera/Chromium có bản báo hỗ trợ audio/mpeg nhưng SourceBuffer có thể lỗi ở runtime.
+     prepareTrackPlayer đã có fallback Blob; tại đây chỉ loại các môi trường rõ ràng thiếu API. */
+  if (IS_OPERA_BROWSER && typeof window.SourceBuffer === 'undefined') return false;
+  return true;
 }
 
 function waitForEvent(
