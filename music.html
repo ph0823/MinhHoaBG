@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1db954">
 <title>Trình nhạc - v5 Adaptive Music Dynamics</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- COOP cho OAuth popup phải cấu hình ở HTTP server: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
 <style>
 :root{
@@ -682,16 +681,10 @@ body{
       <div class="bar"><div id="progress"></div></div>
     </div>
     <div class="auth-area">
-      <div id="driveStatus" class="drive-status">
+      <div id="driveStatus" class="drive-status connected" title="Thư viện Drive công khai • không cần đăng nhập">
         <span class="drive-dot" aria-hidden="true"></span>
-        <span>Chưa kết nối Drive</span>
+        <span>Drive tự động</span>
       </div>
-      <button id="driveLogin" class="auth-button" type="button" disabled>
-        🔐 <span class="auth-text">Kết nối Drive</span>
-      </button>
-      <button id="driveLogout" class="auth-button secondary" type="button" hidden>
-        ⏏ <span class="auth-text">Ngắt kết nối</span>
-      </button>
     </div>
   </header>
 
@@ -820,15 +813,16 @@ body{
 </footer>
 <div id="toast" class="toast"></div>
 
-<!-- Bản v3.0: Google Drive OAuth trực tiếp + byte-range streaming -->
+<!-- No Login Auto Drive: Google Drive công khai + API key + byte-range streaming -->
 <script>
-const GOOGLE_CLIENT_ID = '660983736125-gvdcpfho9dd6vb2an5i8bb8epoto7i12.apps.googleusercontent.com';
+// ===== NO LOGIN – AUTO DRIVE =====
+// 1) Thư mục phải chia sẻ: “Bất kỳ ai có đường liên kết” → Người xem.
+// 2) Tạo Browser API key trong Google Cloud, bật Google Drive API.
+// 3) Giới hạn API key theo domain triển khai và chỉ cho phép Google Drive API.
+const GOOGLE_API_KEY = 'PAIzaSyCE90_1SizqjxOphMThzOQ3cidhGiIxl_Q';
 const GOOGLE_ROOT_FOLDER_ID = '1tWWXnMQr3RlaSfDkGzZDiwUM-ctrdwWc';
-const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
-const GOOGLE_SESSION_TOKEN_KEY = 'music_google_drive_access_token_v1';
-const GOOGLE_SESSION_EXPIRY_KEY = 'music_google_drive_access_expiry_v1';
-const GOOGLE_AUTH_REMEMBERED_KEY = 'music_google_drive_authorized_v1';
-const GOOGLE_TOKEN_REFRESH_SKEW_MS = 2 * 60 * 1000;
+// Chỉ điền nếu đường link chia sẻ có tham số resourcekey=...
+const GOOGLE_ROOT_RESOURCE_KEY = '';
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_CHUNK_SIZE = 1024 * 1024;
 const APP_TYPE = 'audio';
@@ -920,7 +914,7 @@ const els = {
   echoLevel:$('echoLevel'), echoValue:$('echoValue'), effectBadge:$('effectBadge'),
   loading:$('loading'), mode:$('mode'), networkDiagnostics:$('networkDiagnostics'),
   diagnosticText:$('diagnosticText'), diagnosticDot:$('diagnosticDot'), toast:$('toast'),
-  driveStatus:$('driveStatus'), driveLogin:$('driveLogin'), driveLogout:$('driveLogout')
+  driveStatus:$('driveStatus')
 };
 
 const players = [$('audioA'), $('audioB')];
@@ -931,14 +925,6 @@ let cacheDbPromise = null, playbackUiTimer = null, streamWatchdogTimer = null;
 let lastEffectiveDuration = 0, lastSavedSecond = -1, shouldBePlaying = false;
 let recoveryProbePromise = null, lastRecoveryToastAt = 0;
 
-let googleTokenClient = null;
-let googleAccessToken = '';
-let googleTokenExpiresAt = 0;
-let googleAuthReady = false;
-let googleTokenRequestPromise = null;
-let googleTokenRequestResolve = null;
-let googleTokenRequestReject = null;
-let googleTokenRefreshTimer = 0;
 let driveRootName = 'Thư viện nhạc';
 let screenWakeLock = null;
 let tvAutoNextGuard = false;
@@ -1152,6 +1138,8 @@ let standbyState = {
 };
 
 const fileInfoCache = new Map();
+const driveResourceKeyMap = new Map();
+if (GOOGLE_ROOT_RESOURCE_KEY) driveResourceKeyMap.set(GOOGLE_ROOT_FOLDER_ID, GOOGLE_ROOT_RESOURCE_KEY);
 const playerObjectUrls = ['', ''];
 const playerStreamSessions = [null, null];
 
@@ -1457,7 +1445,7 @@ function init() {
   bindTvKeepAwake();
   scheduleIdleTask(() => openChunkDb().then(() => pruneChunkCache()).catch(() => {}), 1800);
   pruneSavedPositions();
-  initializeGoogleDriveAuth();
+  initializePublicGoogleDrive();
 }
 
 // ========================
@@ -2851,8 +2839,6 @@ function handleDocumentVisibility() {
 
 function bindEvents() {
   const debouncedRenderList = debounce(renderList, 160);
-  els.driveLogin.addEventListener('click', requestGoogleDriveAccess);
-  els.driveLogout.addEventListener('click', disconnectGoogleDrive);
   els.menu.addEventListener('click', () => els.sidebar.classList.toggle('open'));
   els.search.addEventListener('input', debouncedRenderList);
   els.search.addEventListener('keydown', event => {
@@ -3160,7 +3146,8 @@ async function apiOnce(action, params, externalSignal) {
       file: await driveGetFileInfo(
         params.fileId,
         params.folderId || '',
-        externalSignal
+        externalSignal,
+        params.resourceKey || ''
       )
     };
   }
@@ -3170,359 +3157,66 @@ async function apiOnce(action, params, externalSignal) {
   );
 }
 
-function waitForGoogleIdentityServices(timeout = 15000) {
-  return new Promise((resolve, reject) => {
-    const startedAt = performance.now();
+async function initializePublicGoogleDrive() {
+  els.driveStatus.classList.add('connected');
+  els.driveStatus.lastElementChild.textContent = 'Drive tự động';
+  els.folderTitle.textContent = 'Đang tải Google Drive...';
+  els.fileList.innerHTML = '<li class="empty">Đang mở thư viện công khai...</li>';
 
-    const check = () => {
-      if (
-        window.google &&
-        window.google.accounts &&
-        window.google.accounts.oauth2
-      ) {
-        resolve();
-        return;
-      }
-
-      if (performance.now() - startedAt >= timeout) {
-        reject(new Error('Không tải được dịch vụ đăng nhập Google.'));
-        return;
-      }
-
-      window.setTimeout(check, 120);
-    };
-
-    check();
-  });
-}
-
-function saveGoogleDriveSession() {
-  try {
-    if (!googleAccessToken || !googleTokenExpiresAt) return;
-    sessionStorage.setItem(GOOGLE_SESSION_TOKEN_KEY, googleAccessToken);
-    sessionStorage.setItem(GOOGLE_SESSION_EXPIRY_KEY, String(googleTokenExpiresAt));
-  } catch (_) {}
-}
-
-function clearGoogleDriveSession() {
-  try {
-    sessionStorage.removeItem(GOOGLE_SESSION_TOKEN_KEY);
-    sessionStorage.removeItem(GOOGLE_SESSION_EXPIRY_KEY);
-  } catch (_) {}
-}
-
-function rememberGoogleAuthorization() {
-  try { localStorage.setItem(GOOGLE_AUTH_REMEMBERED_KEY, '1'); } catch (_) {}
-}
-
-function forgetGoogleAuthorization() {
-  try { localStorage.removeItem(GOOGLE_AUTH_REMEMBERED_KEY); } catch (_) {}
-}
-
-function hasRememberedGoogleAuthorization() {
-  try { return localStorage.getItem(GOOGLE_AUTH_REMEMBERED_KEY) === '1'; }
-  catch (_) { return false; }
-}
-
-function restoreGoogleDriveSession() {
-  try {
-    const token = sessionStorage.getItem(GOOGLE_SESSION_TOKEN_KEY) || '';
-    const expiresAt = Number(sessionStorage.getItem(GOOGLE_SESSION_EXPIRY_KEY) || 0);
-
-    if (!token || !expiresAt || Date.now() >= expiresAt - 30000) {
-      clearGoogleDriveSession();
-      return false;
-    }
-
-    googleAccessToken = token;
-    googleTokenExpiresAt = expiresAt;
-    scheduleGoogleTokenRefresh();
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-function clearGoogleRefreshTimer() {
-  if (googleTokenRefreshTimer) {
-    clearTimeout(googleTokenRefreshTimer);
-    googleTokenRefreshTimer = 0;
-  }
-}
-
-function scheduleGoogleTokenRefresh() {
-  clearGoogleRefreshTimer();
-  if (!googleTokenExpiresAt || !googleAuthReady || !hasRememberedGoogleAuthorization()) return;
-
-  const delay = Math.max(
-    15000,
-    googleTokenExpiresAt - Date.now() - GOOGLE_TOKEN_REFRESH_SKEW_MS
-  );
-
-  googleTokenRefreshTimer = window.setTimeout(() => {
-    refreshGoogleAccessTokenSilently('scheduled').catch(error => {
-      console.warn('Không thể tự làm mới token theo lịch:', error);
-    });
-  }, delay);
-}
-
-function settleGoogleTokenRequest(ok, value) {
-  const resolve = googleTokenRequestResolve;
-  const reject = googleTokenRequestReject;
-  googleTokenRequestResolve = null;
-  googleTokenRequestReject = null;
-  googleTokenRequestPromise = null;
-  if (ok) {
-    if (resolve) resolve(value);
-  } else if (reject) {
-    reject(value instanceof Error ? value : new Error(String(value || 'Google OAuth thất bại.')));
-  }
-}
-
-function requestGoogleAccessToken(options = {}) {
-  const interactive = options.interactive === true;
-  const forceConsent = options.forceConsent === true;
-
-  if (!googleAuthReady || !googleTokenClient) {
-    return Promise.reject(new Error('Dịch vụ đăng nhập Google chưa sẵn sàng.'));
-  }
-
-  if (googleTokenRequestPromise) return googleTokenRequestPromise;
-
-  googleTokenRequestPromise = new Promise((resolve, reject) => {
-    googleTokenRequestResolve = resolve;
-    googleTokenRequestReject = reject;
-
-    try {
-      googleTokenClient.requestAccessToken({
-        prompt: forceConsent || (interactive && !hasRememberedGoogleAuthorization())
-          ? 'consent'
-          : ''
-      });
-    } catch (error) {
-      settleGoogleTokenRequest(false, error);
-    }
-  });
-
-  return googleTokenRequestPromise;
-}
-
-async function applyGoogleTokenResponse(response) {
-  if (!response || !response.access_token) {
-    throw new Error('Google không trả về mã truy cập hợp lệ.');
-  }
-
-  googleAccessToken = response.access_token;
-  googleTokenExpiresAt = Date.now() + (Number(response.expires_in) || 3600) * 1000;
-  saveGoogleDriveSession();
-  rememberGoogleAuthorization();
-  updateGoogleAuthUi(true);
-  scheduleGoogleTokenRefresh();
-  return googleAccessToken;
-}
-
-async function handleGoogleTokenResponse(response) {
-  els.driveLogin.disabled = false;
-
-  try {
-    const token = await applyGoogleTokenResponse(response);
-    settleGoogleTokenRequest(true, token);
-  } catch (error) {
-    settleGoogleTokenRequest(false, error);
-  }
-}
-
-async function refreshGoogleAccessTokenSilently(reason = 'refresh') {
-  if (hasValidGoogleDriveToken() && reason !== 'force' && reason !== 'scheduled') {
-    return googleAccessToken;
-  }
-
-  if (!hasRememberedGoogleAuthorization()) {
-    throw new Error('Thiết bị chưa ghi nhớ quyền Google Drive.');
-  }
-
-  try {
-    return await requestGoogleAccessToken({ interactive: false });
-  } catch (error) {
-    googleAccessToken = '';
-    googleTokenExpiresAt = 0;
-    clearGoogleDriveSession();
-    updateGoogleAuthUi(false);
-    throw error;
-  }
-}
-
-async function ensureGoogleDriveToken(options = {}) {
-  if (hasValidGoogleDriveToken()) return googleAccessToken;
-  if (options.allowSilent !== false && hasRememberedGoogleAuthorization()) {
-    return refreshGoogleAccessTokenSilently(options.reason || 'ensure');
-  }
-  throw new Error('Phiên Google Drive cần được kết nối lại.');
-}
-
-async function restoreGoogleDriveAfterRefresh() {
-  if (!restoreGoogleDriveSession()) return false;
-
-  updateGoogleAuthUi(true);
-  els.folderTitle.textContent = 'Đang khôi phục Google Drive...';
-  els.fileList.innerHTML =
-    '<li class="empty">Đang khôi phục thư viện sau khi tải lại trang...</li>';
-
-  folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName }];
-  fileInfoCache.clear();
-
-  try {
-    await loadDirectory(GOOGLE_ROOT_FOLDER_ID, true);
-    return true;
-  } catch (error) {
-    console.warn('Không thể khôi phục phiên Google Drive:', error);
-    return false;
-  }
-}
-
-async function initializeGoogleDriveAuth() {
-  googleAuthReady = false;
-  googleTokenClient = null;
-  els.driveLogin.disabled = true;
-
-  const restoredFromRefresh = restoreGoogleDriveSession();
-  const rememberedAuthorization = hasRememberedGoogleAuthorization();
-
-  if (restoredFromRefresh || rememberedAuthorization) {
-    els.folderTitle.textContent = 'Đang khôi phục Google Drive...';
-    els.fileList.innerHTML = '<li class="empty">Đang kết nối lại thư viện...</li>';
-  } else {
-    els.folderTitle.textContent = 'Đang khởi tạo Google Drive...';
-    els.fileList.innerHTML = '<li class="empty">Đang tải dịch vụ đăng nhập Google...</li>';
-  }
-
-  try {
-    await waitForGoogleIdentityServices();
-
-    googleTokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_DRIVE_SCOPE,
-      callback: handleGoogleTokenResponse,
-      error_callback: error => {
-        console.warn('Google OAuth:', error);
-        els.driveLogin.disabled = false;
-        settleGoogleTokenRequest(false, new Error(
-          error && error.message ? error.message : 'Không thể tự kết nối Google.'
-        ));
-      }
-    });
-
-    googleAuthReady = true;
-    scheduleGoogleTokenRefresh();
-
-    if (restoredFromRefresh && hasValidGoogleDriveToken()) {
-      try {
-        updateGoogleAuthUi(true);
-        folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName }];
-        fileInfoCache.clear();
-        await loadDirectory(GOOGLE_ROOT_FOLDER_ID, true);
-        return;
-      } catch (error) {
-        console.warn('Token lưu trong phiên không còn dùng được, thử cấp lại im lặng:', error);
-        googleAccessToken = '';
-        googleTokenExpiresAt = 0;
-        clearGoogleDriveSession();
-      }
-    }
-
-    if (rememberedAuthorization) {
-      try {
-        await refreshGoogleAccessTokenSilently('startup');
-        folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName }];
-        fileInfoCache.clear();
-        await loadDirectory(GOOGLE_ROOT_FOLDER_ID, true);
-        return;
-      } catch (error) {
-        console.warn('Silent Auto Reconnect không thành công:', error);
-        updateGoogleAuthUi(false);
-      }
-    }
-
-    els.driveLogin.disabled = false;
-    els.folderTitle.textContent = 'Chưa kết nối Google Drive';
-    els.fileList.innerHTML = '<li class="empty">Nhấn “Kết nối Drive” để tiếp tục.</li>';
-  } catch (error) {
-    googleAuthReady = false;
-    googleTokenClient = null;
-    els.driveLogin.disabled = true;
-    els.folderTitle.textContent = 'Không thể tải Google Drive';
-    showToast(error && error.message ? error.message : 'Không tải được dịch vụ đăng nhập Google.', true);
-  }
-}
-
-async function requestGoogleDriveAccess() {
-  if (!googleAuthReady || !googleTokenClient) {
-    showToast('Dịch vụ đăng nhập Google chưa sẵn sàng.', true);
+  if (!hasGoogleApiKey()) {
+    els.driveStatus.classList.remove('connected');
+    els.driveStatus.lastElementChild.textContent = 'Thiếu API key';
+    els.folderTitle.textContent = 'Chưa cấu hình Google Drive API';
+    els.fileList.innerHTML = '<li class="empty">Hãy điền GOOGLE_API_KEY trong music.html một lần. Sau đó ứng dụng sẽ tự mở Drive, không cần đăng nhập.</li>';
+    showToast('Chưa có Google Drive API key. Hãy điền GOOGLE_API_KEY trong file.', true);
     return;
   }
 
-  els.driveLogin.disabled = true;
-
-  try {
-    await requestGoogleAccessToken({ interactive: true });
-    folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName }];
-    fileInfoCache.clear();
-    showToast('Đã kết nối Google Drive. Thiết bị sẽ tự kết nối lại ở lần sau.');
-    await loadDirectory(GOOGLE_ROOT_FOLDER_ID, true);
-  } catch (error) {
-    els.driveLogin.disabled = false;
-    updateGoogleAuthUi(false);
-    showToast('Không thể kết nối Google Drive hoặc thao tác đã bị hủy.', true);
-  }
-}
-
-function updateGoogleAuthUi(connected) {
-  els.driveStatus.classList.toggle('connected', connected);
-  els.driveStatus.lastElementChild.textContent = connected ? 'Drive trực tiếp' : 'Chưa kết nối Drive';
-  els.driveLogin.hidden = connected;
-  els.driveLogout.hidden = !connected;
-}
-
-function disconnectGoogleDrive() {
-  clearGoogleRefreshTimer();
-
-  if (googleAccessToken && window.google && google.accounts && google.accounts.oauth2) {
-    try { google.accounts.oauth2.revoke(googleAccessToken, () => {}); } catch (_) {}
-  }
-
-  googleAccessToken = '';
-  googleTokenExpiresAt = 0;
-  clearGoogleDriveSession();
-  forgetGoogleAuthorization();
+  rememberDriveResourceKey(GOOGLE_ROOT_FOLDER_ID, GOOGLE_ROOT_RESOURCE_KEY);
+  folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName, resourceKey: GOOGLE_ROOT_RESOURCE_KEY }];
   fileInfoCache.clear();
 
-  currentItems = [];
-  audioItems = [];
-  folderStack = [];
-  currentFolderId = '';
-  currentFolderName = '';
-
-  updateGoogleAuthUi(false);
-  els.folderTitle.textContent = 'Chưa kết nối Google Drive';
-  els.breadcrumb.textContent = 'Thư mục gốc';
-  els.fileList.innerHTML = '<li class="empty">Nhấn “Kết nối Drive” để tải thư viện trực tiếp.</li>';
-  els.playFolder.disabled = true;
-  els.playFolder.textContent = 'Phát tất cả';
-  showToast('Đã ngắt kết nối Google Drive và xóa ghi nhớ trên thiết bị này.');
+  try {
+    await loadDirectory(GOOGLE_ROOT_FOLDER_ID, true);
+    els.driveStatus.classList.add('connected');
+    els.driveStatus.lastElementChild.textContent = 'Drive tự động';
+  } catch (error) {
+    console.warn('Auto Drive:', error);
+    els.driveStatus.classList.remove('connected');
+    els.driveStatus.lastElementChild.textContent = 'Drive lỗi';
+    els.folderTitle.textContent = 'Không thể mở Google Drive';
+    showToast(error && error.message ? error.message : 'Không thể mở thư viện Drive.', true);
+  }
 }
 
-function hasValidGoogleDriveToken() {
-  return Boolean(
-    googleAccessToken &&
-    Date.now() < googleTokenExpiresAt - 30000
-  );
+function hasGoogleApiKey() {
+  const key = String(GOOGLE_API_KEY || '').trim();
+  return Boolean(key && !/^PASTE_|^YOUR_|API_KEY_HERE/i.test(key));
 }
 
-function requireGoogleDriveToken() {
-  if (hasValidGoogleDriveToken()) return;
-  throw new Error('Phiên Google Drive cần được làm mới.');
+function withGoogleApiKey(url) {
+  if (!hasGoogleApiKey()) throw new Error('Chưa cấu hình GOOGLE_API_KEY.');
+  const target = new URL(url, window.location.href);
+  target.searchParams.set('key', GOOGLE_API_KEY.trim());
+  return target.toString();
 }
 
+function resourceKeyHeader(fileId, resourceKey) {
+  const id = String(fileId || '').trim();
+  const key = String(resourceKey || '').trim();
+  return id && key ? `${id}/${key}` : '';
+}
+
+function getDriveResourceKey(fileId, explicitKey = '') {
+  const key = String(explicitKey || driveResourceKeyMap.get(String(fileId || '')) || '').trim();
+  return key;
+}
+
+function rememberDriveResourceKey(fileId, resourceKey) {
+  const id = String(fileId || '').trim();
+  const key = String(resourceKey || '').trim();
+  if (id && key) driveResourceKeyMap.set(id, key);
+}
 
 async function readDriveErrorResponse(response) {
   let data = null;
@@ -3548,101 +3242,72 @@ function isDriveAuthenticationError(status, reasons = []) {
 }
 
 async function driveFetch(url, options = {}, externalSignal) {
-  await ensureGoogleDriveToken({ reason: 'drive-request' });
+  if (!hasGoogleApiKey()) throw new Error('Chưa cấu hình GOOGLE_API_KEY.');
 
-  let authRetryUsed = false;
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromOutside = () => controller.abort();
 
-  while (true) {
-    const controller = new AbortController();
-    let timedOut = false;
-    const abortFromOutside = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) throw createAbortError();
+    externalSignal.addEventListener('abort', abortFromOutside, { once: true });
+  }
 
-    if (externalSignal) {
-      if (externalSignal.aborted) throw createAbortError();
-      externalSignal.addEventListener('abort', abortFromOutside, { once: true });
-    }
+  const timeoutMs = Math.max(3000, Number(options.timeoutMs || REQUEST_TIMEOUT_MS));
+  const timer = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
 
-    const timeoutMs = Math.max(3000, Number(options.timeoutMs || REQUEST_TIMEOUT_MS));
-    const timer = window.setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, timeoutMs);
+  const headers = new Headers(options.headers || {});
 
-    const headers = new Headers(options.headers || {});
-    headers.set('Authorization', `Bearer ${googleAccessToken}`);
+  try {
+    const fetchOptions = { ...options, headers, signal: controller.signal, cache: 'no-store' };
+    delete fetchOptions.timeoutMs;
+    const response = await fetch(withGoogleApiKey(url), fetchOptions);
 
-    try {
-      const fetchOptions = { ...options, headers, signal: controller.signal, cache: 'no-store' };
-      delete fetchOptions.timeoutMs;
-      const response = await fetch(url, fetchOptions);
+    if (!response.ok) {
+      const details = await readDriveErrorResponse(response);
 
-      if (!response.ok) {
-        const details = await readDriveErrorResponse(response);
-
-        if (isDriveAuthenticationError(details.status, details.reasons)) {
-          if (!authRetryUsed && hasRememberedGoogleAuthorization()) {
-            authRetryUsed = true;
-            googleAccessToken = '';
-            googleTokenExpiresAt = 0;
-            clearGoogleDriveSession();
-
-            try {
-              await refreshGoogleAccessTokenSilently('force');
-              continue; // Phát lại chính request vừa lỗi, tối đa một lần.
-            } catch (refreshError) {
-              updateGoogleAuthUi(false);
-              throw new Error('Google cần xác minh lại tài khoản. Hãy nhấn “Kết nối Drive”.');
-            }
-          }
-
-          googleAccessToken = '';
-          googleTokenExpiresAt = 0;
-          clearGoogleDriveSession();
-          updateGoogleAuthUi(false);
-          throw new Error('Google cần xác minh lại tài khoản. Hãy nhấn “Kết nối Drive”.');
+      if (details.status === 401 || details.status === 403) {
+        const limited = details.reasons.some(reason =>
+          ['rateLimitExceeded', 'userRateLimitExceeded', 'quotaExceeded'].includes(reason)
+        );
+        if (limited) {
+          throw new RetryableRequestError('Google Drive đang giới hạn số yêu cầu. Ứng dụng sẽ thử lại.', details.status);
         }
-
-        if (details.status === 403) {
-          const limited = details.reasons.some(reason =>
-            ['rateLimitExceeded', 'userRateLimitExceeded'].includes(reason)
-          );
-          if (limited) {
-            throw new RetryableRequestError(
-              'Google Drive đang giới hạn số yêu cầu. Ứng dụng sẽ thử lại.',
-              403
-            );
-          }
-          throw new Error(details.message || 'Không có quyền truy cập file hoặc thư mục Google Drive này.');
-        }
-
-        if (details.status === 408 || details.status === 429 || details.status >= 500) {
-          throw new RetryableRequestError(details.message, details.status);
-        }
-
-        throw new Error(details.message || `Google Drive trả về HTTP ${details.status}.`);
-      }
-
-      networkState.lastSuccessAt = Date.now();
-      networkState.failures = Math.max(0, networkState.failures - 1);
-      return response;
-    } catch (error) {
-      if (externalSignal && externalSignal.aborted) throw createAbortError();
-      if (error && error.name === 'AbortError') {
-        if (timedOut) throw new RetryableRequestError('Google Drive phản hồi quá chậm.', 408);
-        throw createAbortError();
-      }
-      if (error instanceof RetryableRequestError) throw error;
-      if (error instanceof TypeError) {
-        throw new RetryableRequestError(
-          navigator.onLine ? 'Không thể kết nối Google Drive.' : 'Thiết bị đang mất kết nối mạng.',
-          0
+        throw new Error(
+          'Không đọc được thư mục công khai. Kiểm tra: quyền “Bất kỳ ai có đường liên kết”, API key, giới hạn domain/API và resource key (nếu có).'
         );
       }
-      throw error;
-    } finally {
-      clearTimeout(timer);
-      if (externalSignal) externalSignal.removeEventListener('abort', abortFromOutside);
+
+      if (details.status === 408 || details.status === 429 || details.status >= 500) {
+        throw new RetryableRequestError(details.message, details.status);
+      }
+
+      throw new Error(details.message || `Google Drive trả về HTTP ${details.status}.`);
     }
+
+    networkState.lastSuccessAt = Date.now();
+    networkState.failures = Math.max(0, networkState.failures - 1);
+    return response;
+  } catch (error) {
+    if (externalSignal && externalSignal.aborted) throw createAbortError();
+    if (error && error.name === 'AbortError') {
+      if (timedOut) throw new RetryableRequestError('Google Drive phản hồi quá chậm.', 408);
+      throw createAbortError();
+    }
+    if (error instanceof RetryableRequestError) throw error;
+    if (error instanceof TypeError) {
+      throw new RetryableRequestError(
+        navigator.onLine ? 'Không thể kết nối Google Drive.' : 'Thiết bị đang mất kết nối mạng.',
+        0
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    if (externalSignal) externalSignal.removeEventListener('abort', abortFromOutside);
   }
 }
 
@@ -3669,7 +3334,7 @@ async function driveListFolder(
     params.set('q', query);
     params.set(
       'fields',
-      'nextPageToken,files(id,name,mimeType,size,modifiedTime,parents)'
+      'nextPageToken,files(id,name,mimeType,size,modifiedTime,parents,resourceKey)'
     );
     params.set('pageSize', '1000');
     params.set('orderBy', 'name_natural');
@@ -3692,7 +3357,7 @@ async function driveListFolder(
     const response =
       await driveFetch(
         `${DRIVE_API_BASE}/files?${params.toString()}`,
-        {},
+        { headers: resourceKeyHeader(folderId, getDriveResourceKey(folderId, folderId === GOOGLE_ROOT_FOLDER_ID ? GOOGLE_ROOT_RESOURCE_KEY : '')) ? { 'X-Goog-Drive-Resource-Keys': resourceKeyHeader(folderId, getDriveResourceKey(folderId, folderId === GOOGLE_ROOT_FOLDER_ID ? GOOGLE_ROOT_RESOURCE_KEY : '')) } : {} },
         signal
       );
 
@@ -3711,15 +3376,18 @@ async function driveListFolder(
     'application/vnd.google-apps.folder';
 
   const files =
-    allFiles.map(file => ({
-      id: file.id,
-      name: file.name,
-      mimeType: file.mimeType,
-      size: Number(file.size || 0),
-      isFolder:
-        file.mimeType === folderMime,
-      folderId
-    }));
+    allFiles.map(file => {
+      rememberDriveResourceKey(file.id, file.resourceKey || '');
+      return {
+        id: file.id,
+        name: file.name,
+        mimeType: file.mimeType,
+        size: Number(file.size || 0),
+        isFolder: file.mimeType === folderMime,
+        folderId,
+        resourceKey: file.resourceKey || getDriveResourceKey(file.id)
+      };
+    });
 
   files.sort((a, b) => {
     if (a.isFolder !== b.isFolder) {
@@ -3744,8 +3412,8 @@ async function driveListFolder(
   if (!folderName) {
     const folderResponse =
       await driveFetch(
-        `${DRIVE_API_BASE}/files/${encodeURIComponent(folderId)}?fields=id,name,parents&supportsAllDrives=true`,
-        {},
+        `${DRIVE_API_BASE}/files/${encodeURIComponent(folderId)}?fields=id,name,parents,resourceKey&supportsAllDrives=true`,
+        { headers: resourceKeyHeader(folderId, getDriveResourceKey(folderId, folderId === GOOGLE_ROOT_FOLDER_ID ? GOOGLE_ROOT_RESOURCE_KEY : '')) ? { 'X-Goog-Drive-Resource-Keys': resourceKeyHeader(folderId, getDriveResourceKey(folderId, folderId === GOOGLE_ROOT_FOLDER_ID ? GOOGLE_ROOT_RESOURCE_KEY : '')) } : {} },
         signal
       );
 
@@ -3777,10 +3445,12 @@ async function driveListFolder(
     folderStack[
       folderStack.length - 1
     ].name = folderName;
+    folderStack[folderStack.length - 1].resourceKey = getDriveResourceKey(folderId);
   } else {
     folderStack.push({
       id: folderId,
-      name: folderName
+      name: folderName,
+      resourceKey: getDriveResourceKey(folderId, folderId === GOOGLE_ROOT_FOLDER_ID ? GOOGLE_ROOT_RESOURCE_KEY : '')
     });
   }
 
@@ -3802,17 +3472,20 @@ async function driveListFolder(
 async function driveGetFileInfo(
   fileId,
   folderId,
-  signal
+  signal,
+  resourceKey = ''
 ) {
   const response =
     await driveFetch(
-      `${DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size,modifiedTime,parents&supportsAllDrives=true`,
-      {},
+      `${DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size,modifiedTime,parents,resourceKey&supportsAllDrives=true`,
+      { headers: resourceKeyHeader(fileId, getDriveResourceKey(fileId, resourceKey)) ? { 'X-Goog-Drive-Resource-Keys': resourceKeyHeader(fileId, getDriveResourceKey(fileId, resourceKey)) } : {} },
       signal
     );
 
   const file =
     await response.json();
+
+  rememberDriveResourceKey(fileId, file.resourceKey || resourceKey || '');
 
   const size =
     Number(file.size || 0);
@@ -3853,7 +3526,8 @@ async function driveGetFileInfo(
     chunkSize: DRIVE_CHUNK_SIZE,
     totalChunks,
     modifiedTime:
-      file.modifiedTime || ''
+      file.modifiedTime || '',
+    resourceKey: file.resourceKey || getDriveResourceKey(fileId, resourceKey) || ''
   };
 }
 function showRecoveryStatus(message) {
@@ -4129,14 +3803,6 @@ async function loadDirectory(
   folderId,
   reset = false
 ) {
-  try {
-    await ensureGoogleDriveToken({ reason: 'load-directory' });
-  } catch (_) {
-    els.fileList.innerHTML =
-      '<li class="empty">Hãy kết nối Google Drive trước.</li>';
-    return;
-  }
-
   folderId =
     folderId ||
     GOOGLE_ROOT_FOLDER_ID;
@@ -4342,9 +4008,8 @@ async function getFileInfoCached(
     {
       fileId: file.id,
       folderId:
-        file.folderId ||
-        currentFolderId ||
-        ''
+        file.folderId,
+      resourceKey: file.resourceKey || ''
     },
     signal
   ).then(data => data.file);
@@ -4373,7 +4038,10 @@ async function fetchTrackChunk(file, info, index, signal) {
   }
   const response = await driveFetch(
     `${DRIVE_API_BASE}/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`,
-    { method: 'GET', headers: { Range: `bytes=${startByte}-${endByte}` } },
+    { method: 'GET', headers: {
+      Range: `bytes=${startByte}-${endByte}`,
+      ...(resourceKeyHeader(file.id, info.resourceKey || file.resourceKey) ? { 'X-Goog-Drive-Resource-Keys': resourceKeyHeader(file.id, info.resourceKey || file.resourceKey) } : {})
+    } },
     signal
   );
   if (response.status !== 200 && response.status !== 206) throw new Error(`Máy chủ trả trạng thái ${response.status}.`);
