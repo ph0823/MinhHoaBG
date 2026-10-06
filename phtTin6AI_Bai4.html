@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI6 Bài 4 - Đặc vụ Lá Chắn</title>
+<style>
+:root{
+  --navy:#17365d;--blue:#2468d7;--teal:#0f9d8a;--green:#2e7d32;--lime:#43a047;
+  --orange:#f59e0b;--red:#c62828;--purple:#7c3aed;--ink:#23384d;--muted:#6b7e90;
+  --bg:#eef6fb;--card:#fff;--line:#d7e4ee;--soft:#f7fbff;--gold:#ffca28;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:
+radial-gradient(circle at 8% 5%,rgba(15,157,138,.12),transparent 24%),
+radial-gradient(circle at 94% 8%,rgba(124,58,237,.10),transparent 25%),
+linear-gradient(180deg,#f9fcff,#edf6fb);min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.app{max-width:1240px;margin:0 auto;padding:14px}
+.hero{border-radius:24px;overflow:hidden;background:linear-gradient(120deg,#17365d,#2468d7 53%,#0f9d8a);color:white;box-shadow:0 16px 45px rgba(20,58,94,.18)}
+.hero-inner{padding:22px 26px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+.hero h1{margin:0;font-size:32px;line-height:1.1}
+.hero p{margin:8px 0 0;color:#eaf6ff;line-height:1.5}
+.shield{font-size:76px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.18))}
+.card{background:rgba(255,255,255,.98);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 10px 30px rgba(23,54,93,.08);margin-top:14px}
+.login-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+.intro{padding:22px;background:linear-gradient(155deg,#eefaf7,#f3f7ff);border:1px solid #cce9e3;border-radius:18px;min-height:100%}
+.intro h2{color:var(--navy);margin:4px 0 10px}
+.mission-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini{background:white;border:1px solid var(--line);border-radius:13px;padding:11px;font-size:14px}
+.form h2{margin-top:0;color:var(--navy)}
+.field{margin:10px 0}
+.field label{font-weight:800;display:block;margin-bottom:6px}
+input,select{width:100%;border:1.5px solid #b8cbd9;border-radius:11px;background:white;padding:11px 12px;color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:#5fa5f6;box-shadow:0 0 0 4px rgba(95,165,246,.14)}
+.btn{border:0;border-radius:11px;padding:11px 16px;font-weight:900;background:var(--blue);color:white;box-shadow:0 5px 14px rgba(36,104,215,.15)}
+.btn.green{background:var(--teal)} .btn.orange{background:var(--orange);color:#573800}
+.btn.purple{background:var(--purple)} .btn.red{background:var(--red)} .btn.gray{background:#607d8b}
+.btn.light{background:#eef4f8;color:#334b60;border:1px solid #d5e1ea;box-shadow:none}
+.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.status{margin-top:9px;padding:9px 11px;border-radius:10px;font-size:13px;background:#eef3f7;color:#536979}
+.status.ok{background:#e8f5e9;color:#1b5e20}.status.err{background:#ffebee;color:#a11a1a}
+.gamebar{position:sticky;top:6px;z-index:20}
+.gamebar-inner{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.player{display:flex;gap:8px;flex-wrap:wrap}
+.badge{padding:7px 10px;border-radius:999px;background:#eef4f9;color:#425b70;font-size:13px;font-weight:800}
+.badge.strong{background:#e5f2ff;color:#0d4f9a}.badge.gold{background:#fff4c2;color:#765300}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--muted);margin-top:12px}
+.progress-shell{height:12px;background:#dfe9f0;border-radius:999px;overflow:hidden;margin-top:6px}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#0f9d8a,#43a047);transition:.25s}
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.map-btn{border:1px solid var(--line);border-radius:13px;padding:10px 6px;background:white;color:#536a7d;font-weight:900}
+.map-btn.active{border-color:var(--blue);background:#eaf4ff;color:#0d4f9a}
+.map-btn.done{border-color:#7dceb9;background:#e9f8f4;color:#12695d}
+.map-btn.locked{opacity:.6}
+.mission{position:relative;overflow:hidden}
+.mission::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(var(--teal),var(--blue))}
+.mission h2{margin:0;color:var(--navy);font-size:28px}
+.chip{display:inline-block;padding:6px 10px;border-radius:999px;background:#e8f6f3;color:#0c7467;font-size:12px;font-weight:900;letter-spacing:.3px;margin-bottom:8px}
+.goal{border-left:5px solid var(--teal);background:#f0fbf8;padding:11px 13px;border-radius:0 12px 12px 0;margin:12px 0 16px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.item{border:1px solid var(--line);border-radius:15px;background:white;padding:13px}
+.item h4{margin:6px 0;color:var(--navy)}
+.icon{font-size:36px}
+.choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}
+.choice{border:1px solid #cbd9e4;background:#f8fbfd;color:#4b6275;border-radius:10px;padding:9px 6px;font-weight:800}
+.choice.selected{background:#e5f2ff;border-color:#67a8ef;color:#0d4f9a}
+.wordbank{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.word{border:1px solid #b9d6ed;border-radius:999px;background:#edf7ff;color:#174f7f;padding:8px 11px;font-weight:900}
+.fill-line{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin:10px 0}
+.fill-line select{min-width:0}
+.classify-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.classify-card .choice-row{grid-template-columns:1fr 1fr 1fr}
+.scenario{border:1px solid var(--line);border-radius:15px;background:#fff;padding:15px;margin:12px 0}
+.scenario-head{display:flex;gap:10px;align-items:center}
+.scenario-head .icon{width:48px;height:48px;border-radius:13px;background:#eef6ff;display:grid;place-items:center;font-size:27px}
+.option{display:block;border:1px solid #d5e1ea;border-radius:11px;padding:10px;margin:7px 0;background:white}
+.option input{width:auto;margin-right:8px}
+.sequence{display:grid;gap:8px}
+.seq{display:grid;grid-template-columns:38px 1fr 80px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px;background:white}
+.seq-no{width:30px;height:30px;border-radius:50%;background:#e6f3ff;color:#0d4f9a;font-weight:900;display:grid;place-items:center}
+.seq button{border:1px solid #d3e0ea;background:#f4f8fb;border-radius:8px;width:34px;height:30px;font-weight:900}
+.footer-nav{border-top:1px solid var(--line);padding-top:14px;margin-top:18px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.complete{border:2px solid #9ed9c9;background:#effaf7;border-radius:16px;padding:15px;margin-top:14px}
+.result{background:linear-gradient(150deg,#fff8d9,#eef9ff);border:2px solid #f0cc57}
+.score-circle{width:150px;height:150px;border-radius:50%;margin:10px auto;background:white;border:12px solid var(--gold);display:grid;place-items:center;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+.score-circle b{font-size:40px;color:var(--navy)} .score-circle span{font-size:13px;color:var(--muted)}
+.stars{font-size:38px;letter-spacing:4px;text-align:center}
+.review{border:1px solid var(--line);border-radius:13px;padding:11px;margin:8px 0;background:#fff}
+.review.good{border-color:#9ed9b2;background:#f0faf3}.review.bad{border-color:#f2b8bf;background:#fff3f5}
+.teacher-table{width:100%;border-collapse:collapse;margin-top:12px}
+.teacher-table th,.teacher-table td{border:1px solid var(--line);padding:8px;font-size:13px;vertical-align:top}
+.teacher-table th{background:#edf6ff;color:#264c6e}
+.table-wrap{overflow:auto}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+.kpi{border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center;background:#f9fbfd}
+.kpi b{display:block;font-size:23px;color:var(--navy)}
+.notice{padding:11px 13px;border-radius:12px;background:#fff8e5;border:1px solid #ffd78a;color:#704a00;line-height:1.45}
+.footer-brand{text-align:center;color:#60778a;font-weight:800;font-size:13px;padding:18px 0}
+@media(max-width:850px){.login-grid,.grid2,.grid3{grid-template-columns:1fr}.map{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.app{padding:8px}.hero-inner{grid-template-columns:1fr}.shield{display:none}.hero h1{font-size:25px}.mission-list{grid-template-columns:1fr}.choice-row,.classify-card .choice-row{grid-template-columns:1fr}.gamebar-inner{grid-template-columns:1fr}.seq{grid-template-columns:34px 1fr 74px}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1>🛡️ ĐẶC VỤ LÁ CHẮN · AI6 BÀI 4</h1>
+      <p>Quyền riêng tư và bảo vệ dữ liệu cá nhân trong thời đại AI · YCCĐ 6.A3.3, 6.A3.4</p>
+    </div>
+    <div class="shield">🔐</div>
+  </div>
+</header>
+
+<section id="loginScreen" class="card">
+  <div class="login-grid">
+    <div class="intro">
+      <span class="chip">NHIỆM VỤ PHÒNG MÁY</span>
+      <h2>Thành phố Số đang cần em bảo vệ dữ liệu!</h2>
+      <p>Hoàn thành 5 nhiệm vụ để nhận danh hiệu <b>Đặc vụ Lá Chắn</b>. Hệ thống tự chấm sau khi em hoàn thành và nộp phiếu.</p>
+      <div class="mission-list">
+        <div class="mini">🪪 <b>1. Máy quét dữ liệu</b><br>Nhận diện dữ liệu cá nhân.</div>
+        <div class="mini">🧩 <b>2. Mật mã quyền riêng tư</b><br>Điền từ khóa đúng.</div>
+        <div class="mini">🚦 <b>3. Cổng chia sẻ</b><br>Phân loại theo mức an toàn.</div>
+        <div class="mini">🕵️ <b>4. Phòng điều tra</b><br>Xử lí tình huống thực tế.</div>
+        <div class="mini">🚨 <b>5. Khiên khẩn cấp</b><br>Sắp xếp 3 bước ứng phó.</div>
+      </div>
+      <div class="notice" style="margin-top:12px"><b>Quy tắc:</b> Không nhập mật khẩu, địa chỉ nhà, số điện thoại thật hay dữ liệu nhạy cảm vào phiếu.</div>
+    </div>
+    <div class="form">
+      <h2>Thông tin đặc vụ</h2>
+      <div class="field"><label>Lớp</label><select id="studentClass">
+        <option value="">-- Chọn lớp --</option>
+        <option>6A8</option><option>6A9</option><option>6A10</option><option>6A11</option><option>6A12</option><option>6A13</option><option>6A14</option><option>6A15</option><option>6A16</option>
+      </select></div>
+      <div class="field"><label>STT</label><select id="studentNo"><option value="">-- Chọn STT --</option></select></div>
+      <div class="field"><label>Họ và tên</label><input id="studentName" maxlength="60" placeholder="Nhập họ và tên"></div>
+      <div id="firebaseStatus" class="status hidden"></div>
+      <div class="actions">
+        <button class="btn green" id="startBtn">Bắt đầu / Tiếp tục</button>
+        <button class="btn gray" id="teacherBtn">Giáo viên</button>
+      </div>
+      <div id="teacherLogin" class="hidden" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+        <h3>Đăng nhập giáo viên</h3>
+        <div class="field"><label>Email</label><input id="teacherEmail" type="email" autocomplete="username"></div>
+        <div class="field"><label>Mật khẩu</label><input id="teacherPassword" type="password" autocomplete="current-password"></div>
+        <div class="actions"><button class="btn" id="teacherLoginBtn">Đăng nhập</button><button class="btn light" id="teacherCancelBtn">Hủy</button></div>
+        <div id="teacherLoginStatus" class="status hidden"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="studentScreen" class="hidden">
+  <div class="card gamebar">
+    <div class="gamebar-inner">
+      <div>
+        <div class="player">
+          <span id="studentBadge" class="badge strong"></span>
+          <span id="saveBadge" class="badge">Đã lưu</span>
+          <span id="pointBadge" class="badge gold">⭐ 0 sao nhiệm vụ</span>
+        </div>
+        <div class="progress-label"><span>Tiến độ bảo vệ Thành phố Số</span><span id="progressText">0/5</span></div>
+        <div class="progress-shell"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="missionMap" class="map"></div>
+      </div>
+      <div class="actions"><button class="btn green" id="quickSubmitBtn">Nộp & xem kết quả</button><button class="btn light" id="backBtn">Đổi học sinh</button></div>
+    </div>
+  </div>
+  <div id="missionCard" class="card mission"></div>
+</section>
+
+<section id="teacherScreen" class="card hidden">
+  <div class="actions" style="justify-content:space-between">
+    <div><h2 style="margin:0;color:var(--navy)">Bảng theo dõi · AI6 Bài 4</h2><div style="color:var(--muted)">Điểm tự động, tiến độ và kết quả học sinh.</div></div>
+    <button class="btn light" id="teacherLogoutBtn">Đăng xuất</button>
+  </div>
+  <div class="actions" style="margin-top:12px">
+    <select id="teacherClassFilter" style="width:auto"><option value="all">Tất cả lớp</option><option>6A8</option><option>6A9</option><option>6A10</option><option>6A11</option><option>6A12</option><option>6A13</option><option>6A14</option><option>6A15</option><option>6A16</option></select>
+    <button class="btn purple" id="teacherRefreshBtn">Làm mới</button>
+  </div>
+  <div class="kpis"><div class="kpi"><b id="kpiStudents">0</b>Học sinh</div><div class="kpi"><b id="kpiDone">0</b>Đã nộp</div><div class="kpi"><b id="kpiAvg">0</b>Điểm TB</div><div class="kpi"><b id="kpiHigh">0</b>≥ 80 điểm</div></div>
+  <div class="table-wrap"><table class="teacher-table"><thead><tr><th>Lớp</th><th>STT</th><th>Họ tên</th><th>Tiến độ</th><th>Điểm</th><th>Danh hiệu</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead><tbody id="teacherBody"></tbody></table></div>
+</section>
+
+<div class="footer-brand">Thầy Tin - Hà Huy Tập</div>
+</div>
+
+<script>
+"use strict";
+var WORKSHEET_ID="ai6_b4_privacy_guard_game";
+var VERSION="1.0";
+var STORAGE_PREFIX="worksheet_"+WORKSHEET_ID+"_local_";
+var SESSION_KEY="worksheet_"+WORKSHEET_ID+"_active_student";
+var firebaseConfig={
+ apiKey:"AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",
+ authDomain:"luyen-go.firebaseapp.com",
+ databaseURL:"https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"luyen-go",storageBucket:"luyen-go.firebasestorage.app",
+ messagingSenderId:"79498233127",appId:"1:79498233127:web:a6c2e2bab71ba737ca9502"
+};
+var TEACHERS_PATH="app_secure/teachers";
+var RESULTS_PATH="worksheets/"+WORKSHEET_ID+"/results";
+var database=null,firebaseUser=null,firebaseReady=false,teacherMode=false,ownResultRef=null,resultsRef=null,teacherRecords={},teacherListener=null;
+var currentRecord=null,currentKey="",currentMission=0,saveTimer=null;
+
+var missionTitles=["Máy quét dữ liệu","Mật mã riêng tư","Cổng chia sẻ","Phòng điều tra","Khiên khẩn cấp"];
+var personalItems=[
+ {id:"name",icon:"🪪",t:"Họ và tên",c:"personal"},
+ {id:"voice",icon:"🎙️",t:"Giọng nói",c:"personal"},
+ {id:"phone",icon:"📱",t:"Số điện thoại",c:"personal"},
+ {id:"location",icon:"📍",t:"Vị trí hiện tại",c:"personal"},
+ {id:"photo",icon:"📷",t:"Ảnh khuôn mặt",c:"personal"},
+ {id:"score",icon:"📝",t:"Điểm kiểm tra",c:"personal"},
+ {id:"weather",icon:"🌤️",t:"Thời tiết hôm nay",c:"not"},
+ {id:"pi",icon:"➗",t:"Số π ≈ 3,14",c:"not"}
+];
+var classifyItems=[
+ {id:"book",t:"Sở thích đọc sách",c:"share"},
+ {id:"friendphoto",t:"Ảnh chụp cùng bạn",c:"ask"},
+ {id:"home",t:"Địa chỉ nhà",c:"no"},
+ {id:"phone",t:"Số điện thoại cá nhân",c:"no"},
+ {id:"score",t:"Điểm kiểm tra của em",c:"ask"},
+ {id:"school",t:"Tên trường",c:"ask"},
+ {id:"location",t:"Vị trí hiện tại",c:"no"},
+ {id:"voice",t:"Bản ghi giọng nói",c:"ask"}
+];
+var fillAnswers={a2_1:"dữ liệu cá nhân",a2_2:"quyền riêng tư",a2_3:"xin phép",a2_4:"dừng chia sẻ"};
+var correctSequence=["Dừng chia sẻ","Báo cho cha mẹ/thầy cô","Báo cáo trên nền tảng"];
+function now(){return Date.now()}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function localKey(k){return STORAGE_PREFIX+k}
+function studentKey(c,n){return String(c)+"_"+String(n)}
+function saveLocal(){try{localStorage.setItem(localKey(currentKey),JSON.stringify(currentRecord))}catch(e){}}
+function getLocal(k){try{return JSON.parse(localStorage.getItem(localKey(k))||"null")}catch(e){return null}}
+function setStatus(id,msg,type){var e=document.getElementById(id);if(!msg){e.className="status hidden";e.textContent="";return}e.className="status "+(type||"");e.textContent=msg}
+function formatTime(ts){if(!ts)return "-";try{return new Date(Number(ts)).toLocaleString("vi-VN")}catch(e){return "-"}}
+function readSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){return null}}
+function writeSession(c,n,u){try{localStorage.setItem(SESSION_KEY,JSON.stringify({className:String(c),studentNo:Number(n),uid:u,updatedAt:now()}))}catch(e){}}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
+
+for(var i=1;i<=60;i++){var o=document.createElement("option");o.textContent=i;o.value=i;document.getElementById("studentNo").appendChild(o)}
+
+function newRecord(c,n,name){
+ return {className:String(c),studentNo:Number(n),name:String(name),answers:{},done:[false,false,false,false,false],currentMission:0,sequence:shuffle(correctSequence.slice()),createdAt:now(),updatedAt:now(),submittedAt:null,score:null,stars:0,title:""};
+}
+function mergeRecord(local,remote,c,n,name){
+ var r=local&&remote?(Number(remote.updatedAt||0)>Number(local.updatedAt||0)?remote:local):(remote||local||newRecord(c,n,name));
+ r.className=String(c);r.studentNo=Number(n);r.name=String(name);r.answers=r.answers||{};
+ if(!Array.isArray(r.done)||r.done.length!==5)r.done=[false,false,false,false,false];
+ if(!Array.isArray(r.sequence)||r.sequence.length!==3)r.sequence=shuffle(correctSequence.slice());
+ r.currentMission=Math.max(0,Math.min(4,Number(r.currentMission)||0));return r;
+}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+
+function firebaseAvailable(){return typeof firebase!=="undefined"&&firebase.auth&&firebase.database}
+async function setAnon(user){firebaseUser=user;database=firebase.database();ownResultRef=database.ref(RESULTS_PATH+"/"+user.uid);firebaseReady=true;teacherMode=false;return user}
+async function prepareStudentSession(c,n){
+ if(!firebaseAvailable())return null;
+ if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+ var auth=firebase.auth();database=firebase.database();
+ if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut();
+ var sess=readSession(),wantedC=String(c),wantedN=Number(n);
+ if(auth.currentUser&&auth.currentUser.isAnonymous){
+  var uid=auth.currentUser.uid,match=sess&&sess.uid===uid&&sess.className===wantedC&&Number(sess.studentNo)===wantedN;
+  if(!match){try{var s=await database.ref(RESULTS_PATH+"/"+uid).once("value"),rv=s.val();match=!!(rv&&String(rv.className)===wantedC&&Number(rv.studentNo)===wantedN)}catch(e){}}
+  if(match){await setAnon(auth.currentUser);writeSession(wantedC,wantedN,uid);return auth.currentUser}
+  await auth.signOut();
+ }
+ clearSession();var res=await auth.signInAnonymously();await setAnon(res.user);writeSession(wantedC,wantedN,res.user.uid);return res.user;
+}
+async function loadRemote(){if(!firebaseReady||!ownResultRef)return null;try{var s=await ownResultRef.once("value");return s.val()||null}catch(e){return null}}
+async function syncFirebase(){
+ if(teacherMode||!firebaseReady||!ownResultRef||!currentRecord)return false;
+ try{var p=clone(currentRecord);p.ownerUid=firebaseUser.uid;p.updatedAt=firebase.database.ServerValue.TIMESTAMP;p.meta={worksheetId:WORKSHEET_ID,version:VERSION};await ownResultRef.set(p);return true}catch(e){return false}
+}
+function scheduleSave(){
+ if(!currentRecord||currentRecord.submittedAt)return;
+ currentRecord.updatedAt=now();saveLocal();var b=document.getElementById("saveBadge");if(b)b.textContent="Đang lưu...";
+ clearTimeout(saveTimer);saveTimer=setTimeout(async function(){var ok=await syncFirebase();if(b)b.textContent=ok?"Đã lưu & đồng bộ":"Đã lưu trên máy"},450)
+}
+async function forceSave(){if(!currentRecord)return;clearTimeout(saveTimer);currentRecord.updatedAt=now();saveLocal();var ok=await syncFirebase();var b=document.getElementById("saveBadge");if(b)b.textContent=ok?"Đã lưu & đồng bộ":"Đã lưu trên máy"}
+
+function filled(v){return String(v==null?"":v).trim()!==""}
+function missionComplete(idx){
+ var a=currentRecord.answers||{};
+ if(idx===0)return personalItems.every(function(x){return filled(a["m1_"+x.id])});
+ if(idx===1)return Object.keys(fillAnswers).every(function(k){return filled(a[k])});
+ if(idx===2)return classifyItems.every(function(x){return filled(a["m3_"+x.id])});
+ if(idx===3)return filled(a.m4_s1)&&filled(a.m4_s2)&&filled(a.m4_s3)&&filled(a.m4_s4);
+ if(idx===4)return Array.isArray(currentRecord.sequence)&&currentRecord.sequence.length===3&&filled(a.m5_q1)&&filled(a.m5_q2)&&filled(a.m5_q3);
+ return false;
+}
+function updateDone(){for(var i=0;i<5;i++)currentRecord.done[i]=missionComplete(i)}
+function calcScore(r){
+ var a=r.answers||{},correct=0,total=0,details=[];
+ personalItems.forEach(function(x){total++;var ok=a["m1_"+x.id]===x.c;if(ok)correct++;details.push({label:"Máy quét: "+x.t,ok:ok,ans:a["m1_"+x.id],correct:x.c})});
+ Object.keys(fillAnswers).forEach(function(k){total++;var ok=a[k]===fillAnswers[k];if(ok)correct++;details.push({label:"Điền khuyết "+k.replace("a2_",""),ok:ok,ans:a[k],correct:fillAnswers[k]})});
+ classifyItems.forEach(function(x){total++;var ok=a["m3_"+x.id]===x.c;if(ok)correct++;details.push({label:"Phân loại: "+x.t,ok:ok,ans:a["m3_"+x.id],correct:x.c})});
+ var scen=[["m4_s1","stop"],["m4_s2","ask"],["m4_s3","no"],["m4_s4","report"]];
+ scen.forEach(function(x,idx){total++;var ok=a[x[0]]===x[1];if(ok)correct++;details.push({label:"Tình huống "+(idx+1),ok:ok,ans:a[x[0]],correct:x[1]})});
+ total++;var seqOk=JSON.stringify(r.sequence)===JSON.stringify(correctSequence);if(seqOk)correct++;details.push({label:"3 bước ứng phó",ok:seqOk,ans:(r.sequence||[]).join(" → "),correct:correctSequence.join(" → ")});
+ var exit=[["m5_q1","B"],["m5_q2","C"],["m5_q3","A"]];
+ exit.forEach(function(x,idx){total++;var ok=a[x[0]]===x[1];if(ok)correct++;details.push({label:"Exit ticket "+(idx+1),ok:ok,ans:a[x[0]],correct:x[1]})});
+ var score=Math.round(correct/total*100);
+ var stars=score>=90?5:score>=80?4:score>=65?3:score>=50?2:1;
+ var title=score>=90?"ĐẶC VỤ LÁ CHẮN XUẤT SẮC":score>=80?"ĐẶC VỤ LÁ CHẮN":score>=65?"NGƯỜI BẢO VỆ DỮ LIỆU":score>=50?"TẬP SỰ AN TOÀN SỐ":"CẦN LUYỆN THÊM";
+ return {correct:correct,total:total,score:score,stars:stars,title:title,details:details};
+}
+function renderMap(){
+ updateDone();var html="";for(var i=0;i<5;i++){var c="map-btn";if(i===currentMission)c+=" active";if(currentRecord.done[i])c+=" done";html+='<button class="'+c+'" data-map="'+i+'">'+(i+1)+". "+missionTitles[i]+"</button>"}document.getElementById("missionMap").innerHTML=html;
+ var d=currentRecord.done.filter(function(x){return x}).length;document.getElementById("progressBar").style.width=(d/5*100)+"%";document.getElementById("progressText").textContent=d+"/5";
+ document.getElementById("pointBadge").textContent="⭐ "+d+" sao nhiệm vụ";
+ var n=document.querySelectorAll("[data-map]");for(i=0;i<n.length;i++)n[i].onclick=function(){currentMission=Number(this.getAttribute("data-map"));currentRecord.currentMission=currentMission;renderStudent();window.scrollTo(0,0)}
+}
+function selectButtons(prefix,items){
+ var h='<div class="choice-row">';items.forEach(function(o){h+='<button type="button" class="choice" data-set="'+esc(prefix)+'" data-val="'+esc(o.v)+'">'+esc(o.t)+'</button>'});return h+"</div>"
+}
+function renderM1(){
+ var a=currentRecord.answers||{},h='<span class="chip">NHIỆM VỤ 1 · MÁY QUÉT DỮ LIỆU</span><h2>Đâu là dữ liệu cá nhân?</h2><div class="goal">Chọn <b>Dữ liệu cá nhân</b> hoặc <b>Không phải dữ liệu cá nhân</b> cho từng thẻ.</div><div class="grid2">';
+ personalItems.forEach(function(x){h+='<div class="item"><div class="icon">'+x.icon+'</div><h4>'+x.t+'</h4><div class="choice-row" style="grid-template-columns:1fr 1fr"><button class="choice '+(a["m1_"+x.id]==="personal"?"selected":"")+'" data-answer="m1_'+x.id+'" data-value="personal">Dữ liệu cá nhân</button><button class="choice '+(a["m1_"+x.id]==="not"?"selected":"")+'" data-answer="m1_'+x.id+'" data-value="not">Không phải</button></div></div>'});
+ return h+"</div>";
+}
+function renderM2(){
+ var a=currentRecord.answers||{},opts=["","dữ liệu cá nhân","quyền riêng tư","xin phép","dừng chia sẻ","báo cho cha mẹ/thầy cô","báo cáo trên nền tảng"];
+ function sel(k){var s='<select data-select="'+k+'">';opts.forEach(function(o){s+='<option value="'+esc(o)+'" '+(a[k]===o?"selected":"")+'>'+(o||"-- Chọn từ --")+"</option>"});return s+"</select>"}
+ return '<span class="chip">NHIỆM VỤ 2 · MẬT MÃ QUYỀN RIÊNG TƯ</span><h2>Điền từ khóa để mở khóa</h2><div class="goal">Chọn từ trong ngân hàng để hoàn thành 4 câu kiến thức.</div><div class="wordbank"><span class="word">dữ liệu cá nhân</span><span class="word">quyền riêng tư</span><span class="word">xin phép</span><span class="word">dừng chia sẻ</span><span class="word">báo cho cha mẹ/thầy cô</span><span class="word">báo cáo trên nền tảng</span></div>'+
+ '<div class="item"><div class="fill-line"><b>1.</b><div>Họ tên, hình ảnh, giọng nói, địa chỉ, số điện thoại,... là '+sel("a2_1")+' của mỗi người.</div></div>'+
+ '<div class="fill-line"><b>2.</b><div>Quyền kiểm soát thông tin về bản thân được gọi là '+sel("a2_2")+'.</div></div>'+
+ '<div class="fill-line"><b>3.</b><div>Muốn đăng ảnh của bạn lên mạng, em cần '+sel("a2_3")+' trước.</div></div>'+
+ '<div class="fill-line"><b>4.</b><div>Khi phát hiện nguy cơ lộ thông tin cá nhân, việc đầu tiên là '+sel("a2_4")+'.</div></div></div>';
+}
+function renderM3(){
+ var a=currentRecord.answers||{},h='<span class="chip">NHIỆM VỤ 3 · CỔNG CHIA SẺ</span><h2>Đèn giao thông dữ liệu</h2><div class="goal"><b>Xanh:</b> có thể chia sẻ trong bối cảnh thông thường · <b>Vàng:</b> cần xin phép/cân nhắc · <b>Đỏ:</b> không nên chia sẻ công khai.</div><div class="grid2">';
+ classifyItems.forEach(function(x){var k="m3_"+x.id;h+='<div class="classify-card"><h4>'+x.t+'</h4><div class="choice-row"><button class="choice '+(a[k]==="share"?"selected":"")+'" data-answer="'+k+'" data-value="share">🟢 Có thể</button><button class="choice '+(a[k]==="ask"?"selected":"")+'" data-answer="'+k+'" data-value="ask">🟡 Xin phép</button><button class="choice '+(a[k]==="no"?"selected":"")+'" data-answer="'+k+'" data-value="no">🔴 Không nên</button></div></div>'});return h+"</div><div class='notice' style='margin-top:12px'>Trong thực tế, mức chia sẻ còn phụ thuộc bối cảnh. Trò chơi dùng tình huống thông thường để rèn thói quen cân nhắc trước khi chia sẻ.</div>";
+}
+function radio(k,v,text,a){return '<label class="option"><input type="radio" name="'+k+'" data-radio="'+k+'" value="'+v+'" '+(a[k]===v?"checked":"")+'>'+text+"</label>"}
+function renderM4(){
+ var a=currentRecord.answers||{};
+ return '<span class="chip">NHIỆM VỤ 4 · PHÒNG ĐIỀU TRA</span><h2>Chọn cách xử lí an toàn nhất</h2><div class="goal">Đọc kĩ từng vụ việc. Chọn hành động phù hợp nhất.</div>'+
+ '<div class="scenario"><div class="scenario-head"><div class="icon">🎁</div><h3>Vụ 1 · Quà miễn phí</h3></div><p>Một ứng dụng lạ yêu cầu gửi ảnh khuôn mặt và bật vị trí để nhận quà.</p>'+radio("m4_s1","send","Gửi ngay vì có quà",a)+radio("m4_s1","stop","Dừng chia sẻ và hỏi người lớn tin cậy",a)+radio("m4_s1","fake","Nhập dữ liệu giả rồi tiếp tục",a)+'</div>'+
+ '<div class="scenario"><div class="scenario-head"><div class="icon">📸</div><h3>Vụ 2 · Ảnh chưa xin phép</h3></div><p>Bạn đăng ảnh của em lên mạng khi chưa hỏi.</p>'+radio("m4_s2","ignore","Im lặng vì bạn là người đăng",a)+radio("m4_s2","revenge","Đăng ảnh của bạn để trả đũa",a)+radio("m4_s2","ask","Nói với bạn, đề nghị gỡ/ẩn ảnh; nhờ người lớn nếu cần",a)+'</div>'+
+ '<div class="scenario"><div class="scenario-head"><div class="icon">🔑</div><h3>Vụ 3 · Chatbot xin mật khẩu</h3></div><p>Một chatbot bảo rằng cần mật khẩu tài khoản để “kiểm tra bảo mật”.</p>'+radio("m4_s3","yes","Cung cấp vì chatbot nói là bảo mật",a)+radio("m4_s3","no","Không cung cấp mật khẩu",a)+radio("m4_s3","friend","Hỏi bạn rồi mới gửi",a)+'</div>'+
+ '<div class="scenario"><div class="scenario-head"><div class="icon">🚩</div><h3>Vụ 4 · Nội dung giả mạo</h3></div><p>Em phát hiện một tài khoản dùng ảnh/giọng nói của bạn để giả mạo.</p>'+radio("m4_s4","share","Chia sẻ tiếp để mọi người biết",a)+radio("m4_s4","report","Báo cho bạn/người lớn và dùng chức năng báo cáo",a)+radio("m4_s4","comment","Bình luận chế giễu tài khoản đó",a)+'</div>';
+}
+function renderM5(){
+ var a=currentRecord.answers||{},h='<span class="chip">NHIỆM VỤ 5 · KHIÊN KHẨN CẤP</span><h2>Lắp 3 mảnh khiên đúng thứ tự</h2><div class="goal">Sắp xếp quy trình ứng phó rồi hoàn thành Exit Ticket.</div><div class="sequence">';
+ currentRecord.sequence.forEach(function(x,i){h+='<div class="seq"><div class="seq-no">'+(i+1)+'</div><b>'+esc(x)+'</b><div><button data-up="'+i+'">↑</button> <button data-down="'+i+'">↓</button></div></div>'});h+="</div>";
+ h+='<div class="scenario"><h3>Exit Ticket</h3>'+radio("m5_q1","A","A. Dữ liệu cá nhân có thể tự do chia sẻ nếu đang dùng AI.",a)+radio("m5_q1","B","B. Dữ liệu cá nhân gắn với mỗi người và cần được bảo vệ.",a)+
+ '<hr style="border:0;border-top:1px solid var(--line)">'+radio("m5_q2","A","A. Quyền riêng tư là không cho ai biết bất cứ điều gì.",a)+radio("m5_q2","B","B. Quyền riêng tư chỉ quan trọng với người lớn.",a)+radio("m5_q2","C","C. Quyền riêng tư là quyền kiểm soát dữ liệu về bản thân.",a)+
+ '<hr style="border:0;border-top:1px solid var(--line)">'+radio("m5_q3","A","A. Khi gặp nguy cơ, dừng chia sẻ và nhờ người lớn hỗ trợ.",a)+radio("m5_q3","B","B. Tự giải quyết bằng cách đăng công khai mọi thông tin.",a)+radio("m5_q3","C","C. Xóa trình duyệt là đủ trong mọi trường hợp.",a)+'</div>';
+ return h;
+}
+function renderResult(){
+ var r=calcScore(currentRecord),stars="";for(var i=0;i<5;i++)stars+=i<r.stars?"⭐":"☆";
+ var bad=r.details.filter(function(x){return !x.ok}),review="";
+ bad.slice(0,10).forEach(function(x){review+='<div class="review bad"><b>'+esc(x.label)+'</b><br><span style="color:var(--muted)">Em chọn: '+esc(mapAns(x.ans))+'</span><br><b>Gợi ý đúng:</b> '+esc(mapAns(x.correct))+"</div>"});
+ if(!bad.length)review='<div class="review good"><b>Xuất sắc!</b> Em đã trả lời đúng toàn bộ phần tự chấm.</div>';
+ return '<span class="chip">KẾT QUẢ NHIỆM VỤ</span><h2>'+esc(r.title)+'</h2><div class="card result"><div class="score-circle"><div><b>'+r.score+'</b><br><span>/ 100 điểm</span></div></div><div class="stars">'+stars+'</div><p style="text-align:center"><b>'+r.correct+'/'+r.total+' ý đúng</b></p></div>'+
+ '<div class="complete"><h3>🛡️ Điều em cần ghi nhớ</h3><p>Dữ liệu cá nhân là tài sản gắn với mỗi người. Hãy cân nhắc trước khi chia sẻ. Khi có nguy cơ: <b>Dừng chia sẻ → Báo người lớn tin cậy → Báo cáo/thu hồi quyền truy cập khi có thể.</b></p></div>'+
+ '<h3 style="color:var(--navy)">Những ý cần xem lại</h3>'+review;
+}
+function mapAns(v){
+ var m={personal:"Dữ liệu cá nhân",not:"Không phải",share:"Có thể chia sẻ",ask:"Cần xin phép/cân nhắc",no:"Không nên chia sẻ / Không cung cấp",stop:"Dừng chia sẻ và hỏi người lớn",report:"Báo người lớn + báo cáo"};
+ return m[v]||v||"Chưa trả lời";
+}
+function bindMission(){
+ var choices=document.querySelectorAll("[data-answer]");for(var i=0;i<choices.length;i++)choices[i].onclick=function(){var k=this.getAttribute("data-answer"),v=this.getAttribute("data-value");currentRecord.answers[k]=v;var siblings=document.querySelectorAll('[data-answer="'+k+'"]');for(var j=0;j<siblings.length;j++)siblings[j].classList.remove("selected");this.classList.add("selected");scheduleSave();renderMap()};
+ var sels=document.querySelectorAll("[data-select]");for(i=0;i<sels.length;i++)sels[i].onchange=function(){currentRecord.answers[this.getAttribute("data-select")]=this.value;scheduleSave();renderMap()};
+ var radios=document.querySelectorAll("[data-radio]");for(i=0;i<radios.length;i++)radios[i].onchange=function(){currentRecord.answers[this.getAttribute("data-radio")]=this.value;scheduleSave();renderMap()};
+ var ups=document.querySelectorAll("[data-up]");for(i=0;i<ups.length;i++)ups[i].onclick=function(){var x=Number(this.getAttribute("data-up"));if(x>0){var t=currentRecord.sequence[x-1];currentRecord.sequence[x-1]=currentRecord.sequence[x];currentRecord.sequence[x]=t;scheduleSave();renderStudent()}};
+ var downs=document.querySelectorAll("[data-down]");for(i=0;i<downs.length;i++)downs[i].onclick=function(){var x=Number(this.getAttribute("data-down"));if(x<currentRecord.sequence.length-1){var t=currentRecord.sequence[x+1];currentRecord.sequence[x+1]=currentRecord.sequence[x];currentRecord.sequence[x]=t;scheduleSave();renderStudent()}};
+}
+function renderStudent(){
+ if(!currentRecord)return;
+ currentRecord.currentMission=currentMission;updateDone();
+ document.getElementById("studentBadge").textContent=currentRecord.name+" · "+currentRecord.className+" · STT "+currentRecord.studentNo;
+ renderMap();
+ var content=currentRecord.submittedAt?renderResult():(currentMission===0?renderM1():currentMission===1?renderM2():currentMission===2?renderM3():currentMission===3?renderM4():renderM5());
+ if(!currentRecord.submittedAt){
+  content+='<div class="footer-nav"><button class="btn light" id="prevMission" '+(currentMission===0?"disabled":"")+'>← Nhiệm vụ trước</button><span><b>Nhiệm vụ '+(currentMission+1)+'/5</b></span><button class="btn" id="nextMission" '+(currentMission===4?"disabled":"")+'>Nhiệm vụ tiếp →</button></div>';
+  if(currentMission===4)content+='<div class="complete"><h3>🏁 Hoàn thành chiến dịch</h3><p>Khi đã làm đủ 5 nhiệm vụ, hãy nộp để hệ thống chấm và trao danh hiệu.</p><button class="btn green" id="submitBtn">Nộp & xem kết quả</button></div>';
+ }
+ document.getElementById("missionCard").innerHTML=content;bindMission();
+ var p=document.getElementById("prevMission"),n=document.getElementById("nextMission");if(p)p.onclick=async function(){await forceSave();currentMission--;renderStudent();window.scrollTo(0,0)};if(n)n.onclick=async function(){await forceSave();currentMission++;renderStudent();window.scrollTo(0,0)};
+ var sb=document.getElementById("submitBtn");if(sb)sb.onclick=submitWorksheet;
+}
+async function startStudent(){
+ var c=document.getElementById("studentClass").value,n=document.getElementById("studentNo").value,name=document.getElementById("studentName").value.trim();
+ if(!c||!n||!name){alert("Vui lòng chọn lớp, STT và nhập họ tên.");return}
+ var b=document.getElementById("startBtn");b.disabled=true;b.textContent="Đang chuẩn bị...";
+ currentKey=studentKey(c,n);var local=getLocal(currentKey),remote=null;
+ try{await prepareStudentSession(c,n);remote=await loadRemote();setStatus("firebaseStatus","Đã kết nối hệ thống.","ok")}catch(e){firebaseReady=false;setStatus("firebaseStatus","Không kết nối Firebase. Phiếu vẫn lưu trên máy.","err")}
+ currentRecord=mergeRecord(local,remote,c,n,name);currentMission=currentRecord.currentMission||0;saveLocal();
+ document.getElementById("loginScreen").classList.add("hidden");document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("studentScreen").classList.remove("hidden");b.disabled=false;b.textContent="Bắt đầu / Tiếp tục";renderStudent();
+}
+async function submitWorksheet(){
+ if(!currentRecord||currentRecord.submittedAt)return;
+ updateDone();var d=currentRecord.done.filter(function(x){return x}).length;
+ if(d<5){alert("Em còn "+(5-d)+" nhiệm vụ chưa hoàn thành. Hãy hoàn thành đủ để hệ thống chấm chính xác.");return}
+ if(!confirm("Em đã hoàn thành 5/5 nhiệm vụ. Nộp bài để xem điểm và danh hiệu?"))return;
+ var r=calcScore(currentRecord);currentRecord.score=r.score;currentRecord.stars=r.stars;currentRecord.title=r.title;currentRecord.correct=r.correct;currentRecord.total=r.total;currentRecord.submittedAt=now();currentRecord.updatedAt=now();saveLocal();
+ try{if(!firebaseReady||!ownResultRef)await prepareStudentSession(currentRecord.className,currentRecord.studentNo);if(firebaseReady&&ownResultRef){var p=clone(currentRecord);p.ownerUid=firebaseUser.uid;p.updatedAt=firebase.database.ServerValue.TIMESTAMP;p.meta={worksheetId:WORKSHEET_ID,version:VERSION};await ownResultRef.set(p)}}catch(e){alert("Bài đã được chấm và lưu trên máy, nhưng chưa đồng bộ được lên hệ thống. Khi có mạng, giáo viên có thể yêu cầu em mở lại và nộp lại.")}
+ renderStudent();window.scrollTo(0,0);
+}
+async function loginTeacher(){
+ var email=document.getElementById("teacherEmail").value.trim(),pw=document.getElementById("teacherPassword").value;
+ try{
+  if(!firebaseAvailable())throw new Error("Không tải được Firebase.");if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);var auth=firebase.auth();if(auth.currentUser)await auth.signOut();var cred=await auth.signInWithEmailAndPassword(email,pw);database=firebase.database();var role=await database.ref(TEACHERS_PATH+"/"+cred.user.uid).once("value");if(role.val()!==true){await auth.signOut();throw new Error("Tài khoản chưa được cấp quyền giáo viên.")}firebaseUser=cred.user;teacherMode=true;firebaseReady=true;resultsRef=database.ref(RESULTS_PATH);showTeacher();
+ }catch(e){setStatus("teacherLoginStatus",e.message||"Đăng nhập thất bại","err")}
+}
+function showTeacher(){document.getElementById("loginScreen").classList.add("hidden");document.getElementById("studentScreen").classList.add("hidden");document.getElementById("teacherScreen").classList.remove("hidden");startTeacherListener()}
+function startTeacherListener(){if(teacherListener&&resultsRef)resultsRef.off("value",teacherListener);teacherListener=function(s){teacherRecords=s.val()||{};renderTeacher()};resultsRef.on("value",teacherListener)}
+function renderTeacher(){
+ var f=document.getElementById("teacherClassFilter").value,arr=[];Object.keys(teacherRecords).forEach(function(uid){var r=teacherRecords[uid];if(r&&(f==="all"||r.className===f))arr.push(r)});
+ arr.sort(function(a,b){var c=String(a.className).localeCompare(String(b.className));return c||Number(a.studentNo)-Number(b.studentNo)});
+ var done=0,sum=0,high=0,rows="";arr.forEach(function(r){if(r.submittedAt){done++;sum+=Number(r.score||0);if(Number(r.score||0)>=80)high++}var prog=Array.isArray(r.done)?r.done.filter(function(x){return x}).length:0;rows+='<tr><td>'+esc(r.className)+'</td><td>'+esc(r.studentNo)+'</td><td>'+esc(r.name)+'</td><td>'+prog+'/5</td><td><b>'+(r.score==null?"-":r.score)+'</b></td><td>'+esc(r.title||"-")+'</td><td>'+(r.submittedAt?"✓ Đã nộp":"Đang làm")+'</td><td>'+formatTime(r.updatedAt)+'</td></tr>'});
+ document.getElementById("teacherBody").innerHTML=rows||'<tr><td colspan="8">Chưa có dữ liệu.</td></tr>';document.getElementById("kpiStudents").textContent=arr.length;document.getElementById("kpiDone").textContent=done;document.getElementById("kpiAvg").textContent=done?Math.round(sum/done):0;document.getElementById("kpiHigh").textContent=high;
+}
+async function teacherLogout(){if(resultsRef&&teacherListener)resultsRef.off("value",teacherListener);try{await firebase.auth().signOut()}catch(e){}teacherMode=false;firebaseReady=false;teacherRecords={};document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden")}
+
+document.getElementById("startBtn").onclick=startStudent;
+document.getElementById("teacherBtn").onclick=function(){document.getElementById("teacherLogin").classList.remove("hidden")};
+document.getElementById("teacherCancelBtn").onclick=function(){document.getElementById("teacherLogin").classList.add("hidden")};
+document.getElementById("teacherLoginBtn").onclick=loginTeacher;
+document.getElementById("teacherLogoutBtn").onclick=teacherLogout;
+document.getElementById("teacherClassFilter").onchange=renderTeacher;
+document.getElementById("teacherRefreshBtn").onclick=renderTeacher;
+document.getElementById("quickSubmitBtn").onclick=submitWorksheet;
+document.getElementById("backBtn").onclick=function(){document.getElementById("studentScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden")};
+
+(function(){
+ var ua=navigator.userAgent||"",m=ua.match(/Chrome\/(\d+)/);
+ if(m&&parseInt(m[1],10)<=75)setStatus("firebaseStatus","Trình duyệt Chrome "+m[1]+" đã cũ. Phiếu vẫn cố gắng hoạt động nhưng đồng bộ có thể kém ổn định.","err");
+})();
+</script>
+</body>
+</html>
