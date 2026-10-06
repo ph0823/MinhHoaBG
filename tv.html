@@ -27,15 +27,17 @@ video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:
 @media (max-width:380px){.mobileBar button{font-size:12px}.menuHeader{align-items:flex-start}.hint{max-width:58%}.channelCard{font-size:14px}}
 
 /* Chế độ TV webOS: toàn màn hình bằng CSS để nút Back không làm thoát Fullscreen API */
-body.tv-mode{overflow:hidden;background:#000}
-body.tv-mode .shell{position:fixed;inset:0;width:100vw;height:100vh;max-width:none;margin:0;padding:0}
+body.tv-mode{position:fixed;inset:0;width:100%;height:100%;min-height:0;overflow:hidden;background:#000;overscroll-behavior:none}
+body.tv-mode .shell{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;padding:0;overflow:hidden}
 body.tv-mode .title,body.tv-mode .below,body.tv-mode .links,body.tv-mode .mobileBar{display:none!important}
-body.tv-mode .app{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0;box-shadow:none}
+body.tv-mode .app{position:absolute;inset:0;width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:0;box-shadow:none;overflow:hidden}
 body.tv-mode .quickActions{right:28px;bottom:26px;gap:14px;opacity:.78}
 body.tv-mode .app.controls-idle:not(.menu-open) .quickActions{opacity:0;transform:translateY(10px);pointer-events:none}
 body.tv-mode .app.menu-open .quickActions,body.tv-mode .quickActions:focus-within{opacity:1;transform:none;pointer-events:auto}
 body.tv-mode .iconBtn{width:64px;height:64px;min-width:64px;font-size:28px;border-width:3px}
 body.tv-mode .menu{padding:18px 28px 24px;background:linear-gradient(0deg,rgba(12,15,21,.97) 82%,transparent)}
+body.tv-mode .menu{position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:hidden;contain:layout paint}
+body.tv-mode .channelStrip{overscroll-behavior:contain;scroll-behavior:auto}
 body.tv-mode .menuHeader{margin:20px 0 12px}
 body.tv-mode .menuHeader strong{font-size:22px}
 body.tv-mode .hint{font-size:15px}
@@ -153,9 +155,28 @@ for(let i=0;i<22;i++){const b=document.createElement('i');b.className='bar';b.st
 
 function showChannelInfo(){}
 function setStatus(text,loading=false,autoHide=0){clearTimeout(statusTimer);statusEl.innerHTML=(loading?'<span class="spinner"></span>':'')+text;statusEl.classList.toggle('show',!!text);if(text)showChannelInfo(loading?0:Math.max(autoHide,1800));if(autoHide)statusTimer=setTimeout(()=>{statusEl.classList.remove('show');if(!loading)app.classList.remove('hud-visible')},autoHide)}
-function setMenu(open,focusActive=false){if(open&&isWebOS&&app.classList.contains('apps-open')){app.classList.remove('apps-open');tvApps.setAttribute('aria-hidden','true')}app.classList.toggle('menu-open',open);menu.setAttribute('aria-hidden',String(!open));$('#menuBtn').setAttribute('aria-expanded',String(open));$('#mobileMenu').setAttribute('aria-expanded',String(open));$('#mobileMenu').textContent=open?'✕ Đóng':'☰ Kênh';if(open&&focusActive){const card=playlist.children[currentIndex];if(card){if(card.focus)card.focus({preventScroll:true});if(card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})}}else if(!open){video.focus({preventScroll:true})}if(isWebOS){app.classList.remove('controls-idle');if(open)clearTimeout(controlsTimer);else scheduleQuickControlsHide()}}
+function centerActiveCard(card){
+  if(!card)return;
+  // Trên TV không dùng scrollIntoView vì một số webOS sẽ cuộn cả viewport,
+  // làm hình bị đẩy lên và lộ dải trống ở đáy màn hình.
+  if(isWebOS){
+    const target=card.offsetLeft-(playlist.clientWidth-card.offsetWidth)/2;
+    playlist.scrollLeft=Math.max(0,target);
+  }else if(card.scrollIntoView){
+    card.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
+}
+function lockTvViewport(){
+  if(!isWebOS)return;
+  // Đưa viewport về đúng gốc mà không làm mất khả năng mở thanh ứng dụng bằng phím ↓.
+  try{window.scrollTo(0,0)}catch(_){ }
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+}
+function setMenu(open,focusActive=false){if(open&&isWebOS&&app.classList.contains('apps-open')){app.classList.remove('apps-open');tvApps.setAttribute('aria-hidden','true')}app.classList.toggle('menu-open',open);menu.setAttribute('aria-hidden',String(!open));$('#menuBtn').setAttribute('aria-expanded',String(open));$('#mobileMenu').setAttribute('aria-expanded',String(open));$('#mobileMenu').textContent=open?'✕ Đóng':'☰ Kênh';if(open&&focusActive){const card=playlist.children[currentIndex];if(card){if(card.focus){try{card.focus({preventScroll:true})}catch(_){card.focus()}}centerActiveCard(card)}}else if(!open){if(video.focus){try{video.focus({preventScroll:true})}catch(_){video.focus()}}}if(isWebOS){lockTvViewport();requestAnimationFrame(lockTvViewport);setTimeout(lockTvViewport,80);app.classList.remove('controls-idle');if(open)clearTimeout(controlsTimer);else scheduleQuickControlsHide()}}
 function setApps(open,focusFirst=false){
   if(!isWebOS)return;
+  lockTvViewport();
   if(open)setMenu(false);
   app.classList.toggle('apps-open',open);
   tvApps.setAttribute('aria-hidden',String(!open));
@@ -203,7 +224,7 @@ function selectChannel(index){loadChannel(index);setMenu(false)}
 function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
 function recall(){if(previousIndex===null)return;const target=previousIndex;previousIndex=currentIndex;updateRecall();loadChannel(target,{remember:false});setMenu(false);setStatus('Quay lại '+channels[target].name,false,1600)}
 
-channels.forEach((ch,i)=>{const b=document.createElement('button');b.className='channelCard';b.type='button';b.setAttribute('role','option');b.innerHTML=`${ch.name}${ch.type==='radio'?'<span class="tag">radio</span>':''}`;b.addEventListener('click',()=>selectChannel(i));b.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();playlist.children[(i+1)%channels.length].focus()}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();playlist.children[(i-1+channels.length)%channels.length].focus()}});playlist.appendChild(b)});
+channels.forEach((ch,i)=>{const b=document.createElement('button');b.className='channelCard';b.type='button';b.setAttribute('role','option');b.innerHTML=`${ch.name}${ch.type==='radio'?'<span class="tag">radio</span>':''}`;b.addEventListener('click',()=>selectChannel(i));b.addEventListener('keydown',e=>{if(isWebOS&&e.key==='ArrowDown'){e.preventDefault();setMenu(false);setApps(true,true);return}if(isWebOS&&e.key==='ArrowUp'){e.preventDefault();setMenu(false);return}if(e.key==='ArrowRight'||(!isWebOS&&e.key==='ArrowDown')){e.preventDefault();playlist.children[(i+1)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i+1)%channels.length])}if(e.key==='ArrowLeft'||(!isWebOS&&e.key==='ArrowUp')){e.preventDefault();playlist.children[(i-1+channels.length)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i-1+channels.length)%channels.length])}});playlist.appendChild(b)});
 
 $('#menuBtn').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);$('#mobileMenu').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);
 $('#recallBtn').onclick=$('#recallFloat').onclick=recall;muteBtn.onclick=muteActionBtn.onclick=toggleMute;video.addEventListener('volumechange',updateMuteUI);$('#mobilePrev').onclick=()=>changeChannel(-1);$('#mobileNext').onclick=()=>changeChannel(1);
@@ -252,7 +273,15 @@ if(isWebOS){
 try{history.replaceState({tvApp:true},'',location.href);history.pushState({tvApp:true},'',location.href)}catch(_){ }
 window.addEventListener('popstate',()=>{handleTvBack();try{history.pushState({tvApp:true},'',location.href)}catch(_){ }});
 
-updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>video.focus({preventScroll:true}),300);showQuickControls();
+
+// Giữ viewport TV cố định ngay cả khi webOS thay đổi vùng hiển thị sau thao tác menu/focus.
+if(isWebOS){
+  window.addEventListener('resize',lockTvViewport);
+  window.addEventListener('orientationchange',lockTvViewport);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
+}
+
+updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
 </script>
 </body>
 </html>
