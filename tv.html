@@ -12,7 +12,13 @@
 body{min-height:100dvh}.shell{width:min(100%,1280px);margin:auto;padding:12px}.title{text-align:center;margin:4px 0 10px;font-size:clamp(20px,3vw,34px);color:var(--accent)}
 .app{position:relative;background:#000;overflow:hidden;border-radius:14px;box-shadow:0 16px 50px #000a;aspect-ratio:16/9;isolation:isolate}
 video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:contain}video:focus-visible{box-shadow:inset 0 0 0 4px var(--focus)}
-#visualizer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:7px;background:radial-gradient(circle,#233044,#020203);pointer-events:none}.bar{width:9px;height:64px;border-radius:5px;background:var(--accent);transform:scaleY(.18);opacity:.45}.playing .bar{animation:bounce 1.05s ease-in-out infinite alternate}@keyframes bounce{to{transform:scaleY(1.2);opacity:1}}
+#visualizer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:clamp(4px,.65vw,9px);background:radial-gradient(circle at 50% 48%,#263b58 0,#101824 34%,#05070b 70%,#020203 100%);pointer-events:none;overflow:hidden}
+#visualizer:before{content:"";position:absolute;left:8%;right:8%;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);box-shadow:0 0 26px rgba(239,68,68,.3);opacity:.65}
+.bar{position:relative;width:clamp(5px,.72vw,10px);height:clamp(80px,17vw,190px);border-radius:999px;background:linear-gradient(180deg,#fff7 0,var(--accent) 22%,#ef4444 72%,#7f1d1d 100%);transform:scaleY(.10);transform-origin:center;opacity:.30;box-shadow:0 0 10px rgba(239,68,68,.12);will-change:transform,opacity}
+#visualizer.playing .bar{animation-name:radioWave;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
+@keyframes radioWave{0%{transform:scaleY(.10);opacity:.28}35%{transform:scaleY(.48);opacity:.68}70%{transform:scaleY(.22);opacity:.45}100%{transform:scaleY(1);opacity:1}}
+body.tv-mode #visualizer .bar{height:clamp(110px,24vh,250px)}
+@media (max-width:767px){#visualizer{gap:4px}.bar{width:5px;height:72px}}
 .topHud{position:absolute;left:var(--safe);right:var(--safe);top:var(--safe);display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none;z-index:4}.channelInfo{display:none!important}.status{background:#05070acc;backdrop-filter:blur(8px);border:1px solid #ffffff25;border-radius:10px;padding:8px 12px;text-shadow:0 1px 2px #000}.status{display:none;color:#fff;font-size:14px}.status.show{display:block}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
 .quickActions{position:absolute;right:var(--safe);bottom:var(--safe);display:flex;gap:10px;z-index:6;transition:opacity .35s ease,transform .35s ease;will-change:opacity,transform}.iconBtn{min-width:50px;width:50px;height:50px;border-radius:999px;border:2px solid #ffffff35;background:#07090dd9;color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px);outline:0;font-size:21px}.iconBtn:hover,.iconBtn:focus-visible{background:var(--accent);border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;transform:scale(1.04)}.iconBtn:disabled{opacity:.35}
 .menu{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px max(var(--safe),12px) calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--panel) 78%,transparent);transform:translateY(105%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s}.app.menu-open .menu{transform:translateY(0);opacity:1;pointer-events:auto}.menuHeader{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}.menuHeader strong{font-size:15px}.hint{font-size:12px;color:var(--muted)}
@@ -113,8 +119,10 @@ const channels = [
         { name: "HTV1", url: "https://live.fptplay53.net/epzhd1/htv1_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
         { name: "HTV2", url: "https://live.fptplay53.net/epzhd1/htv2hd_vhls.smil/chunklist_b1800000.m3u8", type: "tv" },
         { name: "HTV3", url: "https://live.fptplay53.net/epzhd1/htv3_hls.smil/chunklist.m3u8", type: "tv" },
-        { name: "HTV4", url: "https://live.fptplay53.net/epzhd1/htv4_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
-        { name: "HTV7", url: "https://live.fptplay53.net/epzhd1/htv7hd_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+        { name: "HTV4", url: "https://ec03-pop5-hht.tv360.vn/bpk-token/ok7eeukxhbrfc2rjjezxhpsckfzl4qsr/bpk-tv/443/output/index.m3u8", type: "tv" },
+        //https://live.fptplay53.net/epzhd1/htv4_hls.smil/chunklist_b1800000.m3u8
+        { name: "HTV7", url: "https://vips-livecdn.fptplay.net/live/media/htv7/live247-hls-avc/htv7-avc1_1800000=10002-mp4a_140800_vie=20000.m3u8", type: "tv" },
+        //"https://live.fptplay53.net/epzhd1/htv7hd_vhls.smil/chunklist_b5000000.m3u8"
         { name: "HTV9", url: "https://live.fptplay53.net/epzhd1/htv9hd_vhls.smil/chunklist.m3u8", type: "tv" },
         { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
         { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
@@ -151,7 +159,20 @@ let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStor
 let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
 const CONTROLS_IDLE_MS=5000;
 
-for(let i=0;i<22;i++){const b=document.createElement('i');b.className='bar';b.style.animationDelay=(Math.random()*.8)+'s';visualizer.appendChild(b)}
+// Sóng radio mô phỏng: mỗi cột có nhịp và biên độ riêng để tạo cảm giác âm thanh sống động.
+// Không dùng Web Audio Analyser để tránh lỗi CORS với các luồng radio bên ngoài và giảm tải cho TV/webOS.
+for(let i=0;i<30;i++){
+  const b=document.createElement('i');
+  b.className='bar';
+  const center=1-Math.abs(i-14.5)/14.5;
+  const duration=.48+Math.random()*.72;
+  const delay=-(Math.random()*1.4);
+  const base=.55+center*.65+Math.random()*.28;
+  b.style.animationDuration=duration.toFixed(2)+'s';
+  b.style.animationDelay=delay.toFixed(2)+'s';
+  b.style.height=(70+base*72).toFixed(0)+'px';
+  visualizer.appendChild(b);
+}
 
 function showChannelInfo(){}
 function setStatus(text,loading=false,autoHide=0){clearTimeout(statusTimer);statusEl.innerHTML=(loading?'<span class="spinner"></span>':'')+text;statusEl.classList.toggle('show',!!text);if(text)showChannelInfo(loading?0:Math.max(autoHide,1800));if(autoHide)statusTimer=setTimeout(()=>{statusEl.classList.remove('show');if(!loading)app.classList.remove('hud-visible')},autoHide)}
