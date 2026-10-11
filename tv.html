@@ -113,10 +113,12 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
 </div>
 <div class="links"><a href="xemphim.html">Phim</a><a href="music.html">Nhạc</a><a href="docPdf.html">Đọc Pdf</a><a href="https://truyentuoitho.com/manga/cau-be-gioi-vo/tap-1/">Truyện</a></div>
 </main>
-<nav class="mobileBar" aria-label="Điều khiển nhanh trên điện thoại"><button id="mobilePrev">◀ Kênh trước</button><button id="mobileMenu" aria-expanded="false">☰ Kênh</button><button id="mobileNext">Kênh sau ▶</button></nav>
-<script>
-const channels = [
-        { name: "HTV1", url: "https://live.fptplay53.net/epzhd1/htv1_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
+<nav class="mobileBar" aria-label="Điều khiển nhanh trên điện thoại"><button id="mobilePrev">◀ Kênh trước</button><button id="mobileMenu" aria-expanded="false">☰ Kênh</button><button id="mobileNext">Kênh sau ▶</button></nav> 
+ 
+ <script>
+    /*
+
+    { name: "HTV1", url: "https://live.fptplay53.net/epzhd1/htv1_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
         { name: "HTV2", url: "https://live.fptplay53.net/epzhd1/htv2hd_vhls.smil/chunklist_b1800000.m3u8", type: "tv" },
         { name: "HTV3", url: "https://live.fptplay53.net/epzhd1/htv3_hls.smil/chunklist.m3u8", type: "tv" },
         { name: "HTV4", url: "https://1011337676.vnns.net/-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3OTE2Nzg2NzksInVyaSI6IlwvaHR2Y1wvaHR2NC43MjBwLm5pbWJsZS5hZG0udG1zIiwiaXAiOiIifQ.2eX76v68Hi3-y6QFFWbNmMan1A-fFDcFsxoHLa2g8gs-/htvc/htv4.720p.nimble.adm.tms/chunks.m3u8", type: "tv" },
@@ -126,185 +128,224 @@ const channels = [
         //"https://live.fptplay53.net/epzhd1/htv7hd_vhls.smil/chunklist_b5000000.m3u8"
         { name: "HTV9", url: "https://vips-livecdn.fptplay.net/live/media/htv9/live247-hls-avc/index.m3u8", type: "tv" },
         //https://live.fptplay53.net/epzhd1/htv9hd_vhls.smil/chunklist.m3u8
-        { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
-        { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
-        { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },        
-        { name: "VTV5", url: "https://vips-livecdn.fptplay.net/live/media/vtv5tnb/live-hls-avc/index.m3u8", type: "tv" },
-        { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
-        { name: "THVL1", url: "https://live.fptplay53.net/epzhd2/vinhlong1_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
-        { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8", type: "tv" },
-        { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8", type: "tv" },
-        { name: "THDN2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=255", type: "tv" },
-        { name: "VieGT", url: "https://freem3u.xyz/api/live/play.m3u8?vid=180", type: "tv" },
-        { name: "VieDr", url: "https://freem3u.xyz/api/live/play.m3u8?vid=177", type: "tv" },        
-        { name: "INFO", url: "https://freem3u.xyz/api/live/play.m3u8?vid=189", type: "tv" },
-        { name: "K-Drama", url: "https://stream.ads.ottera.tv/playlist.m3u8?network_id=425", type: "tv" },
-        { name: "VNToday", url: "https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
-        { name: "FM 92.5", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05Mi41LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.u5XcdU9KljAz3HgehDbCBbNEvSzWNAQTEKkU-DwH2K8-/htvc/VOH-FM92.5.adm.tms/chunks.m3u8", type: "radio" },
-        { name: "FM 95.6", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/chunks.m3u8", type: "radio" },
-        { name: "FM 99.9", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05OS45LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.zVLoKcCW3tFLySpEQHcYh11PHIxk2ZE1pj5P-GFIm1I-/htvc/VOH-FM99.9.adm.tms/chunks.m3u8", type: "radio" },
-        { name: "GTHN", url: "https://str.vov.gov.vn/vovlive/vovGTHN.sdp_aac/chunklist_w601606653.m3u8", type: "radio" },
-        { name: "GTHCM", url: "https://str.vov.gov.vn/vovlive/vovGTHCM.sdp_aac/chunklist_w1213978008.m3u8", type: "radio" },
-        { name: "M music", url: "https://stream-37.zeno.fm/4q7y9hvkp2zuv", type: "radio" },
-        { name: "Dance machine", url: "https://edm.streeemer.com/listen/edm/radio.aac", type: "radio" },
-        { name: "80s Pop Vibes", url: "https://oldies.streeemer.com/listen/oldies/radio.aac", type: "radio" }
-    ];
 
-const $=s=>document.querySelector(s);
-const app=$('#app'),video=$('#video'),playlist=$('#playlist'),menu=$('#menu'),tvApps=$('#tvApps'),visualizer=$('#visualizer'),statusEl=$('#status');
-const currentName=$('#currentName'),currentType=$('#currentType'),playBtn=$('#playBtn');
-const muteBtn=$('#muteBtn'),muteActionBtn=$('#muteActionBtn');
-const isWebOS=/Web0S|webOS|NetCast/i.test(navigator.userAgent);
-if(isWebOS)document.body.classList.add('tv-mode');
-const recallButtons=[$('#recallBtn'),$('#recallFloat')];
-let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
-let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
-const CONTROLS_IDLE_MS=5000;
+    */
+    const channels = [
+            { name: "HTV1", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv1", type: "iframe" },
+            { name: "HTV2", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv2", type: "iframe" },
+            { name: "HTV3", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv3", type: "iframe" },
+            { name: "HTV4", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv4", type: "iframe" },
+            { name: "HTV7", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv7", type: "iframe" },
+            { name: "HTV9", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv9", type: "iframe" },
+            { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
+            { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
+            { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },        
+            { name: "VTV5", url: "https://vips-livecdn.fptplay.net/live/media/vtv5tnb/live-hls-avc/index.m3u8", type: "tv" },
+            { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
+            { name: "THVL1", url: "https://live.fptplay53.net/epzhd2/vinhlong1_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+            { name: "THVL2", url: "https://live.fptplay53.net/epzhd2/vinhlong2_vhls.smil/chunklist.m3u8", type: "tv" },
+            { name: "THVL3", url: "https://live.fptplay53.net/epzhd2/vinhlong3_vhls.smil/chunklist.m3u8", type: "tv" },
+            { name: "THDN2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=255", type: "tv" },
+            { name: "VieGT", url: "https://freem3u.xyz/api/live/play.m3u8?vid=180", type: "tv" },
+            { name: "VieDr", url: "https://freem3u.xyz/api/live/play.m3u8?vid=177", type: "tv" },        
+            { name: "INFO", url: "https://freem3u.xyz/api/live/play.m3u8?vid=189", type: "tv" },
+            { name: "K-Drama", url: "https://stream.ads.ottera.tv/playlist.m3u8?network_id=425", type: "tv" },
+            { name: "VNToday", url: "https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist_b5000000.m3u8", type: "tv" },
+            { name: "FM 92.5", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05Mi41LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.u5XcdU9KljAz3HgehDbCBbNEvSzWNAQTEKkU-DwH2K8-/htvc/VOH-FM92.5.adm.tms/chunks.m3u8", type: "radio" },
+            { name: "FM 95.6", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/chunks.m3u8", type: "radio" },
+            { name: "FM 99.9", url: "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05OS45LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.zVLoKcCW3tFLySpEQHcYh11PHIxk2ZE1pj5P-GFIm1I-/htvc/VOH-FM99.9.adm.tms/chunks.m3u8", type: "radio" },
+            { name: "GTHN", url: "https://str.vov.gov.vn/vovlive/vovGTHN.sdp_aac/chunklist_w601606653.m3u8", type: "radio" },
+            { name: "GTHCM", url: "https://str.vov.gov.vn/vovlive/vovGTHCM.sdp_aac/chunklist_w1213978008.m3u8", type: "radio" },
+            { name: "M music", url: "https://stream-37.zeno.fm/4q7y9hvkp2zuv", type: "radio" },
+            { name: "Dance machine", url: "https://edm.streeemer.com/listen/edm/radio.aac", type: "radio" },
+            { name: "80s Pop Vibes", url: "https://oldies.streeemer.com/listen/oldies/radio.aac", type: "radio" }
+        ];
 
-// Sóng radio mô phỏng: mỗi cột có nhịp và biên độ riêng để tạo cảm giác âm thanh sống động.
-// Không dùng Web Audio Analyser để tránh lỗi CORS với các luồng radio bên ngoài và giảm tải cho TV/webOS.
-for(let i=0;i<30;i++){
-  const b=document.createElement('i');
-  b.className='bar';
-  const center=1-Math.abs(i-14.5)/14.5;
-  const duration=.48+Math.random()*.72;
-  const delay=-(Math.random()*1.4);
-  const base=.55+center*.65+Math.random()*.28;
-  b.style.animationDuration=duration.toFixed(2)+'s';
-  b.style.animationDelay=delay.toFixed(2)+'s';
-  b.style.height=(70+base*72).toFixed(0)+'px';
-  visualizer.appendChild(b);
-}
+    const $=s=>document.querySelector(s);
+    const app=$('#app'),video=$('#video'),playlist=$('#playlist'),menu=$('#menu'),tvApps=$('#tvApps'),visualizer=$('#visualizer'),statusEl=$('#status');
+    const currentName=$('#currentName'),currentType=$('#currentType'),playBtn=$('#playBtn');
+    const muteBtn=$('#muteBtn'),muteActionBtn=$('#muteActionBtn');
+    const isWebOS=/Web0S|webOS|NetCast/i.test(navigator.userAgent);
+    if(isWebOS)document.body.classList.add('tv-mode');
+    const recallButtons=[$('#recallBtn'),$('#recallFloat')];
 
-function showChannelInfo(){}
-function setStatus(text,loading=false,autoHide=0){clearTimeout(statusTimer);statusEl.innerHTML=(loading?'<span class="spinner"></span>':'')+text;statusEl.classList.toggle('show',!!text);if(text)showChannelInfo(loading?0:Math.max(autoHide,1800));if(autoHide)statusTimer=setTimeout(()=>{statusEl.classList.remove('show');if(!loading)app.classList.remove('hud-visible')},autoHide)}
-function centerActiveCard(card){
-  if(!card)return;
-  // Trên TV không dùng scrollIntoView vì một số webOS sẽ cuộn cả viewport,
-  // làm hình bị đẩy lên và lộ dải trống ở đáy màn hình.
-  if(isWebOS){
-    const target=card.offsetLeft-(playlist.clientWidth-card.offsetWidth)/2;
-    playlist.scrollLeft=Math.max(0,target);
-  }else if(card.scrollIntoView){
-    card.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-  }
-}
-function lockTvViewport(){
-  if(!isWebOS)return;
-  // Đưa viewport về đúng gốc mà không làm mất khả năng mở thanh ứng dụng bằng phím ↓.
-  try{window.scrollTo(0,0)}catch(_){ }
-  document.documentElement.scrollTop=0;
-  document.body.scrollTop=0;
-}
-function setMenu(open,focusActive=false){if(open&&isWebOS&&app.classList.contains('apps-open')){app.classList.remove('apps-open');tvApps.setAttribute('aria-hidden','true')}app.classList.toggle('menu-open',open);menu.setAttribute('aria-hidden',String(!open));$('#menuBtn').setAttribute('aria-expanded',String(open));$('#mobileMenu').setAttribute('aria-expanded',String(open));$('#mobileMenu').textContent=open?'✕ Đóng':'☰ Kênh';if(open&&focusActive){const card=playlist.children[currentIndex];if(card){if(card.focus){try{card.focus({preventScroll:true})}catch(_){card.focus()}}centerActiveCard(card)}}else if(!open){if(video.focus){try{video.focus({preventScroll:true})}catch(_){video.focus()}}}if(isWebOS){lockTvViewport();requestAnimationFrame(lockTvViewport);setTimeout(lockTvViewport,80);app.classList.remove('controls-idle');if(open)clearTimeout(controlsTimer);else scheduleQuickControlsHide()}}
-function setApps(open,focusFirst=false){
-  if(!isWebOS)return;
-  lockTvViewport();
-  if(open)setMenu(false);
-  app.classList.toggle('apps-open',open);
-  tvApps.setAttribute('aria-hidden',String(!open));
-  if(open){
-    clearTimeout(controlsTimer);
-    app.classList.remove('controls-idle');
-    if(focusFirst){const first=tvApps.querySelector('[data-tvapp]');if(first)first.focus({preventScroll:true})}
-  }else{
-    video.focus({preventScroll:true});
-    scheduleQuickControlsHide();
-  }
-}
-function moveTvApp(step){
-  const items=[...tvApps.querySelectorAll('[data-tvapp]')];
-  if(!items.length)return;
-  let i=items.indexOf(document.activeElement);
-  if(i<0)i=0;
-  items[(i+step+items.length)%items.length].focus({preventScroll:true});
-}
-function showQuickControls(){
-  if(!isWebOS)return;
-  clearTimeout(controlsTimer);
-  app.classList.remove('controls-idle');
-  // Khi menu đang mở, giữ nút điều khiển hiển thị để tránh gây rối khi thao tác.
-  if(app.classList.contains('menu-open'))return;
-  controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
-}
-function scheduleQuickControlsHide(){
-  if(!isWebOS)return;
-  clearTimeout(controlsTimer);
-  if(app.classList.contains('menu-open')){app.classList.remove('controls-idle');return;}
-  controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
-}
-function updateRecall(){const enabled=previousIndex!==null;recallButtons.forEach(b=>b.disabled=!enabled);if(enabled){const name=channels[previousIndex].name;recallButtons.forEach(b=>b.title='Quay lại '+name)}}
-function updateUI(){const ch=channels[currentIndex];currentName.textContent=ch.name;currentType.textContent=ch.type==='radio'?'Phát thanh trực tuyến':'Truyền hình trực tiếp';visualizer.style.display=ch.type==='radio'?'flex':'none';visualizer.classList.toggle('playing',ch.type==='radio'&&!video.paused);[...playlist.children].forEach((el,i)=>{el.classList.toggle('active',i===currentIndex);el.setAttribute('aria-selected',String(i===currentIndex))});localStorage.setItem('tv.lastChannel',currentIndex)}
-function updateMuteUI(){const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng'}
-function toggleMute(){video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200)}
-function destroyStream(){if(hls){hls.destroy();hls=null}video.pause();video.removeAttribute('src');video.load()}
-function tryPlay(){video.play().catch(()=>setStatus('Nhấn OK hoặc chạm để phát',false,3500))}
-function loadChannel(index,{remember=true}={}){index=(index+channels.length)%channels.length;if(index===currentIndex&&video.currentSrc)return;if(remember&&index!==currentIndex)previousIndex=currentIndex;currentIndex=index;retryCount=0;updateRecall();updateUI();setStatus('Đang mở '+channels[index].name+'…',true);const token=++loadToken;destroyStream();const ch=channels[index];const isHls=/\.m3u8(?:$|\?)/i.test(ch.url);
-if(isHls&&video.canPlayType('application/vnd.apple.mpegurl')){video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}
-else if(isHls&&window.Hls&&Hls.isSupported()){hls=new Hls({lowLatencyMode:false,backBufferLength:10,maxBufferLength:20,maxMaxBufferLength:30,startLevel:-1,capLevelToPlayerSize:true,enableWorker:true});hls.loadSource(ch.url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===loadToken){retryCount=0;tryPlay()}});hls.on(Hls.Events.ERROR,(_,data)=>{if(token!==loadToken||!data.fatal)return;retryCount++;if(retryCount<=4&&data.type===Hls.ErrorTypes.NETWORK_ERROR){const delay=[0,1000,2000,4000][retryCount-1]||4000;setStatus('Mạng gián đoạn, đang thử lại…',true);setTimeout(()=>{if(token===loadToken&&hls)hls.startLoad()},delay)}else if(retryCount<=3&&data.type===Hls.ErrorTypes.MEDIA_ERROR){setStatus('Đang khôi phục luồng phát…',true);hls.recoverMediaError()}else{setStatus('Kênh tạm thời không phát được',false,5000)}})}
-else{video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}}
-function selectChannel(index){loadChannel(index);setMenu(false)}
-function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
-function recall(){if(previousIndex===null)return;const target=previousIndex;previousIndex=currentIndex;updateRecall();loadChannel(target,{remember:false});setMenu(false);setStatus('Quay lại '+channels[target].name,false,1600)}
+    // Tự động tạo thẻ iframe hỗ trợ các kênh dạng web nhúng
+    let iframeEl = $('#tvIframe');
+    if (!iframeEl) {
+      iframeEl = document.createElement('iframe');
+      iframeEl.id = 'tvIframe';
+      iframeEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:1;display:none;background:#000;';
+      iframeEl.setAttribute('allow', 'autoplay; fullscreen');
+      video.parentNode.insertBefore(iframeEl, video);
+    }
 
-channels.forEach((ch,i)=>{const b=document.createElement('button');b.className='channelCard';b.type='button';b.setAttribute('role','option');b.innerHTML=`${ch.name}${ch.type==='radio'?'<span class="tag">radio</span>':''}`;b.addEventListener('click',()=>selectChannel(i));b.addEventListener('keydown',e=>{if(isWebOS&&e.key==='ArrowDown'){e.preventDefault();setMenu(false);setApps(true,true);return}if(isWebOS&&e.key==='ArrowUp'){e.preventDefault();setMenu(false);return}if(e.key==='ArrowRight'||(!isWebOS&&e.key==='ArrowDown')){e.preventDefault();playlist.children[(i+1)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i+1)%channels.length])}if(e.key==='ArrowLeft'||(!isWebOS&&e.key==='ArrowUp')){e.preventDefault();playlist.children[(i-1+channels.length)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i-1+channels.length)%channels.length])}});playlist.appendChild(b)});
+    let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
+    let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
+    const CONTROLS_IDLE_MS=5000;
 
-$('#menuBtn').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);$('#mobileMenu').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);
-$('#recallBtn').onclick=$('#recallFloat').onclick=recall;muteBtn.onclick=muteActionBtn.onclick=toggleMute;video.addEventListener('volumechange',updateMuteUI);$('#mobilePrev').onclick=()=>changeChannel(-1);$('#mobileNext').onclick=()=>changeChannel(1);
-playBtn.onclick=()=>video.paused?tryPlay():video.pause();video.addEventListener('click',()=>video.paused?tryPlay():video.pause());
-video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});video.addEventListener('pause',()=>{playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});video.addEventListener('waiting',()=>setStatus('Đang tải dữ liệu…',true));video.addEventListener('playing',()=>setStatus('',false));video.addEventListener('error',()=>setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000));
-function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
-$('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
+    for(let i=0;i<30;i++){
+      const b=document.createElement('i');
+      b.className='bar';
+      const center=1-Math.abs(i-14.5)/14.5;
+      const duration=.48+Math.random()*.72;
+      const delay=-(Math.random()*1.4);
+      const base=.55+center*.65+Math.random()*.28;
+      b.style.animationDuration=duration.toFixed(2)+'s';
+      b.style.animationDelay=delay.toFixed(2)+'s';
+      b.style.height=(70+base*72).toFixed(0)+'px';
+      visualizer.appendChild(b);
+    }
 
-function handleTvBack(){const now=Date.now();if(now-lastBackAt<350)return;lastBackAt=now;if(app.classList.contains('apps-open')){setApps(false);return}if(app.classList.contains('menu-open')){setMenu(false);return}recall()}
+    function showChannelInfo(){}
+    function setStatus(text,loading=false,autoHide=0){clearTimeout(statusTimer);statusEl.innerHTML=(loading?'<span class="spinner"></span>':'')+text;statusEl.classList.toggle('show',!!text);if(text)showChannelInfo(loading?0:Math.max(autoHide,1800));if(autoHide)statusTimer=setTimeout(()=>{statusEl.classList.remove('show');if(!loading)app.classList.remove('hud-visible')},autoHide)}
+    function centerActiveCard(card){
+      if(!card)return;
+      if(isWebOS){
+        const target=card.offsetLeft-(playlist.clientWidth-card.offsetWidth)/2;
+        playlist.scrollLeft=Math.max(0,target);
+      }else if(card.scrollIntoView){
+        card.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+      }
+    }
+    function lockTvViewport(){
+      if(!isWebOS)return;
+      try{window.scrollTo(0,0)}catch(_){ }
+      document.documentElement.scrollTop=0;
+      document.body.scrollTop=0;
+    }
+    function setMenu(open,focusActive=false){if(open&&isWebOS&&app.classList.contains('apps-open')){app.classList.remove('apps-open');tvApps.setAttribute('aria-hidden','true')}app.classList.toggle('menu-open',open);menu.setAttribute('aria-hidden',String(!open));$('#menuBtn').setAttribute('aria-expanded',String(open));$('#mobileMenu').setAttribute('aria-expanded',String(open));$('#mobileMenu').textContent=open?'✕ Đóng':'☰ Kênh';if(open&&focusActive){const card=playlist.children[currentIndex];if(card){if(card.focus){try{card.focus({preventScroll:true})}catch(_){card.focus()}}centerActiveCard(card)}}else if(!open){if(video.focus){try{video.focus({preventScroll:true})}catch(_){video.focus()}}}if(isWebOS){lockTvViewport();requestAnimationFrame(lockTvViewport);setTimeout(lockTvViewport,80);app.classList.remove('controls-idle');if(open)clearTimeout(controlsTimer);else scheduleQuickControlsHide()}}
+    function setApps(open,focusFirst=false){
+      if(!isWebOS)return;
+      lockTvViewport();
+      if(open)setMenu(false);
+      app.classList.toggle('apps-open',open);
+      tvApps.setAttribute('aria-hidden',String(!open));
+      if(open){
+        clearTimeout(controlsTimer);
+        app.classList.remove('controls-idle');
+        if(focusFirst){const first=tvApps.querySelector('[data-tvapp]');if(first)first.focus({preventScroll:true})}
+      }else{
+        video.focus({preventScroll:true});
+        scheduleQuickControlsHide();
+      }
+    }
+    function moveTvApp(step){
+      const items=[...tvApps.querySelectorAll('[data-tvapp]')];
+      if(!items.length)return;
+      let i=items.indexOf(document.activeElement);
+      if(i<0)i=0;
+      items[(i+step+items.length)%items.length].focus({preventScroll:true});
+    }
+    function showQuickControls(){
+      if(!isWebOS)return;
+      clearTimeout(controlsTimer);
+      app.classList.remove('controls-idle');
+      if(app.classList.contains('menu-open'))return;
+      controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
+    }
+    function scheduleQuickControlsHide(){
+      if(!isWebOS)return;
+      clearTimeout(controlsTimer);
+      if(app.classList.contains('menu-open')){app.classList.remove('controls-idle');return;}
+      controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
+    }
+    function updateRecall(){const enabled=previousIndex!==null;recallButtons.forEach(b=>b.disabled=!enabled);if(enabled){const name=channels[previousIndex].name;recallButtons.forEach(b=>b.title='Quay lại '+name)}}
+    function updateUI(){const ch=channels[currentIndex];currentName.textContent=ch.name;currentType.textContent=ch.type==='radio'?'Phát thanh trực tuyến':(ch.type==='iframe'?'Truyền hình (Web Nhúng)':'Truyền hình trực tiếp');visualizer.style.display=ch.type==='radio'?'flex':'none';visualizer.classList.toggle('playing',ch.type==='radio'&&!video.paused);[...playlist.children].forEach((el,i)=>{el.classList.toggle('active',i===currentIndex);el.setAttribute('aria-selected',String(i===currentIndex))});localStorage.setItem('tv.lastChannel',currentIndex)}
+    function updateMuteUI(){const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng'}
+    function toggleMute(){video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200)}
+    function destroyStream(){
+      if(hls){hls.destroy();hls=null}
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      if(iframeEl){
+        iframeEl.style.display='none';
+        iframeEl.src='about:blank';
+      }
+      video.style.display='block';
+    }
+    function tryPlay(){video.play().catch(()=>setStatus('Nhấn OK hoặc chạm để phát',false,3500))}
+    function loadChannel(index,{remember=true}={}){
+      index=(index+channels.length)%channels.length;
+      if(index===currentIndex&&video.currentSrc)return;
+      if(remember&&index!==currentIndex)previousIndex=currentIndex;
+      currentIndex=index;
+      retryCount=0;
+      updateRecall();
+      updateUI();
+      setStatus('Đang mở '+channels[index].name+'…',true);
+      const token=++loadToken;
+      destroyStream();
+      const ch=channels[index];
 
-document.addEventListener('keydown',e=>{const inMenu=app.classList.contains('menu-open');const key=e.key;
-const isTvBack=e.keyCode===461||key==='GoBack'||key==='BrowserBack';
-const isDesktopBack=key==='Escape'||key==='Backspace';
+      // Xử lý riêng cho các kênh truyền hình dạng iframe nhúng
+      if(ch.type==='iframe'){
+        video.style.display='none';
+        iframeEl.style.display='block';
+        iframeEl.src=ch.url;
+        setStatus('',false);
+        return;
+      }
 
-// LG webOS: Back luôn là Recall và không rời chế độ TV CSS fullscreen.
-if(isTvBack){e.preventDefault();e.stopPropagation();handleTvBack();return}
+      const isHls=/\.m3u8(?:$|\?)/i.test(ch.url);
+      if(isHls&&video.canPlayType('application/vnd.apple.mpegurl')){video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}
+      else if(isHls&&window.Hls&&Hls.isSupported()){hls=new Hls({lowLatencyMode:false,backBufferLength:10,maxBufferLength:20,maxMaxBufferLength:30,startLevel:-1,capLevelToPlayerSize:true,enableWorker:true});hls.loadSource(ch.url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===loadToken){retryCount=0;tryPlay()}});hls.on(Hls.Events.ERROR,(_,data)=>{if(token!==loadToken||!data.fatal)return;retryCount++;if(retryCount<=4&&data.type===Hls.ErrorTypes.NETWORK_ERROR){const delay=[0,1000,2000,4000][retryCount-1]||4000;setStatus('Mạng gián đoạn, đang thử lại…',true);setTimeout(()=>{if(token===loadToken&&hls)hls.startLoad()},delay)}else if(retryCount<=3&&data.type===Hls.ErrorTypes.MEDIA_ERROR){setStatus('Đang khôi phục luồng phát…',true);hls.recoverMediaError()}else{setStatus('Kênh tạm thời không phát được',false,5000)}})}
+      else{video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}
+    }
+    function selectChannel(index){loadChannel(index);setMenu(false)}
+    function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
+    function recall(){if(previousIndex===null)return;const target=previousIndex;previousIndex=currentIndex;updateRecall();loadChannel(target,{remember:false});setMenu(false);setStatus('Quay lại '+channels[target].name,false,1600)}
 
-// Máy tính: Escape/Backspace đóng menu trước, sau đó mới thoát Fullscreen API.
-if(isDesktopBack){e.preventDefault();if(app.classList.contains('apps-open'))setApps(false);else if(inMenu)setMenu(false);else if(!isWebOS&&document.fullscreenElement)toggleFullscreen();return}
+    channels.forEach((ch,i)=>{const b=document.createElement('button');b.className='channelCard';b.type='button';b.setAttribute('role','option');b.innerHTML=`${ch.name}${ch.type==='radio'?'<span class="tag">radio</span>':''}`;b.addEventListener('click',()=>selectChannel(i));b.addEventListener('keydown',e=>{if(isWebOS&&e.key==='ArrowDown'){e.preventDefault();setMenu(false);setApps(true,true);return}if(isWebOS&&e.key==='ArrowUp'){e.preventDefault();setMenu(false);return}if(e.key==='ArrowRight'||(!isWebOS&&e.key==='ArrowDown')){e.preventDefault();playlist.children[(i+1)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i+1)%channels.length])}if(e.key==='ArrowLeft'||(!isWebOS&&e.key==='ArrowUp')){e.preventDefault();playlist.children[(i-1+channels.length)%channels.length].focus({preventScroll:true});centerActiveCard(playlist.children[(i-1+channels.length)%channels.length])}});playlist.appendChild(b)});
 
-const appsOpen=app.classList.contains('apps-open');
-if(isWebOS&&appsOpen){
-  if(key==='ArrowLeft'){e.preventDefault();moveTvApp(-1);return}
-  if(key==='ArrowRight'){e.preventDefault();moveTvApp(1);return}
-  if(key==='ArrowUp'){e.preventDefault();setApps(false);return}
-  if(key==='ArrowDown'){e.preventDefault();return}
-  if(key==='Enter'||key===' '){const a=document.activeElement&&document.activeElement.closest?document.activeElement.closest('[data-tvapp]'):null;if(a){e.preventDefault();a.click();return}}
-}
-if(isWebOS&&!inMenu&&!appsOpen&&key==='ArrowDown'){e.preventDefault();setApps(true,true);return}
-if(!inMenu&&!appsOpen&&(key==='ArrowLeft'||key==='ChannelDown')){e.preventDefault();changeChannel(-1)}
-if(!inMenu&&!appsOpen&&(key==='ArrowRight'||key==='ChannelUp')){e.preventDefault();changeChannel(1)}
-if(!inMenu&&!appsOpen&&(key==='Enter'||key===' ')){if(document.activeElement===video||document.activeElement===document.body){e.preventDefault();setMenu(true,true)}}
-if(key==='r'||key==='R'){e.preventDefault();recall()}
-if(key==='m'||key==='M'){e.preventDefault();toggleMute()}
-});
+    $('#menuBtn').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);$('#mobileMenu').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);
+    $('#recallBtn').onclick=$('#recallFloat').onclick=recall;muteBtn.onclick=muteActionBtn.onclick=toggleMute;video.addEventListener('volumechange',updateMuteUI);$('#mobilePrev').onclick=()=>changeChannel(-1);$('#mobileNext').onclick=()=>changeChannel(1);
+    playBtn.onclick=()=>video.paused?tryPlay():video.pause();video.addEventListener('click',()=>video.paused?tryPlay():video.pause());
+    video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});video.addEventListener('pause',()=>{playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});video.addEventListener('waiting',()=>setStatus('Đang tải dữ liệu…',true));video.addEventListener('playing',()=>setStatus('',false));video.addEventListener('error',()=>setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000));
+    function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
+    $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
-// Tự ẩn nút Mute/Menu sau 5 giây không thao tác trên TV webOS; di chuột, click hoặc nhấn phím sẽ hiện lại.
-if(isWebOS){
-  ['mousemove','pointermove','pointerdown','touchstart'].forEach(evt=>document.addEventListener(evt,showQuickControls,{passive:true}));
-  document.addEventListener('keydown',showQuickControls,true);
-  $('.quickActions').addEventListener('mouseenter',showQuickControls);
-  $('.quickActions').addEventListener('focusin',showQuickControls);
-}
+    function handleTvBack(){const now=Date.now();if(now-lastBackAt<350)return;lastBackAt=now;if(app.classList.contains('apps-open')){setApps(false);return}if(app.classList.contains('menu-open')){setMenu(false);return}recall()}
 
-// Một số bản webOS gửi Back qua History API thay vì keyCode 461.
-try{history.replaceState({tvApp:true},'',location.href);history.pushState({tvApp:true},'',location.href)}catch(_){ }
-window.addEventListener('popstate',()=>{handleTvBack();try{history.pushState({tvApp:true},'',location.href)}catch(_){ }});
+    document.addEventListener('keydown',e=>{const inMenu=app.classList.contains('menu-open');const key=e.key;
+    const isTvBack=e.keyCode===461||key==='GoBack'||key==='BrowserBack';
+    const isDesktopBack=key==='Escape'||key==='Backspace';
 
+    if(isTvBack){e.preventDefault();e.stopPropagation();handleTvBack();return}
+    if(isDesktopBack){e.preventDefault();if(app.classList.contains('apps-open'))setApps(false);else if(inMenu)setMenu(false);else if(!isWebOS&&document.fullscreenElement)toggleFullscreen();return}
 
-// Giữ viewport TV cố định ngay cả khi webOS thay đổi vùng hiển thị sau thao tác menu/focus.
-if(isWebOS){
-  window.addEventListener('resize',lockTvViewport);
-  window.addEventListener('orientationchange',lockTvViewport);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
-}
+    const appsOpen=app.classList.contains('apps-open');
+    if(isWebOS&&appsOpen){
+      if(key==='ArrowLeft'){e.preventDefault();moveTvApp(-1);return}
+      if(key==='ArrowRight'){e.preventDefault();moveTvApp(1);return}
+      if(key==='ArrowUp'){e.preventDefault();setApps(false);return}
+      if(key==='ArrowDown'){e.preventDefault();return}
+      if(key==='Enter'||key===' '){const a=document.activeElement&&document.activeElement.closest?document.activeElement.closest('[data-tvapp]'):null;if(a){e.preventDefault();a.click();return}}
+    }
+    if(isWebOS&&!inMenu&&!appsOpen&&key==='ArrowDown'){e.preventDefault();setApps(true,true);return}
+    if(!inMenu&&!appsOpen&&(key==='ArrowLeft'||key==='ChannelDown')){e.preventDefault();changeChannel(-1)}
+    if(!inMenu&&!appsOpen&&(key==='ArrowRight'||key==='ChannelUp')){e.preventDefault();changeChannel(1)}
+    if(!inMenu&&!appsOpen&&(key==='Enter'||key===' ')){if(document.activeElement===video||document.activeElement===document.body){e.preventDefault();setMenu(true,true)}}
+    if(key==='r'||key==='R'){e.preventDefault();recall()}
+    if(key==='m'||key==='M'){e.preventDefault();toggleMute()}
+    });
 
-updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
+    if(isWebOS){
+      ['mousemove','pointermove','pointerdown','touchstart'].forEach(evt=>document.addEventListener(evt,showQuickControls,{passive:true}));
+      document.addEventListener('keydown',showQuickControls,true);
+      $('.quickActions').addEventListener('mouseenter',showQuickControls);$('.quickActions').addEventListener('focusin',showQuickControls);
+    }
+
+    try{history.replaceState({tvApp:true},'',location.href);history.pushState({tvApp:true},'',location.href)}catch(_){ }
+    window.addEventListener('popstate',()=>{handleTvBack();try{history.pushState({tvApp:true},'',location.href)}catch(_){ }});
+
+    if(isWebOS){
+      window.addEventListener('resize',lockTvViewport);
+      window.addEventListener('orientationchange',lockTvViewport);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
+    }
+
+    updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
 </script>
 </body>
 </html>
