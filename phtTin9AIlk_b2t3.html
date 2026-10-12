@@ -94,6 +94,18 @@ async function syncRemote(){
  if(record.editing){setSave('Bản sửa đã lưu trên máy · Nhấn Nộp lại để cập nhật giáo viên');return false}if(record.submitted&&record.serverConfirmed){setSave('Bài đã nộp · Firebase đã xác nhận');return true}
  if(syncBusy){syncAgain=true;return false}
  syncBusy=true;
+ // Kiểm tra bản ghi hiện có để giữ createdAt / submittedAt gốc, hỗ trợ hồ sơ cũ.
+ var remoteExisting=null;
+ try { var existingSnap=await ownRef.once('value'); remoteExisting=existingSnap.val(); }
+ catch(readError){ console.warn('Không đọc được bản ghi trước khi ghi',readError); }
+ if(remoteExisting){
+   if(remoteExisting.className!==record.className || Number(remoteExisting.studentNo)!==Number(record.studentNo) || normalize(remoteExisting.name)!==normalize(record.name)){
+     setSave('LỖI: UID này thuộc hồ sơ khác. Bài của em vẫn lưu trên máy; không ghi đè.');
+     syncBusy=false;return false;
+   }
+   if(remoteExisting.createdAt) record.createdAt=remoteExisting.createdAt;
+   if(remoteExisting.submittedAt) {record.submittedAt=remoteExisting.submittedAt; record.submitted=true;}
+ }
  var localUpdatedAt=Number(record.updatedAt);var data=remotePayload();
  setSave('Đang gửi lên Firebase...');
  try{
@@ -104,7 +116,7 @@ async function syncRemote(){
  }catch(e){
   console.error('Đồng bộ thất bại',e);
   record.serverConfirmed=false;saveLocal();
-  setSave('Chưa đồng bộ Firebase ('+(e.code||e.message||'lỗi ghi')+') – nhấn Gửi lại dữ liệu');
+  setSave('LỖI GHI Firebase ('+(e.code||e.message||'lỗi ghi')+'). Kiểm tra Rules đã Publish và đăng nhập Firebase; bài vẫn lưu trên máy.');
   return false;
  }finally{
   syncBusy=false;
