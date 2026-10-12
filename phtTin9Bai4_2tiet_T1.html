@@ -184,7 +184,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}.app{ma
 var WORKSHEET_ID="tin9_bai4_2tiet_v1";
 var STORAGE_KEY="worksheet_"+WORKSHEET_ID+"_local";
 var SESSION_KEY="worksheet_"+WORKSHEET_ID+"_session";
-var VERSION="1.3";
+var VERSION="1.4-refresh-safe";
 var firebaseConfig={apiKey:"AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",authDomain:"luyen-go.firebaseapp.com",databaseURL:"https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"luyen-go",storageBucket:"luyen-go.firebasestorage.app",messagingSenderId:"79498233127",appId:"1:79498233127:web:a6c2e2bab71ba737ca9502"};
 var TEACHERS_PATH="app_secure/teachers";
 var RESULTS_PATH="worksheets/"+WORKSHEET_ID+"/results";
@@ -206,7 +206,13 @@ function generateKey(cls,no){
   return k
 }
 function getVal(k){return currentRecord&&currentRecord.answers&&k in currentRecord.answers?currentRecord.answers[k]:""}
-function setVal(k,v){if(!currentRecord.answers)currentRecord.answers={};currentRecord.answers[k]=v;currentRecord.updatedAt=Date.now();scheduleSave()}
+function setVal(k,v){
+  if(!currentRecord.answers)currentRecord.answers={};
+  currentRecord.answers[k]=v;currentRecord.updatedAt=Date.now();
+  // Lưu đồng bộ ngay khi gõ: F5 đột ngột không làm mất các kí tự cuối.
+  try{if(currentLocalKey){var d=allData();d[currentLocalKey]=currentRecord;saveAll(d)}}catch(e){console.warn("Không lưu được bản nháp cục bộ:",e);setSaveStatus("Lỗi lưu trên máy",true)}
+  scheduleSave()
+}
 function textInput(k,ph){return '<input data-key="'+k+'" value="'+esc(getVal(k))+'" placeholder="'+esc(ph||"")+'">'}
 function textArea(k,ph){return '<textarea data-key="'+k+'" placeholder="'+esc(ph||"")+'">'+esc(getVal(k))+'</textarea>'}
 function selectOne(k,opts,ph){var cur=String(getVal(k)==null?"":getVal(k)),h='<select data-key="'+k+'"><option value="">'+esc(ph||"-- Chọn --")+'</option>';opts.forEach(function(o){h+='<option value="'+esc(o[0])+'" '+(cur===String(o[0])?"selected":"")+'>'+esc(o[1])+'</option>'});return h+'</select>'}
@@ -557,7 +563,7 @@ function renderTabs(){
 function renderNav(){
   var nav=document.getElementById("activityNav"),ids=sessionIds(currentSession);
   nav.innerHTML=ids.map(function(i){var st=activityAssessment(currentRecord,i);return '<button class="'+(currentSession===1?"t1":"t2")+" "+(i===currentActivity?"active ":"")+(st.complete?"done":"")+'" data-act="'+i+'">HĐ '+localActNo(i)+'<span class="navlabel">'+(st.complete?"Đã đủ":st.status==="partial"?"Đang làm":"Chưa làm")+'</span></button>'}).join("");
-  Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=async function(){await saveCurrentActivity(false,true);currentActivity=Number(b.getAttribute("data-act"));currentRecord.meta.currentActivity=currentActivity;renderActivity()}})
+  Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=async function(){await saveCurrentActivity(false,true);currentActivity=Number(b.getAttribute("data-act"));currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity()}})
 }
 function updateProgress(){
   var ids=sessionIds(currentSession),n=ids.filter(function(i){return activityAssessment(currentRecord,i).complete}).length;
@@ -588,19 +594,19 @@ function renderActivity(){
     }
   });
   if(currentSession===1&&currentActivity===3)renderKnowledgeCard();
-  document.getElementById("prevAct").onclick=async function(){if(pos>0){await saveCurrentActivity(false,true);currentActivity=ids[pos-1];currentRecord.meta.currentActivity=currentActivity;renderActivity()}};
+  document.getElementById("prevAct").onclick=async function(){if(pos>0){await saveCurrentActivity(false,true);currentActivity=ids[pos-1];currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity()}};
   document.getElementById("nextAct").onclick=async function(){
     if(activityAssessment(currentRecord,currentActivity).touched<=0){var box=document.getElementById("activityFeedback");box.className="feedback warn";box.textContent="Em cần hoàn thành ít nhất một ô/yêu cầu trước khi bấm Tiếp.";return}
     await saveCurrentActivity(true,false);
     if(currentSession===1&&currentActivity===3)renderKnowledgeCard();
-    if(!last){currentActivity=ids[pos+1];currentRecord.meta.currentActivity=currentActivity;renderActivity();document.getElementById("activityCard").scrollIntoView({behavior:"smooth",block:"start"})}
+    if(!last){currentActivity=ids[pos+1];currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity();document.getElementById("activityCard").scrollIntoView({behavior:"smooth",block:"start"})}
   };
   updateNextState()
 }
 async function switchSession(s){
   if(!currentRecord)return;await saveCurrentActivity(false,true);currentSession=s;currentRecord.meta.currentSession=s;
   var ids=sessionIds(s),saved=Number(currentRecord.meta["lastActivityT"+s]);currentActivity=ids.indexOf(saved)>=0?saved:ids.find(function(i){return !activityAssessment(currentRecord,i).complete});
-  if(currentActivity==null||currentActivity<0)currentActivity=ids[0];renderActivity()
+  if(currentActivity==null||currentActivity<0)currentActivity=ids[0];persistCurrent(false);renderActivity()
 }
 
 // ---------- local + Firebase ----------
@@ -709,6 +715,40 @@ async function changeStudent(){
   clearSession();currentRecord=null;currentLocalKey=null;firebaseUser=null;ownResultRef=null;
   document.getElementById("studentScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("studentKeyInput").value="";document.getElementById("studentName").value="";
   await ensureAnonymous()
+}
+
+// Khôi phục phiên học khi làm mới trang hoặc cập nhật HTML.
+// Chỉ khôi phục trên đúng thiết bị/trình duyệt và cùng tài khoản Anonymous Auth.
+async function restoreSessionAfterRefresh(){
+  var session=readSession();
+  if(!session||!session.className||!session.studentNo||!/^[0-9]{4}$/.test(String(session.accessKey||"")))return false;
+  var found=findLocal(session.className,session.studentNo,session.accessKey);
+  if(!found)return false;
+  try{
+    await ensureAnonymous();
+    if(!firebaseUser||session.uid!==firebaseUser.uid){
+      console.warn("UID đã đổi, không tự ghi dữ liệu cũ lên tài khoản mới.");
+      return false;
+    }
+    // Không đọc Firebase rồi đè lên bản nháp mới hơn trên máy.
+    currentRecord=hydrateRecord(found.record);
+    currentLocalKey=found.storageKey;
+    currentRecord.ownerUid=firebaseUser.uid;
+    currentSession=Number(currentRecord.meta.currentSession||1)===2?2:1;
+    currentActivity=Number(currentRecord.meta.currentActivity||0);
+    if(sessionOf(currentActivity)!==currentSession)currentActivity=sessionIds(currentSession)[0];
+    document.getElementById("studentClass").value=currentRecord.className;
+    document.getElementById("studentNo").value=String(currentRecord.studentNo);
+    document.getElementById("studentName").value=currentRecord.name||"";
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("studentScreen").classList.remove("hidden");
+    document.getElementById("studentBadge").textContent=currentRecord.className+" · STT "+currentRecord.studentNo+" · "+currentRecord.name;
+    renderActivity();setSaveStatus("Đã khôi phục bản trên máy · Đang đồng bộ");
+    // Chỉ cập nhật bản máy chủ nếu đây vẫn là cùng UID.
+    try{await syncRemote();setSaveStatus("Đã khôi phục · Đã đồng bộ")}
+    catch(e){console.warn("Đồng bộ sau F5 thất bại:",e);setSaveStatus("Đã khôi phục trên máy · Chưa đồng bộ",true)}
+    return true;
+  }catch(e){console.warn("Không thể tự khôi phục phiên:",e);return false}
 }
 
 // ---------- teacher ----------
@@ -924,7 +964,9 @@ document.getElementById("exportCsvBtn").onclick=exportCsv;
 document.getElementById("teacherPassword").addEventListener("keydown",function(e){if(e.key==="Enter")teacherLogin()});
 window.addEventListener("online",function(){if(currentRecord&&!teacherMode)syncRemote().catch(console.error)});
 window.addEventListener("beforeunload",function(){if(currentRecord&&currentLocalKey&&!teacherMode){var d=allData();d[currentLocalKey]=currentRecord;saveAll(d)}});
-ensureAnonymous().catch(console.error);
+restoreSessionAfterRefresh().then(function(restored){
+  if(!restored)ensureAnonymous().catch(console.error)
+}).catch(console.error);
 </script>
 </body>
 </html>
