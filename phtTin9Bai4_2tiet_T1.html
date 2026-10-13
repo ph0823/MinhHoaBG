@@ -91,7 +91,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}.app{ma
   </div>
   <div class="key-box">
     <strong>Cách dùng mã key</strong>
-    <div class="small" style="margin-top:5px">Lần đầu: chọn Lớp + STT + nhập Họ tên, để trống mã key → hệ thống tạo 1 mã 4 số. Lần sau: nhập đúng Lớp + STT + mã key để mở lại bài.</div>
+    <div class="small" style="margin-top:5px">Lần đầu: chọn Lớp + STT + nhập Họ tên, để trống mã key → hệ thống tạo 1 mã 4 số. Lần sau: nhập đúng Lớp + STT + mã key để mở lại bài. Nếu dùng máy khác, giáo viên phải bật quyền khôi phục cho em hoặc cả lớp.</div>
   </div>
   <div id="browserWarning" class="browser-warning hidden"></div>
   <div id="loginStatus" class="status-error hidden"></div>
@@ -184,7 +184,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}.app{ma
 var WORKSHEET_ID="tin9_bai4_2tiet_v1";
 var STORAGE_KEY="worksheet_"+WORKSHEET_ID+"_local";
 var SESSION_KEY="worksheet_"+WORKSHEET_ID+"_session";
-var VERSION="1.4-refresh-safe";
+var VERSION="1.4";
 var firebaseConfig={apiKey:"AIzaSyDmzXo6VGoXP6zAkJ_kVDdIFKC-i2uOW7o",authDomain:"luyen-go.firebaseapp.com",databaseURL:"https://luyen-go-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"luyen-go",storageBucket:"luyen-go.firebasestorage.app",messagingSenderId:"79498233127",appId:"1:79498233127:web:a6c2e2bab71ba737ca9502"};
 var TEACHERS_PATH="app_secure/teachers";
 var RESULTS_PATH="worksheets/"+WORKSHEET_ID+"/results";
@@ -206,13 +206,7 @@ function generateKey(cls,no){
   return k
 }
 function getVal(k){return currentRecord&&currentRecord.answers&&k in currentRecord.answers?currentRecord.answers[k]:""}
-function setVal(k,v){
-  if(!currentRecord.answers)currentRecord.answers={};
-  currentRecord.answers[k]=v;currentRecord.updatedAt=Date.now();
-  // Lưu đồng bộ ngay khi gõ: F5 đột ngột không làm mất các kí tự cuối.
-  try{if(currentLocalKey){var d=allData();d[currentLocalKey]=currentRecord;saveAll(d)}}catch(e){console.warn("Không lưu được bản nháp cục bộ:",e);setSaveStatus("Lỗi lưu trên máy",true)}
-  scheduleSave()
-}
+function setVal(k,v){if(!currentRecord.answers)currentRecord.answers={};if(currentRecord.answers[k]===v)return;currentRecord.answers[k]=v;currentRecord.meta=currentRecord.meta||{};currentRecord.meta.answerRevision=(Number(currentRecord.meta.answerRevision)||0)+1;currentRecord.updatedAt=Date.now();scheduleSave()}
 function textInput(k,ph){return '<input data-key="'+k+'" value="'+esc(getVal(k))+'" placeholder="'+esc(ph||"")+'">'}
 function textArea(k,ph){return '<textarea data-key="'+k+'" placeholder="'+esc(ph||"")+'">'+esc(getVal(k))+'</textarea>'}
 function selectOne(k,opts,ph){var cur=String(getVal(k)==null?"":getVal(k)),h='<select data-key="'+k+'"><option value="">'+esc(ph||"-- Chọn --")+'</option>';opts.forEach(function(o){h+='<option value="'+esc(o[0])+'" '+(cur===String(o[0])?"selected":"")+'>'+esc(o[1])+'</option>'});return h+'</select>'}
@@ -445,42 +439,38 @@ function selectedSet(a,prefix,letters){
 function topicResult(name,earned,max,icon){
   return {name:name,earned:earned,max:max,ok:earned>=max*0.7,icon:icon}
 }
-function scoreT1(r){
-  var a=(r&&r.answers)||{},topics=[],earned=0,max=10;
-
-  // HĐ1: 4 thẻ = 2 điểm
-  var h1=0,ans1={t1a_s1_choice:"negative",t1a_s2_choice:"negative",t1a_s3_choice:"negative",t1a_s4_choice:"not"};
-  Object.keys(ans1).forEach(function(k){if(String(a[k]||"")===ans1[k])h1+=0.5});
-  earned+=h1;topics.push(topicResult("Nhận diện tác động tiêu cực",h1,2,"🔎"));
-
-  // HĐ2: SGK 1 điểm + Hình 4.1 0.5 + phân loại 1 điểm + giải pháp 0.5 = 3 điểm
-  var h2=0;
-  if(selectedSet(a,"t1b_sgk",["A","B","C","D"])==="ABD")h2+=1;
-  if(a.t1b_fig41==="account")h2+=0.5;
-  var groups={leak:"person",screen:"person",addict:"person",ewaste:"society",automation:"society"};
-  var sols={leak:"protect",screen:"break",addict:"balance",ewaste:"recycle",automation:"learn"};
-  Object.keys(groups).forEach(function(id){if(a["t1b_"+id+"_group"]===groups[id])h2+=0.2});
-  Object.keys(sols).forEach(function(id){if(a["t1b_"+id+"_solution"]===sols[id])h2+=0.1});
-  earned+=h2;topics.push(topicResult("Phân loại tác động và cách giảm tác động",h2,3,"🧩"));
-
-  // HĐ3: 2 câu SGK + 4 thẻ = 2 điểm
-  var h3=0;
-  if(a.t1c_q1==="C")h3+=0.75;
-  if(selectedSet(a,"t1c_q2",["A","B","C","D"])==="CD")h3+=0.75;
-  var cards={t1c_card1:"person",t1c_card2:"person",t1c_card3:"society",t1c_card4:"society"};
-  Object.keys(cards).forEach(function(k){if(a[k]===cards[k])h3+=0.125});
-  earned+=h3;topics.push(topicResult("Phân biệt tác động đến con người và xã hội",h3,2,"🎯"));
-
-  // HĐ4: dấu hiệu 1, kiểm chứng 1, quy trình 1 = 3 điểm
-  var h4=0;
-  if(selectedSet(a,"t1d_sign",["urgent","oddvoice","avoid","family","known"])==="avoidoddvoiceurgent")h4+=1;
-  if(selectedSet(a,"t1d_verify",["callback","relative","direct","reply","ai2"])==="callbackdirectrelative")h4+=1;
-  if(a.t1d_order1==="stop"&&a.t1d_order2==="verify"&&a.t1d_order3==="report")h4+=1;
-  earned+=h4;topics.push(topicResult("Deepfake: kiểm chứng và ứng phó an toàn",h4,3,"🛡️"));
-
-  earned=Math.round(earned*10)/10;
-  return {score:earned,max:max,topics:topics}
+function scoreDetailsT1(r){
+ var a=(r&&r.answers)||{},items=[];
+ function add(stage,label,earned,max,actual,expected,tip){items.push({stage:stage,label:label,earned:earned,max:max,actual:actual||"Chưa chọn",expected:expected,tip:tip})}
+ function one(stage,k,label,right,max,shown,tip){var v=String(a[k]||"");add(stage,label,v===right?max:0,max,shown&&shown[v]||v||"Chưa chọn",shown&&shown[right]||right,tip||"Đọc lại tình huống và chọn phương án phù hợp.")}
+ function multiple(stage,prefix,label,letters,right,max,tip){var v=selectedSet(a,prefix,letters),r=right;add(stage,label,v===r?max:0,max,v||"Chưa chọn",r,tip||"Kiểm tra lại cả những phương án nên chọn và không nên chọn.")}
+ var binary={negative:"Tác động tiêu cực",not:"Không phải tác động tiêu cực"},groups={person:"Con người",society:"Xã hội"};
+ one(0,'t1a_s1_choice','Tình huống 1','negative',.5,binary);one(0,'t1a_s2_choice','Tình huống 2','negative',.5,binary);one(0,'t1a_s3_choice','Tình huống 3','negative',.5,binary);one(0,'t1a_s4_choice','Tình huống 4','not',.5,binary);
+ multiple(1,'t1b_sgk','Câu hỏi SGK',['A','B','C','D'],'ABD',1);
+ one(1,'t1b_fig41','Nhận diện Hình 4.1','account',.5,{account:'Tài khoản / thông tin cá nhân'},'Xem lại nội dung Hình 4.1 trong phiếu.');
+ var g={leak:'person',screen:'person',addict:'person',ewaste:'society',automation:'society'},sol={leak:'protect',screen:'break',addict:'balance',ewaste:'recycle',automation:'learn'};
+ Object.keys(g).forEach(function(id){one(1,'t1b_'+id+'_group','Phân loại: '+id,g[id],.2,groups,'Xác định đối tượng chịu ảnh hưởng trực tiếp.')});
+ Object.keys(sol).forEach(function(id){var opts=solutionOptions(id),names={};opts.forEach(function(x){names[x[0]]=x[1]});one(1,'t1b_'+id+'_solution','Giải pháp: '+id,sol[id],.1,names,'Chọn giải pháp sát với tình huống.')});
+ one(2,'t1c_q1','Câu hỏi SGK 1','C',.75);multiple(2,'t1c_q2','Câu hỏi SGK 2',['A','B','C','D'],'CD',.75);
+ var cards={t1c_card1:'person',t1c_card2:'person',t1c_card3:'society',t1c_card4:'society'};Object.keys(cards).forEach(function(k,i){one(2,k,'Thẻ phân loại '+(i+1),cards[k],.125,groups)});
+ multiple(3,'t1d_sign','Dấu hiệu nhận diện',['urgent','oddvoice','avoid','family','known'],'avoidoddvoiceurgent',1,'Phân biệt dấu hiệu đáng ngờ với thông tin chưa đủ cơ sở.');
+ multiple(3,'t1d_verify','Cách kiểm chứng',['callback','relative','direct','reply','ai2'],'callbackdirectrelative',1,'Ưu tiên liên hệ độc lập, trực tiếp với người liên quan.');
+ var actual=[a.t1d_order1,a.t1d_order2,a.t1d_order3].map(function(x){return x||'—'}).join(' → '),expected='stop → verify → report';add(3,'Thứ tự ứng phó',actual===expected?1:0,1,actual,expected,'Dừng lại → Kiểm chứng → Báo người đáng tin cậy.');
+ return items
 }
+function scoreT1(r){
+ var details=scoreDetailsT1(r),names=['Nhận diện tác động tiêu cực','Phân loại tác động và cách giảm tác động','Phân biệt tác động đến con người và xã hội','Deepfake: kiểm chứng và ứng phó an toàn'],icons=['🔎','🧩','🎯','🛡️'],topics=[];
+ for(var i=0;i<4;i++){var subset=details.filter(function(d){return d.stage===i}),earned=subset.reduce(function(v,d){return v+d.earned},0),max=subset.reduce(function(v,d){return v+d.max},0);topics.push(topicResult(names[i],Math.round(earned*1000)/1000,Math.round(max*1000)/1000,icons[i]))}
+ var total=topics.reduce(function(v,t){return v+t.earned},0);
+ return {score:Math.round(total*10)/10,rawScore:Math.round(total*1000)/1000,max:10,topics:topics,details:details}
+}
+function fmtPoints(n){return Number(n).toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}
+function gradeDetailsHtml(details){
+ return '<div class="grade-detail">'+details.map(function(d){var missed=d.max-d.earned,good=missed<.000001;return '<div style="padding:9px;margin:7px 0;border:1px solid '+(good?'#b9d9bf':'#efc4b7')+';border-radius:10px;background:'+(good?'#f3fbf4':'#fff8f4')+'"><div class="topbar" style="justify-content:space-between"><b>'+(good?'✓ ':'− ')+esc(d.label)+'</b><b>' +fmtPoints(d.earned)+'/'+fmtPoints(d.max)+(good?'':' · Trừ '+fmtPoints(missed))+'</b></div>'+(good?'':'<div class="small">Em đã chọn: '+esc(d.actual)+'<div>Đáp án phù hợp: <b>'+esc(d.expected)+'</b></div><div>Gợi ý học lại: '+esc(d.tip)+'</div></div>')+'</div>'}).join('')+'</div>'
+}
+function checkHistory(r){return (r&&r.meta&&r.meta.quickHistory)||{}}
+function improvementHtml(r){var h=checkHistory(r),s=scoreT1(r),parts=[];for(var i=0;i<4;i++){var v=h[String(i)]||[],first=v.length?v[0].score:null,latest=s.topics[i].earned;parts.push('<div class="k-item">HĐ'+(i+1)+': '+(first==null?'Chưa kiểm tra':fmtPoints(first))+' → <b>'+fmtPoints(latest)+'</b>/'+fmtPoints(s.topics[i].max)+' · '+v.length+' lần kiểm tra</div>')}return parts.join('')}
+
 function scoreIcon(score){
   if(score>=9)return {icon:"🌟",label:"Rất tốt"};
   if(score>=7)return {icon:"🏆",label:"Đạt tốt"};
@@ -488,24 +478,28 @@ function scoreIcon(score){
   return {icon:"🔄",label:"Cần xem lại"}
 }
 function renderAutoResult(i){
-  var box=document.getElementById("autoResult_"+i);if(!box||!currentRecord)return;
-  var s=scoreT1(currentRecord),topic=s.topics[i],cls=topic.ok?"ok":"warn";
-  box.className="auto-result "+cls;
-  box.innerHTML='<b>'+topic.icon+' '+esc(topic.name)+'</b> · <span class="score-chip">'+topic.earned.toFixed(1)+'/'+topic.max.toFixed(1)+' điểm</span> '+(topic.ok?'✅ Đạt':'🔄 Nên xem lại');
+ var box=document.getElementById("autoResult_"+i);if(!box||!currentRecord)return;
+ var s=scoreT1(currentRecord),topic=s.topics[i],details=s.details.filter(function(d){return d.stage===i});
+ currentRecord.meta=currentRecord.meta||{};var history=currentRecord.meta.quickHistory||{};var arr=history[String(i)]||[];
+ if(!arr.length||arr[arr.length-1].revision!==Number(currentRecord.meta.answerRevision||0)){
+   arr.push({score:topic.earned,at:Date.now(),revision:Number(currentRecord.meta.answerRevision||0)});if(arr.length>30)arr=arr.slice(-30);
+   history[String(i)]=arr;currentRecord.meta.quickHistory=history;scheduleSave();
+ }
+ box.className="auto-result "+(topic.ok?"ok":"warn");
+ box.innerHTML='<b>'+topic.icon+' '+esc(topic.name)+'</b> · <span class="score-chip">'+fmtPoints(topic.earned)+'/'+fmtPoints(topic.max)+' điểm</span> · Thiếu '+fmtPoints(topic.max-topic.earned)+' điểm'+
+ '<div class="small">Lần kiểm tra: '+arr.length+' · Điểm lần đầu: '+fmtPoints(arr[0].score)+' · Điểm hiện tại: '+fmtPoints(topic.earned)+'</div>'+gradeDetailsHtml(details)+
+ '<div class="info">Em có thể sửa lựa chọn phía trên rồi nhấn <b>Kiểm tra nhanh</b> lần nữa. Phần tự luận cần giáo viên nhận xét riêng.</div>';
 }
 function renderKnowledgeCard(){
-  var host=document.getElementById("t1KnowledgeCard");if(!host||!currentRecord)return;
-  var s=scoreT1(currentRecord),ic=scoreIcon(s.score),good=s.topics.filter(function(t){return t.ok}),review=s.topics.filter(function(t){return !t.ok});
-  host.innerHTML='<div class="knowledge-card">'+
-    '<h3>THẺ KIẾN THỨC TIẾT 1</h3>'+
-    '<div class="knowledge-hero"><div class="knowledge-icon">'+ic.icon+'</div><div><div class="knowledge-score">'+s.score.toFixed(1)+'/10</div><b>'+ic.label+'</b><div class="small">Điểm tự động từ các câu hỏi kiến thức. Phần viết không tính điểm.</div></div></div>'+
-    '<div class="knowledge-grid">'+
-      '<div class="knowledge-list"><h4>✅ Kiến thức em đã đạt</h4>'+(good.length?good.map(function(t){return '<div class="k-item good">'+t.icon+' '+esc(t.name)+' <b>('+t.earned.toFixed(1)+'/'+t.max.toFixed(1)+')</b></div>'}).join(""):'<div class="small">Chưa có nhóm kiến thức đạt ngưỡng 70%.</div>')+'</div>'+
-      '<div class="knowledge-list"><h4>🔄 Kiến thức cần xem lại</h4>'+(review.length?review.map(function(t){return '<div class="k-item review">'+t.icon+' '+esc(t.name)+' <b>('+t.earned.toFixed(1)+'/'+t.max.toFixed(1)+')</b></div>'}).join(""):'<div class="k-item good">🎉 Không có nội dung nào cần xem lại.</div>')+'</div>'+
-    '</div>'+
-    '<div class="info" style="margin-top:10px"><b>Gợi ý:</b> Em có thể dùng thanh HĐ1-HĐ4 phía trên để quay lại đúng hoạt động cần ôn và làm lại.</div>'+
-  '</div>'
+ var host=document.getElementById("t1KnowledgeCard");if(!host||!currentRecord)return;
+ var s=scoreT1(currentRecord),ic=scoreIcon(s.score),good=s.topics.filter(function(t){return t.ok}),review=s.topics.filter(function(t){return !t.ok});
+ host.innerHTML='<div class="knowledge-card"><h3>THẺ KIẾN THỨC TIẾT 1</h3>'+
+ '<div class="knowledge-hero"><div class="knowledge-icon">'+ic.icon+'</div><div><div class="knowledge-score">'+fmtPoints(s.rawScore)+'/10</div><b>'+ic.label+'</b><div class="small">Điểm kiến thức tự động. Phần viết không tính điểm.</div></div></div>'+
+ '<div class="knowledge-grid"><div class="knowledge-list"><h4>Kiến thức đã đạt</h4>'+(good.length?good.map(function(t){return '<div class="k-item good">'+t.icon+' '+esc(t.name)+' ('+fmtPoints(t.earned)+'/'+fmtPoints(t.max)+')</div>'}).join(''):'Chưa có')+'</div>'+
+ '<div class="knowledge-list"><h4>Kiến thức cần xem lại</h4>'+(review.length?review.map(function(t){return '<div class="k-item review">'+t.icon+' '+esc(t.name)+' ('+fmtPoints(t.earned)+'/'+fmtPoints(t.max)+')</div>'}).join(''):'Không có')+'</div></div>'+
+ '<h4>Tiến bộ sau những lần kiểm tra nhanh</h4>'+improvementHtml(currentRecord)+'<div class="info">Chọn HĐ1–HĐ4 để sửa câu sai và kiểm tra lại.</div></div>';
 }
+
 function activityAssessment(r,i){
   var a=(r&&r.answers)||{},missing=[],touched=0;
   function req(k,label){var v=a[k];if(v===true||hasText(v)){touched++}else missing.push(label)}
@@ -563,7 +557,7 @@ function renderTabs(){
 function renderNav(){
   var nav=document.getElementById("activityNav"),ids=sessionIds(currentSession);
   nav.innerHTML=ids.map(function(i){var st=activityAssessment(currentRecord,i);return '<button class="'+(currentSession===1?"t1":"t2")+" "+(i===currentActivity?"active ":"")+(st.complete?"done":"")+'" data-act="'+i+'">HĐ '+localActNo(i)+'<span class="navlabel">'+(st.complete?"Đã đủ":st.status==="partial"?"Đang làm":"Chưa làm")+'</span></button>'}).join("");
-  Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=async function(){await saveCurrentActivity(false,true);currentActivity=Number(b.getAttribute("data-act"));currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity()}})
+  Array.prototype.forEach.call(nav.querySelectorAll("[data-act]"),function(b){b.onclick=async function(){await saveCurrentActivity(false,true);currentActivity=Number(b.getAttribute("data-act"));currentRecord.meta.currentActivity=currentActivity;renderActivity()}})
 }
 function updateProgress(){
   var ids=sessionIds(currentSession),n=ids.filter(function(i){return activityAssessment(currentRecord,i).complete}).length;
@@ -594,19 +588,19 @@ function renderActivity(){
     }
   });
   if(currentSession===1&&currentActivity===3)renderKnowledgeCard();
-  document.getElementById("prevAct").onclick=async function(){if(pos>0){await saveCurrentActivity(false,true);currentActivity=ids[pos-1];currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity()}};
+  document.getElementById("prevAct").onclick=async function(){if(pos>0){await saveCurrentActivity(false,true);currentActivity=ids[pos-1];currentRecord.meta.currentActivity=currentActivity;renderActivity()}};
   document.getElementById("nextAct").onclick=async function(){
     if(activityAssessment(currentRecord,currentActivity).touched<=0){var box=document.getElementById("activityFeedback");box.className="feedback warn";box.textContent="Em cần hoàn thành ít nhất một ô/yêu cầu trước khi bấm Tiếp.";return}
     await saveCurrentActivity(true,false);
     if(currentSession===1&&currentActivity===3)renderKnowledgeCard();
-    if(!last){currentActivity=ids[pos+1];currentRecord.meta.currentActivity=currentActivity;persistCurrent(false);renderActivity();document.getElementById("activityCard").scrollIntoView({behavior:"smooth",block:"start"})}
+    if(!last){currentActivity=ids[pos+1];currentRecord.meta.currentActivity=currentActivity;renderActivity();document.getElementById("activityCard").scrollIntoView({behavior:"smooth",block:"start"})}
   };
   updateNextState()
 }
 async function switchSession(s){
   if(!currentRecord)return;await saveCurrentActivity(false,true);currentSession=s;currentRecord.meta.currentSession=s;
   var ids=sessionIds(s),saved=Number(currentRecord.meta["lastActivityT"+s]);currentActivity=ids.indexOf(saved)>=0?saved:ids.find(function(i){return !activityAssessment(currentRecord,i).complete});
-  if(currentActivity==null||currentActivity<0)currentActivity=ids[0];persistCurrent(false);renderActivity()
+  if(currentActivity==null||currentActivity<0)currentActivity=ids[0];renderActivity()
 }
 
 // ---------- local + Firebase ----------
@@ -630,27 +624,34 @@ function remotePayload(r){
   var meta=Object.assign({},r.meta||{});meta.worksheetId=WORKSHEET_ID;meta.version=VERSION;meta.activitySaved=(r.activitySaved||[]).map(function(x){return x?1:0}).join(",");
   return {className:String(r.className||""),studentNo:Number(r.studentNo||0),name:String(r.name||""),answers:r.answers||{},done:(r.done||[]).map(Boolean),ownerUid:firebaseUser?firebaseUser.uid:String(r.ownerUid||""),currentActivity:Number(r.meta.currentActivity||0),createdAt:Number(r.createdAt||Date.now()),updatedAt:firebase.database.ServerValue.TIMESTAMP,meta:meta}
 }
-async function syncRemote(){if(teacherMode||!ownResultRef||!currentRecord)return;currentRecord.ownerUid=firebaseUser.uid;await ownResultRef.set(remotePayload(currentRecord))}
-async function persistCurrent(remote){
-  if(!currentRecord||!currentLocalKey)return false;currentRecord.updatedAt=Date.now();
-  var d=allData();d[currentLocalKey]=currentRecord;saveAll(d);setSaveStatus("Đã lưu trên máy");
-  if(remote){
-    try{
-      await syncRemote();
-      try{await syncRecoverySnapshot()}catch(re){console.warn("Recovery snapshot:",re)}
-      setSaveStatus("Đã lưu · Đã đồng bộ")
-    }catch(e){console.error(e);setSaveStatus("Đã lưu trên máy",true)}
-  }else{
-    clearTimeout(saveTimer);
-    saveTimer=setTimeout(function(){
-      syncRemote().then(function(){
-        return syncRecoverySnapshot().catch(function(re){console.warn("Recovery snapshot:",re)})
-      }).then(function(){setSaveStatus("Đã lưu · Đã đồng bộ")})
-        .catch(function(){setSaveStatus("Đã lưu trên máy",true)})
-    },450)
-  }
-  return true
+var syncQueue=Promise.resolve(),localRevision=0;
+async function syncRemote(){
+ if(teacherMode||!ownResultRef||!currentRecord)return false;
+ var ref=ownResultRef,who=firebaseUser&&firebaseUser.uid,recordKey=currentLocalKey;
+ if(!who)return false;
+ var snapshot=JSON.parse(JSON.stringify(currentRecord));snapshot.ownerUid=who;
+ var revision=++localRevision;
+ var op=syncQueue.catch(function(){}).then(async function(){
+   if(teacherMode||ownResultRef!==ref||currentLocalKey!==recordKey||!firebaseUser||firebaseUser.uid!==who)return false;
+   // Bản ghi đã lấy tại thời điểm xếp hàng; không lấy dữ liệu của học sinh vừa đổi máy.
+   await ref.set(remotePayload(snapshot));return true
+ });
+ syncQueue=op;return op
 }
+async function persistCurrent(remote){
+ if(!currentRecord||!currentLocalKey)return false;
+ currentRecord.updatedAt=Date.now();
+ var d=allData();d[currentLocalKey]=currentRecord;saveAll(d);setSaveStatus('Đã lưu trên máy');
+ if(remote){
+   clearTimeout(saveTimer);
+   try{await syncRemote();await syncRecoverySnapshot();setSaveStatus('Đã lưu · Đã đồng bộ')}catch(e){console.error(e);setSaveStatus('Đã lưu trên máy · Đồng bộ lỗi',true)}
+ }else{
+   clearTimeout(saveTimer);
+   saveTimer=setTimeout(function(){syncRemote().then(function(){return syncRecoverySnapshot()}).then(function(){setSaveStatus('Đã lưu · Đã đồng bộ')}).catch(function(e){console.error(e);setSaveStatus('Đã lưu trên máy · Đồng bộ lỗi',true)})},450)
+ }
+ return true
+}
+
 function findLocal(cls,no,key){
   var d=allData(),k=localRecordKey(cls,no,key),r=d[k];return r?{storageKey:k,record:hydrateRecord(r)}:null
 }
@@ -717,40 +718,6 @@ async function changeStudent(){
   await ensureAnonymous()
 }
 
-// Khôi phục phiên học khi làm mới trang hoặc cập nhật HTML.
-// Chỉ khôi phục trên đúng thiết bị/trình duyệt và cùng tài khoản Anonymous Auth.
-async function restoreSessionAfterRefresh(){
-  var session=readSession();
-  if(!session||!session.className||!session.studentNo||!/^[0-9]{4}$/.test(String(session.accessKey||"")))return false;
-  var found=findLocal(session.className,session.studentNo,session.accessKey);
-  if(!found)return false;
-  try{
-    await ensureAnonymous();
-    if(!firebaseUser||session.uid!==firebaseUser.uid){
-      console.warn("UID đã đổi, không tự ghi dữ liệu cũ lên tài khoản mới.");
-      return false;
-    }
-    // Không đọc Firebase rồi đè lên bản nháp mới hơn trên máy.
-    currentRecord=hydrateRecord(found.record);
-    currentLocalKey=found.storageKey;
-    currentRecord.ownerUid=firebaseUser.uid;
-    currentSession=Number(currentRecord.meta.currentSession||1)===2?2:1;
-    currentActivity=Number(currentRecord.meta.currentActivity||0);
-    if(sessionOf(currentActivity)!==currentSession)currentActivity=sessionIds(currentSession)[0];
-    document.getElementById("studentClass").value=currentRecord.className;
-    document.getElementById("studentNo").value=String(currentRecord.studentNo);
-    document.getElementById("studentName").value=currentRecord.name||"";
-    document.getElementById("loginScreen").classList.add("hidden");
-    document.getElementById("studentScreen").classList.remove("hidden");
-    document.getElementById("studentBadge").textContent=currentRecord.className+" · STT "+currentRecord.studentNo+" · "+currentRecord.name;
-    renderActivity();setSaveStatus("Đã khôi phục bản trên máy · Đang đồng bộ");
-    // Chỉ cập nhật bản máy chủ nếu đây vẫn là cùng UID.
-    try{await syncRemote();setSaveStatus("Đã khôi phục · Đã đồng bộ")}
-    catch(e){console.warn("Đồng bộ sau F5 thất bại:",e);setSaveStatus("Đã khôi phục trên máy · Chưa đồng bộ",true)}
-    return true;
-  }catch(e){console.warn("Không thể tự khôi phục phiên:",e);return false}
-}
-
 // ---------- teacher ----------
 async function teacherLogin(){
   var email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value,status=document.getElementById("teacherLoginStatus");
@@ -773,24 +740,15 @@ function startTeacherListener(){
 }
 function normalizeRecords(){return Object.keys(firebaseRecords||{}).map(function(uid){var r=hydrateRecord(Object.assign({},firebaseRecords[uid]||{}));if(!r||!r.className||!r.studentNo)return null;r.uid=uid;return r}).filter(Boolean)}
 function mergeRecords(arr){
-  var s=arr.slice().sort(function(a,b){return Number(a.updatedAt||0)-Number(b.updatedAt||0)}),
-      last=s[s.length-1],
-      lastKey=String(((last.answers||{})._accessKey)||""),
-      m={className:last.className,studentNo:last.studentNo,name:last.name,answers:{_accessKey:lastKey},done:Array(8).fill(false),activitySaved:Array(8).fill(false),createdAt:Number(last.createdAt||0),updatedAt:0,meta:{worksheetId:WORKSHEET_ID,version:VERSION}};
-  s.forEach(function(r){
-    Object.keys(r.answers||{}).forEach(function(k){
-      var v=r.answers[k];
-      if(k==="_accessKey"){if(hasText(v))m.answers._accessKey=String(v);return}
-      if(v===true||hasText(v))m.answers[k]=v
-    });
-    for(var i=0;i<8;i++){
-      m.done[i]=m.done[i]||Boolean((r.done||[])[i]);
-      m.activitySaved[i]=m.activitySaved[i]||Boolean((r.activitySaved||[])[i])
-    }
-    m.updatedAt=Math.max(m.updatedAt,Number(r.updatedAt||0))
-  });
-  return hydrateRecord(m)
+ var s=arr.slice().sort(function(a,b){return Number(a.updatedAt||0)-Number(b.updatedAt||0)}),last=s[s.length-1];
+ // Chỉ dùng bản mới nhất: giữ cả false, chuỗi rỗng và đáp án đã bỏ chọn.
+ // Không trộn câu trả lời khác thời điểm vì tạo bài chưa từng được HS thực hiện.
+ var m=hydrateRecord(JSON.parse(JSON.stringify(last)));
+ m.done=Array.from({length:8},function(_,i){return activityAssessment(m,i).complete});
+ m.activitySaved=Array.from({length:8},function(_,i){return activityAssessment(m,i).touched>0});
+ return m
 }
+
 function groupKey(r){
   var accessKey=String(((r.answers||{})._accessKey)||"");
   // Mỗi key là một hồ sơ riêng. Nhập trùng tên/STT nhưng khác key sẽ KHÔNG bị gộp.
@@ -927,8 +885,9 @@ function renderDetailAt(groups,idx){
   var g=groups[idx],r=g.representative,o=overallAssessment(r),detail=document.getElementById("teacherDetail");
   detail.innerHTML='<div class="card detail-card" id="teacherDetailCard" tabindex="-1" style="margin-top:14px"><div class="topbar" style="justify-content:space-between"><h3 style="margin:0">'+esc(r.name)+' · '+esc(r.className)+' · STT '+r.studentNo+' · KEY <span class="badge gold" style="font-size:1rem;letter-spacing:.12em">'+esc(g.accessKey||"----")+'</span></h3><span class="small">'+(idx+1)+'/'+groups.length+'</span></div>'+
   '<div class="detail-floating-nav"><button class="btn light" id="prevStudentBtn" '+(idx===0?'disabled':'')+'>← Trước</button><button class="btn light" id="closeDetailBtn">Đóng chi tiết</button><button class="btn light" id="nextStudentBtn" '+(idx===groups.length-1?'disabled':'')+'>Sau →</button></div>'+
-  '<p><b>Tiết 1:</b> '+o.t1+'/4 · <b>Điểm tự động T1:</b> '+scoreT1(r).score.toFixed(1)+'/10 · <b>Tiết 2:</b> '+o.t2+'/4 · <b>Số phiên:</b> '+g.records.length+'</p>'+
+  '<p><b>Tiết 1:</b> '+o.t1+'/4 · <b>Điểm tự động T1:</b> '+fmtPoints(scoreT1(r).rawScore)+'/10 · <b>Tiết 2:</b> '+o.t2+'/4 · <b>Số phiên:</b> '+g.records.length+'</p>'+
   '<div class="info"><b>Kiến thức cần xem lại:</b> '+(scoreT1(r).topics.filter(function(t){return !t.ok}).map(function(t){return t.name}).join("; ")||"Không có")+'</div>'+
+  '<div class="detail-section"><h4>CHI TIẾT ĐIỂM TRỪ TIẾT 1</h4><div class="small">Điểm theo từng ý; phần tự luận không tính điểm tự động. Điểm chính xác: '+fmtPoints(scoreT1(r).rawScore)+'/10</div>'+gradeDetailsHtml(scoreT1(r).details)+'<h4>Lịch sử tự kiểm tra</h4>'+improvementHtml(r)+'</div>'+
   '<div class="detail-section"><h4>Tiết 1</h4>'+answerRows(r,1)+'</div><div class="detail-section"><h4>Tiết 2</h4>'+answerRows(r,2)+'</div></div>';
   document.getElementById("closeDetailBtn").onclick=function(){detail.innerHTML=""};document.getElementById("prevStudentBtn").onclick=function(){if(idx>0)renderDetailAt(groups,idx-1)};document.getElementById("nextStudentBtn").onclick=function(){if(idx<groups.length-1)renderDetailAt(groups,idx+1)};
   requestAnimationFrame(function(){var c=document.getElementById("teacherDetailCard");c.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(function(){try{c.focus({preventScroll:true})}catch(e){c.focus()}},200)})
@@ -937,7 +896,7 @@ async function deleteGroup(key){if(!teacherMode)return;var g=buildGroups().find(
 async function teacherLogout(){try{if(resultsRef&&teacherListener)resultsRef.off("value",teacherListener);if(grantRef&&grantListener)grantRef.off("value",grantListener);await firebase.auth().signOut()}catch(e){}teacherMode=false;firebaseRecords={};document.getElementById("teacherScreen").classList.add("hidden");document.getElementById("loginScreen").classList.remove("hidden");document.getElementById("teacherDetail").innerHTML="";await ensureAnonymous()}
 function exportCsv(){
   var rows=[["Lớp","STT","Họ tên","Mã key","Điểm T1","Cần xem lại T1","Tiết 1","Tiết 2","Trạng thái","Cập nhật"]];
-  getViewGroups().forEach(function(g){var r=g.representative,o=overallAssessment(r);rows.push([r.className,r.studentNo,r.name,g.accessKey||"",scoreT1(r).score.toFixed(1)+"/10",scoreT1(r).topics.filter(function(t){return !t.ok}).map(function(t){return t.name}).join("; "),o.t1+"/4",o.t2+"/4",o.t1===4&&o.t2===4?"Hoàn thành":"Đang làm",new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")])});
+  getViewGroups().forEach(function(g){var r=g.representative,o=overallAssessment(r);rows.push([r.className,r.studentNo,r.name,g.accessKey||"",fmtPoints(scoreT1(r).rawScore)+"/10",scoreT1(r).topics.filter(function(t){return !t.ok}).map(function(t){return t.name}).join("; "),o.t1+"/4",o.t2+"/4",o.t1===4&&o.t2===4?"Hoàn thành":"Đang làm",new Date(Number(g.updatedAt)||0).toLocaleString("vi-VN")])});
   var csv="\uFEFF"+rows.map(function(row){return row.map(function(x){return '"'+String(x==null?"":x).replace(/"/g,'""')+'"'}).join(",")}).join("\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download="ket_qua_tin9_bai4_2tiet.csv";a.click();setTimeout(function(){URL.revokeObjectURL(url)},500)
 }
 
@@ -964,9 +923,7 @@ document.getElementById("exportCsvBtn").onclick=exportCsv;
 document.getElementById("teacherPassword").addEventListener("keydown",function(e){if(e.key==="Enter")teacherLogin()});
 window.addEventListener("online",function(){if(currentRecord&&!teacherMode)syncRemote().catch(console.error)});
 window.addEventListener("beforeunload",function(){if(currentRecord&&currentLocalKey&&!teacherMode){var d=allData();d[currentLocalKey]=currentRecord;saveAll(d)}});
-restoreSessionAfterRefresh().then(function(restored){
-  if(!restored)ensureAnonymous().catch(console.error)
-}).catch(console.error);
+ensureAnonymous().catch(console.error);
 </script>
 </body>
 </html>
