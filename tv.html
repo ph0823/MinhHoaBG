@@ -159,6 +159,21 @@ const recallButtons=[$('#recallBtn'),$('#recallFloat')];
 let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
 let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
 let startPromptTimer=null,playRequestId=0,playWanted=true;
+let startupWatchdog=null, startupRetries=0, playbackConfirmed=false, autoplayBlocked=false;
+const STARTUP_TIMEOUT_MS=12000, MAX_STARTUP_RETRIES=2;
+function mediaLog(event, detail){
+  console.info('[TV Player]', event, 'channel='+channels[currentIndex].name,
+    'readyState='+video.readyState, 'networkState='+video.networkState,
+    'paused='+video.paused, detail||'');
+}
+function clearStartupTimers(){clearTimeout(startPromptTimer);clearTimeout(startupWatchdog);}
+function focusPlayPrompt(){
+  if(isWebOS&&!app.classList.contains('menu-open')&&!app.classList.contains('apps-open')){
+    try{startPlayback.focus({preventScroll:true})}catch(_){startPlayback.focus()}
+    lockTvViewport();
+  }
+}
+
 const CONTROLS_IDLE_MS=5000;
 
 // CÂN BẰNG ÂM LƯỢNG GIỮA CÁC KÊNH
@@ -282,39 +297,141 @@ function updateRecall(){const enabled=previousIndex!==null;recallButtons.forEach
 function updateUI(){const ch=channels[currentIndex];currentName.textContent=ch.name;currentType.textContent=ch.type==='radio'?'Phát thanh trực tuyến':'Truyền hình trực tiếp';visualizer.style.display=ch.type==='radio'?'flex':'none';visualizer.classList.toggle('playing',ch.type==='radio'&&!video.paused);[...playlist.children].forEach((el,i)=>{el.classList.toggle('active',i===currentIndex);el.setAttribute('aria-selected',String(i===currentIndex))});localStorage.setItem('tv.lastChannel',currentIndex)}
 function updateMuteUI(){const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng'}
 function toggleMute(){video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200)}
-function showStartPlayback(){startPlayback.classList.add('show');startPlayback.textContent='▶ Nhấn OK hoặc chạm để phát';}
+function showStartPlayback(label){
+  startPlayback.textContent=label||'▶ Nhấn OK hoặc chạm để phát';
+  startPlayback.classList.add('show');
+  focusPlayPrompt();
+}
 function hideStartPlayback(){startPlayback.classList.remove('show');}
-function destroyStream(){if(hls){hls.destroy();hls=null}video.pause();video.removeAttribute('src');video.load()}
+function destroyStream(){
+  // Vô hiệu hóa các callback cũ; bộ đếm phiên nằm trong loadChannel.
+  if(hls){try{hls.destroy()}catch(e){console.warn('[TV Player] hls.destroy',e)}hls=null}
+  try{video.pause();video.removeAttribute('src');video.load()}catch(e){console.warn('[TV Player] reset media',e)}
+}
+function confirmPlayback(){
+  playbackConfirmed=true;autoplayBlocked=false;startupRetries=0;
+  clearStartupTimers();hideStartPlayback();setStatus('',false);
+  if(document.activeElement===startPlayback){try{video.focus({preventScroll:true})}catch(_){video.focus()}}
+  mediaLog('playing confirmed');
+}
+function armStartupWatchdog(token){
+  clearTimeout(startupWatchdog);
+  startupWatchdog=setTimeout(function(){
+    if(token!==loadToken||!playWanted||playbackConfirmed||autoplayBlocked)return;
+    mediaLog('startup timeout', 'attempt='+startupRetries);
+    if(startupRetries<MAX_STARTUP_RETRIES){
+      startupRetries++;
+      setStatus('Đang thử kết nối lại kênh…',true);
+      loadChannel(currentIndex,{remember:false,force:true,recovery:true});
+    }else{
+      setStatus('Chưa phát được '+channels[currentIndex].name,false,3000);
+      showStartPlayback('▶ Thử phát lại');
+    }
+  },STARTUP_TIMEOUT_MS);
+}
 function tryPlay(fromUser=false){
-  if(fromUser){playWanted=true;hideStartPlayback();}
+  if(fromUser){playWanted=true;autoplayBlocked=false;}
+  if(!playWanted)return;
   const token=loadToken,request=++playRequestId;
+  mediaLog('play requested', fromUser?'user':'automatic');
   let result;
-  try{result=video.play();}
-  catch(e){console.warn('[TV] play synchronous error',e);if(token===loadToken)showStartPlayback();return;}
-  if(result&&result.then){result.then(()=>{
-    if(token===loadToken&&request===playRequestId)hideStartPlayback();
-  }).catch(e=>{
+  try{result=video.play()}
+  catch(e){
+    console.warn('[TV Player] synchronous play failure',e);
+    if(token===loadToken){if(e&&e.name==='NotAllowedError')autoplayBlocked=true;showStartPlayback('▶ Nhấn OK hoặc chạm để phát')}
+    return;
+  }
+  if(result&&typeof result.then==='function')result.then(function(){
+    if(token!==loadToken||request!==playRequestId)return;
+    // A resolved play() is not necessarily video/audio flowing. Wait for playing.
+    mediaLog('play promise resolved');
+  }).catch(function(e){
     if(token!==loadToken||request!==playRequestId||!playWanted)return;
-    console.warn('[TV] Playback could not start:',e&&e.name,e&&e.message);
-    showStartPlayback();
-    // Không tự ẩn lời nhắc bằng setStatus: người xem phải luôn có nút phát để nhấn.
-    if(e&&e.name!=='NotAllowedError'&&e.name!=='AbortError')setStatus('Chưa phát được kênh, thử nhấn Phát',false,2200);
-  });}
+    console.warn('[TV Player] play() rejected',e&&e.name,e&&e.message);
+    if(e&&e.name==='NotAllowedError'){
+      autoplayBlocked=true;
+      clearTimeout(startupWatchdog);
+      showStartPlayback('▶ Nhấn OK hoặc chạm để phát');
+    }else if(e&&e.name!=='AbortError'){
+      showStartPlayback('▶ Thử phát lại');
+    }
+  });
 }
 function userStartPlayback(){
-  playWanted=true;
-  // play() chạy ngay trong thao tác người dùng để được Chrome/webOS cấp quyền phát tiếng.
+  // Thao tác OK/click phải trực tiếp thực hiện video.play() để mở khóa tiếng.
+  playWanted=true;autoplayBlocked=false;
+  if(video.error || video.networkState===HTMLMediaElement.NETWORK_NO_SOURCE || !video.getAttribute('src')&&!hls){
+    mediaLog('user requested fresh stream');
+    loadChannel(currentIndex,{remember:false,force:true});
+    tryPlay(true);
+    return;
+  }
   tryPlay(true);
-  // Nếu video được gắn sau khi manifest HLS tải xong, callback tải kênh sẽ thử tiếp.
+  armStartupWatchdog(loadToken);
 }
 function togglePlayByUser(){
   if(video.paused||startPlayback.classList.contains('show'))userStartPlayback();
-  else{playWanted=false;video.pause();hideStartPlayback();}
+  else{playWanted=false;clearStartupTimers();video.pause();hideStartPlayback();}
 }
-function loadChannel(index,{remember=true}={}){index=(index+channels.length)%channels.length;if(index===currentIndex&&video.currentSrc)return;if(remember&&index!==currentIndex)previousIndex=currentIndex;currentIndex=index;retryCount=0;playWanted=true;hideStartPlayback();clearTimeout(startPromptTimer);updateRecall();updateUI();applyNormalizedVolume(index);setStatus('Đang mở '+channels[index].name+'…',true);const token=++loadToken;destroyStream();startPromptTimer=setTimeout(()=>{if(token===loadToken&&(video.paused||video.readyState<2)&&playWanted)showStartPlayback()},1900);const ch=channels[index];const isHls=/\.m3u8(?:$|\?)/i.test(ch.url);
-if(isHls&&video.canPlayType('application/vnd.apple.mpegurl')){video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&playWanted&&tryPlay(),{once:true})}
-else if(isHls&&window.Hls&&Hls.isSupported()){hls=new Hls({lowLatencyMode:false,backBufferLength:10,maxBufferLength:20,maxMaxBufferLength:30,startLevel:-1,capLevelToPlayerSize:true,enableWorker:true});hls.loadSource(ch.url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===loadToken){retryCount=0;if(playWanted)tryPlay()}});hls.on(Hls.Events.ERROR,(_,data)=>{if(token!==loadToken||!data.fatal)return;retryCount++;if(retryCount<=4&&data.type===Hls.ErrorTypes.NETWORK_ERROR){const delay=[0,1000,2000,4000][retryCount-1]||4000;setStatus('Mạng gián đoạn, đang thử lại…',true);setTimeout(()=>{if(token===loadToken&&hls)hls.startLoad()},delay)}else if(retryCount<=3&&data.type===Hls.ErrorTypes.MEDIA_ERROR){setStatus('Đang khôi phục luồng phát…',true);hls.recoverMediaError()}else{setStatus('Kênh tạm thời không phát được',false,5000)}})}
-else{video.src=ch.url;video.addEventListener('loadedmetadata',()=>token===loadToken&&playWanted&&tryPlay(),{once:true})}}
+function loadChannel(index,options){
+  options=options||{};
+  index=(index+channels.length)%channels.length;
+  if(!options.force&&index===currentIndex&&video.currentSrc)return;
+  if(options.remember!==false&&index!==currentIndex)previousIndex=currentIndex;
+  if(!options.recovery)startupRetries=0;
+  currentIndex=index;retryCount=0;playWanted=true;autoplayBlocked=false;playbackConfirmed=false;
+  clearStartupTimers();hideStartPlayback();updateRecall();updateUI();applyNormalizedVolume(index);
+  const token=++loadToken;
+  destroyStream();
+  setStatus('Đang mở '+channels[index].name+'…',true);
+  mediaLog('start load', 'token='+token+(options.recovery?' recovery':' initial'));
+  // Hiển thị nút thật để người dùng thao tác khi TV chặn autoplay.
+  startPromptTimer=setTimeout(function(){
+    if(token===loadToken&&playWanted&&!playbackConfirmed)showStartPlayback();
+  },1500);
+  armStartupWatchdog(token);
+  const ch=channels[index],isHls=/\.m3u8(?:$|\?)/i.test(ch.url);
+  function ready(){
+    if(token!==loadToken||!playWanted||playbackConfirmed)return;
+    mediaLog('media ready');
+    if(!autoplayBlocked)tryPlay(false);
+  }
+  if(isHls&&video.canPlayType('application/vnd.apple.mpegurl')){
+    video.addEventListener('loadedmetadata',ready,{once:true});
+    video.src=ch.url;
+    try{video.load()}catch(e){console.warn('[TV Player] native HLS load',e)}
+    // Một số bản webOS không gửi loadedmetadata cho lần mở đầu.
+    tryPlay(false);
+  }else if(isHls&&window.Hls&&Hls.isSupported()){
+    const player=new Hls({lowLatencyMode:false,backBufferLength:10,maxBufferLength:20,maxMaxBufferLength:30,startLevel:-1,capLevelToPlayerSize:true,enableWorker:true});
+    hls=player;
+    player.on(Hls.Events.MANIFEST_PARSED,function(){if(token===loadToken)ready()});
+    player.on(Hls.Events.ERROR,function(_,data){
+      if(token!==loadToken)return;
+      console.warn('[TV Player] HLS error',data&&data.type,data&&data.details,'fatal=',data&&data.fatal);
+      if(!data||!data.fatal)return;
+      retryCount++;
+      if(retryCount<=3&&data.type===Hls.ErrorTypes.NETWORK_ERROR){
+        setStatus('Mạng gián đoạn, đang thử lại…',true);
+        const delay=Math.min(4000,retryCount*1000);
+        setTimeout(function(){if(token===loadToken&&hls===player)player.startLoad()},delay);
+      }else if(retryCount<=2&&data.type===Hls.ErrorTypes.MEDIA_ERROR){
+        player.recoverMediaError();
+      }else{
+        setStatus('Kênh đang gặp lỗi phát',false,2500);
+        if(startupRetries<MAX_STARTUP_RETRIES){
+          startupRetries++;loadChannel(currentIndex,{remember:false,force:true,recovery:true});
+        }else{clearTimeout(startupWatchdog);showStartPlayback('▶ Thử phát lại')}
+      }
+    });
+    player.attachMedia(video);player.loadSource(ch.url);
+  }else{
+    video.addEventListener('loadedmetadata',ready,{once:true});
+    video.src=ch.url;
+    try{video.load()}catch(e){console.warn('[TV Player] direct load',e)}
+    tryPlay(false);
+  }
+}
 function selectChannel(index){loadChannel(index);setMenu(false)}
 function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
 function recall(){if(previousIndex===null)return;const target=previousIndex;previousIndex=currentIndex;updateRecall();loadChannel(target,{remember:false});setMenu(false);setStatus('Quay lại '+channels[target].name,false,1600)}
@@ -336,7 +453,7 @@ $('#mobilePrev').onclick=()=>changeChannel(-1);$('#mobileNext').onclick=()=>chan
 playBtn.onclick=togglePlayByUser;startPlayback.onclick=e=>{e.stopPropagation();userStartPlayback()};video.addEventListener('click',togglePlayByUser);visualizer.addEventListener('click',togglePlayByUser);
 // Nhấn vùng đen còn lại của màn hình cũng kích hoạt phát, không chỉ phần tử video.
 app.addEventListener('click',e=>{if(e.target===app)togglePlayByUser()});
-video.addEventListener('play',()=>{clearTimeout(startPromptTimer);hideStartPlayback();playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});video.addEventListener('pause',()=>{playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});video.addEventListener('waiting',()=>setStatus('Đang tải dữ liệu…',true));video.addEventListener('playing',()=>{clearTimeout(startPromptTimer);hideStartPlayback();setStatus('',false)});video.addEventListener('error',()=>{console.warn('[TV] media error',video.error&&video.error.code);setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000);if(playWanted)showStartPlayback()});
+video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});video.addEventListener('pause',()=>{playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});video.addEventListener('waiting',()=>setStatus('Đang tải dữ liệu…',true));video.addEventListener('playing',confirmPlayback);video.addEventListener('error',()=>{mediaLog('media error','code='+(video.error&&video.error.code));if(playWanted&&!playbackConfirmed){setStatus('Kênh đang gặp lỗi phát',false,3000);showStartPlayback('▶ Thử phát lại')}});['loadstart','loadedmetadata','canplay','waiting','stalled','emptied'].forEach(function(ev){video.addEventListener(ev,function(){mediaLog(ev)})});
 function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
 $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
@@ -363,7 +480,7 @@ if(isWebOS&&appsOpen){
 if(isWebOS&&!inMenu&&!appsOpen&&key==='ArrowDown'){e.preventDefault();setApps(true,true);return}
 if(!inMenu&&!appsOpen&&(key==='ArrowLeft'||key==='ChannelDown')){e.preventDefault();changeChannel(-1)}
 if(!inMenu&&!appsOpen&&(key==='ArrowRight'||key==='ChannelUp')){e.preventDefault();changeChannel(1)}
-if(!inMenu&&!appsOpen&&(key==='Enter'||key===' ')){if(document.activeElement===startPlayback){e.preventDefault();userStartPlayback();return}if(document.activeElement===video||document.activeElement===document.body){e.preventDefault();if(video.paused||startPlayback.classList.contains('show'))userStartPlayback();else setMenu(true,true)}}
+if(!inMenu&&!appsOpen&&(key==='Enter'||key===' ')){if(startPlayback.classList.contains('show')){e.preventDefault();userStartPlayback();return}if(document.activeElement===video||document.activeElement===document.body){e.preventDefault();if(video.paused||startPlayback.classList.contains('show'))userStartPlayback();else setMenu(true,true)}}
 // Hiệu chỉnh nhanh mức bù của từng kênh: + tăng, - giảm, 0 đặt lại.
 // Mức này được nhớ riêng theo tên kênh và tự áp dụng ở lần mở sau.
 if(!inMenu&&!appsOpen&&(key==='+'||key==='=')){e.preventDefault();adjustChannelVolumeTrim(VOLUME_TRIM_STEP);return}
@@ -393,7 +510,7 @@ if(isWebOS){
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
 }
 
-updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
+updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();if(!startPlayback.classList.contains('show')){try{video.focus({preventScroll:true})}catch(_){video.focus()}}},300);showQuickControls();
 </script>
 </body>
 </html>
