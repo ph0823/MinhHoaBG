@@ -831,6 +831,8 @@ const GOOGLE_SESSION_TOKEN_KEY = 'music_google_drive_access_token_v1';
 const GOOGLE_SESSION_EXPIRY_KEY = 'music_google_drive_access_expiry_v1';
 const GOOGLE_AUTH_REMEMBERED_KEY = 'music_google_drive_authorized_v1';
 const GOOGLE_TOKEN_REFRESH_SKEW_MS = 2 * 60 * 1000;
+// LG webOS: tránh request OAuth chờ vô hạn khi trình duyệt không mở được popup.
+const TV_OAUTH_TIMEOUT_MS = 22000;
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_CHUNK_SIZE = 1024 * 1024;
 const APP_TYPE = 'audio';
@@ -941,6 +943,7 @@ let googleAuthReady = false;
 let googleTokenRequestPromise = null;
 let googleTokenRequestResolve = null;
 let googleTokenRequestReject = null;
+let tvGoogleOAuthTimeout = 0;
 let googleTokenRefreshTimer = 0;
 let driveRootName = 'Thư viện nhạc';
 let screenWakeLock = null;
@@ -3298,7 +3301,7 @@ function clearGoogleRefreshTimer() {
 
 function scheduleGoogleTokenRefresh() {
   clearGoogleRefreshTimer();
-  if (!googleTokenExpiresAt || !googleAuthReady || !hasRememberedGoogleAuthorization()) return;
+  if (!googleTokenExpiresAt || !googleAuthReady || !hasRememberedGoogleAuthorization() || IS_TV_DEVICE) return;
 
   const delay = Math.max(
     15000,
@@ -3313,6 +3316,10 @@ function scheduleGoogleTokenRefresh() {
 }
 
 function settleGoogleTokenRequest(ok, value) {
+  if (IS_TV_DEVICE && tvGoogleOAuthTimeout) {
+    clearTimeout(tvGoogleOAuthTimeout);
+    tvGoogleOAuthTimeout = 0;
+  }
   const resolve = googleTokenRequestResolve;
   const reject = googleTokenRequestReject;
   googleTokenRequestResolve = null;
@@ -3333,6 +3340,9 @@ function requestGoogleAccessToken(options = {}) {
     return Promise.reject(new Error('Dịch vụ đăng nhập Google chưa sẵn sàng.'));
   }
 
+  if (IS_TV_DEVICE && !interactive) {
+    return Promise.reject(new Error('LG webOS không hỗ trợ cấp lại Google OAuth tự động trong trình duyệt.'));
+  }
   if (googleTokenRequestPromise) return googleTokenRequestPromise;
 
   googleTokenRequestPromise = new Promise((resolve, reject) => {
@@ -3340,6 +3350,13 @@ function requestGoogleAccessToken(options = {}) {
     googleTokenRequestReject = reject;
 
     try {
+      if (IS_TV_DEVICE) {
+        // Trên webOS chỉ thực hiện OAuth sau thao tác bấm trực tiếp của người dùng.
+        tvGoogleOAuthTimeout = window.setTimeout(() => {
+          console.warn('[LG webOS] Google OAuth không trả kết quả (popup/callback bị chặn hoặc trình duyệt không hỗ trợ).');
+          settleGoogleTokenRequest(false, new Error('TV không mở được cửa sổ đăng nhập Google.'));
+        }, TV_OAUTH_TIMEOUT_MS);
+      }
       googleTokenClient.requestAccessToken({
         prompt: forceConsent || (interactive && !hasRememberedGoogleAuthorization())
           ? 'consent'
@@ -3400,7 +3417,7 @@ async function refreshGoogleAccessTokenSilently(reason = 'refresh') {
 
 async function ensureGoogleDriveToken(options = {}) {
   if (hasValidGoogleDriveToken()) return googleAccessToken;
-  if (options.allowSilent !== false && hasRememberedGoogleAuthorization()) {
+  if (!IS_TV_DEVICE && options.allowSilent !== false && hasRememberedGoogleAuthorization()) {
     return refreshGoogleAccessTokenSilently(options.reason || 'ensure');
   }
   throw new Error('Phiên Google Drive cần được kết nối lại.');
@@ -3453,7 +3470,7 @@ async function initializeGoogleDriveAuth() {
         console.warn('Google OAuth:', error);
         els.driveLogin.disabled = false;
         settleGoogleTokenRequest(false, new Error(
-          error && error.message ? error.message : 'Không thể tự kết nối Google.'
+          error && (error.message || error.type) ? (error.message || error.type) : 'Không thể tự kết nối Google.'
         ));
       }
     });
@@ -3476,7 +3493,7 @@ async function initializeGoogleDriveAuth() {
       }
     }
 
-    if (rememberedAuthorization) {
+    if (rememberedAuthorization && !IS_TV_DEVICE) {
       try {
         await refreshGoogleAccessTokenSilently('startup');
         folderStack = [{ id: GOOGLE_ROOT_FOLDER_ID, name: driveRootName }];
@@ -3491,12 +3508,18 @@ async function initializeGoogleDriveAuth() {
 
     els.driveLogin.disabled = false;
     els.folderTitle.textContent = 'Chưa kết nối Google Drive';
-    els.fileList.innerHTML = '<li class="empty">Nhấn “Kết nối Drive” để tiếp tục.</li>';
+    els.fileList.innerHTML = IS_TV_DEVICE
+      ? '<li class="empty">Chọn Kết nối Drive trên TV. Nếu Google không hỗ trợ đăng nhập, bạn cần một phương thức xác thực ngoài trình duyệt TV.</li>'
+      : '<li class="empty">Nhấn “Kết nối Drive” để tiếp tục.</li>';
   } catch (error) {
     googleAuthReady = false;
     googleTokenClient = null;
     els.driveLogin.disabled = true;
     els.folderTitle.textContent = 'Không thể tải Google Drive';
+    if (IS_TV_DEVICE) {
+      console.warn('[LG webOS] Không khởi tạo được Google Identity Services:', error);
+      els.fileList.innerHTML = '<li class="empty">TV không tải được dịch vụ đăng nhập Google.</li>';
+    }
     showToast(error && error.message ? error.message : 'Không tải được dịch vụ đăng nhập Google.', true);
   }
 }
@@ -3518,7 +3541,14 @@ async function requestGoogleDriveAccess() {
   } catch (error) {
     els.driveLogin.disabled = false;
     updateGoogleAuthUi(false);
-    showToast('Không thể kết nối Google Drive hoặc thao tác đã bị hủy.', true);
+    if (IS_TV_DEVICE) {
+      console.warn('[LG webOS] Đăng nhập Google không thành công:', error);
+      els.folderTitle.textContent = 'Chưa kết nối Google Drive';
+      els.fileList.innerHTML = '<li class="empty">Trình duyệt TV có thể không hỗ trợ cửa sổ đăng nhập Google. Không phải lỗi phát nhạc.</li>';
+      showToast('TV không mở được đăng nhập Google. Hãy kiểm tra trình duyệt webOS.', true);
+    } else {
+      showToast('Không thể kết nối Google Drive hoặc thao tác đã bị hủy.', true);
+    }
   }
 }
 
