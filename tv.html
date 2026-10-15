@@ -86,7 +86,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
 <h1 class="title">TIVI <span style="color:#fff">NGUYÊN</span> NHI</h1>
 <section class="app" id="app" aria-label="Trình phát">
 <div id="visualizer" aria-hidden="true"></div>
-<video id="video" playsinline crossorigin="anonymous" tabindex="0"></video>
+<video id="video" muted playsinline crossorigin="anonymous" tabindex="0"></video>
 <div class="topHud"><div class="channelInfo" hidden aria-hidden="true"><span id="currentName"></span><small id="currentType"></small></div><div class="status" id="status"></div></div>
 <div class="quickActions">
 <button class="iconBtn" id="recallFloat" title="Kênh vừa xem" aria-label="Kênh vừa xem" disabled>↶</button>
@@ -265,50 +265,88 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     function tryPlay(){video.play().catch(()=>setStatus('Nhấn OK hoặc chạm để phát',false,3500))}
     
     // Hàm nạp kênh hỗ trợ giải mã luồng m3u8 tự động
-    async function loadChannel(index,{remember=true}={}){
-      index=(index+channels.length)%channels.length;
-      if(index===currentIndex&&(video.currentSrc||iframeEl.src!=='about:blank'))return;
-      if(remember&&index!==currentIndex)previousIndex=currentIndex;
-      currentIndex=index;
-      retryCount=0;
+    // 1. Cập nhật hàm loadChannel bổ sung tham số isInitial
+    async function loadChannel(index, { remember = true, isInitial = false } = {}) {
+      index = (index + channels.length) % channels.length;
+      
+      // Bỏ qua kiểm tra guard clause nếu đây là lần nạp trang đầu tiên
+      if (!isInitial && index === currentIndex && (video.currentSrc !== "" || (iframeEl.src !== "" && iframeEl.src !== "about:blank"))) {
+        return;
+      }
+      
+      currentIndex = index;
+      retryCount = 0;
       updateRecall();
       updateUI();
-      setStatus('Đang mở '+channels[index].name+'…',true);
-      const token=++loadToken;
+      setStatus('Đang mở ' + channels[index].name + '…', true);
+      const token = ++loadToken;
       destroyStream();
-      const ch=channels[index];
+      const ch = channels[index];
 
       let streamUrl = ch.url;
 
-      // Xử lý kênh thuộc dạng cURL HLS
-      if(ch.type==='curl_hls'){
-        setStatus('Đang giải mã luồng '+ch.name+'…',true);
+      if (ch.type === 'curl_hls') {
+        setStatus('Đang giải mã luồng ' + ch.name + '…', true);
         const freshUrl = await fetchM3u8FromCurl(ch.url);
-        if(token!==loadToken) return; // Đã chuyển kênh khác trong lúc cURL
+        if (token !== loadToken) return;
         
-        if(freshUrl){
+        if (freshUrl) {
           streamUrl = freshUrl;
         } else {
-          // Dự phòng: Chuyển sang phát iframe nếu không bóc tách được m3u8
-          video.style.display='none';
-          iframeEl.style.display='block';
-          iframeEl.src=ch.url;
-          setStatus('',false);
+          // Nếu vướng CORS không bóc tách được m3u8 -> Tự động Fallback sang iframe
+          video.style.display = 'none';
+          iframeEl.style.display = 'block';
+          iframeEl.src = ch.url;
+          setStatus('', false);
           return;
         }
-      } else if(ch.type==='iframe'){
-        video.style.display='none';
-        iframeEl.style.display='block';
-        iframeEl.src=ch.url;
-        setStatus('',false);
+      } else if (ch.type === 'iframe') {
+        video.style.display = 'none';
+        iframeEl.style.display = 'block';
+        iframeEl.src = ch.url;
+        setStatus('', false);
         return;
       }
 
-      const isHls=/\.m3u8(?:$|\?)/i.test(streamUrl);
-      if(isHls&&video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}
-      else if(isHls&&window.Hls&&Hls.isSupported()){hls=new Hls({lowLatencyMode:false,backBufferLength:10,maxBufferLength:20,maxMaxBufferLength:30,startLevel:-1,capLevelToPlayerSize:true,enableWorker:true});hls.loadSource(streamUrl);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===loadToken){retryCount=0;tryPlay()}});hls.on(Hls.Events.ERROR,(_,data)=>{if(token!==loadToken||!data.fatal)return;retryCount++;if(retryCount<=4&&data.type===Hls.ErrorTypes.NETWORK_ERROR){const delay=[0,1000,2000,4000][retryCount-1]||4000;setStatus('Mạng gián đoạn, đang thử lại…',true);setTimeout(()=>{if(token===loadToken&&hls)hls.startLoad()},delay)}else if(retryCount<=3&&data.type===Hls.ErrorTypes.MEDIA_ERROR){setStatus('Đang khôi phục luồng phát…',true);hls.recoverMediaError()}else{setStatus('Kênh tạm thời không phát được',false,5000)}})}
-      else{video.src=streamUrl;video.addEventListener('loadedmetadata',()=>token===loadToken&&tryPlay(),{once:true})}
+      const isHls = /\.m3u8(?:$|\?)/i.test(streamUrl);
+      if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.addEventListener('loadedmetadata', () => token === loadToken && tryPlay(), { once: true });
+      } else if (isHls && window.Hls && Hls.isSupported()) {
+        hls = new Hls({ lowLatencyMode: false, backBufferLength: 10, maxBufferLength: 20, maxMaxBufferLength: 30, startLevel: -1, capLevelToPlayerSize: true, enableWorker: true });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (token === loadToken) {
+            retryCount = 0;
+            tryPlay();
+          }
+        });
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (token !== loadToken || !data.fatal) return;
+          retryCount++;
+          if (retryCount <= 4 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            const delay = [0, 1000, 2000, 4000][retryCount - 1] || 4000;
+            setStatus('Mạng gián đoạn, đang thử lại…', true);
+            setTimeout(() => { if (token === loadToken && hls) hls.startLoad(); }, delay);
+          } else if (retryCount <= 3 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            setStatus('Đang khôi phục luồng phát…', true);
+            hls.recoverMediaError();
+          } else {
+            // Fallback sang iframe nếu HLS lỗi hoàn toàn
+            video.style.display = 'none';
+            iframeEl.style.display = 'block';
+            iframeEl.src = ch.url;
+            setStatus('', false);
+          }
+        });
+      } else {
+        video.src = streamUrl;
+        video.addEventListener('loadedmetadata', () => token === loadToken && tryPlay(), { once: true });
+      }
     }
+
+    
 
     function selectChannel(index){loadChannel(index);setMenu(false)}
     function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
@@ -364,6 +402,17 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     }
 
     updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
+    
+    video.muted = true; // Thiết lập muted ban đầu để qua mặt Autoplay Policy
+    updateUI();
+    updateMuteUI();
+    // Truyền cờ isInitial: true để buộc nạp kênh đầu tiên ngay khi mở web
+    loadChannel(currentIndex, { remember: false, isInitial: true });
+    setTimeout(() => {
+      lockTvViewport();
+      try { video.focus({ preventScroll: true }); } catch (_) { video.focus(); }
+    }, 300);
+    showQuickControls();
 </script>
 </body>
 </html>
