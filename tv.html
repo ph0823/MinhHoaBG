@@ -361,13 +361,46 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
     $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
-    function handleTvBack(){const now=Date.now();if(now-lastBackAt<350)return;lastBackAt=now;if(app.classList.contains('apps-open')){setApps(false);return}if(app.classList.contains('menu-open')){setMenu(false);return}recall()}
+    // LG webOS Magic Remote - xử lý nút Back ổn định hơn.
+    // Khi đang mở menu/app: Back chỉ đóng lớp đang mở.
+    // Khi đang xem TV: Back quay lại kênh vừa xem.
+    function handleTvBack(){
+      const now=Date.now();
+      if(now-lastBackAt<450)return;
+      lastBackAt=now;
+
+      if(app.classList.contains('apps-open')){setApps(false);return}
+      if(app.classList.contains('menu-open')){setMenu(false);return}
+      recall();
+    }
+
+    function isLgBackEvent(e){
+      const key=e.key||'';
+      const code=e.code||'';
+      const keyCode=e.keyCode||e.which||0;
+      return keyCode===461 ||
+             keyCode===10009 ||
+             key==='GoBack' ||
+             key==='BrowserBack' ||
+             key==='Back' ||
+             key==='Escape' && isWebOS ||
+             code==='BrowserBack';
+    }
+
+    function consumeLgBack(e){
+      if(!isWebOS || !isLgBackEvent(e))return false;
+      try{e.preventDefault()}catch(_){ }
+      try{e.stopPropagation()}catch(_){ }
+      try{e.stopImmediatePropagation()}catch(_){ }
+      handleTvBack();
+      return true;
+    }
 
     document.addEventListener('keydown',e=>{const inMenu=app.classList.contains('menu-open');const key=e.key;
-    const isTvBack=e.keyCode===461||key==='GoBack'||key==='BrowserBack';
+    const isTvBack=isLgBackEvent(e);
     const isDesktopBack=key==='Escape'||key==='Backspace';
 
-    if(isTvBack){e.preventDefault();e.stopPropagation();handleTvBack();return}
+    if(isWebOS&&isTvBack){consumeLgBack(e);return}
     if(isDesktopBack){e.preventDefault();if(app.classList.contains('apps-open'))setApps(false);else if(inMenu)setMenu(false);else if(!isWebOS&&document.fullscreenElement)toggleFullscreen();return}
 
     const appsOpen=app.classList.contains('apps-open');
@@ -392,8 +425,26 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       $('.quickActions').addEventListener('mouseenter',showQuickControls);$('.quickActions').addEventListener('focusin',showQuickControls);
     }
 
-    try{history.replaceState({tvApp:true},'',location.href);history.pushState({tvApp:true},'',location.href)}catch(_){ }
-    window.addEventListener('popstate',()=>{handleTvBack();try{history.pushState({tvApp:true},'',location.href)}catch(_){ }});
+    // Một số đời webOS phát Back ở keyup thay vì keydown.
+    if(isWebOS){
+      document.addEventListener('keyup',e=>{
+        if(isLgBackEvent(e))consumeLgBack(e);
+      },true);
+    }
+
+    // Một số trình duyệt webOS xử lý Magic Remote Back qua History API.
+    // Luôn giữ một history state đệm để Back không thoát khỏi trang TV.
+    try{
+      history.replaceState({tvRoot:true},'',location.href);
+      history.pushState({tvGuard:true},'',location.href);
+    }catch(_){ }
+
+    window.addEventListener('popstate',()=>{
+      if(isWebOS){
+        handleTvBack();
+        try{history.pushState({tvGuard:true},'',location.href)}catch(_){ }
+      }
+    });
 
     if(isWebOS){
       window.addEventListener('resize',lockTvViewport);
