@@ -274,6 +274,11 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         return;
       }
       
+      // Ghi nhớ kênh hiện tại trước khi chuyển kênh để nút Back có đích quay lại.
+      if (remember && index !== currentIndex) {
+        previousIndex = currentIndex;
+      }
+
       currentIndex = index;
       retryCount = 0;
       updateRecall();
