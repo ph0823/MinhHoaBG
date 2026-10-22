@@ -167,10 +167,31 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
     const CONTROLS_IDLE_MS=5000;
 
-    // Hàm cURL ngầm bóc tách link m3u8 tươi
+    // Cache ngắn hạn URL m3u8 đã bóc tách để webOS không phải xử lý lại khi quay kênh.
+    const STREAM_CACHE_TTL = 10 * 60 * 1000; // 10 phút
+
+    function getCachedStreamUrl(key){
+      try{
+        const raw=sessionStorage.getItem('tv.stream.'+key);
+        if(!raw)return null;
+        const data=JSON.parse(raw);
+        if(!data||!data.url||!data.time||Date.now()-data.time>STREAM_CACHE_TTL){
+          sessionStorage.removeItem('tv.stream.'+key);
+          return null;
+        }
+        return data.url;
+      }catch(_){return null}
+    }
+
+    function setCachedStreamUrl(key,url){
+      if(!url)return;
+      try{sessionStorage.setItem('tv.stream.'+key,JSON.stringify({url,time:Date.now()}))}catch(_){ }
+    }
+
+    // Hàm cURL ngầm bóc tách link m3u8 tươi.
     async function fetchM3u8FromCurl(curlUrl) {
       try {
-        const res = await fetch(curlUrl);
+        const res = await fetch(curlUrl, { cache: 'no-store' });
         if(!res.ok) return null;
         const html = await res.text();
         const match = html.match(/file:\s*['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
@@ -291,19 +312,29 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       let streamUrl = ch.url;
 
       if (ch.type === 'curl_hls') {
-        setStatus('Đang giải mã luồng ' + ch.name + '…', true);
-        const freshUrl = await fetchM3u8FromCurl(ch.url);
-        if (token !== loadToken) return;
-        
-        if (freshUrl) {
-          streamUrl = freshUrl;
+        // Ưu tiên URL vừa bóc tách trước đó. Đặc biệt hữu ích khi Back về kênh vừa xem trên LG webOS.
+        const cacheKey = encodeURIComponent(ch.url);
+        const cachedUrl = getCachedStreamUrl(cacheKey);
+
+        if (cachedUrl) {
+          streamUrl = cachedUrl;
+          setStatus('Đang mở ' + ch.name + '…', true);
         } else {
-          // Nếu vướng CORS không bóc tách được m3u8 -> Tự động Fallback sang iframe
-          video.style.display = 'none';
-          iframeEl.style.display = 'block';
-          iframeEl.src = ch.url;
-          setStatus('', false);
-          return;
+          setStatus('Đang xử lý ' + ch.name + '…', true);
+          const freshUrl = await fetchM3u8FromCurl(ch.url);
+          if (token !== loadToken) return;
+
+          if (freshUrl) {
+            streamUrl = freshUrl;
+            setCachedStreamUrl(cacheKey, freshUrl);
+          } else {
+            // Nếu vướng CORS không bóc tách được m3u8 -> Tự động Fallback sang iframe
+            video.style.display = 'none';
+            iframeEl.style.display = 'block';
+            iframeEl.src = ch.url;
+            setStatus('', false);
+            return;
+          }
         }
       } else if (ch.type === 'iframe') {
         video.style.display = 'none';
@@ -457,12 +488,11 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
     }
 
-    updateUI();updateMuteUI();loadChannel(currentIndex,{remember:false});setTimeout(()=>{lockTvViewport();try{video.focus({preventScroll:true})}catch(_){video.focus()}},300);showQuickControls();
-    
-    video.muted = true; // Thiết lập muted ban đầu để qua mặt Autoplay Policy
+    // Khởi tạo đúng một lần. Trước đây loadChannel() bị gọi 2 lần liên tiếp,
+    // làm TV LG phải fetch/bóc tách luồng hai lần khi mở trang.
+    video.muted = true; // Giúp autoplay ổn định hơn trên webOS
     updateUI();
     updateMuteUI();
-    // Truyền cờ isInitial: true để buộc nạp kênh đầu tiên ngay khi mở web
     loadChannel(currentIndex, { remember: false, isInitial: true });
     setTimeout(() => {
       lockTvViewport();
