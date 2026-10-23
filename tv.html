@@ -19,7 +19,7 @@ video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:
 @keyframes radioWave{0%{transform:scaleY(.10);opacity:.28}35%{transform:scaleY(.48);opacity:.68}70%{transform:scaleY(.22);opacity:.45}100%{transform:scaleY(1);opacity:1}}
 body.tv-mode #visualizer .bar{height:clamp(110px,24vh,250px)}
 @media (max-width:767px){#visualizer{gap:4px}.bar{width:5px;height:72px}}
-.topHud{position:absolute;left:var(--safe);right:var(--safe);top:var(--safe);display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none;z-index:4}.channelInfo{display:none!important}.status{background:#05070acc;backdrop-filter:blur(8px);border:1px solid #ffffff25;border-radius:10px;padding:8px 12px;text-shadow:0 1px 2px #000}.status{display:none;color:#fff;font-size:14px}.status.show{display:block}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
+.topHud{position:absolute;left:var(--safe);right:var(--safe);top:var(--safe);display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none;z-index:4}.channelInfo{display:none!important}.status{background:#05070acc;backdrop-filter:blur(8px);border:1px solid #ffffff25;border-radius:10px;padding:8px 12px;text-shadow:0 1px 2px #000;display:none;color:#fff;font-size:14px}.status.show{display:block}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
 .quickActions{position:absolute;right:var(--safe);bottom:var(--safe);display:flex;gap:10px;z-index:6;transition:opacity .35s ease,transform .35s ease;will-change:opacity,transform}.iconBtn{min-width:50px;width:50px;height:50px;border-radius:999px;border:2px solid #ffffff35;background:#07090dd9;color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px);outline:0;font-size:21px}.iconBtn:hover,.iconBtn:focus-visible{background:var(--accent);border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;transform:scale(1.04)}.iconBtn:disabled{opacity:.35}
 .menu{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px max(var(--safe),12px) calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--panel) 78%,transparent);transform:translateY(105%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s}.app.menu-open .menu{transform:translateY(0);opacity:1;pointer-events:auto}.menuHeader{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}.menuHeader strong{font-size:15px}.hint{font-size:12px;color:var(--muted)}
 .channelStrip{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:3px 2px 5px;scrollbar-width:thin}.channelCard{flex:0 0 clamp(94px,11vw,132px);min-height:58px;padding:9px 8px;border-radius:9px;border:2px solid transparent;background:#20242c;color:#fff;text-align:center;cursor:pointer;outline:0;scroll-snap-align:center;font-weight:650}.channelCard:hover,.channelCard:focus-visible{border-color:var(--focus);background:#343a46;transform:translateY(-2px)}.channelCard.active{background:var(--accent);border-color:#fff}.tag{display:block;color:#fde047;font-size:10px;text-transform:uppercase;margin-top:4px}
@@ -35,17 +35,19 @@ body.tv-mode{position:fixed;inset:0;width:100%;height:100%;min-height:0;overflow
 body.tv-mode .shell{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;padding:0;overflow:hidden}
 body.tv-mode .title,body.tv-mode .below,body.tv-mode .links,body.tv-mode .mobileBar{display:none!important}
 body.tv-mode .app{position:absolute;inset:0;width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:0;box-shadow:none;overflow:hidden}
+/* Tắt backdrop-filter trên TV để tránh tụt FPS khi giải mã video */
+body.tv-mode .status,body.tv-mode .iconBtn{backdrop-filter:none!important;background:rgba(7,9,13,.92)}
+/* Ngăn iframe cướp focus của điều khiển TV */
+body.tv-mode #tvIframe{pointer-events:none}
 body.tv-mode .quickActions{right:28px;bottom:26px;gap:14px;opacity:.78}
 body.tv-mode .app.controls-idle:not(.menu-open) .quickActions{opacity:0;transform:translateY(10px);pointer-events:none}
 body.tv-mode .app.menu-open .quickActions,body.tv-mode .quickActions:focus-within{opacity:1;transform:none;pointer-events:auto}
 body.tv-mode .iconBtn{width:64px;height:64px;min-width:64px;font-size:28px;border-width:3px}
-body.tv-mode .menu{padding:18px 28px 24px;background:linear-gradient(0deg,rgba(12,15,21,.97) 82%,transparent)}
-body.tv-mode .menu{position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:hidden;contain:layout paint}
-body.tv-mode .channelStrip{overscroll-behavior:contain;scroll-behavior:auto}
+body.tv-mode .menu{padding:18px 28px 24px;background:linear-gradient(0deg,rgba(12,15,21,.97) 82%,transparent);position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:hidden;contain:layout paint}
+body.tv-mode .channelStrip{overscroll-behavior:contain;scroll-behavior:auto;gap:12px;padding:8px 4px 10px;max-height:104px}
 body.tv-mode .menuHeader{margin:20px 0 12px}
 body.tv-mode .menuHeader strong{font-size:22px}
 body.tv-mode .hint{font-size:15px}
-body.tv-mode .channelStrip{gap:12px;padding:8px 4px 10px;max-height:104px}
 body.tv-mode .channelCard{flex:0 0 164px;min-height:74px;padding:12px 10px;border-radius:12px;font-size:20px;border-width:3px}
 body.tv-mode .channelCard:hover,body.tv-mode .channelCard:focus-visible{transform:none;border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;background:#343a46}
 body.tv-mode .channelCard.active{background:var(--accent);border-color:#fff}
@@ -86,7 +88,8 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
 <h1 class="title">TIVI <span style="color:#fff">NGUYÊN</span> NHI</h1>
 <section class="app" id="app" aria-label="Trình phát">
 <div id="visualizer" aria-hidden="true"></div>
-<video id="video" muted playsinline crossorigin="anonymous" tabindex="0"></video>
+<!-- Đã gỡ bỏ crossorigin="anonymous" để tránh lỗi chặn luồng CORS trên các CDN IPTV -->
+<video id="video" muted playsinline tabindex="0"></video>
 <div class="topHud"><div class="channelInfo" hidden aria-hidden="true"><span id="currentName"></span><small id="currentType"></small></div><div class="status" id="status"></div></div>
 <div class="quickActions">
 <button class="iconBtn" id="recallFloat" title="Kênh vừa xem" aria-label="Kênh vừa xem" disabled>↶</button>
@@ -164,7 +167,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     }
 
     let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
-    let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null;
+    let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null,stallTimer=null,lastMoveTime=0;
     const CONTROLS_IDLE_MS=5000;
 
     // Cache ngắn hạn URL m3u8 đã bóc tách để webOS không phải xử lý lại khi quay kênh.
@@ -188,16 +191,20 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       try{sessionStorage.setItem('tv.stream.'+key,JSON.stringify({url,time:Date.now()}))}catch(_){ }
     }
 
-    // Hàm cURL ngầm bóc tách link m3u8 tươi.
+    // Hàm cURL ngầm bóc tách link m3u8 tươi (có timeout chống treo 6 giây).
     async function fetchM3u8FromCurl(curlUrl) {
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
       try {
-        const res = await fetch(curlUrl, { cache: 'no-store' });
-        if(!res.ok) return null;
+        const res = await fetch(curlUrl, { cache: 'no-store', signal: controller ? controller.signal : undefined });
+        if (timer) clearTimeout(timer);
+        if (!res.ok) return null;
         const html = await res.text();
         const match = html.match(/file:\s*['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
         return match ? match[1] : null;
       } catch (e) {
-        console.warn("Không thể cURL m3u8 trực tiếp (có thể do CORS):", e);
+        if (timer) clearTimeout(timer);
+        console.warn("Không thể cURL m3u8 trực tiếp (có thể do CORS hoặc timeout):", e);
         return null;
       }
     }
@@ -255,8 +262,14 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       if(i<0)i=0;
       items[(i+step+items.length)%items.length].focus({preventScroll:true});
     }
-    function showQuickControls(){
+    function showQuickControls(e){
       if(!isWebOS)return;
+      // Throttle sự kiện di chuyển chuột của LG Magic Remote để tránh nghẽn Main Thread
+      if(e&&(e.type==='mousemove'||e.type==='pointermove')){
+        const now=Date.now();
+        if(now-lastMoveTime<250)return;
+        lastMoveTime=now;
+      }
       clearTimeout(controlsTimer);
       app.classList.remove('controls-idle');
       if(app.classList.contains('menu-open'))return;
@@ -273,6 +286,8 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     function updateMuteUI(){const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng'}
     function toggleMute(){video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200)}
     function destroyStream(){
+      clearTimeout(stallTimer);
+      video.onloadedmetadata=null;
       if(hls){hls.destroy();hls=null}
       video.pause();
       video.removeAttribute('src');
@@ -285,17 +300,14 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     }
     function tryPlay(){video.play().catch(()=>setStatus('Nhấn OK hoặc chạm để phát',false,3500))}
     
-    // Hàm nạp kênh hỗ trợ giải mã luồng m3u8 tự động
-    // 1. Cập nhật hàm loadChannel bổ sung tham số isInitial
+    // Hàm nạp kênh hỗ trợ giải mã luồng m3u8 tự động và chống khựng hình
     async function loadChannel(index, { remember = true, isInitial = false } = {}) {
       index = (index + channels.length) % channels.length;
       
-      // Bỏ qua kiểm tra guard clause nếu đây là lần nạp trang đầu tiên
       if (!isInitial && index === currentIndex && (video.currentSrc !== "" || (iframeEl.src !== "" && iframeEl.src !== "about:blank"))) {
         return;
       }
       
-      // Ghi nhớ kênh hiện tại trước khi chuyển kênh để nút Back có đích quay lại.
       if (remember && index !== currentIndex) {
         previousIndex = currentIndex;
       }
@@ -312,7 +324,6 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       let streamUrl = ch.url;
 
       if (ch.type === 'curl_hls') {
-        // Ưu tiên URL vừa bóc tách trước đó. Đặc biệt hữu ích khi Back về kênh vừa xem trên LG webOS.
         const cacheKey = encodeURIComponent(ch.url);
         const cachedUrl = getCachedStreamUrl(cacheKey);
 
@@ -328,11 +339,11 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
             streamUrl = freshUrl;
             setCachedStreamUrl(cacheKey, freshUrl);
           } else {
-            // Nếu vướng CORS không bóc tách được m3u8 -> Tự động Fallback sang iframe
             video.style.display = 'none';
             iframeEl.style.display = 'block';
             iframeEl.src = ch.url;
             setStatus('', false);
+            if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
             return;
           }
         }
@@ -341,15 +352,35 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         iframeEl.style.display = 'block';
         iframeEl.src = ch.url;
         setStatus('', false);
+        if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
         return;
       }
 
       const isHls = /\.m3u8(?:$|\?)/i.test(streamUrl);
-      if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = streamUrl;
-        video.addEventListener('loadedmetadata', () => token === loadToken && tryPlay(), { once: true });
-      } else if (isHls && window.Hls && Hls.isSupported()) {
-        hls = new Hls({ lowLatencyMode: false, backBufferLength: 10, maxBufferLength: 20, maxMaxBufferLength: 30, startLevel: -1, capLevelToPlayerSize: true, enableWorker: true });
+      
+      // ƯU TIÊN HLS.JS TRƯỚC: Giúp kiểm soát bộ đệm, nhảy qua đoạn khuyết và tự phục hồi trên LG webOS
+      if (isHls && window.Hls && Hls.isSupported()) {
+        hls = new Hls({
+          lowLatencyMode: false,
+          backBufferLength: 15,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          maxBufferHole: 0.5,           // Tự động nhảy qua khoảng trống nhỏ nếu phân đoạn .ts bị khuyết
+          highBufferWatchdogPeriod: 3,  // Kiểm tra kẹt buffer mỗi 3 giây
+          nudgeOffset: 0.2,             // Nhích đầu đọc 0.2s khi bị khựng
+          nudgeMaxRetry: 5,
+          liveSyncDurationCount: 3,     // Giữ khoảng cách an toàn với luồng Live tránh cạn buffer
+          liveMaxLatencyDurationCount: 10,
+          manifestLoadingTimeOut: 10000,
+          manifestLoadingMaxRetry: 3,
+          levelLoadingTimeOut: 10000,
+          levelLoadingMaxRetry: 4,
+          fragLoadingTimeOut: 15000,
+          fragLoadingMaxRetry: 6,
+          startLevel: -1,
+          capLevelToPlayerSize: true,
+          enableWorker: true
+        });
         hls.loadSource(streamUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -359,30 +390,47 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
           }
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
-          if (token !== loadToken || !data.fatal) return;
+          if (token !== loadToken) return;
+          
+          // Xử lý các lỗi không nghiêm trọng (Non-fatal) gây khựng hình
+          if (!data.fatal) {
+            if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+              setStatus('Đang đồng bộ lại luồng phát…', true, 2500);
+              if (video.paused) tryPlay();
+            }
+            return;
+          }
+
           retryCount++;
           if (retryCount <= 4 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            const delay = [0, 1000, 2000, 4000][retryCount - 1] || 4000;
+            const delay = [500, 1500, 3000, 5000][retryCount - 1] || 5000;
             setStatus('Mạng gián đoạn, đang thử lại…', true);
             setTimeout(() => { if (token === loadToken && hls) hls.startLoad(); }, delay);
           } else if (retryCount <= 3 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            setStatus('Đang khôi phục luồng phát…', true);
+            setStatus('Đang khôi phục hình ảnh…', true);
+            if (retryCount === 2) hls.swapAudioCodec();
             hls.recoverMediaError();
-          } else {
-            // Fallback sang iframe nếu HLS lỗi hoàn toàn
+          } else if (ch.type === 'curl_hls') {
+            // Nếu link cache đã hết hạn token, xóa cache và nạp sang iframe dự phòng
+            try { sessionStorage.removeItem('tv.stream.' + encodeURIComponent(ch.url)); } catch (_) {}
             video.style.display = 'none';
             iframeEl.style.display = 'block';
             iframeEl.src = ch.url;
             setStatus('', false);
+            if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
+          } else {
+            setStatus('Kênh đang bảo trì hoặc gián đoạn.', false, 4000);
           }
         });
+      } else if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Dành cho Safari / iOS không hỗ trợ MSE
+        video.src = streamUrl;
+        video.onloadedmetadata = () => token === loadToken && tryPlay();
       } else {
         video.src = streamUrl;
-        video.addEventListener('loadedmetadata', () => token === loadToken && tryPlay(), { once: true });
+        video.onloadedmetadata = () => token === loadToken && tryPlay();
       }
     }
-
-    
 
     function selectChannel(index){loadChannel(index);setMenu(false)}
     function changeChannel(step){selectChannel(currentIndex+step);setStatus(channels[currentIndex].name,false,1300)}
@@ -393,13 +441,37 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     $('#menuBtn').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);$('#mobileMenu').onclick=()=>setMenu(!app.classList.contains('menu-open'),true);
     $('#recallBtn').onclick=$('#recallFloat').onclick=recall;muteBtn.onclick=muteActionBtn.onclick=toggleMute;video.addEventListener('volumechange',updateMuteUI);$('#mobilePrev').onclick=()=>changeChannel(-1);$('#mobileNext').onclick=()=>changeChannel(1);
     playBtn.onclick=()=>video.paused?tryPlay():video.pause();video.addEventListener('click',()=>video.paused?tryPlay():video.pause());
-    video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});video.addEventListener('pause',()=>{playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});video.addEventListener('waiting',()=>setStatus('Đang tải dữ liệu…',true));video.addEventListener('playing',()=>setStatus('',false));video.addEventListener('error',()=>setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000));
+    
+    video.addEventListener('play',()=>{playBtn.textContent='⏸ Tạm dừng';visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');setStatus('',false)});
+    video.addEventListener('pause',()=>{clearTimeout(stallTimer);playBtn.textContent='▶ Phát tiếp';visualizer.classList.remove('playing')});
+    
+    // Watchdog tự động gỡ kẹt nếu luồng đứng hình quá 6 giây
+    function startStallWatchdog(){
+      setStatus('Đang tải dữ liệu…',true);
+      clearTimeout(stallTimer);
+      stallTimer=setTimeout(()=>{
+        if(video.paused)return;
+        if(hls){
+          hls.startLoad();
+          try{
+            if(video.buffered.length){
+              const end=video.buffered.end(video.buffered.length-1);
+              if(end-video.currentTime>1.5)video.currentTime=end-0.5;
+            }
+          }catch(_){}
+          tryPlay();
+        }
+      },6000);
+    }
+    video.addEventListener('waiting',startStallWatchdog);
+    video.addEventListener('stalled',startStallWatchdog);
+    video.addEventListener('playing',()=>{clearTimeout(stallTimer);setStatus('',false)});
+    video.addEventListener('timeupdate',()=>{if(statusEl.classList.contains('show'))clearTimeout(stallTimer)});
+    video.addEventListener('error',()=>{clearTimeout(stallTimer);if(!hls)setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000)});
+
     function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
     $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
-    // LG webOS Magic Remote - xử lý nút Back ổn định hơn.
-    // Khi đang mở menu/app: Back chỉ đóng lớp đang mở.
-    // Khi đang xem TV: Back quay lại kênh vừa xem.
     function handleTvBack(){
       const now=Date.now();
       if(now-lastBackAt<450)return;
@@ -461,15 +533,12 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       $('.quickActions').addEventListener('mouseenter',showQuickControls);$('.quickActions').addEventListener('focusin',showQuickControls);
     }
 
-    // Một số đời webOS phát Back ở keyup thay vì keydown.
     if(isWebOS){
       document.addEventListener('keyup',e=>{
         if(isLgBackEvent(e))consumeLgBack(e);
       },true);
     }
 
-    // Một số trình duyệt webOS xử lý Magic Remote Back qua History API.
-    // Luôn giữ một history state đệm để Back không thoát khỏi trang TV.
     try{
       history.replaceState({tvRoot:true},'',location.href);
       history.pushState({tvGuard:true},'',location.href);
@@ -488,9 +557,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
     }
 
-    // Khởi tạo đúng một lần. Trước đây loadChannel() bị gọi 2 lần liên tiếp,
-    // làm TV LG phải fetch/bóc tách luồng hai lần khi mở trang.
-    video.muted = true; // Giúp autoplay ổn định hơn trên webOS
+    video.muted = true;
     updateUI();
     updateMuteUI();
     loadChannel(currentIndex, { remember: false, isInitial: true });
