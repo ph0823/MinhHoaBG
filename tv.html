@@ -123,7 +123,8 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         { name: "HTV3", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv3", type: "curl_hls" },
         { name: "HTV4", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv4", type: "curl_hls" },
         { name: "HTV7", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv7", type: "curl_hls" },
-        { name: "HTV9", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv9", type: "curl_hls" },
+        //{ name: "HTV9", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv9", type: "curl_hls" },
+        { name: "HTV9", url: "https://hd1.xemtv.net/kenh/htv9.php", type: "tv" },
         { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
         { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
         { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },        
@@ -298,7 +299,29 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       }
       video.style.display='block';
     }
-    function tryPlay(){video.play().catch(()=>setStatus('Nhấn OK hoặc chạm để phát',false,3500))}
+    
+    function tryPlay() {
+      let playPromise = video.play();
+      if (playPromise !== undefined) {
+          playPromise.catch(error => {
+              // Nếu trình duyệt chặn phát vì có tiếng (lỗi NotAllowedError)
+              if (error.name === 'NotAllowedError') {
+                  setStatus('Trình duyệt yêu cầu chạm/nhấn OK để bật tiếng', false, 3500);
+                  
+                  // Mẹo lách luật: Tạm thời tắt tiếng để trình duyệt cho phép phát hình ảnh trước
+                  video.muted = true; 
+                  updateMuteUI();
+                  
+                  // Thử phát lại không tiếng
+                  video.play().catch(() => {
+                      setStatus('Nhấn OK hoặc chạm để phát', false, 3500);
+                  });
+              } else {
+                  setStatus('Nhấn OK hoặc chạm để phát', false, 3500);
+              }
+          });
+      }
+  }
     
     // Hàm nạp kênh hỗ trợ giải mã luồng m3u8 tự động và chống khựng hình
     async function loadChannel(index, { remember = true, isInitial = false } = {}) {
@@ -557,7 +580,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockTvViewport()});
     }
 
-    video.muted = true;
+    video.muted = false;
     updateUI();
     updateMuteUI();
     loadChannel(currentIndex, { remember: false, isInitial: true });
