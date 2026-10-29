@@ -492,7 +492,34 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     video.addEventListener('timeupdate',()=>{if(statusEl.classList.contains('show'))clearTimeout(stallTimer)});
     video.addEventListener('error',()=>{clearTimeout(stallTimer);if(!hls)setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000)});
 
+    /*
     function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
+    */
+    function toggleFullscreen() {
+        setMenu(false); // Tự động ẩn danh sách kênh khi phóng to
+        
+        const enterFs = app.requestFullscreen || app.webkitRequestFullscreen;
+        
+        if (enterFs) {
+            // Ưu tiên dùng Fullscreen chuẩn để ẩn hoàn toàn thanh địa chỉ của trình duyệt LG
+            if (!document.fullscreenElement) {
+                enterFs.call(app);
+                app.classList.add('fullscreen');
+            } else {
+                const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exitFs) {
+                    exitFs.call(document);
+                    app.classList.remove('fullscreen');
+                }
+            }
+        } else if (isWebOS) {
+            // Phương án dự phòng chỉ dành cho TV LG đời cực cũ không hỗ trợ Fullscreen API
+            document.body.classList.toggle('tv-mode');
+            const on = document.body.classList.contains('tv-mode');
+            $('#fullscreenBtn').textContent = on ? '⛶ Chế độ TV' : '⛶ Toàn màn hình';
+        }
+    }
+    
     $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
     function handleTvBack(){
