@@ -80,6 +80,12 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
 }
 .tvAppIcon{font-size:28px}.tvAppsHint{position:absolute;bottom:5px;left:0;right:0;text-align:center;color:#b7bec9;font-size:13px}
 
+
+/* LG webOS: tạm cho phép tương tác trình phát iframe để bật âm thanh của bên thứ ba. */
+body.tv-mode .app.iframe-audio-access #tvIframe{pointer-events:auto!important}
+body.tv-mode .iframeAudioHelp{display:none;position:absolute;z-index:12;top:14px;left:18px;right:18px;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:rgba(5,9,16,.92);border:1px solid #ffffff55;border-radius:10px;color:#fff;font-size:17px}
+body.tv-mode .app.iframe-audio-access .iframeAudioHelp{display:flex}
+body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
 </style>
 </head>
@@ -166,6 +172,29 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       iframeEl.setAttribute('allow', 'autoplay; fullscreen');
       video.parentNode.insertBefore(iframeEl, video);
     }
+    // Chỉ hiển thị trên LG khi cần thao tác bên trong iframe khác nguồn.
+    const iframeAudioHelp = document.createElement('div');
+    iframeAudioHelp.className = 'iframeAudioHelp';
+    iframeAudioHelp.innerHTML = '<span>Di chuyển con trỏ Magic Remote vào hình và nhấn biểu tượng loa của trình phát để bật tiếng.</span><button type="button" class="iframeAudioDone">Xong</button>';
+    app.appendChild(iframeAudioHelp);
+    function iframeIsActive(){return iframeEl.style.display === 'block';}
+    function closeIframeAudioAccess(){
+      app.classList.remove('iframe-audio-access');
+      if(isWebOS)try{video.focus({preventScroll:true})}catch(_){ }
+    }
+    function openIframeAudioAccess(){
+      if(!isWebOS || !iframeIsActive())return;
+      setMenu(false);
+      app.classList.add('iframe-audio-access');
+      app.classList.remove('controls-idle');
+      clearTimeout(controlsTimer);
+      setStatus('',false);
+    }
+    iframeAudioHelp.querySelector('button').addEventListener('click',()=>{
+      closeIframeAudioAccess();
+      scheduleQuickControlsHide();
+    });
+
 
     let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
     let previousIndex=null,loadToken=0,statusTimer=null,hudTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null,stallTimer=null,lastMoveTime=0;
@@ -273,20 +302,38 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
       }
       clearTimeout(controlsTimer);
       app.classList.remove('controls-idle');
-      if(app.classList.contains('menu-open'))return;
+      if(app.classList.contains('menu-open')||app.classList.contains('iframe-audio-access'))return;
       controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
     }
     function scheduleQuickControlsHide(){
       if(!isWebOS)return;
       clearTimeout(controlsTimer);
-      if(app.classList.contains('menu-open')){app.classList.remove('controls-idle');return;}
+      if(app.classList.contains('menu-open')||app.classList.contains('iframe-audio-access')){app.classList.remove('controls-idle');return;}
       controlsTimer=setTimeout(()=>app.classList.add('controls-idle'),CONTROLS_IDLE_MS);
     }
     function updateRecall(){const enabled=previousIndex!==null;recallButtons.forEach(b=>b.disabled=!enabled);if(enabled){const name=channels[previousIndex].name;recallButtons.forEach(b=>b.title='Quay lại '+name)}}
     function updateUI(){const ch=channels[currentIndex];currentName.textContent=ch.name;currentType.textContent=ch.type==='radio'?'Phát thanh trực tuyến':(ch.type==='iframe'?'Truyền hình (Web Nhúng)':'Truyền hình trực tiếp');visualizer.style.display=ch.type==='radio'?'flex':'none';visualizer.classList.toggle('playing',ch.type==='radio'&&!video.paused);[...playlist.children].forEach((el,i)=>{el.classList.toggle('active',i===currentIndex);el.setAttribute('aria-selected',String(i===currentIndex))});localStorage.setItem('tv.lastChannel',currentIndex)}
-    function updateMuteUI(){const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng'}
-    function toggleMute(){video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200)}
+    function updateMuteUI(){
+      if(isWebOS && iframeIsActive()){
+        muteBtn.textContent='🔊';
+        muteBtn.title='Mở điều khiển âm thanh của kênh nhúng';
+        muteBtn.setAttribute('aria-label',muteBtn.title);
+        muteActionBtn.textContent='🔊 Âm thanh kênh nhúng';
+        return;
+      }
+      const muted=video.muted;muteBtn.textContent=muted?'🔇':'🔊';muteBtn.title=muted?'Bật tiếng':'Tắt tiếng';muteBtn.setAttribute('aria-label',muteBtn.title);muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng';
+    }
+    function toggleMute(){
+      if(isWebOS && iframeIsActive()){
+        // Cross-origin iframe: không thể đặt iframe.contentWindow.document.querySelector('video').muted.
+        // Thay vào đó mở tương tác thật với trình phát. Không hiển thị xác nhận bật tiếng sai.
+        openIframeAudioAccess();
+        return;
+      }
+      video.muted=!video.muted;updateMuteUI();setStatus(video.muted?'Đã tắt tiếng':'Đã bật tiếng',false,1200);
+    }
     function destroyStream(){
+      closeIframeAudioAccess();
       clearTimeout(stallTimer);
       video.onloadedmetadata=null;
       if(hls){hls.destroy();hls=null}
@@ -298,6 +345,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         iframeEl.src='about:blank';
       }
       video.style.display='block';
+      updateMuteUI();
     }
     
     function tryPlay() {
@@ -365,6 +413,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
             video.style.display = 'none';
             iframeEl.style.display = 'block';
             iframeEl.src = ch.url;
+            updateMuteUI();
             setStatus('', false);
             if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
             return;
@@ -374,6 +423,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         video.style.display = 'none';
         iframeEl.style.display = 'block';
         iframeEl.src = ch.url;
+        updateMuteUI();
         setStatus('', false);
         if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
         return;
@@ -439,6 +489,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
             video.style.display = 'none';
             iframeEl.style.display = 'block';
             iframeEl.src = ch.url;
+            updateMuteUI();
             setStatus('', false);
             if (isWebOS) try { video.focus({ preventScroll: true }); } catch (_) {}
           } else {
@@ -523,6 +574,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
     function handleTvBack(){
+      if(app.classList.contains('iframe-audio-access')){closeIframeAudioAccess();return}
       const now=Date.now();
       if(now-lastBackAt<450)return;
       lastBackAt=now;
