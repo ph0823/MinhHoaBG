@@ -126,7 +126,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
         //{ name: "HTV9", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv9", type: "curl_hls" },
         { name: "HTV9", url: "https://hd1.xemtv.net/kenh/htv9.php", type: "iframe" },
         { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
-        { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "iframe" },
+        { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
         { name: "SCTV6", url: "https://live.fptplay53.net/epzhd2/film360_vhls.smil/chunklist.m3u8", type: "tv" },        
         { name: "VTV5", url: "https://vips-livecdn.fptplay.net/live/media/vtv5tnb/live-hls-avc/index.m3u8", type: "tv" },
         { name: "TN", url: "https://live.fptplay53.net/epzsd1/tayninh01_hls.smil/chunklist_b1800000.m3u8", type: "tv" },
@@ -492,9 +492,9 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
     video.addEventListener('timeupdate',()=>{if(statusEl.classList.contains('show'))clearTimeout(stallTimer)});
     video.addEventListener('error',()=>{clearTimeout(stallTimer);if(!hls)setStatus('Không thể phát kênh này. Hãy thử lại sau.',false,5000)});
 
-    /*
+    
     function toggleFullscreen(){if(isWebOS){document.body.classList.toggle('tv-mode');const on=document.body.classList.contains('tv-mode');$('#fullscreenBtn').textContent=on?'⛶ Chế độ TV':'⛶ Toàn màn hình';setMenu(false);return}if(!document.fullscreenElement){const enterFs=app.requestFullscreen||app.webkitRequestFullscreen;if(enterFs){enterFs.call(app);app.classList.add('fullscreen')}}else{const exitFs=document.exitFullscreen||document.webkitExitFullscreen;if(exitFs){exitFs.call(document);app.classList.remove('fullscreen')}}}
-    */
+    /*
     function toggleFullscreen() {
         setMenu(false); // Tự động ẩn danh sách kênh khi phóng to
         
@@ -519,7 +519,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
             $('#fullscreenBtn').textContent = on ? '⛶ Chế độ TV' : '⛶ Toàn màn hình';
         }
     }
-    
+    */
     $('#fullscreenBtn').onclick=toggleFullscreen;video.addEventListener('dblclick',toggleFullscreen);document.addEventListener('fullscreenchange',()=>app.classList.toggle('fullscreen',!!document.fullscreenElement));
 
     function handleTvBack(){
