@@ -6,127 +6,124 @@
 <meta name="theme-color" content="#090b0f">
 <title>TH Nguyên Nhi 9.2026</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.13/dist/hls.min.js"></script>
-
 <style>
-    :root{--accent:#ef4444;--focus:#facc15;--bg:#090b0f;--panel:rgba(12,15,21,.94);--text:#fff;--muted:#aab2c0;--safe:clamp(10px,2vw,24px)}
-    *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Roboto,Arial,sans-serif;overscroll-behavior:none}button{font:inherit}
-    body{min-height:100dvh}.shell{width:min(100%,1280px);margin:auto;padding:12px}.title{text-align:center;margin:4px 0 10px;font-size:clamp(20px,3vw,34px);color:var(--accent)}
-    .app{position:relative;background:#000;overflow:hidden;border-radius:14px;box-shadow:0 16px 50px #000a;aspect-ratio:16/9;isolation:isolate}
-    video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:contain}video:focus-visible{box-shadow:inset 0 0 0 4px var(--focus)}
-    #visualizer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:clamp(4px,.65vw,9px);background:radial-gradient(circle at 50% 48%,#263b58 0,#101824 34%,#05070b 70%,#020203 100%);pointer-events:none;overflow:hidden}
-    #visualizer:before{content:"";position:absolute;left:8%;right:8%;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);box-shadow:0 0 26px rgba(239,68,68,.3);opacity:.65}
-    .bar{position:relative;width:clamp(5px,.72vw,10px);height:clamp(80px,17vw,190px);border-radius:999px;background:linear-gradient(180deg,#fff7 0,var(--accent) 22%,#ef4444 72%,#7f1d1d 100%);transform:scaleY(.10);transform-origin:center;opacity:.30;box-shadow:0 0 10px rgba(239,68,68,.12);will-change:transform,opacity}
-    #visualizer.playing .bar{animation-name:radioWave;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
-    @keyframes radioWave{0%{transform:scaleY(.10);opacity:.28}35%{transform:scaleY(.48);opacity:.68}70%{transform:scaleY(.22);opacity:.45}100%{transform:scaleY(1);opacity:1}}
-    body.tv-mode #visualizer .bar{height:clamp(110px,24vh,250px);box-shadow:none}
+:root{--accent:#ef4444;--focus:#facc15;--bg:#090b0f;--panel:rgba(12,15,21,.94);--text:#fff;--muted:#aab2c0;--safe:clamp(10px,2vw,24px)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Roboto,Arial,sans-serif;overscroll-behavior:none}button{font:inherit}
+body{min-height:100dvh}.shell{width:min(100%,1280px);margin:auto;padding:12px}.title{text-align:center;margin:4px 0 10px;font-size:clamp(20px,3vw,34px);color:var(--accent)}
+.app{position:relative;background:#000;overflow:hidden;border-radius:14px;box-shadow:0 16px 50px #000a;aspect-ratio:16/9;isolation:isolate}
+video{width:100%;height:100%;display:block;background:#000;outline:0;object-fit:contain}video:focus-visible{box-shadow:inset 0 0 0 4px var(--focus)}
+#visualizer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:clamp(4px,.65vw,9px);background:radial-gradient(circle at 50% 48%,#263b58 0,#101824 34%,#05070b 70%,#020203 100%);pointer-events:none;overflow:hidden}
+#visualizer:before{content:"";position:absolute;left:8%;right:8%;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);box-shadow:0 0 26px rgba(239,68,68,.3);opacity:.65}
+.bar{position:relative;width:clamp(5px,.72vw,10px);height:clamp(80px,17vw,190px);border-radius:999px;background:linear-gradient(180deg,#fff7 0,var(--accent) 22%,#ef4444 72%,#7f1d1d 100%);transform:scaleY(.10);transform-origin:center;opacity:.30;box-shadow:0 0 10px rgba(239,68,68,.12);will-change:transform,opacity}
+#visualizer.playing .bar{animation-name:radioWave;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
+@keyframes radioWave{0%{transform:scaleY(.10);opacity:.28}35%{transform:scaleY(.48);opacity:.68}70%{transform:scaleY(.22);opacity:.45}100%{transform:scaleY(1);opacity:1}}
+body.tv-mode #visualizer .bar{height:clamp(110px,24vh,250px);box-shadow:none}
 
-    .topHud{position:absolute;left:var(--safe);right:var(--safe);top:var(--safe);display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none;z-index:4}.channelInfo{display:none!important}.status{background:#05070acc;backdrop-filter:blur(8px);border:1px solid #ffffff25;border-radius:10px;padding:8px 12px;text-shadow:0 1px 2px #000;display:none;color:#fff;font-size:14px}.status.show{display:block}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
-    .quickActions{position:absolute;right:var(--safe);bottom:var(--safe);display:flex;gap:10px;z-index:6;transition:opacity .35s ease,transform .35s ease;will-change:opacity,transform}.iconBtn{min-width:50px;width:50px;height:50px;border-radius:999px;border:2px solid #ffffff35;background:#07090dd9;color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px);outline:0;font-size:21px}.iconBtn:hover,.iconBtn:focus-visible{background:var(--accent);border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;transform:scale(1.04)}.iconBtn:disabled{opacity:.35}
-    .menu{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px max(var(--safe),12px) calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--panel) 78%,transparent);transform:translateY(105%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s}.app.menu-open .menu{transform:translateY(0);opacity:1;pointer-events:auto}.menuHeader{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}.menuHeader strong{font-size:15px}.hint{font-size:12px;color:var(--muted)}
-    .channelStrip{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:3px 2px 5px;scrollbar-width:thin}.channelCard{flex:0 0 clamp(94px,11vw,132px);min-height:58px;padding:9px 8px;border-radius:9px;border:2px solid transparent;background:#20242c;color:#fff;text-align:center;cursor:pointer;outline:0;scroll-snap-align:center;font-weight:650}.channelCard:hover,.channelCard:focus-visible{border-color:var(--focus);background:#343a46;transform:translateY(-2px)}.channelCard.active{background:var(--accent);border-color:#fff}.tag{display:block;color:#fde047;font-size:10px;text-transform:uppercase;margin-top:4px}
-    .mobileBar{display:none}.below{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0}.action{border:1px solid #ffffff28;background:#181c24;color:#fff;border-radius:10px;padding:11px 17px;min-height:46px;cursor:pointer;outline:0}.action:hover,.action:focus-visible{background:var(--accent);border-color:var(--focus)}.links{text-align:center;color:var(--muted);font-size:14px}.links a{color:#68b7ff;padding:8px;display:inline-block}
-    .app:fullscreen,.app.fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0}.app:fullscreen .quickActions,.app.fullscreen .quickActions{bottom:var(--safe)}
+.topHud{position:absolute;left:var(--safe);right:var(--safe);top:var(--safe);display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none;z-index:4}.channelInfo{display:none!important}.status{background:#05070acc;backdrop-filter:blur(8px);border:1px solid #ffffff25;border-radius:10px;padding:8px 12px;text-shadow:0 1px 2px #000;display:none;color:#fff;font-size:14px}.status.show{display:block}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
+.quickActions{position:absolute;right:var(--safe);bottom:var(--safe);display:flex;gap:10px;z-index:6;transition:opacity .35s ease,transform .35s ease;will-change:opacity,transform}.iconBtn{min-width:50px;width:50px;height:50px;border-radius:999px;border:2px solid #ffffff35;background:#07090dd9;color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px);outline:0;font-size:21px}.iconBtn:hover,.iconBtn:focus-visible{background:var(--accent);border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;transform:scale(1.04)}.iconBtn:disabled{opacity:.35}
+.menu{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px max(var(--safe),12px) calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--panel) 78%,transparent);transform:translateY(105%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s}.app.menu-open .menu{transform:translateY(0);opacity:1;pointer-events:auto}.menuHeader{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}.menuHeader strong{font-size:15px}.hint{font-size:12px;color:var(--muted)}
+.channelStrip{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:3px 2px 5px;scrollbar-width:thin}.channelCard{flex:0 0 clamp(94px,11vw,132px);min-height:58px;padding:9px 8px;border-radius:9px;border:2px solid transparent;background:#20242c;color:#fff;text-align:center;cursor:pointer;outline:0;scroll-snap-align:center;font-weight:650}.channelCard:hover,.channelCard:focus-visible{border-color:var(--focus);background:#343a46;transform:translateY(-2px)}.channelCard.active{background:var(--accent);border-color:#fff}.tag{display:block;color:#fde047;font-size:10px;text-transform:uppercase;margin-top:4px}
+.mobileBar{display:none}.below{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0}.action{border:1px solid #ffffff28;background:#181c24;color:#fff;border-radius:10px;padding:11px 17px;min-height:46px;cursor:pointer;outline:0}.action:hover,.action:focus-visible{background:var(--accent);border-color:var(--focus)}.links{text-align:center;color:var(--muted);font-size:14px}.links a{color:#68b7ff;padding:8px;display:inline-block}
+.app:fullscreen,.app.fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0}.app:fullscreen .quickActions,.app.fullscreen .quickActions{bottom:var(--safe)}
 
-    @media (min-width:768px){
-      #recallFloat{display:none}
-      .menu{padding-bottom:12px}
-      .channelStrip{max-height:92px}
-      .app.menu-open .quickActions{bottom:114px}
-    }
+@media (min-width:768px){
+  #recallFloat{display:none}
+  .menu{padding-bottom:12px}
+  .channelStrip{max-height:92px}
+  .app.menu-open .quickActions{bottom:114px}
+}
 
-    /* Giao diện chuẩn cho Điện thoại Android */
-    @media (max-width:767px){
-      #visualizer{gap:4px}
-      .bar{width:5px;height:72px}
-      body{padding-bottom:76px}
-      .shell{padding:0}
-      .title{font-size:20px;margin:8px}
-      .app{border-radius:0;aspect-ratio:16/9}
-      .topHud{top:8px;left:8px;right:8px}
-      .status{font-size:12px;padding:6px 9px}
-      .quickActions{right:8px;bottom:8px;gap:6px}
-      .iconBtn{min-width:40px;width:40px;height:40px;font-size:17px;border-width:1.5px}
-      #menuBtn{display:none}
-      .menu{position:fixed;left:0;right:0;bottom:64px;z-index:20;max-height:52dvh;background:#11151bf5;border-radius:18px 18px 0 0;padding:10px 12px 12px;box-shadow:0 -12px 32px #0009}
-      .menuHeader{margin:4px 2px 10px;gap:10px}
-      .menuHeader strong{font-size:17px}
-      .hint{font-size:11px;line-height:1.3;text-align:right}
-      .channelStrip{display:grid;grid-template-columns:repeat(3,1fr);max-height:38dvh;overflow-y:auto;scroll-snap-type:none;padding-bottom:4px}
-      .channelCard{min-width:0;min-height:58px;padding:8px 6px}
-      .below{display:none}
-      .links{padding:14px 10px}
-      .mobileBar{position:fixed;left:0;right:0;bottom:0;height:64px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:#10131af5;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;z-index:25;border-top:1px solid #ffffff1f;box-shadow:0 -8px 24px #0008}
-      .mobileBar button{border:1px solid #ffffff14;border-radius:10px;background:#232833;color:#fff;font-size:13px;min-width:0;padding:0 4px}
-      .mobileBar button:active,.mobileBar button:focus-visible{background:var(--accent);border-color:var(--focus);outline:0}
-      .app.menu-open~.links{opacity:.35}
-    }
+/* Giao diện chuẩn cho Điện thoại Android */
+@media (max-width:767px){
+  #visualizer{gap:4px}
+  .bar{width:5px;height:72px}
+  body{padding-bottom:76px}
+  .shell{padding:0}
+  .title{font-size:20px;margin:8px}
+  .app{border-radius:0;aspect-ratio:16/9}
+  .topHud{top:8px;left:8px;right:8px}
+  .status{font-size:12px;padding:6px 9px}
+  .quickActions{right:8px;bottom:8px;gap:6px}
+  .iconBtn{min-width:40px;width:40px;height:40px;font-size:17px;border-width:1.5px}
+  #menuBtn{display:none}
+  .menu{position:fixed;left:0;right:0;bottom:64px;z-index:20;max-height:52dvh;background:#11151bf5;border-radius:18px 18px 0 0;padding:10px 12px 12px;box-shadow:0 -12px 32px #0009}
+  .menuHeader{margin:4px 2px 10px;gap:10px}
+  .menuHeader strong{font-size:17px}
+  .hint{font-size:11px;line-height:1.3;text-align:right}
+  .channelStrip{display:grid;grid-template-columns:repeat(3,1fr);max-height:38dvh;overflow-y:auto;scroll-snap-type:none;padding-bottom:4px}
+  .channelCard{min-width:0;min-height:58px;padding:8px 6px}
+  .below{display:none}
+  .links{padding:14px 10px}
+  .mobileBar{position:fixed;left:0;right:0;bottom:0;height:64px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:#10131af5;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;z-index:25;border-top:1px solid #ffffff1f;box-shadow:0 -8px 24px #0008}
+  .mobileBar button{border:1px solid #ffffff14;border-radius:10px;background:#232833;color:#fff;font-size:13px;min-width:0;padding:0 4px}
+  .mobileBar button:active,.mobileBar button:focus-visible{background:var(--accent);border-color:var(--focus);outline:0}
+  .app.menu-open~.links{opacity:.35}
+}
 
-    @media (max-width:430px){.channelStrip{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:380px){.mobileBar button{font-size:12px}.menuHeader{align-items:flex-start}.hint{max-width:58%}.channelCard{font-size:14px}}
+@media (max-width:430px){.channelStrip{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:380px){.mobileBar button{font-size:12px}.menuHeader{align-items:flex-start}.hint{max-width:58%}.channelCard{font-size:14px}}
 
-    /* Giao diện chuẩn cho Tivi LG webOS */
-    body.tv-mode{position:fixed;inset:0;width:100%;height:100%;min-height:0;overflow:hidden;background:#000;overscroll-behavior:none}
-    body.tv-mode .shell{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;padding:0;overflow:hidden}
-    body.tv-mode .title,body.tv-mode .below,body.tv-mode .links,body.tv-mode .mobileBar{display:none!important}
-    body.tv-mode .app{position:absolute;inset:0;width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:0;box-shadow:none;overflow:hidden}
-    body.tv-mode .status,body.tv-mode .iconBtn{backdrop-filter:none!important;background:rgba(7,9,13,.92)}
-    body.tv-mode #tvIframe{pointer-events:none}
-    body.tv-mode .quickActions{right:28px;bottom:26px;gap:14px;opacity:.78}
-    body.tv-mode .app.controls-idle:not(.menu-open) .quickActions{opacity:0;transform:translateY(10px);pointer-events:none}
-    body.tv-mode .app.menu-open .quickActions,body.tv-mode .quickActions:focus-within{opacity:1;transform:none;pointer-events:auto}
-    body.tv-mode .iconBtn{width:64px;height:64px;min-width:64px;font-size:28px;border-width:3px}
-    body.tv-mode .menu{padding:18px 28px 24px;background:linear-gradient(0deg,rgba(12,15,21,.97) 82%,transparent);position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:hidden;contain:layout paint}
-    body.tv-mode .channelStrip{overscroll-behavior:contain;scroll-behavior:auto;gap:12px;padding:8px 4px 10px;max-height:104px}
-    body.tv-mode .menuHeader{margin:20px 0 12px}
-    body.tv-mode .menuHeader strong{font-size:22px}
-    body.tv-mode .hint{font-size:15px}
-    body.tv-mode .channelCard{flex:0 0 164px;min-height:74px;padding:12px 10px;border-radius:12px;font-size:20px;border-width:3px}
-    body.tv-mode .channelCard:hover,body.tv-mode .channelCard:focus-visible{transform:none;border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;background:#343a46}
-    body.tv-mode .channelCard.active{background:var(--accent);border-color:#fff}
-    body.tv-mode .tag{font-size:12px;margin-top:6px}
-    body.tv-mode .app.menu-open .quickActions{bottom:132px}
+/* Giao diện chuẩn cho Tivi LG webOS */
+body.tv-mode{position:fixed;inset:0;width:100%;height:100%;min-height:0;overflow:hidden;background:#000;overscroll-behavior:none}
+body.tv-mode .shell{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;padding:0;overflow:hidden}
+body.tv-mode .title,body.tv-mode .below,body.tv-mode .links,body.tv-mode .mobileBar{display:none!important}
+body.tv-mode .app{position:absolute;inset:0;width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:0;box-shadow:none;overflow:hidden}
+body.tv-mode .status,body.tv-mode .iconBtn{backdrop-filter:none!important;background:rgba(7,9,13,.92)}
+body.tv-mode #tvIframe{pointer-events:none}
+body.tv-mode .quickActions{right:28px;bottom:26px;gap:14px;opacity:.78}
+body.tv-mode .app.controls-idle:not(.menu-open) .quickActions{opacity:0;transform:translateY(10px);pointer-events:none}
+body.tv-mode .app.menu-open .quickActions,body.tv-mode .quickActions:focus-within{opacity:1;transform:none;pointer-events:auto}
+body.tv-mode .iconBtn{width:64px;height:64px;min-width:64px;font-size:28px;border-width:3px}
+body.tv-mode .menu{padding:18px 28px 24px;background:linear-gradient(0deg,rgba(12,15,21,.97) 82%,transparent);position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:hidden;contain:layout paint}
+body.tv-mode .channelStrip{overscroll-behavior:contain;scroll-behavior:auto;gap:12px;padding:8px 4px 10px;max-height:104px}
+body.tv-mode .menuHeader{margin:20px 0 12px}
+body.tv-mode .menuHeader strong{font-size:22px}
+body.tv-mode .hint{font-size:15px}
+body.tv-mode .channelCard{flex:0 0 164px;min-height:74px;padding:12px 10px;border-radius:12px;font-size:20px;border-width:3px}
+body.tv-mode .channelCard:hover,body.tv-mode .channelCard:focus-visible{transform:none;border-color:var(--focus);box-shadow:0 0 0 4px #facc1545;background:#343a46}
+body.tv-mode .channelCard.active{background:var(--accent);border-color:#fff}
+body.tv-mode .tag{font-size:12px;margin-top:6px}
+body.tv-mode .app.menu-open .quickActions{bottom:132px}
 
-    .tvApps{display:none}
-    body.tv-mode .tvApps{
-      position:absolute;left:0;right:0;bottom:0;z-index:8;
-      display:flex;justify-content:center;gap:18px;
-      padding:22px 30px 28px;
-      background:linear-gradient(0deg,rgba(8,10,14,.985) 72%,rgba(8,10,14,.88) 88%,transparent);
-      transform:translateY(112%);opacity:0;pointer-events:none;
-      transition:transform .22s ease,opacity .22s ease;
-    }
-    body.tv-mode .app.apps-open .tvApps{transform:translateY(0);opacity:1;pointer-events:auto}
-    body.tv-mode .app.apps-open .quickActions{opacity:0!important;pointer-events:none!important}
-    body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-events:none}
-    .tvAppLink{
-      min-width:170px;min-height:84px;padding:14px 20px;border-radius:16px;
-      border:3px solid #ffffff2b;background:#20252f;color:#fff;text-decoration:none;
-      display:flex;align-items:center;justify-content:center;gap:10px;
-      font-size:22px;font-weight:700;outline:0;box-shadow:0 10px 28px #0007;
-    }
-    .tvAppLink:hover,.tvAppLink:focus-visible{
-      background:var(--accent);border-color:var(--focus);
-      box-shadow:0 0 0 5px #facc1540,0 12px 34px #0009;
-      transform:translateY(-3px) scale(1.02)
-    }
-    .tvAppIcon{font-size:28px}.tvAppsHint{position:absolute;bottom:5px;left:0;right:0;text-align:center;color:#b7bec9;font-size:13px}
+.tvApps{display:none}
+body.tv-mode .tvApps{
+  position:absolute;left:0;right:0;bottom:0;z-index:8;
+  display:flex;justify-content:center;gap:18px;
+  padding:22px 30px 28px;
+  background:linear-gradient(0deg,rgba(8,10,14,.985) 72%,rgba(8,10,14,.88) 88%,transparent);
+  transform:translateY(112%);opacity:0;pointer-events:none;
+  transition:transform .22s ease,opacity .22s ease;
+}
+body.tv-mode .app.apps-open .tvApps{transform:translateY(0);opacity:1;pointer-events:auto}
+body.tv-mode .app.apps-open .quickActions{opacity:0!important;pointer-events:none!important}
+body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-events:none}
+.tvAppLink{
+  min-width:170px;min-height:84px;padding:14px 20px;border-radius:16px;
+  border:3px solid #ffffff2b;background:#20252f;color:#fff;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:22px;font-weight:700;outline:0;box-shadow:0 10px 28px #0007;
+}
+.tvAppLink:hover,.tvAppLink:focus-visible{
+  background:var(--accent);border-color:var(--focus);
+  box-shadow:0 0 0 5px #facc1540,0 12px 34px #0009;
+  transform:translateY(-3px) scale(1.02)
+}
+.tvAppIcon{font-size:28px}.tvAppsHint{position:absolute;bottom:5px;left:0;right:0;text-align:center;color:#b7bec9;font-size:13px}
 
-    /* LG webOS: cho phép tương tác trình phát iframe để bật âm thanh của bên thứ ba */
-    .iframeAudioHelp{display:none}
-    body.tv-mode .app.iframe-audio-access #tvIframe{pointer-events:auto!important}
-    body.tv-mode .iframeAudioHelp{display:none;position:absolute;z-index:12;top:14px;left:18px;right:18px;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:rgba(5,9,16,.92);border:1px solid #ffffff55;border-radius:10px;color:#fff;font-size:17px}
-    body.tv-mode .app.iframe-audio-access .iframeAudioHelp{display:flex}
-    body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}
-    @media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
+/* LG webOS: cho phép tương tác trình phát iframe để bật âm thanh của bên thứ ba */
+.iframeAudioHelp{display:none}
+body.tv-mode .app.iframe-audio-access #tvIframe{pointer-events:auto!important}
+body.tv-mode .iframeAudioHelp{display:none;position:absolute;z-index:12;top:14px;left:18px;right:18px;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:rgba(5,9,16,.92);border:1px solid #ffffff55;border-radius:10px;color:#fff;font-size:17px}
+body.tv-mode .app.iframe-audio-access .iframeAudioHelp{display:flex}
+body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
 </style>
-
 </head>
 <body>
 <main class="shell">
 <h1 class="title">TIVI <span style="color:#fff">NGUYÊN</span> NHI</h1>
 <section class="app" id="app" aria-label="Trình phát">
 <div id="visualizer" aria-hidden="true"></div>
-<!-- Đã gỡ bỏ crossorigin="anonymous" để tránh lỗi chặn luồng CORS trên các CDN IPTV -->
 <video id="video" muted playsinline tabindex="0"></video>
 <div class="topHud"><div class="channelInfo" hidden aria-hidden="true"><span id="currentName"></span><small id="currentType"></small></div><div class="status" id="status"></div></div>
 <div class="quickActions">
@@ -160,7 +157,6 @@
 </nav>
 
 <script>
-    // Danh sách kênh được cấu hình type: "curl_hls" để ứng dụng bóc tách m3u8 tươi tự động
     const channels = [
         { name: "HTV1", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv1", type: "curl_hls" },
         { name: "HTV2", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv2", type: "curl_hls" },
@@ -201,6 +197,12 @@
     if(isWebOS)document.body.classList.add('tv-mode');
     const recallButtons=[$('#recallBtn'),$('#recallFloat')];
 
+    let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
+    let previousIndex=null,loadToken=0,statusTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null,stallTimer=null,lastMoveTime=0;
+    let autoMutedByPolicy=false,wakeLock=null;
+    const CONTROLS_IDLE_MS=5000;
+    const STREAM_CACHE_TTL=10*60*1000;
+
     // Tự động tạo thẻ iframe hỗ trợ dự phòng nếu cURL m3u8 bị lỗi
     let iframeEl = $('#tvIframe');
     if (!iframeEl) {
@@ -211,11 +213,33 @@
       video.parentNode.insertBefore(iframeEl, video);
     }
 
-    let hls=null,currentIndex=Math.max(0,Math.min(channels.length-1,Number(localStorage.getItem('tv.lastChannel'))||0));
-    let previousIndex=null,loadToken=0,statusTimer=null,lastBackAt=0,retryCount=0,controlsTimer=null,stallTimer=null,lastMoveTime=0;
-    let autoMutedByPolicy=false,wakeLock=null;
-    const CONTROLS_IDLE_MS=5000;
-    const STREAM_CACHE_TTL=10*60*1000;
+    // Khối quản lý âm thanh cho kênh nhúng iframe trên LG webOS (Đã khôi phục đầy đủ)
+    const iframeAudioHelp = document.createElement('div');
+    iframeAudioHelp.className = 'iframeAudioHelp';
+    iframeAudioHelp.innerHTML = '<span>Di chuyển con trỏ Magic Remote vào hình và nhấn biểu tượng loa của trình phát để bật tiếng.</span><button type="button" class="iframeAudioDone">Xong</button>';
+    app.appendChild(iframeAudioHelp);
+
+    function iframeIsActive(){
+      return iframeEl && iframeEl.style.display === 'block';
+    }
+    function closeIframeAudioAccess(){
+      app.classList.remove('iframe-audio-access');
+      if(isWebOS)try{video.focus({preventScroll:true})}catch(_){}
+    }
+    function openIframeAudioAccess(){
+      if(!isWebOS || !iframeIsActive())return;
+      setMenu(false);
+      app.classList.add('iframe-audio-access');
+      app.classList.remove('controls-idle');
+      clearTimeout(controlsTimer);
+      setStatus('',false);
+      const doneBtn = iframeAudioHelp.querySelector('button');
+      if(doneBtn) try{doneBtn.focus({preventScroll:true})}catch(_){}
+    }
+    iframeAudioHelp.querySelector('button').addEventListener('click',()=>{
+      closeIframeAudioAccess();
+      scheduleQuickControlsHide();
+    });
 
     // Giữ màn hình Android luôn sáng khi đang xem TV / nghe Radio
     async function requestWakeLock(){
@@ -252,7 +276,6 @@
         if (timer) clearTimeout(timer);
         if (!res.ok) return null;
         const html = await res.text();
-        // Mở rộng regex để bắt cả biến file, source, hoặc chuỗi .m3u8 trực tiếp
         const match = html.match(/(?:file|source|src)\s*[:=]\s*['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/i)
                    || html.match(/['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/i);
         return match ? match[1] : null;
@@ -263,7 +286,6 @@
       }
     }
 
-    // Giảm số thanh visualizer trên TV để tiết kiệm GPU
     const barCount = isWebOS ? 20 : 28;
     const barMid = (barCount - 1) / 2;
     for(let i=0;i<barCount;i++){
@@ -476,7 +498,6 @@
         previousIndex = currentIndex;
       }
 
-      // Khi người dùng chủ động đổi kênh (không phải lần tự mở đầu tiên), tự mở tiếng nếu trước đó bị trình duyệt khóa
       if (!isInitial && autoMutedByPolicy) {
         video.muted = false;
         autoMutedByPolicy = false;
@@ -500,7 +521,7 @@
         if (cachedUrl) {
           streamUrl = cachedUrl;
         } else {
-          setStatus('Đang lấy luồng ' + ch.name + '…', true);
+          setStatus('Đang xử lý ' + ch.name + '…', true);
           const freshUrl = await fetchM3u8FromCurl(ch.url);
           if (token !== loadToken) return;
 
@@ -527,13 +548,11 @@
         return;
       }
 
-      // Kiểm tra HLS chính xác hơn (bao gồm cả .m3u8 nằm giữa URL hoặc kênh loại curl_hls)
-      const isHls = /\.m3u8/i.test(streamUrl) || ch.type === 'curl_hls';
+      const isHls = /\.m3u8/i.test(streamUrl);
 
       if (isHls && window.Hls && Hls.isSupported()) {
         hls = new Hls({
           lowLatencyMode: false,
-          // Giảm bộ đệm trên webOS để tránh tràn RAM trình duyệt TV
           backBufferLength: isWebOS ? 10 : 15,
           maxBufferLength: isWebOS ? 20 : 30,
           maxMaxBufferLength: isWebOS ? 30 : 60,
@@ -594,6 +613,9 @@
             setStatus('Kênh đang bảo trì hoặc gián đoạn.', false, 4000);
           }
         });
+      } else if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.onloadedmetadata = () => token === loadToken && tryPlay();
       } else {
         video.src = streamUrl;
         video.onloadedmetadata = () => token === loadToken && tryPlay();
@@ -601,7 +623,6 @@
     }
 
     function selectChannel(index){loadChannel(index);setMenu(false)}
-    // Đã bỏ setStatus ghi đè làm mất hiệu ứng loading
     function changeChannel(step){selectChannel(currentIndex+step)}
     function recall(){
       if(previousIndex===null)return;
@@ -647,7 +668,6 @@
     $('#mobileNext').onclick=()=>changeChannel(1);
     playBtn.onclick=()=>video.paused?tryPlay():video.pause();
 
-    // Trên Android/Web: nếu đang bị auto-mute bởi trình duyệt, chạm vào video sẽ bật tiếng thay vì pause
     video.addEventListener('click',()=>{
       if(autoMutedByPolicy && video.muted){
         toggleMute();
@@ -660,6 +680,7 @@
     video.addEventListener('play',()=>{
       playBtn.textContent='⏸ Tạm dừng';
       visualizer.classList.toggle('playing',channels[currentIndex].type==='radio');
+      setStatus('',false);
     });
     video.addEventListener('pause',()=>{
       clearTimeout(stallTimer);
@@ -687,7 +708,6 @@
     video.addEventListener('waiting',startStallWatchdog);
     video.addEventListener('stalled',startStallWatchdog);
     video.addEventListener('playing',()=>{clearTimeout(stallTimer);setStatus('',false)});
-    // Chỉ xóa stallTimer trong timeupdate khi video thực sự đủ dữ liệu phát (readyState >= 3)
     video.addEventListener('timeupdate',()=>{
       if(video.readyState>=3 && stallTimer){
         clearTimeout(stallTimer);
@@ -712,7 +732,6 @@
           try{
             await enterFs.call(app);
             app.classList.add('fullscreen');
-            // Tự động xoay ngang màn hình trên điện thoại Android khi phóng to
             if(screen.orientation && screen.orientation.lock){
               screen.orientation.lock('landscape').catch(()=>{});
             }
@@ -796,7 +815,6 @@
         }
       }
 
-      // Cho phép điều hướng Trái/Phải giữa các nút quickActions (#muteBtn, #menuBtn) khi đang focus vào chúng
       const inQuickActions=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.quickActions');
       if(inQuickActions){
         const btns=[...document.querySelectorAll('.quickActions .iconBtn:not(:disabled)')].filter(b=>b.offsetParent!==null);
@@ -808,11 +826,9 @@
 
       if(isWebOS&&!inMenu&&!appsOpen){
         if(key==='ArrowDown'){e.preventDefault();setApps(true,true);return}
-        // Nhấn Mũi tên Lên khi đang xem để focus nhanh vào nút Tắt/Bật tiếng trên TV
         if(key==='ArrowUp'&&!inQuickActions){e.preventDefault();showQuickControls();muteBtn.focus();return}
       }
 
-      // Hỗ trợ cả phím P+/P- (ChannelUp/ChannelDown hoặc PageUp/PageDown trên webOS)
       if(!inMenu&&!appsOpen&&!inQuickActions&&(key==='ArrowLeft'||key==='ChannelDown'||key==='PageDown'||keyCode===34)){e.preventDefault();changeChannel(-1)}
       if(!inMenu&&!appsOpen&&!inQuickActions&&(key==='ArrowRight'||key==='ChannelUp'||key==='PageUp'||keyCode===33)){e.preventDefault();changeChannel(1)}
       if(!inMenu&&!appsOpen&&(key==='Enter'||key===' ')){
@@ -838,7 +854,6 @@
       history.pushState({tvGuard:true},'',location.href);
     }catch(_){}
 
-    // Hỗ trợ nút Back vật lý / vuốt cạnh trên cả TV LG lẫn điện thoại Android
     window.addEventListener('popstate',()=>{
       const handled = handleBackAction();
       if(isWebOS || handled){
