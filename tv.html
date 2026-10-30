@@ -110,7 +110,7 @@ body.tv-mode .app.apps-open .menu{transform:translateY(105%);opacity:0;pointer-e
 }
 .tvAppIcon{font-size:28px}.tvAppsHint{position:absolute;bottom:5px;left:0;right:0;text-align:center;color:#b7bec9;font-size:13px}
 
-/* LG webOS: cho phép tương tác trình phát iframe để bật âm thanh của bên thứ ba */
+/* Quản lý âm thanh bên thứ ba */
 .iframeAudioHelp{display:none}
 body.tv-mode .app.iframe-audio-access #tvIframe{pointer-events:auto!important}
 body.tv-mode .iframeAudioHelp{display:none;position:absolute;z-index:12;top:14px;left:18px;right:18px;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:rgba(5,9,16,.92);border:1px solid #ffffff55;border-radius:10px;color:#fff;font-size:17px}
@@ -163,7 +163,6 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
         { name: "HTV3", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv3", type: "curl_hls" },
         { name: "HTV4", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv4", type: "curl_hls" },
         { name: "HTV7", url: "https://data.tvso1.com/nguon/curlhtv.php?id=htv7", type: "curl_hls" },
-        // Đã đổi HTV9 sang cơ chế tự bóc m3u8 qua CORS proxy thay vì bắt buộc dùng iframe
         { name: "HTV9", url: "https://hd1.xemtv.net/kenh/htv9.php", type: "curl_hls" },
         { name: "SCTV2", url: "https://freem3u.xyz/api/live/play.m3u8?vid=201", type: "tv" },
         { name: "SCTV4", url: "https://vtvgolive-sctvdrm.vtvdigital.vn/zbhZdlxRAlmWWLLO5g6THg/1786005011/manifest/sctv4/playlist_720p.m3u8", type: "tv" },
@@ -291,7 +290,7 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
       try{sessionStorage.setItem('tv.stream.'+key,JSON.stringify({url,time:Date.now()}))}catch(_){}
     }
 
-    // Nâng cấp: Tự động chạy qua các cổng CORS Proxy miễn phí để lấy link m3u8 thay vì bó tay dùng iframe
+    // Tự động chạy qua các cổng CORS Proxy miễn phí để lấy link m3u8
     async function fetchM3u8FromCurl(curlUrl) {
       const endpoints = [
         curlUrl,
@@ -307,7 +306,6 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
           if (timer) clearTimeout(timer);
           if (!res.ok) continue;
           const html = await res.text();
-          // Mở rộng regex bắt link .m3u8 trên đa số các player web
           const match = html.match(/(?:file|source|src|hls)\s*[:=]\s*['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/i)
                      || html.match(/['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/i);
           if (match && match[1]) return match[1].replace(/\\\//g, '/');
@@ -458,7 +456,7 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
     }
 
     function updateMuteUI(){
-      if(isWebOS && iframeIsActive()){
+      if(iframeIsActive()){
         muteBtn.textContent='🔊';
         muteBtn.title='Mở điều khiển âm thanh của kênh nhúng';
         muteBtn.setAttribute('aria-label',muteBtn.title);
@@ -472,9 +470,8 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
       muteActionBtn.textContent=muted?'🔇 Bật tiếng':'🔊 Tắt tiếng';
     }
 
-    // Tự động giải quyết vấn đề tắt/bật âm thanh kênh nhúng Iframe
     function toggleMute(){
-      if(isWebOS && iframeIsActive()){
+      if(iframeIsActive()){
         // Bước 1: Thử bắn lệnh tự bật tiếng cho iframe
         sendUnmuteToIframe();
 
@@ -490,12 +487,10 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
             sendUnmuteToIframe();
             setTimeout(sendUnmuteToIframe, 800);
           };
-          
-          app.classList.add('iframe-audio-access');
           return;
         }
 
-        // Bước 3: Nếu nạp lại rồi mà bên cung cấp thứ 3 cố tình chặn, mở hướng dẫn cho người dùng click tay
+        // Bước 3: Nếu nạp lại rồi mà bên cung cấp thứ 3 cố tình chặn, mở hướng dẫn (chỉ trên WebOS)
         openIframeAudioAccess();
         return;
       }
@@ -507,7 +502,8 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
     }
 
     function destroyStream(){
-      iframeUnmutedOnce = false; // Reset trạng thái nạp iframe khi đổi kênh
+      iframeUnmutedOnce = false;
+      iframeEl.onload = null; // Ngăn chặn lỗi kẹt lệnh ngầm khi người dùng chuyển kênh quá nhanh
       closeIframeAudioAccess();
       clearTimeout(stallTimer);
       video.onloadedmetadata=null;
@@ -585,7 +581,7 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
             streamUrl = freshUrl;
             setCachedStreamUrl(cacheKey, freshUrl);
           } else {
-            // Khi proxy thất bại, fallback hiển thị dạng iframe an toàn
+            // Khi proxy thất bại, fallback hiển thị dạng iframe
             video.style.display = 'none';
             iframeEl.style.display = 'block';
             iframeEl.src = ch.url;
@@ -905,9 +901,11 @@ body.tv-mode .iframeAudioDone{flex:none;background:#facc15;color:#141414;border:
       $('.quickActions').addEventListener('focusin',showQuickControls);
       document.addEventListener('keyup',e=>{if(isLgBackEvent(e))consumeLgBack(e)},true);
       
-      // Cơ chế nhận diện tự động cho Magic Remote
+      // Cơ chế nhận diện tự động cho Magic Remote (Chống ghi đè ngốn CPU)
       document.addEventListener('mousemove', () => {
-        if (iframeIsActive()) iframeEl.style.pointerEvents = 'auto';
+        if (iframeIsActive() && iframeEl.style.pointerEvents !== 'auto') {
+          iframeEl.style.pointerEvents = 'auto';
+        }
       }, { passive: true });
       
       // Khóa lại Iframe khi chuyển sang thao tác D-Pad để ứng dụng điều khiển
