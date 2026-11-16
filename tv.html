@@ -193,7 +193,7 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
 
 <script>
 /* ================================================================
- * TIVI NGUYÊN NHI - BẢN 3.0 / LG webOS STABLE BACK
+ * TIVI NGUYÊN NHI - BẢN 3.1 / LG webOS BACK & PLAYBACK RECOVERY
  * Nền: tv1.html. Toàn bộ danh sách kênh được giữ nguyên.
  * MỤC TIÊU:
  *   - Back = đóng bảng đang mở; khi đang xem = đổi 2 kênh gần nhất.
@@ -281,9 +281,11 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
     let currentIndex=readInitialChannel(), previousIndex=null;
     let loadToken=0, activeLoad=null, hls=null, playbackMode='none';
     let statusTimer=null, controlsTimer=null, stallTimer=null, startTimer=null;
+     let bufferingCoverTimer=null, playbackProbeTimer=null;
     let iframeRevealTimer=null, fetchAbort=null, lastBackAt=0, lastMoveAt=0;
     let autoMutedByPolicy=false, wakeLock=null, iframeAudioOpen=false;
     let playbackState='idle';  // idle/loading/playing/error
+     let videoProgressTime=0, videoProgressAt=0;
 
     /* ---------------- iframe & âm thanh bên thứ ba ---------------- */
     const iframeEl=document.createElement('iframe');
@@ -368,7 +370,7 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
     }
     function showFatal(message){
       playbackState='error';
-      clearTimeout(startTimer);clearTimeout(stallTimer);clearTimeout(iframeRevealTimer);
+      clearPlayerTimers();
       showCover('Không thể phát '+channels[currentIndex].name,message,true);
       setStatus('',false);
       if(isWebOS){
@@ -544,7 +546,8 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
     /* ---------------- quản lý vòng đời video/iframe ---------------- */
     function clearPlayerTimers(){
       clearTimeout(startTimer);clearTimeout(stallTimer);clearTimeout(iframeRevealTimer);
-      startTimer=stallTimer=iframeRevealTimer=null;
+      clearTimeout(bufferingCoverTimer);clearTimeout(playbackProbeTimer);
+      startTimer=stallTimer=iframeRevealTimer=bufferingCoverTimer=playbackProbeTimer=null;
     }
     function stopCurrentPlayer(){
       clearPlayerTimers();
@@ -559,6 +562,7 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
       iframeEl.src='about:blank';
       video.style.display='block';
       playbackMode='none';
+      videoProgressTime=0;videoProgressAt=0;
       closeIframeAudio();
       updateMuteUI();
     }
@@ -589,10 +593,30 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
       if(!isCurrent(ctx,phase))return;
       playbackState='playing';
       clearTimeout(startTimer);clearTimeout(stallTimer);
+      clearTimeout(bufferingCoverTimer);clearTimeout(playbackProbeTimer);
+      if(!ctx.startedOnce){ctx.stallRecoveries=0;ctx.startedOnce=true;}
       hideCover();setStatus('',false);saveLastChannel();
       visualizer.classList.toggle('playing',ctx.channel.type==='radio'&&!video.paused);
       playBtn.textContent='⏸ Tạm dừng';
       if(iframe)console.info('[TV] iframe tải xong (không xác minh được video con đã phát):',ctx.channel.name);
+    }
+    // Trên webOS, sự kiện play/playing có thể xuất hiện trước khung hình đầu tiên.
+    // Chỉ bỏ lớp che sau khi bộ giải mã thực sự có dữ liệu hình (radio là ngoại lệ).
+    function hasVisibleVideoFrame(ctx){
+      if(!ctx||video.paused||video.readyState<2)return false;
+      if(ctx.channel.type==='radio')return true;
+      return video.videoWidth>0&&video.videoHeight>0;
+    }
+    function confirmVideoPlayback(ctx,phase){
+      if(!isCurrent(ctx,phase)||playbackMode==='iframe')return;
+      if(hasVisibleVideoFrame(ctx)){
+        if(playbackState==='loading')markPlaying(ctx,phase);
+      }else if(playbackState==='loading'&&!video.paused){
+        clearTimeout(playbackProbeTimer);
+        playbackProbeTimer=setTimeout(()=>{
+          if(isCurrent(ctx,phase)&&playbackState==='loading')confirmVideoPlayback(ctx,phase);
+        },450);
+      }
     }
     function tryPlay(ctx,phase){
       if(!ctx||!isCurrent(ctx,phase)||playbackMode==='iframe')return;
@@ -776,7 +800,7 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
         token:loadToken,channel:channels[index],phase:0,
         hlsTried:false,nativeTried:false,iframeTried:false,
         usedCache:false,cacheRefreshTried:false,networkRetries:0,mediaRetries:0,
-        playUrl:''
+        stallRecoveries:0,playUrl:''
       };
       activeLoad=ctx;
       if(ctx.channel.type==='iframe')startIframe(ctx,ctx.channel.url);
@@ -795,7 +819,10 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
     /* ---------------- khi video phát / chờ / gặp lỗi ---------------- */
     video.addEventListener('playing',()=>{
       if(!activeLoad||playbackMode==='iframe'||video.readyState<2)return;
-      markPlaying(activeLoad,activeLoad.phase);
+      confirmVideoPlayback(activeLoad,activeLoad.phase);
+    });
+    video.addEventListener('loadeddata',()=>{
+      if(activeLoad&&playbackMode!=='iframe')confirmVideoPlayback(activeLoad,activeLoad.phase);
     });
     video.addEventListener('play',()=>{
       playBtn.textContent='⏸ Tạm dừng';
@@ -808,27 +835,52 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
     video.addEventListener('waiting',onBuffering);
     video.addEventListener('stalled',onBuffering);
     function onBuffering(){
-      if(!activeLoad||playbackMode==='iframe'||video.paused)return;
-      if(playbackState==='playing')setStatus('Đang tải thêm dữ liệu…',true,5000);
-      clearTimeout(stallTimer);
+      if(!activeLoad||playbackMode==='iframe'||video.paused||playbackState==='error')return;
       const ctx=activeLoad,phase=ctx.phase;
+      clearTimeout(stallTimer);clearTimeout(bufferingCoverTimer);
+      // Che hình bị đen/đóng băng, nhưng không che khi chỉ gián đoạn cực ngắn.
+      if(playbackState==='playing'){
+        bufferingCoverTimer=setTimeout(()=>{
+          if(isCurrent(ctx,phase)&&!video.paused&&video.readyState<3){
+            captureFrame();
+            showCover('Đang khôi phục '+ctx.channel.name,'Đang kết nối lại tín hiệu…');
+          }
+        },CONFIG.bufferCoverDelayMs);
+      }
       stallTimer=setTimeout(()=>{
-        if(!isCurrent(ctx,phase)||video.paused)return;
-        console.warn('[TV] Bộ đệm gián đoạn, thử khôi phục.');
-        if(hls){
-          try{hls.startLoad()}catch(_){}
-          try{
-            if(video.buffered.length){
-              const end=video.buffered.end(video.buffered.length-1);
-              if(end-video.currentTime>2)video.currentTime=end-.5;
-            }
-          }catch(_){}
+        if(!isCurrent(ctx,phase)||video.paused||playbackState==='error')return;
+        // Nếu dữ liệu đã phát tiếp trong thời gian chờ thì không khởi động lại bộ giải mã.
+        if(video.readyState>=3&&Date.now()-videoProgressAt<3500){
+          hideCover();return;
+        }
+        ctx.stallRecoveries=(ctx.stallRecoveries||0)+1;
+        console.warn('[TV] Phát gián đoạn, lần khôi phục',ctx.stallRecoveries);
+        if(ctx.stallRecoveries>CONFIG.maxStallRecoveries){
+          handleStreamFailure(ctx,phase,'Luồng phát bị đứng quá lâu');return;
+        }
+        if(hls&&playbackMode==='hls'){
+          try{hls.stopLoad();hls.startLoad()}catch(_){}
+        }else if(playbackMode==='native'){
+          try{video.load()}catch(_){}
         }
         tryPlay(ctx,phase);
+        // Theo dõi tiếp ngay cả khi trình phát không phát sinh sự kiện waiting mới.
+        onBuffering();
       },CONFIG.stalledRetryMs);
     }
     video.addEventListener('timeupdate',()=>{
-      if(video.readyState>=3){clearTimeout(stallTimer);stallTimer=null}
+      if(!activeLoad||playbackMode==='iframe')return;
+      if(video.currentTime!==videoProgressTime){
+        videoProgressTime=video.currentTime;
+        videoProgressAt=Date.now();
+        activeLoad.stallRecoveries=0;
+        clearTimeout(stallTimer);clearTimeout(bufferingCoverTimer);
+        if(playbackState==='playing'&&cover.classList.contains('visible'))hideCover();
+      }
+      if(playbackState==='loading')confirmVideoPlayback(activeLoad,activeLoad.phase);
+    });
+    video.addEventListener('canplay',()=>{
+      if(activeLoad&&playbackMode!=='iframe')confirmVideoPlayback(activeLoad,activeLoad.phase);
     });
     video.addEventListener('error',()=>{
       if(!activeLoad||playbackMode==='iframe'||playbackMode==='none')return;
@@ -1030,7 +1082,7 @@ body.tv-mode .switchSpinner{width:54px;height:54px}
       try{video.focus({preventScroll:true})}catch(_){}
     },300);
     scheduleQuickControlsHide();
-    console.info('[TV] webOS optimized v3.0 ready, device:',isWebOS?'webOS':'Browser');
+    console.info('[TV] webOS optimized v3.1 ready, device:',isWebOS?'webOS':'Browser');
 </script>
 </body>
 </html>
