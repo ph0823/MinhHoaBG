@@ -458,8 +458,8 @@
     </div>
     <div id="exportMenu" class="tool-menu" hidden>
       <button id="btnSaveJson">Lưu tệp JSON</button>
-      <button id="btnPng">Xuất PNG</button>
-      <button id="btnSvg">Xuất SVG</button>
+      <button id="btnPng">Xuất PNG (nhánh đang hiện)</button>
+      <button id="btnSvg">Xuất SVG (nhánh đang hiện)</button>
       <button id="btnPrint">Xuất PDF / In</button>
     </div>
     <input type="file" id="fileOpenInput" accept=".json" style="display:none" />
@@ -602,7 +602,7 @@
     var PROJECT_INDEX = "mindmap_project_index_v21";
     var projects = [{id:LEGACY_KEY,name:"Sơ đồ đầu tiên"}];
     var projectSwitching = false, presentation = false, presentIndex = -1;
-    var imageEpoch = 0;
+    var imageEpoch = 0, prePresentView=null;
 
     let nodes = [];
     let selectedId = null;
@@ -746,7 +746,7 @@
       try { return JSON.parse(localStorage.getItem(key) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
     }
     function captureState() {
-      return {version:2,nodes:JSON.parse(JSON.stringify(nodes)),panX:panX,panY:panY,zoom:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
+      return {version:2,nodes:JSON.parse(JSON.stringify(nodes)),panX:prePresentView?prePresentView.x:panX,panY:prePresentView?prePresentView.y:panY,zoom:prePresentView?prePresentView.z:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
     }
     function persistNow() {
       if(!storageReady) return;
@@ -1220,7 +1220,7 @@
 
     // Kéo di chuyển vùng vẽ (pan) & bỏ chọn khi bấm ra ngoài
     viewport.addEventListener("mousedown", e => {
-      if (!storageReady || modalOpen()) return;
+      if (presentation || !storageReady || modalOpen()) return;
       if (e.button === 0 && (e.target === viewport || e.target === world || e.target === nodesLayer)) {
         finishEditing();
         selectNode(null);
@@ -1270,11 +1270,12 @@
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.1 : -0.1;
       zoomAt(delta>0?1.15:1/1.15,e.clientX,e.clientY);
-      updateTransform(); scheduleSave();
+      updateTransform(); if(!presentation)scheduleSave();
     }, { passive: false });
 
     // Phím tắt
     window.addEventListener("keydown", e => {
+      if(projectSwitching)return;
       if(e.key === "Escape" && modalOpen()){
         e.preventDefault();
         if(messageModal.classList.contains("open")) closeMessage(false);
@@ -1582,7 +1583,7 @@
       });
     }
     function switchProject(key,newState,newEntry){
-      if(projectSwitching||!storageReady||key===STORAGE_KEY)return;
+      if(projectSwitching||!storageReady||key===STORAGE_KEY)return Promise.resolve(false);
       finishEditing();persistNow();projectSwitching=true;
       var oldKey=STORAGE_KEY;
       return saveQueue.then(function(){
@@ -1613,7 +1614,7 @@
       var state=copy?captureState():{version:2,nodes:[],panX:0,panY:0,zoom:1,updatedAt:Date.now()};
       switchProject(id,state,{id:id,name:name});
     }
-    document.getElementById("btnProjects").onclick=function(){finishEditing();drawProjects();projectModal.classList.add("open");};
+    document.getElementById("btnProjects").onclick=function(){if(!storageReady||projectSwitching)return;finishEditing();drawProjects();projectModal.classList.add("open");};
     document.getElementById("btnProjectClose").onclick=function(){if(!projectSwitching)projectModal.classList.remove("open");};
     document.getElementById("btnProjectNew").onclick=function(){addProject(false);};
     document.getElementById("btnProjectCopy").onclick=function(){addProject(true);};
@@ -1641,8 +1642,8 @@
     document.addEventListener("click",function(e){if(!e.target.closest("#btnMore,#btnExport,.tool-menu")||e.target.closest(".tool-menu button"))hideMenus();});
     document.getElementById("btnHelp").onclick=function(){showMessage("Nháy đúp để sửa chữ. Tab: nhánh con. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; lăn chuột để thu phóng.");};
     document.getElementById("btnCollapse").onclick=function(){if(selectedId)toggleCollapse(selectedId);};
-    document.getElementById("btnLayoutBoth").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(true);};
-    document.getElementById("btnLayoutRight").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(false);};
+    document.getElementById("btnLayoutBoth").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(true);viewport.focus();};
+    document.getElementById("btnLayoutRight").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(false);viewport.focus();};
     document.getElementById("btnLayoutCancel").onclick=function(){document.getElementById("layoutModal").classList.remove("open");};
     function presentationRoots(){var list=visibleNodes();return list.filter(function(n){return !n.parentId || list.some(function(p){return p.id===n.parentId&&!p.parentId;});});}
     function stepPresentation(delta){
@@ -1652,11 +1653,12 @@
     }
     function exitPresentation(){
       if(!presentation)return;presentation=false;document.body.classList.remove("presenting");document.getElementById("presentControls").hidden=true;
-      renderAll();fitView(false);
+      if(prePresentView){panX=prePresentView.x;panY=prePresentView.y;zoom=prePresentView.z;prePresentView=null;}
+      renderAll();
       if(document.fullscreenElement && document.exitFullscreen)document.exitFullscreen().catch(function(){});
     }
     document.getElementById("btnPresent").onclick=function(){
-      if(!nodes.length)return;finishEditing();hideMenus();presentation=true;presentIndex=-1;document.body.classList.add("presenting");document.getElementById("presentControls").hidden=false;fitView(false);
+      if(!storageReady||projectSwitching||!nodes.length)return;finishEditing();hideMenus();prePresentView={x:panX,y:panY,z:zoom};presentation=true;presentIndex=-1;document.body.classList.add("presenting");document.getElementById("presentControls").hidden=false;fitView(false);
       if(document.documentElement.requestFullscreen)try{var p=document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){});}catch(e){}
     };
     document.getElementById("btnPresentPrev").onclick=function(){stepPresentation(-1);};
@@ -1684,11 +1686,11 @@
       });return lines;
     }
     function makeExport(){
-      finishEditing();
+      finishEditing();renderEdges();
       var list=visibleNodes().map(function(n){return Object.assign({},n);}),g=geometry(),els=Object.create(null);
       nodesLayer.querySelectorAll(".node").forEach(function(el){els[el.dataset.id]=el;});
       if(!list.length)return Promise.reject(Error("Chưa có sơ đồ để xuất."));
-      var b=bounds(list,g),pad=28,svg=svgEl("svg",{xmlns:"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink",width:b.w+pad*2,height:b.h+pad*2,viewBox:(b.x-pad)+" "+(b.y-pad)+" "+(b.w+pad*2)+" "+(b.h+pad*2),preserveAspectRatio:"xMidYMid meet"});
+      var b=bounds(list,g),pad=28,svg=svgEl("svg",{width:b.w+pad*2,height:b.h+pad*2,viewBox:(b.x-pad)+" "+(b.y-pad)+" "+(b.w+pad*2)+" "+(b.h+pad*2),preserveAspectRatio:"xMidYMid meet"});
       svg.appendChild(svgEl("rect",{x:b.x-pad,y:b.y-pad,width:b.w+pad*2,height:b.h+pad*2,fill:"#fff"}));
       edgesLayer.querySelectorAll("path").forEach(function(p){svg.appendChild(svgEl("path",{d:p.getAttribute("d"),fill:"none",stroke:"#8d99ae","stroke-width":1.8,"stroke-linecap":"round"}));});
       var ctx=document.createElement("canvas").getContext("2d"),missing=0;
@@ -1714,19 +1716,19 @@
     function downloadBlob(blob,name){var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1500);}
     var exporting=false;
     function exportMap(type){
-      if(exporting||!storageReady)return;
-      exporting=true;hideMenus();
+      if(exporting||!storageReady||projectSwitching)return;
+      exporting=true;hideMenus();var filename=projectFilename();
       makeExport().then(function(out){
         if(type==="pdf"){
           var sheet=document.getElementById("printSheet");sheet.textContent="";sheet.appendChild(out.svg);document.body.classList.add("export-print");
           // Second explicit click preserves user activation in embedded browsers.
-          showMessage((out.missing?"Có "+out.missing+" ảnh ngoài không thể đưa vào bản in.\n":"")+"Chọn Xác nhận để in hoặc lưu PDF khổ A4 ngang.",function(){window.print();},"Xuất PDF");
+          showMessage((out.missing?"Có "+out.missing+" ảnh ngoài không thể đưa vào bản in.\n":"")+"Chọn Xác nhận để in hoặc lưu PDF khổ A4 ngang.",function(){try{window.print();}finally{document.body.classList.remove("export-print");}},"Xuất PDF");
         }else{
           var blob=new Blob([new XMLSerializer().serializeToString(out.svg)],{type:"image/svg+xml;charset=utf-8"});
-          if(type==="svg")downloadBlob(blob,projectFilename()+".svg");
+          if(type==="svg")downloadBlob(blob,filename+".svg");
           else return new Promise(function(resolve,reject){
             var url=URL.createObjectURL(blob),img=new Image();img.onerror=function(){URL.revokeObjectURL(url);reject(Error("Không tạo được ảnh PNG."));};
-            img.onload=function(){URL.revokeObjectURL(url);try{var scale=Math.min(2,8192/Math.max(out.w,out.h),Math.sqrt(24000000/(out.w*out.h))),c=document.createElement("canvas");c.width=Math.max(1,Math.round(out.w*scale));c.height=Math.max(1,Math.round(out.h*scale));var ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);c.toBlob(function(b){if(!b)return reject(Error("Không tạo được ảnh PNG."));downloadBlob(b,projectFilename()+".png");resolve();},"image/png");}catch(e){reject(e);}};img.src=url;
+            img.onload=function(){URL.revokeObjectURL(url);try{var scale=Math.min(2,8192/Math.max(out.w,out.h),Math.sqrt(24000000/(out.w*out.h))),c=document.createElement("canvas");c.width=Math.max(1,Math.round(out.w*scale));c.height=Math.max(1,Math.round(out.h*scale));var ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);c.toBlob(function(b){if(!b)return reject(Error("Không tạo được ảnh PNG."));downloadBlob(b,filename+".png");resolve();},"image/png");}catch(e){reject(e);}};img.src=url;
           }).then(function(){if(out.missing)showMessage("Đã tạo PNG; "+out.missing+" ảnh ngoài không xuất được.");});
           if(out.missing)showMessage("Đã tạo SVG; "+out.missing+" ảnh ngoài không xuất được.");
         }
