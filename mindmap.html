@@ -464,7 +464,7 @@
   </header>
 
   <!-- Vùng vẽ sơ đồ -->
-  <main id="viewport">
+  <main id="viewport" tabindex="0" aria-label="Vùng vẽ sơ đồ tư duy">
     <div id="world">
       <svg id="edges-layer"></svg>
       <div id="nodes-layer"></div>
@@ -502,7 +502,8 @@
       <h3>🖼️ Chèn hình ảnh vào nhánh</h3>
       <div class="form-group">
         <label>Cách 1: Chọn ảnh từ máy tính (dùng được khi không có mạng)</label>
-        <input type="file" id="imgFileInput" accept="image/*" />
+        <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" />
+        <div class="hint">Ảnh tối đa 3 MB.</div>
       </div>
       <div class="form-group">
         <label>Cách 2: Dán đường dẫn hình ảnh (URL)</label>
@@ -531,7 +532,7 @@
       <div class="form-group">
         <label>Cách 2: Đính kèm tệp từ máy tính (.docx, .xlsx, .pdf, ảnh, âm thanh...)</label>
         <input type="file" id="linkFileInput" />
-        <div class="hint">Tệp đính kèm sẽ lưu trực tiếp trong sơ đồ để mở/tải về ngay cả khi không có mạng (khuyên dùng tệp &lt; 3 MB).</div>
+        <div class="hint">Tệp tối đa 4 MB; tệp lớn hơn nên dùng liên kết Google Drive.</div>
       </div>
       <div class="form-group">
         <label>Tên hiển thị khi rê chuột vào biểu tượng liên kết (tùy chọn)</label>
@@ -705,18 +706,20 @@
       if(saveTimer !== null){ clearTimeout(saveTimer); saveTimer = null; }
       var state = captureState(), id = ++revision;
       var raw = JSON.stringify(state);
+      var large = raw.length * 2 > MAX_PROJECT * .75;
+      var savedLabel = large ? "Đã lưu – sơ đồ lớn, nên lưu thêm tệp JSON" : "Đã lưu trên máy";
       var localOK = false;
       // Synchronous small backup protects refresh before the asynchronous DB transaction commits.
       try { localStorage.setItem(STORAGE_KEY,raw); localOK = true; } catch(e){ console.warn("Mindmap local backup",e); }
-      setStatus(localOK ? "Đã lưu trên máy" : "Đang lưu...",false);
+      setStatus(localOK ? savedLabel : "Đang lưu...",false);
       saveQueue = saveQueue.catch(function(){}).then(function(){
         return dbWrite(state).then(function(){
-          if(id === revision){ saveFailed = false; setStatus("Đã lưu trên máy",false); }
+          if(id === revision){ saveFailed = false; setStatus(savedLabel,false); }
         },function(e){
           console.warn("Mindmap IndexedDB save",e);
           if(id === revision){
             saveFailed = !localOK;
-            setStatus(localOK ? "Đã lưu trên máy" : "Chưa lưu được – hãy lưu tệp JSON",!localOK);
+            setStatus(localOK ? savedLabel : "Chưa lưu được – hãy lưu tệp JSON",!localOK);
           }
         });
       });
@@ -862,6 +865,7 @@
           if (!storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
           e.stopPropagation();
           finishEditing();
+          viewport.focus();
           selectNode(node.id);
           dragNodeId = node.id;
           const rect = viewport.getBoundingClientRect();
@@ -898,7 +902,7 @@
 
       const finish = () => {
         textEl.contentEditable = "false";
-        const newText = textEl.textContent.trim();
+        const newText = textEl.textContent.trim().slice(0,20000);
         node.text = newText || (node.parentId ? "Nhánh con" : "Chủ đề mới");
         textEl.textContent = node.text;
         renderEdges();
@@ -1160,7 +1164,7 @@
     // Kéo di chuyển vùng vẽ (pan) & bỏ chọn khi bấm ra ngoài
     viewport.addEventListener("mousedown", e => {
       if (!storageReady || modalOpen()) return;
-      if (e.target === viewport || e.target === world || e.target === nodesLayer) {
+      if (e.button === 0 && (e.target === viewport || e.target === world || e.target === nodesLayer)) {
         finishEditing();
         selectNode(null);
         isPanning = true;
@@ -1229,7 +1233,7 @@
         if(key==="z" || key==="y"){e.preventDefault();if(key==="y" || e.shiftKey) restoreHistory(redoStack,undoStack);else restoreHistory(undoStack,redoStack);return;}
       }
       if(active && (active.tagName==="BUTTON" || active.tagName==="A") && (e.key==="Enter" || e.key==="Tab" || e.key===" ")) return;
-      if (e.key === "Tab" && selectedId) {
+      if (e.key === "Tab" && !e.shiftKey && selectedId) {
         e.preventDefault();
         addChildNode(selectedId);
       } else if (e.key === "Enter" && selectedId) {
