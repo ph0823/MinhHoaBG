@@ -347,6 +347,8 @@
       z-index: 200;
     }
 
+    #messageModal { z-index: 300; }
+    #saveStatus { font-weight: 600; }
     .modal-backdrop.open {
       display: flex;
     }
@@ -447,6 +449,8 @@
       <button class="swatch" data-theme="theme-pink" style="background:#fce7f3" title="Hồng nhạt"></button>
     </div>
 
+    <button id="btnUndo" title="Hoàn tác (Ctrl+Z)">↶ Hoàn tác</button>
+    <button id="btnRedo" title="Làm lại (Ctrl+Y)">↷ Làm lại</button>
     <button class="danger" id="btnDelete" title="Xóa nhánh đang chọn (Phím Delete)">🗑️ Xóa</button>
 
     <div class="divider"></div>
@@ -483,6 +487,7 @@
     <div>
       <strong>Thao tác:</strong> Nháy đúp vùng trống để tạo chủ đề • Nháy đúp vào ô để sửa chữ • Kéo thả ô tự do • <strong>Tab</strong> thêm nhánh con • <strong>Enter</strong> thêm nhánh cùng cấp • <strong>Ctrl+V</strong> dán ảnh vào nhánh.
     </div>
+    <div id="saveStatus" role="status" aria-live="polite">Đang khôi phục bài...</div>
     <div class="zoom-controls">
       <button id="btnZoomOut">−</button>
       <span id="zoomLabel">100%</span>
@@ -540,6 +545,16 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="messageModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="messageTitle">
+      <h3 id="messageTitle">Thông báo</h3>
+      <p id="messageText" style="font-size:14px;line-height:1.5;white-space:pre-wrap"></p>
+      <div class="modal-actions">
+        <button id="messageCancel">Hủy</button>
+        <button class="primary" id="messageOK">Đồng ý</button>
+      </div>
+    </div>
+  </div>
   <script>
     const LINK_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 
@@ -565,35 +580,236 @@
       return "n_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
 
-    function saveToLocal() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, panX, panY, zoom }));
-      } catch (e) {}
-    }
+    // V2.0 – Reliable Mindmap. IndexedDB stores large payloads; localStorage is a fallback.
+    var MAX_FILE = 4 * 1024 * 1024;
+    var MAX_IMAGE = 3 * 1024 * 1024;
+    var MAX_PROJECT = 32 * 1024 * 1024;
+    var MAX_NODES = 500;
+    var HISTORY_LIMIT = 40;
+    var HISTORY_BYTES = 24 * 1024 * 1024;
+    var undoStack = [], redoStack = [], lastSnapshot = "[]";
+    var storageDB = null, saveQueue = Promise.resolve(), saveTimer = null;
+    var lastSavedAt = 0;
+    var revision = 0, storageReady = false, saveFailed = false;
+    var modalAction = null, modalFocus = null, imageTarget = null, linkTarget = null;
+    var imgReadToken = 0, linkReadToken = 0;
+    var saveStatus = document.getElementById("saveStatus");
+    var messageModal = document.getElementById("messageModal");
+    var messageOK = document.getElementById("messageOK");
+    var messageCancel = document.getElementById("messageCancel");
 
-    function loadInitialState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.nodes)) {
-            nodes = parsed.nodes;
-            panX = parsed.panX ?? 0;
-            panY = parsed.panY ?? 0;
-            zoom = parsed.zoom ?? 1;
-            selectedId = nodes[nodes.length - 1]?.id || null;
+    function setStatus(message, error) {
+      saveStatus.textContent = message;
+      saveStatus.style.color = error ? "#b91c1c" : "#475569";
+    }
+    function modalOpen() { return !!document.querySelector(".modal-backdrop.open"); }
+    function showMessage(message, action, title) {
+      if (!messageModal.classList.contains("open")) modalFocus = document.activeElement;
+      document.getElementById("messageTitle").textContent = title || "Thông báo";
+      document.getElementById("messageText").textContent = message;
+      modalAction = typeof action === "function" ? action : null;
+      messageCancel.style.display = modalAction ? "" : "none";
+      messageOK.textContent = modalAction ? "Xác nhận" : "Đóng";
+      messageModal.classList.add("open");
+      (modalAction ? messageCancel : messageOK).focus();
+    }
+    function closeMessage(accepted) {
+      var action = modalAction, focus = modalFocus;
+      modalAction = null; modalFocus = null;
+      messageModal.classList.remove("open");
+      if (focus && document.contains(focus)) focus.focus();
+      if (accepted && action) action();
+    }
+    messageOK.addEventListener("click", function(){ closeMessage(true); });
+    messageCancel.addEventListener("click", function(){ closeMessage(false); });
+    function finishEditing() {
+      var active = document.activeElement;
+      if (active && active.isContentEditable) active.blur();
+    }
+    function historyUpdate() {
+      document.getElementById("btnUndo").disabled = !undoStack.length || !storageReady;
+      document.getElementById("btnRedo").disabled = !redoStack.length || !storageReady;
+    }
+    function pushHistory(stack, value) {
+      stack.push(value);
+      var total = stack.reduce(function(sum, item){ return sum + item.length * 2; }, 0);
+      while (stack.length > 1 && (stack.length > HISTORY_LIMIT || total > HISTORY_BYTES)) {
+        total -= stack.shift().length * 2;
+      }
+    }
+    function recordHistory() {
+      var next = JSON.stringify(nodes);
+      if (next !== lastSnapshot) {
+        pushHistory(undoStack, lastSnapshot);
+        redoStack.length = 0;
+        lastSnapshot = next;
+      }
+      historyUpdate();
+    }
+    function restoreHistory(from, to) {
+      if (!storageReady || modalOpen()) return;
+      finishEditing();
+      if (!from.length) return;
+      pushHistory(to, lastSnapshot);
+      lastSnapshot = from.pop();
+      nodes = JSON.parse(lastSnapshot);
+      if (!nodes.some(function(n){return n.id === selectedId;})) selectedId = nodes.length ? nodes[0].id : null;
+      renderAll(); saveToLocal(false); historyUpdate();
+    }
+    document.getElementById("btnUndo").addEventListener("click", function(){ restoreHistory(undoStack, redoStack); });
+    document.getElementById("btnRedo").addEventListener("click", function(){ restoreHistory(redoStack, undoStack); });
+
+    function openStorage() {
+      return new Promise(function(resolve) {
+        if (!window.indexedDB) return resolve(null);
+        var req, settled = false;
+        function done(db) { if (settled) { if(db) db.close(); return; } settled = true; resolve(db); }
+        try {
+          req = indexedDB.open("MindmapReliableV2", 1);
+          req.onupgradeneeded = function(){ if(!req.result.objectStoreNames.contains("projects")) req.result.createObjectStore("projects"); };
+          req.onsuccess = function(){ done(req.result); };
+          req.onerror = req.onblocked = function(){ done(null); };
+          setTimeout(function(){ done(null); }, 2500);
+        } catch(e) { done(null); }
+      });
+    }
+    function dbRead() {
+      return new Promise(function(resolve,reject){
+        if(!storageDB) return resolve(null);
+        try {
+          var request = storageDB.transaction("projects","readonly").objectStore("projects").get(STORAGE_KEY);
+          request.onsuccess = function(){ resolve(request.result || null); };
+          request.onerror = function(){ reject(request.error); };
+        } catch(e){ reject(e); }
+      });
+    }
+    function dbWrite(state) {
+      return new Promise(function(resolve,reject){
+        if(!storageDB) return reject(new Error("IndexedDB unavailable"));
+        try {
+          var tx = storageDB.transaction("projects","readwrite");
+          tx.objectStore("projects").put(state,STORAGE_KEY);
+          tx.oncomplete = function(){ resolve(); };
+          tx.onerror = tx.onabort = function(){ reject(tx.error || new Error("Storage failed")); };
+        } catch(e){ reject(e); }
+      });
+    }
+    function localRead() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
+    }
+    function captureState() {
+      return {version:2,nodes:JSON.parse(JSON.stringify(nodes)),panX:panX,panY:panY,zoom:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
+    }
+    function persistNow() {
+      if(!storageReady) return;
+      if(saveTimer !== null){ clearTimeout(saveTimer); saveTimer = null; }
+      var state = captureState(), id = ++revision;
+      var raw = JSON.stringify(state);
+      var localOK = false;
+      // Synchronous small backup protects refresh before the asynchronous DB transaction commits.
+      try { localStorage.setItem(STORAGE_KEY,raw); localOK = true; } catch(e){ console.warn("Mindmap local backup",e); }
+      setStatus(localOK ? "Đã lưu trên máy" : "Đang lưu...",false);
+      saveQueue = saveQueue.catch(function(){}).then(function(){
+        return dbWrite(state).then(function(){
+          if(id === revision){ saveFailed = false; setStatus("Đã lưu trên máy",false); }
+        },function(e){
+          console.warn("Mindmap IndexedDB save",e);
+          if(id === revision){
+            saveFailed = !localOK;
+            setStatus(localOK ? "Đã lưu trên máy" : "Chưa lưu được – hãy lưu tệp JSON",!localOK);
           }
-        }
-      } catch (e) {}
-      renderAll();
+        });
+      });
+      if(!localOK && !storageDB){ saveFailed = true; setStatus("Chưa lưu được – hãy lưu tệp JSON",true); }
     }
-
+    function saveToLocal(track) {
+      if(!storageReady) return;
+      if(track !== false) recordHistory();
+      persistNow();
+    }
+    function scheduleSave() {
+      if(!storageReady) return;
+      if(saveTimer !== null) clearTimeout(saveTimer);
+      saveTimer = setTimeout(function(){ saveToLocal(false); },200);
+    }
+    function validHttp(value) {
+      if(typeof value !== "string" || !/^https?:\/\//i.test(value)) return false;
+      try { var url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !!url.hostname; } catch(e){ return false; }
+    }
+    function validImage(value) {
+      return value === "" || validHttp(value) || /^data:image\/(png|jpeg|jpg|gif|webp|bmp|x-icon);base64,[A-Za-z0-9+/=]+$/i.test(value);
+    }
+    function validLink(value) {
+      return value === "" || validHttp(value) || /^data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/i.test(value) && !/^data:(text\/html|image\/svg\+xml|application\/xhtml\+xml|application\/(javascript|x-msdownload|x-executable|x-sh|x-bat)|text\/javascript);/i.test(value);
+    }
+    function validateProject(parsed) {
+      if(!parsed || !Array.isArray(parsed.nodes) || parsed.nodes.length > MAX_NODES || (parsed.version != null && parsed.version !== 1 && parsed.version !== 2)) throw new Error("Tệp không đúng định dạng hoặc có quá nhiều nhánh.");
+      var ids = Object.create(null), result = [];
+      parsed.nodes.forEach(function(n){
+        if(!n || typeof n.id !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(n.id) || ids[n.id]) throw new Error("Mã nhánh không hợp lệ hoặc bị trùng.");
+        if(n.parentId != null && typeof n.parentId !== "string") throw new Error("Nhánh cha không hợp lệ.");
+        if(typeof n.text !== "string" || n.text.length > 20000 || !Number.isFinite(n.x) || !Number.isFinite(n.y) || Math.abs(n.x)>1000000 || Math.abs(n.y)>1000000) throw new Error("Nội dung hoặc vị trí nhánh không hợp lệ.");
+        var image = n.image == null ? "" : n.image, link = n.link == null ? "" : n.link;
+        if(typeof image !== "string" || typeof link !== "string" || !validImage(image) || !validLink(link)) throw new Error("Tệp chứa hình ảnh hoặc liên kết không an toàn.");
+        if(n.linkName != null && (typeof n.linkName !== "string" || n.linkName.length>1024)) throw new Error("Tên tệp không hợp lệ.");
+        var theme = ["theme-blue","theme-gray","theme-green","theme-yellow","theme-pink"].indexOf(n.theme)>=0 ? n.theme : "theme-gray";
+        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||""};
+        ids[n.id] = clean; result.push(clean);
+      });
+      result.forEach(function(n){
+        var seen = Object.create(null), p = n;
+        while(p){
+          if(seen[p.id]) throw new Error("Sơ đồ có vòng lặp giữa các nhánh.");
+          seen[p.id] = true;
+          if(p.parentId && !ids[p.parentId]) throw new Error("Sơ đồ có nhánh thiếu nhánh cha.");
+          p = p.parentId ? ids[p.parentId] : null;
+        }
+      });
+      if(JSON.stringify(result).length*2 > MAX_PROJECT) throw new Error("Sơ đồ quá lớn. Hãy giảm dung lượng hình và tệp.");
+      return {nodes:result,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.4,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
+    }
+    function canAddMedia(node,key,value) {
+      var copy = Object.assign({},node); copy[key] = value;
+      var size = JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;})).length*2;
+      if(size>MAX_PROJECT){showMessage("Sơ đồ đã gần đầy. Hãy giảm dung lượng ảnh hoặc dùng liên kết Google Drive.");return false;}
+      if(size>MAX_PROJECT*.75) setStatus("Sơ đồ có dung lượng lớn – nên lưu tệp JSON",true);
+      return true;
+    }
+    function loadInitialState() {
+      // Lock editor until restoration completes; never replace a recoverable draft with a blank project.
+      document.querySelector("header.toolbar").style.pointerEvents = "none";
+      viewport.style.pointerEvents = "none";
+      var local = localRead(), candidates = [], hadInvalid = false;
+      openStorage().then(function(db){
+        storageDB = db;
+        return dbRead().catch(function(e){console.warn("Mindmap restore",e);return null;});
+      }).then(function(dbState){
+        [local,dbState].forEach(function(raw){
+          if(raw) try {candidates.push(validateProject(raw));} catch(e){hadInvalid=true;console.warn("Mindmap invalid draft",e);}
+        });
+        candidates.sort(function(a,b){return b.updatedAt-a.updatedAt;});
+        if(candidates.length){
+          var state=candidates[0]; nodes=state.nodes;panX=state.panX;panY=state.panY;zoom=state.zoom;
+          selectedId=nodes.length?nodes[nodes.length-1].id:null;
+          lastSavedAt=state.updatedAt;
+        }
+        lastSnapshot=JSON.stringify(nodes);
+        storageReady=true;
+        document.querySelector("header.toolbar").style.pointerEvents="";
+        viewport.style.pointerEvents="";
+        renderAll();historyUpdate();
+        if(hadInvalid && !candidates.length) setStatus("Không khôi phục được bài cũ – hãy mở tệp JSON",true);
+        else if(candidates.length) persistNow();
+        else setStatus("Chưa có bài",false);
+      });
+    }
     function updateTransform() {
       world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
       zoomLabel.textContent = Math.round(zoom * 100) + "%";
     }
 
     function renderAll() {
+      if (!storageReady) return;
       updateTransform();
       emptyHint.style.display = nodes.length === 0 ? "flex" : "none";
       nodesLayer.innerHTML = "";
@@ -611,7 +827,7 @@
           badge.className = "link-badge";
           badge.innerHTML = LINK_ICON_SVG;
           badge.title = node.linkName ? `Mở: ${node.linkName}` : `Mở liên kết: ${node.link}`;
-          badge.href = node.link;
+          badge.href = validLink(node.link) ? node.link : "#";
 
           if (node.link.startsWith("data:")) {
             badge.download = node.linkName || "tep-dinh-kem";
@@ -643,8 +859,9 @@
 
         // Chọn và kéo thả
         el.addEventListener("mousedown", e => {
-          if (textEl.isContentEditable) return;
+          if (!storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
           e.stopPropagation();
+          finishEditing();
           selectNode(node.id);
           dragNodeId = node.id;
           const rect = viewport.getBoundingClientRect();
@@ -669,6 +886,7 @@
 
     function startEditing(el, node) {
       const textEl = el.querySelector(".node-text");
+      if (textEl.isContentEditable) return;
       textEl.contentEditable = "true";
       textEl.focus();
 
@@ -688,6 +906,7 @@
       };
 
       const onKeyDown = e => {
+        if (e.isComposing || e.keyCode === 229) return;
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           textEl.blur();
@@ -762,10 +981,14 @@
       document.getElementById("btnLink").disabled = !hasSel;
       document.getElementById("btnDelete").disabled = !hasSel;
       document.getElementById("btnAutoLayout").disabled = nodes.length === 0;
+      historyUpdate();
     }
 
     // Tạo chủ đề mới (hoặc nhãn tên HS)
     function createTopic(x = null, y = null) {
+      if (!storageReady || modalOpen()) return;
+      finishEditing();
+      if(nodes.length >= MAX_NODES){showMessage("Sơ đồ đã đạt giới hạn số nhánh.");return;}
       const rect = viewport.getBoundingClientRect();
       const rootCount = nodes.filter(n => !n.parentId).length;
       const defaultX = (rect.width * 0.18 - panX) / zoom + rootCount * 24;
@@ -795,6 +1018,9 @@
 
     // Tạo nhánh con
     function addChildNode(parentId) {
+      if (!storageReady || modalOpen()) return;
+      finishEditing();
+      if(nodes.length >= MAX_NODES){showMessage("Sơ đồ đã đạt giới hạn số nhánh.");return;}
       const parent = nodes.find(n => n.id === parentId);
       if (!parent) return;
 
@@ -839,7 +1065,8 @@
     }
 
     function deleteSelectedNode() {
-      if (!selectedId) return;
+      if (!storageReady || !selectedId || modalOpen()) return;
+      finishEditing();
       const toDelete = new Set([selectedId]);
       let added = true;
       while (added) {
@@ -851,16 +1078,19 @@
           }
         });
       }
-      if (toDelete.size > 1 && !confirm(`Xóa nhánh này cùng ${toDelete.size - 1} nhánh con bên dưới?`)) return;
-      nodes = nodes.filter(n => !toDelete.has(n.id));
-      selectedId = nodes[nodes.length - 1]?.id || null;
-      renderAll();
-      saveToLocal();
+      function removeBranch(){
+        nodes = nodes.filter(n => !toDelete.has(n.id));
+        selectedId = nodes.length ? nodes[nodes.length-1].id : null;
+        renderAll(); saveToLocal();
+      }
+      if(toDelete.size>1) showMessage("Xóa nhánh này cùng "+(toDelete.size-1)+" nhánh con?",removeBranch,"Xóa nhánh");
+      else removeBranch();
     }
 
     // Tự động sắp xếp cân đối như hình mẫu
     function autoLayout() {
-      if (nodes.length === 0) return;
+      if (!storageReady || modalOpen() || nodes.length === 0) return;
+      finishEditing();
       const nodeEls = {};
       nodesLayer.querySelectorAll(".node").forEach(el => {
         nodeEls[el.dataset.id] = el;
@@ -871,7 +1101,7 @@
 
       function getSubtreeHeight(id) {
         const children = getChildren(id);
-        const h = (nodeEls[id]?.offsetHeight || 44) + 26;
+        const h = ((nodeEls[id] && nodeEls[id].offsetHeight) || 44) + 26;
         if (children.length === 0) return h;
         return Math.max(h, children.reduce((sum, c) => sum + getSubtreeHeight(c.id), 0));
       }
@@ -879,8 +1109,8 @@
       function layoutSubtree(id, x, topY) {
         const node = nodes.find(n => n.id === id);
         const el = nodeEls[id];
-        const w = el?.offsetWidth || 150;
-        const h = el?.offsetHeight || 44;
+        const w = (el && el.offsetWidth) || 150;
+        const h = (el && el.offsetHeight) || 44;
         const subH = getSubtreeHeight(id);
 
         node.x = x;
@@ -929,7 +1159,9 @@
 
     // Kéo di chuyển vùng vẽ (pan) & bỏ chọn khi bấm ra ngoài
     viewport.addEventListener("mousedown", e => {
+      if (!storageReady || modalOpen()) return;
       if (e.target === viewport || e.target === world || e.target === nodesLayer) {
+        finishEditing();
         selectNode(null);
         isPanning = true;
         viewport.classList.add("panning");
@@ -967,24 +1199,36 @@
       if (isPanning) {
         isPanning = false;
         viewport.classList.remove("panning");
-        saveToLocal();
+        saveToLocal(false);
       }
     });
 
     // Thu phóng bằng con lăn chuột
     viewport.addEventListener("wheel", e => {
+      if(!storageReady || modalOpen()) return;
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.1 : -0.1;
       zoom = Math.min(2, Math.max(0.4, +(zoom + delta).toFixed(2)));
-      updateTransform();
+      updateTransform(); scheduleSave();
     }, { passive: false });
 
     // Phím tắt
     window.addEventListener("keydown", e => {
+      if(e.key === "Escape" && modalOpen()){
+        e.preventDefault();
+        if(messageModal.classList.contains("open")) closeMessage(false);
+        else {imageModal.classList.remove("open");linkModal.classList.remove("open");imgReadToken++;linkReadToken++;}
+        return;
+      }
+      if(!storageReady || modalOpen() || e.isComposing || e.keyCode===229) return;
       const active = document.activeElement;
       const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
       if (isTyping) return;
-
+      if((e.ctrlKey || e.metaKey) && !e.altKey){
+        var key=e.key.toLowerCase();
+        if(key==="z" || key==="y"){e.preventDefault();if(key==="y" || e.shiftKey) restoreHistory(redoStack,undoStack);else restoreHistory(undoStack,redoStack);return;}
+      }
+      if(active && (active.tagName==="BUTTON" || active.tagName==="A") && (e.key==="Enter" || e.key==="Tab" || e.key===" ")) return;
       if (e.key === "Tab" && selectedId) {
         e.preventDefault();
         addChildNode(selectedId);
@@ -1002,24 +1246,28 @@
     });
 
     // Dán ảnh trực tiếp bằng Ctrl+V vào nhánh đang chọn
-    window.addEventListener("paste", e => {
-      if (!selectedId) return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of items) {
-        if (item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = ev => {
-            const node = nodes.find(n => n.id === selectedId);
-            if (node) {
-              node.image = ev.target.result;
-              renderAll();
-              saveToLocal();
-            }
-          };
-          reader.readAsDataURL(file);
-          break;
+    function readImage(file, callback) {
+      if(!file || !/^image\/(png|jpeg|gif|webp|bmp|x-icon)$/i.test(file.type)){
+        showMessage("Hãy chọn ảnh PNG, JPG, GIF, WebP hoặc BMP.");callback(null);return;
+      }
+      if(file.size>MAX_IMAGE){showMessage("Ảnh lớn hơn 3 MB. Hãy giảm kích thước ảnh trước khi chèn.");callback(null);return;}
+      var reader=new FileReader();
+      reader.onload=function(){if(validImage(reader.result)) callback(reader.result);else{showMessage("Không đọc được ảnh.");callback(null);}};
+      reader.onerror=function(){showMessage("Không đọc được ảnh.");callback(null);};
+      reader.readAsDataURL(file);
+    }
+    window.addEventListener("paste",function(e){
+      if(!storageReady || modalOpen() || !selectedId) return;
+      var active=document.activeElement;
+      var items=e.clipboardData && e.clipboardData.items;
+      if(!items || active && (active.tagName==="INPUT" || active.tagName==="TEXTAREA")) return;
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf("image/")===0){
+          e.preventDefault(); var target=selectedId; finishEditing();
+          readImage(items[i].getAsFile(),function(data){
+            var node=nodes.find(function(n){return n.id===target;});
+            if(data && node && canAddMedia(node,"image",data)){node.image=data;renderAll();saveToLocal();}
+          });break;
         }
       }
     });
@@ -1032,16 +1280,12 @@
     document.getElementById("btnDelete").addEventListener("click", deleteSelectedNode);
     document.getElementById("btnAutoLayout").addEventListener("click", autoLayout);
 
-    document.getElementById("btnClearAll").addEventListener("click", () => {
-      if (nodes.length === 0 || confirm("Xóa toàn bộ sơ đồ hiện tại để làm lại từ trang trống?")) {
-        nodes = [];
-        selectedId = null;
-        panX = 0;
-        panY = 0;
-        zoom = 1;
-        localStorage.removeItem(STORAGE_KEY);
-        renderAll();
-      }
+    document.getElementById("btnClearAll").addEventListener("click", function(){
+      if(!storageReady || modalOpen())return;
+      finishEditing();
+      function clearProject(){nodes=[];selectedId=null;panX=0;panY=0;zoom=1;renderAll();saveToLocal();}
+      if(nodes.length)showMessage("Làm mới sơ đồ? Em có thể dùng Hoàn tác để khôi phục.",clearProject,"Làm mới");
+      else clearProject();
     });
 
     document.querySelectorAll(".swatch").forEach(btn => {
@@ -1068,6 +1312,9 @@
     document.getElementById("btnImage").addEventListener("click", () => {
       const node = nodes.find(n => n.id === selectedId);
       if (!node) return;
+      finishEditing();
+      imageTarget=node.id; imgReadToken++;
+      document.getElementById("btnApplyImg").disabled=false;
       pendingImgData = null;
       imgFileInput.value = "";
       imgUrlInput.value = node.image && !node.image.startsWith("data:") ? node.image : "";
@@ -1076,19 +1323,20 @@
       imageModal.classList.add("open");
     });
 
-    imgFileInput.addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => { pendingImgData = ev.target.result; };
-      reader.readAsDataURL(file);
+    imgFileInput.addEventListener("change",function(e){
+      var token=++imgReadToken, file=e.target.files[0], btn=document.getElementById("btnApplyImg");
+      pendingImgData=null; if(!file){btn.disabled=false;return;}
+      btn.disabled=true;
+      readImage(file,function(data){if(token!==imgReadToken)return;pendingImgData=data;btn.disabled=false;if(!data)imgFileInput.value="";});
     });
 
     document.getElementById("btnApplyImg").addEventListener("click", () => {
-      const node = nodes.find(n => n.id === selectedId);
+      const node = nodes.find(n => n.id === imageTarget);
       if (node) {
-        if (pendingImgData) node.image = pendingImgData;
-        else if (imgUrlInput.value.trim()) node.image = imgUrlInput.value.trim();
+        var value=pendingImgData || imgUrlInput.value.trim() || node.image;
+        if(value && !validImage(value)){showMessage("Đường dẫn ảnh không hợp lệ. Hãy dùng HTTP hoặc HTTPS.");return;}
+        if(!canAddMedia(node,"image",value))return;
+        node.image=value;
         node.imgWidth = Number(imgWidthInput.value) || 280;
         renderAll();
         saveToLocal();
@@ -1097,8 +1345,9 @@
     });
 
     document.getElementById("btnRemoveImg").addEventListener("click", () => {
-      const node = nodes.find(n => n.id === selectedId);
+      const node = nodes.find(n => n.id === imageTarget);
       if (node) {
+        imgReadToken++;
         node.image = "";
         renderAll();
         saveToLocal();
@@ -1106,7 +1355,7 @@
       imageModal.classList.remove("open");
     });
 
-    document.getElementById("btnCancelImg").addEventListener("click", () => imageModal.classList.remove("open"));
+    document.getElementById("btnCancelImg").addEventListener("click", () => {imgReadToken++;imageModal.classList.remove("open");});
 
     // Hộp thoại Chèn liên kết / Đính kèm tệp
     const linkModal = document.getElementById("linkModal");
@@ -1117,6 +1366,9 @@
     document.getElementById("btnLink").addEventListener("click", () => {
       const node = nodes.find(n => n.id === selectedId);
       if (!node) return;
+      finishEditing();
+      linkTarget=node.id; linkReadToken++;
+      document.getElementById("btnApplyLink").disabled=false;
       pendingFileLinkData = null;
       pendingFileLinkName = "";
       linkFileInput.value = "";
@@ -1125,28 +1377,35 @@
       linkModal.classList.add("open");
     });
 
-    linkFileInput.addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (file.size > 4 * 1024 * 1024) {
-        alert("Tệp lớn hơn 4 MB; nên chia sẻ qua Google Drive rồi dán đường liên kết ở Cách 1.");
-      }
-      pendingFileLinkName = file.name;
-      if (!linkLabelInput.value.trim()) linkLabelInput.value = file.name;
-      const reader = new FileReader();
-      reader.onload = ev => { pendingFileLinkData = ev.target.result; };
+    linkFileInput.addEventListener("change",function(e){
+      var token=++linkReadToken,file=e.target.files[0],btn=document.getElementById("btnApplyLink");
+      pendingFileLinkData=null;pendingFileLinkName="";
+      if(!file){btn.disabled=false;return;}
+      if(file.size>MAX_FILE){linkFileInput.value="";btn.disabled=false;showMessage("Tệp lớn hơn 4 MB. Hãy dùng liên kết Google Drive.");return;}
+      if(/\.(exe|bat|cmd|com|msi|js|html?|svg|vbs|ps1|scr|sh)$/i.test(file.name)){linkFileInput.value="";btn.disabled=false;showMessage("Loại tệp này không được hỗ trợ.");return;}
+      btn.disabled=true;
+      var reader=new FileReader();
+      reader.onload=function(){
+        if(token!==linkReadToken)return;btn.disabled=false;
+        if(!validLink(reader.result)){linkFileInput.value="";showMessage("Loại tệp này không được hỗ trợ.");return;}
+        pendingFileLinkData=reader.result;pendingFileLinkName=file.name;
+        if(!linkLabelInput.value.trim())linkLabelInput.value=file.name;
+      };
+      reader.onerror=function(){if(token!==linkReadToken)return;btn.disabled=false;linkFileInput.value="";showMessage("Không đọc được tệp.");};
       reader.readAsDataURL(file);
     });
 
     document.getElementById("btnApplyLink").addEventListener("click", () => {
-      const node = nodes.find(n => n.id === selectedId);
+      const node = nodes.find(n => n.id === linkTarget);
       if (node) {
         if (pendingFileLinkData) {
+          if(!canAddMedia(node,"link",pendingFileLinkData))return;
           node.link = pendingFileLinkData;
           node.linkName = linkLabelInput.value.trim() || pendingFileLinkName;
         } else if (linkUrlInput.value.trim()) {
           let url = linkUrlInput.value.trim();
           if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+          if(!validHttp(url)){showMessage("Đường dẫn không hợp lệ.");return;}
           node.link = url;
           node.linkName = linkLabelInput.value.trim() || url;
         }
@@ -1157,8 +1416,9 @@
     });
 
     document.getElementById("btnRemoveLink").addEventListener("click", () => {
-      const node = nodes.find(n => n.id === selectedId);
+      const node = nodes.find(n => n.id === linkTarget);
       if (node) {
+        linkReadToken++;
         node.link = "";
         node.linkName = "";
         renderAll();
@@ -1167,59 +1427,61 @@
       linkModal.classList.remove("open");
     });
 
-    document.getElementById("btnCancelLink").addEventListener("click", () => linkModal.classList.remove("open"));
+    document.getElementById("btnCancelLink").addEventListener("click", () => {linkReadToken++;linkModal.classList.remove("open");});
 
     // Lưu / Mở tệp JSON
     document.getElementById("btnSaveJson").addEventListener("click", () => {
-      const dataStr = JSON.stringify({ version: 1, nodes }, null, 2);
+      if(!storageReady)return;
+      finishEditing();
+      const dataStr = JSON.stringify({ version: 2, nodes, panX, panY, zoom }, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "SoDoTuDuy_HS.json";
-      a.click();
-      URL.revokeObjectURL(url);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){URL.revokeObjectURL(url);},1000);
     });
 
     const fileOpenInput = document.getElementById("fileOpenInput");
     document.getElementById("btnOpenJson").addEventListener("click", () => fileOpenInput.click());
-    fileOpenInput.addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          const parsed = JSON.parse(ev.target.result);
-          if (Array.isArray(parsed.nodes)) {
-            nodes = parsed.nodes;
-            selectedId = nodes[0]?.id || null;
-            renderAll();
-            saveToLocal();
-          } else {
-            alert("Tệp không đúng định dạng sơ đồ tư duy.");
+    fileOpenInput.addEventListener("change",function(e){
+      var file=e.target.files[0];fileOpenInput.value="";
+      if(!file || !storageReady)return;
+      if(file.size>MAX_PROJECT){showMessage("Tệp quá lớn để mở.");return;}
+      var reader=new FileReader();
+      reader.onload=function(){
+        try{
+          var project=validateProject(JSON.parse(reader.result));
+          function apply(){
+            finishEditing();nodes=project.nodes;panX=project.panX;panY=project.panY;zoom=project.zoom;
+            selectedId=nodes.length?nodes[0].id:null;renderAll();saveToLocal();
           }
-        } catch (err) {
-          alert("Không thể đọc tệp này.");
-        }
+          if(nodes.length)showMessage("Mở tệp sẽ thay sơ đồ hiện tại. Em có thể dùng Hoàn tác để khôi phục.",apply,"Mở sơ đồ");
+          else apply();
+        }catch(err){console.warn("Mindmap import",err);showMessage(err instanceof SyntaxError?"Không đọc được tệp JSON.":err.message || "Tệp không hợp lệ.");}
       };
+      reader.onerror=function(){showMessage("Không đọc được tệp.");};
       reader.readAsText(file);
-      fileOpenInput.value = "";
     });
 
     // Xuất PDF & Thu phóng
-    document.getElementById("btnPrint").addEventListener("click", () => window.print());
+    document.getElementById("btnPrint").addEventListener("click", () => {finishEditing();window.print();});
     document.getElementById("btnZoomIn").addEventListener("click", () => {
       zoom = Math.min(2, +(zoom + 0.1).toFixed(2));
-      updateTransform();
+      updateTransform();scheduleSave();
     });
     document.getElementById("btnZoomOut").addEventListener("click", () => {
       zoom = Math.max(0.4, +(zoom - 0.1).toFixed(2));
-      updateTransform();
+      updateTransform();scheduleSave();
     });
     document.getElementById("btnResetView").addEventListener("click", () => {
       panX = 0; panY = 0; zoom = 1;
-      updateTransform();
+      updateTransform();scheduleSave();
     });
+
+    window.addEventListener("pagehide",function(){if(storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
+    document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
 
     // Khởi chạy với trang trống (hoặc khôi phục bài đang làm dở)
     loadInitialState();
