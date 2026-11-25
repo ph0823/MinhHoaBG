@@ -430,37 +430,39 @@
 
   <!-- Thanh công cụ -->
   <header class="toolbar">
-    <div class="brand">🧠 Sơ đồ tư duy</div>
-
-    <button class="primary" id="btnAddTopic" title="Tạo chủ đề mới hoặc ô độc lập (ví dụ: tenHS, chủ đề chính)">+ Tạo chủ đề</button>
-    <button id="btnAddChild" title="Thêm nhánh con cho ô đang chọn (Phím Tab)">+ Nhánh con</button>
-    <button id="btnAddSibling" title="Thêm nhánh cùng cấp (Phím Enter)">+ Nhánh cùng cấp</button>
-
-    <div class="divider"></div>
-
-    <button id="btnImage" title="Chèn, chỉnh cỡ hoặc xóa hình ảnh cho nhánh đang chọn">🖼️ Chèn hình</button>
-    <button id="btnLink" title="Gắn liên kết web hoặc đính kèm tệp cho nhánh đang chọn">🔗 Chèn liên kết</button>
-
-    <div class="color-group" title="Đổi màu ô đang chọn">
-      <button class="swatch" data-theme="theme-blue" style="background:#29a8df" title="Xanh dương (Chủ đề / Tên HS)"></button>
-      <button class="swatch" data-theme="theme-gray" style="background:#eaecef" title="Xám nhạt (Nhánh con)"></button>
-      <button class="swatch" data-theme="theme-green" style="background:#dcfce7" title="Xanh lá"></button>
-      <button class="swatch" data-theme="theme-yellow" style="background:#fef9c3" title="Vàng nhạt"></button>
-      <button class="swatch" data-theme="theme-pink" style="background:#fce7f3" title="Hồng nhạt"></button>
+    <div class="brand">Sơ đồ tư duy</div>
+    <button id="btnProjects" title="Quản lý sơ đồ">Sơ đồ của em</button>
+    <button class="primary" id="btnAddTopic">+ Chủ đề</button>
+    <button id="btnAddChild" title="Tab">+ Nhánh con</button>
+    <button id="btnAddSibling" title="Enter">+ Cùng cấp</button>
+    <button id="btnUndo" title="Ctrl+Z">↶</button>
+    <button id="btnRedo" title="Ctrl+Y">↷</button>
+    <button id="btnAutoLayout">Sắp xếp</button>
+    <button id="btnPresent">Trình bày</button>
+    <button id="btnMore" aria-expanded="false">Thêm ▾</button>
+    <button id="btnExport" aria-expanded="false">Xuất bài ▾</button>
+    <div id="moreMenu" class="tool-menu" hidden>
+      <button id="btnImage">Chèn hình</button>
+      <button id="btnLink">Chèn liên kết</button>
+      <button id="btnCollapse">Thu gọn nhánh</button>
+      <div class="color-group" title="Đổi màu nhánh">
+        <button class="swatch" data-theme="theme-blue" style="background:#29a8df" title="Xanh dương"></button>
+        <button class="swatch" data-theme="theme-gray" style="background:#eaecef" title="Xám"></button>
+        <button class="swatch" data-theme="theme-green" style="background:#dcfce7" title="Xanh lá"></button>
+        <button class="swatch" data-theme="theme-yellow" style="background:#fef9c3" title="Vàng"></button>
+        <button class="swatch" data-theme="theme-pink" style="background:#fce7f3" title="Hồng"></button>
+      </div>
+      <button class="danger" id="btnDelete">Xóa nhánh</button>
+      <button id="btnClearAll">Làm mới</button>
+      <button id="btnOpenJson">Mở tệp JSON</button>
     </div>
-
-    <button id="btnUndo" title="Hoàn tác (Ctrl+Z)">↶ Hoàn tác</button>
-    <button id="btnRedo" title="Làm lại (Ctrl+Y)">↷ Làm lại</button>
-    <button class="danger" id="btnDelete" title="Xóa nhánh đang chọn (Phím Delete)">🗑️ Xóa</button>
-
-    <div class="divider"></div>
-
-    <button id="btnAutoLayout" title="Tự động căn chỉnh đều các nhánh">✨ Sắp xếp</button>
-    <button id="btnClearAll" title="Xóa trắng trang vẽ để làm lại từ đầu">📄 Làm mới</button>
-    <button id="btnSaveJson" title="Lưu sơ đồ thành tệp .json">💾 Lưu tệp</button>
-    <button id="btnOpenJson" title="Mở tệp .json đã lưu">📂 Mở tệp</button>
+    <div id="exportMenu" class="tool-menu" hidden>
+      <button id="btnSaveJson">Lưu tệp JSON</button>
+      <button id="btnPng">Xuất PNG</button>
+      <button id="btnSvg">Xuất SVG</button>
+      <button id="btnPrint">Xuất PDF / In</button>
+    </div>
     <input type="file" id="fileOpenInput" accept=".json" style="display:none" />
-    <button id="btnPrint" title="In hoặc lưu thành tệp PDF (giữ nguyên liên kết)">🖨️ Xuất PDF</button>
   </header>
 
   <!-- Vùng vẽ sơ đồ -->
@@ -471,6 +473,7 @@
     </div>
 
     <!-- Màn hình trống hướng dẫn bắt đầu -->
+    <div id="presentControls" hidden><button id="btnPresentPrev">‹ Nhánh trước</button><button id="btnPresentNext">Nhánh tiếp ›</button><button id="btnPresentExit">Thoát trình bày</button></div>
     <div id="emptyHint">
       <div class="hint-card">
         <h2>Bắt đầu tạo sơ đồ tư duy</h2>
@@ -484,15 +487,14 @@
 
   <!-- Thanh trạng thái -->
   <footer class="statusbar">
-    <div>
-      <strong>Thao tác:</strong> Nháy đúp vùng trống để tạo chủ đề • Nháy đúp vào ô để sửa chữ • Kéo thả ô tự do • <strong>Tab</strong> thêm nhánh con • <strong>Enter</strong> thêm nhánh cùng cấp • <strong>Ctrl+V</strong> dán ảnh vào nhánh.
-    </div>
+    <div id="projectLabel">Sơ đồ của em</div>
+    <button id="btnHelp" title="Hướng dẫn">?</button>
     <div id="saveStatus" role="status" aria-live="polite">Đang khôi phục bài...</div>
     <div class="zoom-controls">
       <button id="btnZoomOut">−</button>
       <span id="zoomLabel">100%</span>
       <button id="btnZoomIn">+</button>
-      <button id="btnResetView">Căn giữa</button>
+      <button id="btnResetView">Vừa màn hình</button>
     </div>
   </footer>
 
@@ -503,7 +505,7 @@
       <div class="form-group">
         <label>Cách 1: Chọn ảnh từ máy tính (dùng được khi không có mạng)</label>
         <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" />
-        <div class="hint">Ảnh tối đa 3 MB.</div>
+        <div class="hint">Ảnh tối đa 20 MB trước khi nén; ảnh lưu tối đa 3 MB.</div>
       </div>
       <div class="form-group">
         <label>Cách 2: Dán đường dẫn hình ảnh (URL)</label>
@@ -556,10 +558,51 @@
       </div>
     </div>
   </div>
+  <div class="modal-backdrop" id="projectModal"><div class="modal" role="dialog" aria-modal="true">
+    <h3>Sơ đồ của em</h3>
+    <div id="projectList"></div>
+    <div class="form-group"><label>Tên sơ đồ</label><input id="projectName" type="text" maxlength="100" placeholder="Nhập tên sơ đồ"></div>
+    <div class="modal-actions project-actions"><button id="btnProjectNew">Tạo mới</button><button id="btnProjectRename">Đổi tên</button><button id="btnProjectCopy">Sao chép</button><button class="danger" id="btnProjectDelete">Xóa</button><button id="btnProjectClose">Đóng</button></div>
+  </div></div>
+  <div class="modal-backdrop" id="layoutModal"><div class="modal" role="dialog" aria-modal="true">
+    <h3>Sắp xếp sơ đồ</h3><div class="modal-actions"><button id="btnLayoutBoth">Tỏa hai bên</button><button id="btnLayoutRight">Cây ngang</button><button id="btnLayoutCancel">Hủy</button></div>
+  </div></div>
+  <div id="printSheet" aria-hidden="true"></div>
+  <style>
+    .toolbar {position:relative;gap:6px}
+    .tool-menu {position:absolute;top:100%;right:10px;background:#fff;border:1px solid #cbd5e1;box-shadow:0 8px 24px rgba(0,0,0,.14);border-radius:9px;padding:8px;z-index:120;max-width:calc(100vw - 20px);display:flex;flex-wrap:wrap;gap:6px}
+    [hidden]{display:none!important}
+    #projectLabel{font-weight:600;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #projectList{max-height:40vh;overflow:auto;margin-bottom:12px}
+    .project-row{display:block;width:100%;text-align:left;margin:4px 0;white-space:normal;overflow-wrap:break-word}
+    .project-row.active{background:#e0f2fe;border-color:#29a8df}
+    .project-actions{flex-wrap:wrap}
+    .collapse-badge{position:absolute;bottom:-10px;right:-8px;border-radius:20px;background:#fff;color:#185f83;font-size:11px;padding:2px 6px;border:1px solid #7cb5d1;z-index:12}
+    #presentControls{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:110;display:flex;gap:8px;white-space:nowrap}
+    body.presenting header,body.presenting footer{display:none}
+    body.presenting .node.selected{outline:none;box-shadow:none}
+    body.presenting .node.dimmed{opacity:.25}
+    body.presenting .node{cursor:default}
+    body.presenting .collapse-badge{display:none}
+    #printSheet{display:none}
+    @page{size:A4 landscape;margin:8mm}
+    @media print{
+      body{height:auto!important;overflow:visible!important}
+      body.export-print>*:not(#printSheet){display:none!important}
+      body.export-print #printSheet{display:block!important;width:280mm;height:193mm}
+      #printSheet svg{display:block;width:100%;height:100%}
+    }
+    @media(max-width:680px){.brand{display:none}.toolbar button{font-size:12px;padding:5px 7px}#projectLabel{max-width:100%}.statusbar{gap:4px}}
+  </style>
   <script>
     const LINK_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 
-    const STORAGE_KEY = "mindmap_blank_practice_v1";
+    const LEGACY_KEY = "mindmap_blank_practice_v1";
+    var STORAGE_KEY = LEGACY_KEY;
+    var PROJECT_INDEX = "mindmap_project_index_v21";
+    var projects = [{id:LEGACY_KEY,name:"Sơ đồ đầu tiên"}];
+    var projectSwitching = false, presentation = false, presentIndex = -1;
+    var imageEpoch = 0;
 
     let nodes = [];
     let selectedId = null;
@@ -603,7 +646,7 @@
       saveStatus.textContent = message;
       saveStatus.style.color = error ? "#b91c1c" : "#475569";
     }
-    function modalOpen() { return !!document.querySelector(".modal-backdrop.open"); }
+    function modalOpen() { return projectSwitching || !!document.querySelector(".modal-backdrop.open"); }
     function showMessage(message, action, title) {
       if (!messageModal.classList.contains("open")) modalFocus = document.activeElement;
       document.getElementById("messageTitle").textContent = title || "Thông báo";
@@ -620,6 +663,7 @@
       messageModal.classList.remove("open");
       if (focus && document.contains(focus)) focus.focus();
       if (accepted && action) action();
+      else document.body.classList.remove("export-print");
     }
     messageOK.addEventListener("click", function(){ closeMessage(true); });
     messageCancel.addEventListener("click", function(){ closeMessage(false); });
@@ -674,29 +718,32 @@
         } catch(e) { done(null); }
       });
     }
-    function dbRead() {
+    function dbRead(key) {
+      key=key || STORAGE_KEY;
       return new Promise(function(resolve,reject){
         if(!storageDB) return resolve(null);
         try {
-          var request = storageDB.transaction("projects","readonly").objectStore("projects").get(STORAGE_KEY);
+          var request = storageDB.transaction("projects","readonly").objectStore("projects").get(key);
           request.onsuccess = function(){ resolve(request.result || null); };
           request.onerror = function(){ reject(request.error); };
         } catch(e){ reject(e); }
       });
     }
-    function dbWrite(state) {
+    function dbWrite(state,key) {
+      key=key || STORAGE_KEY;
       return new Promise(function(resolve,reject){
         if(!storageDB) return reject(new Error("IndexedDB unavailable"));
         try {
           var tx = storageDB.transaction("projects","readwrite");
-          tx.objectStore("projects").put(state,STORAGE_KEY);
+          tx.objectStore("projects").put(state,key);
           tx.oncomplete = function(){ resolve(); };
           tx.onerror = tx.onabort = function(){ reject(tx.error || new Error("Storage failed")); };
         } catch(e){ reject(e); }
       });
     }
-    function localRead() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
+    function localRead(key) {
+      key=key || STORAGE_KEY;
+      try { return JSON.parse(localStorage.getItem(key) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
     }
     function captureState() {
       return {version:2,nodes:JSON.parse(JSON.stringify(nodes)),panX:panX,panY:panY,zoom:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
@@ -704,20 +751,20 @@
     function persistNow() {
       if(!storageReady) return;
       if(saveTimer !== null){ clearTimeout(saveTimer); saveTimer = null; }
-      var state = captureState(), id = ++revision;
+      var state = captureState(), id = ++revision, key=STORAGE_KEY;
       var raw = JSON.stringify(state);
       var large = raw.length * 2 > MAX_PROJECT * .75;
       var savedLabel = large ? "Đã lưu – sơ đồ lớn, nên lưu thêm tệp JSON" : "Đã lưu trên máy";
       var localOK = false;
       // Synchronous small backup protects refresh before the asynchronous DB transaction commits.
-      try { localStorage.setItem(STORAGE_KEY,raw); localOK = true; } catch(e){ console.warn("Mindmap local backup",e); }
+      try { localStorage.setItem(key,raw); localOK = true; } catch(e){ console.warn("Mindmap local backup",e); }
       setStatus(localOK ? savedLabel : "Đang lưu...",false);
       saveQueue = saveQueue.catch(function(){}).then(function(){
-        return dbWrite(state).then(function(){
-          if(id === revision){ saveFailed = false; setStatus(savedLabel,false); }
+        return dbWrite(state,key).then(function(){
+          if(id === revision && key === STORAGE_KEY){ saveFailed = false; setStatus(savedLabel,false); }
         },function(e){
           console.warn("Mindmap IndexedDB save",e);
-          if(id === revision){
+          if(id === revision && key === STORAGE_KEY){
             saveFailed = !localOK;
             setStatus(localOK ? savedLabel : "Chưa lưu được – hãy lưu tệp JSON",!localOK);
           }
@@ -756,7 +803,7 @@
         if(typeof image !== "string" || typeof link !== "string" || !validImage(image) || !validLink(link)) throw new Error("Tệp chứa hình ảnh hoặc liên kết không an toàn.");
         if(n.linkName != null && (typeof n.linkName !== "string" || n.linkName.length>1024)) throw new Error("Tên tệp không hợp lệ.");
         var theme = ["theme-blue","theme-gray","theme-green","theme-yellow","theme-pink"].indexOf(n.theme)>=0 ? n.theme : "theme-gray";
-        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||""};
+        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||"",collapsed:n.collapsed===true};
         ids[n.id] = clean; result.push(clean);
       });
       result.forEach(function(n){
@@ -769,7 +816,7 @@
         }
       });
       if(JSON.stringify(result).length*2 > MAX_PROJECT) throw new Error("Sơ đồ quá lớn. Hãy giảm dung lượng hình và tệp.");
-      return {nodes:result,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.4,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
+      return {nodes:result,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.05,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
     }
     function canAddMedia(node,key,value) {
       var copy = Object.assign({},node); copy[key] = value;
@@ -782,12 +829,12 @@
       // Lock editor until restoration completes; never replace a recoverable draft with a blank project.
       document.querySelector("header.toolbar").style.pointerEvents = "none";
       viewport.style.pointerEvents = "none";
-      var local = localRead(), candidates = [], hadInvalid = false;
+      var candidates = [], hadInvalid = false;
       openStorage().then(function(db){
         storageDB = db;
-        return dbRead().catch(function(e){console.warn("Mindmap restore",e);return null;});
+        return loadCatalog().then(function(){return dbRead();}).catch(function(e){console.warn("Mindmap restore",e);return null;});
       }).then(function(dbState){
-        [local,dbState].forEach(function(raw){
+        [localRead(),dbState].forEach(function(raw){
           if(raw) try {candidates.push(validateProject(raw));} catch(e){hadInvalid=true;console.warn("Mindmap invalid draft",e);}
         });
         candidates.sort(function(a,b){return b.updatedAt-a.updatedAt;});
@@ -800,7 +847,7 @@
         storageReady=true;
         document.querySelector("header.toolbar").style.pointerEvents="";
         viewport.style.pointerEvents="";
-        renderAll();historyUpdate();
+        renderAll();historyUpdate();updateProjectLabel();
         if(hadInvalid && !candidates.length) setStatus("Không khôi phục được bài cũ – hãy mở tệp JSON",true);
         else if(candidates.length) persistNow();
         else setStatus("Chưa có bài",false);
@@ -817,7 +864,7 @@
       emptyHint.style.display = nodes.length === 0 ? "flex" : "none";
       nodesLayer.innerHTML = "";
 
-      nodes.forEach(node => {
+      visibleNodes().forEach(node => {
         const el = document.createElement("div");
         el.className = `node ${node.theme || "theme-gray"} ${node.id === selectedId ? "selected" : ""}`;
         el.dataset.id = node.id;
@@ -860,9 +907,13 @@
         textEl.textContent = node.text;
         el.appendChild(textEl);
 
+        if(nodes.some(function(n){return n.parentId===node.id;})) {
+          var toggle=document.createElement("button");toggle.className="collapse-badge";toggle.textContent=node.collapsed?"+":"−";toggle.title=node.collapsed?"Mở rộng":"Thu gọn";
+          toggle.addEventListener("mousedown",function(e){e.stopPropagation();});toggle.addEventListener("dblclick",function(e){e.stopPropagation();});toggle.addEventListener("click",function(e){e.stopPropagation();if(!presentation)toggleCollapse(node.id);});el.appendChild(toggle);
+        }
         // Chọn và kéo thả
         el.addEventListener("mousedown", e => {
-          if (!storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
+          if (presentation || !storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
           e.stopPropagation();
           finishEditing();
           viewport.focus();
@@ -878,14 +929,14 @@
         // Nháy đúp để sửa chữ
         el.addEventListener("dblclick", e => {
           e.stopPropagation();
-          startEditing(el, node);
+          if(!presentation)startEditing(el, node);
         });
 
         nodesLayer.appendChild(el);
       });
 
       requestAnimationFrame(renderEdges);
-      updateButtonsState();
+      updateButtonsState();updateProjectLabel();
     }
 
     function startEditing(el, node) {
@@ -947,18 +998,19 @@
         const cw = childEl.offsetWidth;
         const ch = childEl.offsetHeight;
 
-        const startX = parent.x + pw / 2;
+        const parentCenterX = parent.x + pw / 2;
         const startY = parent.y + ph / 2;
         const childCenterX = node.x + cw / 2;
 
-        const isRight = childCenterX >= startX;
+        const isRight = childCenterX >= parentCenterX;
+        const startX = isRight ? parent.x + pw : parent.x;
         const endX = isRight ? node.x : node.x + cw;
         const endY = node.y + ch / 2;
 
         const dx = endX - startX;
-        const c1x = startX;
-        const c1y = endY;
-        const c2x = startX + dx * 0.35;
+        const c1x = startX + dx * .5;
+        const c1y = startY;
+        const c2x = endX - dx * .5;
         const c2y = endY;
 
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -985,12 +1037,13 @@
       document.getElementById("btnLink").disabled = !hasSel;
       document.getElementById("btnDelete").disabled = !hasSel;
       document.getElementById("btnAutoLayout").disabled = nodes.length === 0;
+      var collapse=document.getElementById("btnCollapse");collapse.disabled=!hasSel || !nodes.some(function(n){return n.parentId===selectedId;});collapse.textContent=hasSel&&selNode.collapsed?"Mở rộng nhánh":"Thu gọn nhánh";
       historyUpdate();
     }
 
     // Tạo chủ đề mới (hoặc nhãn tên HS)
     function createTopic(x = null, y = null) {
-      if (!storageReady || modalOpen()) return;
+      if (presentation || !storageReady || modalOpen()) return;
       finishEditing();
       if(nodes.length >= MAX_NODES){showMessage("Sơ đồ đã đạt giới hạn số nhánh.");return;}
       const rect = viewport.getBoundingClientRect();
@@ -1011,6 +1064,7 @@
         linkName: ""
       };
 
+      placeFree(newNode);
       nodes.push(newNode);
       selectedId = newNode.id;
       renderAll();
@@ -1022,12 +1076,13 @@
 
     // Tạo nhánh con
     function addChildNode(parentId) {
-      if (!storageReady || modalOpen()) return;
+      if (presentation || !storageReady || modalOpen()) return;
       finishEditing();
       if(nodes.length >= MAX_NODES){showMessage("Sơ đồ đã đạt giới hạn số nhánh.");return;}
       const parent = nodes.find(n => n.id === parentId);
       if (!parent) return;
 
+      parent.collapsed=false;
       const siblings = nodes.filter(n => n.parentId === parentId);
       const parentEl = nodesLayer.querySelector(`.node[data-id="${parentId}"]`);
       const pw = parentEl ? parentEl.offsetWidth : 150;
@@ -1053,6 +1108,7 @@
         linkName: ""
       };
 
+      placeFree(newNode);
       nodes.push(newNode);
       selectedId = newNode.id;
       renderAll();
@@ -1092,63 +1148,64 @@
     }
 
     // Tự động sắp xếp cân đối như hình mẫu
-    function autoLayout() {
-      if (!storageReady || modalOpen() || nodes.length === 0) return;
+    function visibleNodes(){
+      var map=Object.create(null);nodes.forEach(function(n){map[n.id]=n;});
+      return nodes.filter(function(n){var p=map[n.parentId],guard=0;while(p && guard++<MAX_NODES){if(p.collapsed)return false;p=map[p.parentId];}return true;});
+    }
+    function toggleCollapse(id){
+      finishEditing();var n=nodes.find(function(x){return x.id===id;});if(!n)return;
+      n.collapsed=!n.collapsed;selectedId=id;renderAll();saveToLocal();
+    }
+    function geometry(){
+      var result=Object.create(null);nodesLayer.querySelectorAll(".node").forEach(function(el){result[el.dataset.id]={w:el.offsetWidth,h:el.offsetHeight};});return result;
+    }
+    function placeFree(n){
+      var g=geometry(), list=visibleNodes(), count=0;
+      while(count++<MAX_NODES && list.some(function(a){var d=g[a.id]||{w:150,h:48};return n.x<a.x+d.w+20 && n.x+180>a.x && n.y<a.y+d.h+20 && n.y+60>a.y;}))n.y+=80;
+    }
+    function bounds(list,g){
+      if(!list.length)return null;
+      var x=Infinity,y=Infinity,r=-Infinity,b=-Infinity;
+      list.forEach(function(n){var d=g[n.id]||{w:150,h:48};x=Math.min(x,n.x);y=Math.min(y,n.y);r=Math.max(r,n.x+d.w);b=Math.max(b,n.y+d.h);});
+      return {x:x,y:y,w:r-x,h:b-y};
+    }
+    function fitView(save){
+      var b=bounds(visibleNodes(),geometry()),rect=viewport.getBoundingClientRect();if(!b||!rect.width||!rect.height)return;
+      zoom=Math.max(.05,Math.min(1.5,(rect.width-48)/Math.max(1,b.w),(rect.height-64)/Math.max(1,b.h)));
+      panX=(rect.width-b.w*zoom)/2-b.x*zoom;panY=(rect.height-b.h*zoom)/2-b.y*zoom;
+      updateTransform();if(save!==false)scheduleSave();
+    }
+    function layoutForest(list,g,both){
+      var children=Object.create(null), map=Object.create(null), heights=Object.create(null), widths=Object.create(null);
+      list.forEach(function(n){map[n.id]=n;(children[n.parentId||"root"]||(children[n.parentId||"root"]=[])).push(n);});
+      function dim(n){return g[n.id]||{w:150,h:48};}
+      function kids(n){return children[n.id]||[];}
+      function height(n){if(heights[n.id])return heights[n.id];return heights[n.id]=Math.max(dim(n).h+36,kids(n).reduce(function(a,c){return a+height(c);},0));}
+      function depthWidths(n,d,side){var key=side+":"+d;widths[key]=Math.max(widths[key]||0,dim(n).w);kids(n).forEach(function(c){depthWidths(c,d+1,side);});}
+      function place(n,d,side,edge,top){
+        var z=dim(n);n.x=side===1?edge:edge-z.w;n.y=top+(height(n)-z.h)/2;
+        var k=kids(n),sum=k.reduce(function(a,c){return a+height(c);},0), t=top+(height(n)-sum)/2;
+        k.forEach(function(c){place(c,d+1,side,edge+side*((widths[side+":"+d]||z.w)+75),t);t+=height(c);});
+      }
+      var top=40;
+      (children.root||[]).forEach(function(root){
+        widths=Object.create(null);
+        var z=dim(root),left=[],right=[],lh=0,rh=0;
+        kids(root).forEach(function(c){if(both && lh<rh){left.push(c);lh+=height(c);}else{right.push(c);rh+=height(c);}});
+        left.forEach(function(c){depthWidths(c,1,-1);});right.forEach(function(c){depthWidths(c,1,1);});
+        var band=Math.max(z.h+36,lh,rh);root.x=0;root.y=top+(band-z.h)/2;
+        var l=top+(band-lh)/2, rr=top+(band-rh)/2;
+        left.forEach(function(c){place(c,1,-1,-75,l);l+=height(c);});
+        right.forEach(function(c){place(c,1,1,z.w+75,rr);rr+=height(c);});
+        top+=band+70;
+      });
+    }
+    function autoLayout(both){
+      if(!storageReady||presentation||!nodes.length)return;
       finishEditing();
-      const nodeEls = {};
-      nodesLayer.querySelectorAll(".node").forEach(el => {
-        nodeEls[el.dataset.id] = el;
-      });
-
-      const roots = nodes.filter(n => !n.parentId);
-      const getChildren = id => nodes.filter(n => n.parentId === id);
-
-      function getSubtreeHeight(id) {
-        const children = getChildren(id);
-        const h = ((nodeEls[id] && nodeEls[id].offsetHeight) || 44) + 26;
-        if (children.length === 0) return h;
-        return Math.max(h, children.reduce((sum, c) => sum + getSubtreeHeight(c.id), 0));
-      }
-
-      function layoutSubtree(id, x, topY) {
-        const node = nodes.find(n => n.id === id);
-        const el = nodeEls[id];
-        const w = (el && el.offsetWidth) || 150;
-        const h = (el && el.offsetHeight) || 44;
-        const subH = getSubtreeHeight(id);
-
-        node.x = x;
-        node.y = topY + (subH - h) / 2;
-
-        let curY = topY;
-        getChildren(id).forEach(child => {
-          const cH = getSubtreeHeight(child.id);
-          layoutSubtree(child.id, x + w + 95, curY);
-          curY += cH;
-        });
-      }
-
-      const mainRoots = roots.filter(r => getChildren(r.id).length > 0);
-      const floatRoots = roots.filter(r => getChildren(r.id).length === 0);
-
-      let curTop = 40;
-      const startX = floatRoots.length > 0 && mainRoots.length > 0 ? 175 : 60;
-
-      mainRoots.forEach(r => {
-        layoutSubtree(r.id, startX, curTop);
-        curTop += getSubtreeHeight(r.id) + 50;
-      });
-
-      floatRoots.forEach((f, idx) => {
-        f.x = 45;
-        f.y = mainRoots.length > 0 ? Math.max(40, mainRoots[0].y - 68 - idx * 55) : 60 + idx * 65;
-      });
-
-      panX = 10;
-      panY = 10;
-      zoom = 1;
-      renderAll();
-      saveToLocal();
+      // Expand all so hidden descendants also receive collision-free coordinates.
+      nodes.forEach(function(n){n.collapsed=false;});renderAll();
+      layoutForest(nodes,geometry(),both!==false);renderAll();fitView(false);saveToLocal();
     }
 
     // Nháy đúp vùng trống để tạo chủ đề tại đúng vị trí con trỏ
@@ -1212,7 +1269,7 @@
       if(!storageReady || modalOpen()) return;
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.1 : -0.1;
-      zoom = Math.min(2, Math.max(0.4, +(zoom + delta).toFixed(2)));
+      zoomAt(delta>0?1.15:1/1.15,e.clientX,e.clientY);
       updateTransform(); scheduleSave();
     }, { passive: false });
 
@@ -1221,9 +1278,10 @@
       if(e.key === "Escape" && modalOpen()){
         e.preventDefault();
         if(messageModal.classList.contains("open")) closeMessage(false);
-        else {imageModal.classList.remove("open");linkModal.classList.remove("open");imgReadToken++;linkReadToken++;}
+        else {imageModal.classList.remove("open");linkModal.classList.remove("open");document.getElementById("projectModal").classList.remove("open");document.getElementById("layoutModal").classList.remove("open");imgReadToken++;linkReadToken++;}
         return;
       }
+      if(presentation){if(e.key==="Escape")exitPresentation();else if(e.key==="ArrowRight")stepPresentation(1);else if(e.key==="ArrowLeft")stepPresentation(-1);return;}
       if(!storageReady || modalOpen() || e.isComposing || e.keyCode===229) return;
       const active = document.activeElement;
       const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
@@ -1250,27 +1308,42 @@
     });
 
     // Dán ảnh trực tiếp bằng Ctrl+V vào nhánh đang chọn
-    function readImage(file, callback) {
-      if(!file || !/^image\/(png|jpeg|gif|webp|bmp|x-icon)$/i.test(file.type)){
-        showMessage("Hãy chọn ảnh PNG, JPG, GIF, WebP hoặc BMP.");callback(null);return;
-      }
-      if(file.size>MAX_IMAGE){showMessage("Ảnh lớn hơn 3 MB. Hãy giảm kích thước ảnh trước khi chèn.");callback(null);return;}
+    function readImage(file,callback){
+      if(!file || !/^image\/(png|jpeg|gif|webp|bmp|x-icon)$/i.test(file.type)){showMessage("Hãy chọn ảnh PNG, JPG, GIF, WebP hoặc BMP.");callback(null);return;}
+      if(file.size>20*1024*1024){showMessage("Ảnh lớn hơn 20 MB. Hãy chọn ảnh nhỏ hơn.");callback(null);return;}
       var reader=new FileReader();
-      reader.onload=function(){if(validImage(reader.result)) callback(reader.result);else{showMessage("Không đọc được ảnh.");callback(null);}};
-      reader.onerror=function(){showMessage("Không đọc được ảnh.");callback(null);};
-      reader.readAsDataURL(file);
+      function failed(){showMessage("Không đọc được ảnh.");callback(null);}
+      reader.onerror=failed;
+      reader.onload=function(){
+        var original=reader.result;
+        if(!validImage(original)){failed();return;}
+        if(file.type==="image/gif" && file.size<=MAX_IMAGE){callback(original);return;}
+        var img=new Image();img.onerror=failed;
+        img.onload=function(){
+          try{
+            var scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));
+            if(scale===1 && file.size<=500*1024){callback(original);return;}
+            var c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+            var ctx=c.getContext("2d");ctx.drawImage(img,0,0,c.width,c.height);
+            var data=c.toDataURL("image/webp",.82);
+            if(data.length>MAX_IMAGE*4/3){ctx.globalCompositeOperation="destination-over";ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);data=c.toDataURL("image/jpeg",.78);}
+            if(file.size<=MAX_IMAGE && original.length<data.length && scale===1)data=original;
+            if(!validImage(data)||data.length>MAX_IMAGE*4/3){showMessage("Ảnh vẫn quá lớn sau khi nén.");callback(null);return;}callback(data);
+          }catch(e){if(file.size<=MAX_IMAGE)callback(original);else failed();}
+        };img.src=original;
+      };reader.readAsDataURL(file);
     }
     window.addEventListener("paste",function(e){
-      if(!storageReady || modalOpen() || !selectedId) return;
+      if(presentation || !storageReady || modalOpen() || !selectedId) return;
       var active=document.activeElement;
       var items=e.clipboardData && e.clipboardData.items;
       if(!items || active && (active.tagName==="INPUT" || active.tagName==="TEXTAREA")) return;
       for(var i=0;i<items.length;i++){
         if(items[i].type.indexOf("image/")===0){
-          e.preventDefault(); var target=selectedId; finishEditing();
+          e.preventDefault(); var target=selectedId, epoch=imageEpoch; finishEditing();
           readImage(items[i].getAsFile(),function(data){
             var node=nodes.find(function(n){return n.id===target;});
-            if(data && node && canAddMedia(node,"image",data)){node.image=data;renderAll();saveToLocal();}
+            if(epoch===imageEpoch && data && node && canAddMedia(node,"image",data)){node.image=data;renderAll();saveToLocal();}
           });break;
         }
       }
@@ -1282,12 +1355,12 @@
     document.getElementById("btnAddChild").addEventListener("click", () => addChildNode(selectedId));
     document.getElementById("btnAddSibling").addEventListener("click", addSiblingNode);
     document.getElementById("btnDelete").addEventListener("click", deleteSelectedNode);
-    document.getElementById("btnAutoLayout").addEventListener("click", autoLayout);
+    document.getElementById("btnAutoLayout").addEventListener("click",function(){document.getElementById("layoutModal").classList.add("open");});
 
     document.getElementById("btnClearAll").addEventListener("click", function(){
       if(!storageReady || modalOpen())return;
       finishEditing();
-      function clearProject(){nodes=[];selectedId=null;panX=0;panY=0;zoom=1;renderAll();saveToLocal();}
+      function clearProject(){imageEpoch++;nodes=[];selectedId=null;panX=0;panY=0;zoom=1;renderAll();saveToLocal();}
       if(nodes.length)showMessage("Làm mới sơ đồ? Em có thể dùng Hoàn tác để khôi phục.",clearProject,"Làm mới");
       else clearProject();
     });
@@ -1442,7 +1515,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "SoDoTuDuy_HS.json";
+      a.download = projectFilename()+".json";
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){URL.revokeObjectURL(url);},1000);
     });
@@ -1453,12 +1526,13 @@
       var file=e.target.files[0];fileOpenInput.value="";
       if(!file || !storageReady)return;
       if(file.size>MAX_PROJECT){showMessage("Tệp quá lớn để mở.");return;}
-      var reader=new FileReader();
+      var reader=new FileReader(), key=STORAGE_KEY;
       reader.onload=function(){
+        if(key!==STORAGE_KEY)return;
         try{
           var project=validateProject(JSON.parse(reader.result));
           function apply(){
-            finishEditing();nodes=project.nodes;panX=project.panX;panY=project.panY;zoom=project.zoom;
+            finishEditing();imageEpoch++;nodes=project.nodes;panX=project.panX;panY=project.panY;zoom=project.zoom;
             selectedId=nodes.length?nodes[0].id:null;renderAll();saveToLocal();
           }
           if(nodes.length)showMessage("Mở tệp sẽ thay sơ đồ hiện tại. Em có thể dùng Hoàn tác để khôi phục.",apply,"Mở sơ đồ");
@@ -1469,20 +1543,206 @@
       reader.readAsText(file);
     });
 
-    // Xuất PDF & Thu phóng
-    document.getElementById("btnPrint").addEventListener("click", () => {finishEditing();window.print();});
-    document.getElementById("btnZoomIn").addEventListener("click", () => {
-      zoom = Math.min(2, +(zoom + 0.1).toFixed(2));
-      updateTransform();scheduleSave();
-    });
-    document.getElementById("btnZoomOut").addEventListener("click", () => {
-      zoom = Math.max(0.4, +(zoom - 0.1).toFixed(2));
-      updateTransform();scheduleSave();
-    });
-    document.getElementById("btnResetView").addEventListener("click", () => {
-      panX = 0; panY = 0; zoom = 1;
-      updateTransform();scheduleSave();
-    });
+    // Quản lý nhiều sơ đồ: lưu danh mục ở cả hai kho, dữ liệu từng sơ đồ có khóa riêng.
+    function currentProject(){return projects.find(function(p){return p.id===STORAGE_KEY;})||projects[0];}
+    function projectFilename(){return (currentProject().name||"SoDoTuDuy").replace(/[\\/:*?"<>|]/g,"_").slice(0,100);}
+    function updateProjectLabel(){document.getElementById("projectLabel").textContent=currentProject().name+" · "+nodes.length+" nhánh";}
+    function validateCatalog(raw){
+      if(!raw||!Array.isArray(raw.projects))return null;
+      var seen=Object.create(null), list=raw.projects.filter(function(p){if(!p||typeof p.id!=="string"||!(p.id===LEGACY_KEY||/^mindmap_p_[a-z0-9_]+$/.test(p.id))||seen[p.id]||typeof p.name!=="string")return false;seen[p.id]=true;return true;}).map(function(p){return {id:p.id,name:p.name.slice(0,100)||"Sơ đồ"};});
+      if(!list.length)return null;
+      return {projects:list,active:list.some(function(p){return p.id===raw.active;})?raw.active:list[0].id,updatedAt:Number(raw.updatedAt)||0};
+    }
+    function loadCatalog(){
+      var local=null;try{local=validateCatalog(JSON.parse(localStorage.getItem(PROJECT_INDEX)||"null"));}catch(e){}
+      return dbRead(PROJECT_INDEX).catch(function(){return null;}).then(function(db){
+        db=validateCatalog(db);var c=db&&(!local||db.updatedAt>local.updatedAt)?db:local;
+        if(c){projects=c.projects;STORAGE_KEY=c.active;}
+      });
+    }
+    function saveCatalog(){
+      var data={projects:projects.map(function(p){return {id:p.id,name:p.name};}),active:STORAGE_KEY,updatedAt:Date.now()},ok=false;
+      try{localStorage.setItem(PROJECT_INDEX,JSON.stringify(data));ok=true;}catch(e){}
+      return dbWrite(data,PROJECT_INDEX).then(function(){return true;},function(){return ok;});
+    }
+    var projectModal=document.getElementById("projectModal");
+    function drawProjects(){
+      var list=document.getElementById("projectList");list.textContent="";
+      projects.forEach(function(p){var b=document.createElement("button");b.className="project-row"+(p.id===STORAGE_KEY?" active":"");b.textContent=p.name+(p.id===STORAGE_KEY?" (đang mở)":"");b.onclick=function(){switchProject(p.id);};list.appendChild(b);});
+      document.getElementById("projectName").value=currentProject().name;
+      document.getElementById("btnProjectDelete").disabled=projects.length<2;
+    }
+    function readProject(key){
+      var local=localRead(key);
+      return dbRead(key).catch(function(){return null;}).then(function(db){
+        var states=[];[local,db].forEach(function(raw){if(raw)try{states.push(validateProject(raw));}catch(e){console.warn(e);}});
+        states.sort(function(a,b){return b.updatedAt-a.updatedAt;});
+        if(!states.length && (local||db))throw Error("Không đọc được sơ đồ đã lưu.");
+        return states[0]||{nodes:[],panX:0,panY:0,zoom:1,updatedAt:0};
+      });
+    }
+    function switchProject(key,newState,newEntry){
+      if(projectSwitching||!storageReady||key===STORAGE_KEY)return;
+      finishEditing();persistNow();projectSwitching=true;
+      var oldKey=STORAGE_KEY;
+      return saveQueue.then(function(){
+        if(saveFailed)throw Error("Bài hiện tại chưa lưu được. Hãy lưu tệp JSON trước khi chuyển sơ đồ.");
+        return newState?newState:readProject(key);
+      }).then(function(state){
+        if(newEntry){
+          var localOK=false;try{localStorage.setItem(key,JSON.stringify(state));localOK=true;}catch(e){}
+          return dbWrite(state,key).then(function(){return state;},function(){if(localOK)return state;throw Error("Không tạo được sơ đồ mới.");});
+        }
+        return state;
+      }).then(function(state){
+        if(newEntry)projects.push(newEntry);
+        STORAGE_KEY=key;
+        return saveCatalog().then(function(ok){
+          if(!ok){STORAGE_KEY=oldKey;if(newEntry)projects=projects.filter(function(p){return p.id!==key;});throw Error("Không lưu được danh mục sơ đồ.");}
+          imageEpoch++;nodes=state.nodes;panX=state.panX||0;panY=state.panY||0;zoom=state.zoom||1;lastSavedAt=state.updatedAt||0;
+          selectedId=nodes.length?nodes[0].id:null;undoStack=[];redoStack=[];lastSnapshot=JSON.stringify(nodes);
+          projectModal.classList.remove("open");renderAll();updateProjectLabel();persistNow();
+        });
+      }).catch(function(e){showMessage(e.message||"Không mở được sơ đồ.");}).then(function(){projectSwitching=false;});
+    }
+    function projectName(){return document.getElementById("projectName").value.trim().slice(0,100)||"Sơ đồ mới";}
+    function addProject(copy){
+      if(projectSwitching)return;
+      var id="mindmap_p_"+generateId(),name=projectName();
+      if(copy&&name===currentProject().name)name=(name+" - bản sao").slice(0,100);
+      var state=copy?captureState():{version:2,nodes:[],panX:0,panY:0,zoom:1,updatedAt:Date.now()};
+      switchProject(id,state,{id:id,name:name});
+    }
+    document.getElementById("btnProjects").onclick=function(){finishEditing();drawProjects();projectModal.classList.add("open");};
+    document.getElementById("btnProjectClose").onclick=function(){if(!projectSwitching)projectModal.classList.remove("open");};
+    document.getElementById("btnProjectNew").onclick=function(){addProject(false);};
+    document.getElementById("btnProjectCopy").onclick=function(){addProject(true);};
+    document.getElementById("btnProjectRename").onclick=function(){if(projectSwitching)return;var p=currentProject(),old=p.name;p.name=projectName();saveCatalog().then(function(ok){if(!ok){p.name=old;showMessage("Không lưu được tên sơ đồ.");}drawProjects();updateProjectLabel();});};
+    document.getElementById("btnProjectDelete").onclick=function(){
+      if(projects.length<2||projectSwitching)return;
+      var key=STORAGE_KEY,name=currentProject().name,next=projects.find(function(p){return p.id!==key;}).id;
+      showMessage("Xóa sơ đồ "+name+" khỏi danh sách? Hãy lưu tệp JSON nếu cần giữ bản sao.",function(){
+        switchProject(next).then(function(){
+          if(STORAGE_KEY!==next)return;
+          var old=projects.slice();projects=projects.filter(function(p){return p.id!==key;});
+          saveCatalog().then(function(ok){
+            if(!ok){projects=old;showMessage("Không cập nhật được danh mục.");return;}
+            try{localStorage.removeItem(key);}catch(e){}
+            if(storageDB)try{storageDB.transaction("projects","readwrite").objectStore("projects").delete(key);}catch(e){console.warn(e);}
+          });
+        });
+      },"Xóa sơ đồ");
+    };
+    // Menu và trình bày.
+    function hideMenus(){["more","export"].forEach(function(k){document.getElementById(k+"Menu").hidden=true;});document.getElementById("btnMore").setAttribute("aria-expanded","false");document.getElementById("btnExport").setAttribute("aria-expanded","false");}
+    function menu(btn,id){var el=document.getElementById(id);var was=!el.hidden;hideMenus();el.hidden=was;btn.setAttribute("aria-expanded",String(!was));}
+    document.getElementById("btnMore").onclick=function(){menu(this,"moreMenu");};
+    document.getElementById("btnExport").onclick=function(){menu(this,"exportMenu");};
+    document.addEventListener("click",function(e){if(!e.target.closest("#btnMore,#btnExport,.tool-menu")||e.target.closest(".tool-menu button"))hideMenus();});
+    document.getElementById("btnHelp").onclick=function(){showMessage("Nháy đúp để sửa chữ. Tab: nhánh con. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; lăn chuột để thu phóng.");};
+    document.getElementById("btnCollapse").onclick=function(){if(selectedId)toggleCollapse(selectedId);};
+    document.getElementById("btnLayoutBoth").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(true);};
+    document.getElementById("btnLayoutRight").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(false);};
+    document.getElementById("btnLayoutCancel").onclick=function(){document.getElementById("layoutModal").classList.remove("open");};
+    function presentationRoots(){var list=visibleNodes();return list.filter(function(n){return !n.parentId || list.some(function(p){return p.id===n.parentId&&!p.parentId;});});}
+    function stepPresentation(delta){
+      var list=presentationRoots();presentIndex=Math.max(-1,Math.min(list.length-1,presentIndex+delta));var root=list[presentIndex],map=Object.create(null);
+      nodes.forEach(function(n){map[n.id]=n;});
+      nodesLayer.querySelectorAll(".node").forEach(function(el){var n=map[el.dataset.id],show=!root;while(n&&!show){if(n.id===root.id)show=true;n=map[n.parentId];}el.classList.toggle("dimmed",!show);});
+    }
+    function exitPresentation(){
+      if(!presentation)return;presentation=false;document.body.classList.remove("presenting");document.getElementById("presentControls").hidden=true;
+      renderAll();fitView(false);
+      if(document.fullscreenElement && document.exitFullscreen)document.exitFullscreen().catch(function(){});
+    }
+    document.getElementById("btnPresent").onclick=function(){
+      if(!nodes.length)return;finishEditing();hideMenus();presentation=true;presentIndex=-1;document.body.classList.add("presenting");document.getElementById("presentControls").hidden=false;fitView(false);
+      if(document.documentElement.requestFullscreen)try{var p=document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){});}catch(e){}
+    };
+    document.getElementById("btnPresentPrev").onclick=function(){stepPresentation(-1);};
+    document.getElementById("btnPresentNext").onclick=function(){stepPresentation(1);};
+    document.getElementById("btnPresentExit").onclick=exitPresentation;
+    document.addEventListener("fullscreenchange",function(){if(presentation&&!document.fullscreenElement)exitPresentation();});
+    // Xuất SVG/PNG/PDF bằng SVG thuần, không phụ thuộc CDN hoặc foreignObject.
+    function svgEl(name,attrs,text){
+      var el=document.createElementNS("http://www.w3.org/2000/svg",name);Object.keys(attrs||{}).forEach(function(k){el.setAttribute(k,attrs[k]);});if(text!=null)el.textContent=text;return el;
+    }
+    function fetchExportImage(src){
+      if(!src)return Promise.resolve(null);
+      if(src.indexOf("data:")===0)return Promise.resolve(src);
+      return new Promise(function(resolve){
+        var img=new Image(),done=false,timer=setTimeout(function(){finish(null);},4000);
+        function finish(v){if(done)return;done=true;clearTimeout(timer);resolve(v);}
+        img.crossOrigin="anonymous";img.onerror=function(){finish(null);};
+        img.onload=function(){try{var c=document.createElement("canvas"),scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);finish(c.toDataURL("image/png"));}catch(e){finish(null);}};
+        img.src=src;
+      });
+    }
+    function wrapText(text,width,ctx){
+      var lines=[];String(text).split("\n").forEach(function(p){
+        var line="";Array.from(p).forEach(function(ch){if(line&&ctx.measureText(line+ch).width>width){lines.push(line);line=ch;}else line+=ch;});lines.push(line);
+      });return lines;
+    }
+    function makeExport(){
+      finishEditing();
+      var list=visibleNodes().map(function(n){return Object.assign({},n);}),g=geometry(),els=Object.create(null);
+      nodesLayer.querySelectorAll(".node").forEach(function(el){els[el.dataset.id]=el;});
+      if(!list.length)return Promise.reject(Error("Chưa có sơ đồ để xuất."));
+      var b=bounds(list,g),pad=28,svg=svgEl("svg",{xmlns:"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink",width:b.w+pad*2,height:b.h+pad*2,viewBox:(b.x-pad)+" "+(b.y-pad)+" "+(b.w+pad*2)+" "+(b.h+pad*2),preserveAspectRatio:"xMidYMid meet"});
+      svg.appendChild(svgEl("rect",{x:b.x-pad,y:b.y-pad,width:b.w+pad*2,height:b.h+pad*2,fill:"#fff"}));
+      edgesLayer.querySelectorAll("path").forEach(function(p){svg.appendChild(svgEl("path",{d:p.getAttribute("d"),fill:"none",stroke:"#8d99ae","stroke-width":1.8,"stroke-linecap":"round"}));});
+      var ctx=document.createElement("canvas").getContext("2d"),missing=0;
+      var palette={"theme-blue":["#29a8df","#1d8ec0","#1e293b"],"theme-gray":["#eaecef","#8d99ae","#2b2d42"],"theme-green":["#dcfce7","#4ade80","#14532d"],"theme-yellow":["#fef9c3","#facc15","#713f12"],"theme-pink":["#fce7f3","#f472b6","#831843"]};
+      return Promise.all(list.map(function(n){
+        var el=els[n.id],d=g[n.id]||{w:150,h:48},p=palette[n.theme]||palette["theme-gray"],t=el&&el.querySelector(".node-text"),im=el&&el.querySelector(".node-img");
+        var tw=t?t.offsetWidth:d.w-32,th=t?t.offsetTop:9,iw=im?im.offsetWidth:0,ih=im?im.offsetHeight:0,iy=im?im.offsetTop:8;
+        return fetchExportImage(n.image).then(function(data){
+          var group=svgEl("g",{});group.appendChild(svgEl("rect",{x:n.x,y:n.y,width:d.w,height:d.h,rx:12,fill:p[0],stroke:p[1],"stroke-width":1.5}));
+          if(n.image){
+            if(data){var image=svgEl("image",{x:n.x+(d.w-iw)/2,y:n.y+iy,width:Math.max(iw,1),height:Math.max(ih,1)});image.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href",data);group.appendChild(image);}
+            else {missing++;group.appendChild(svgEl("text",{x:n.x+d.w/2,y:n.y+iy+14,"text-anchor":"middle","font-size":11,fill:"#64748b"},"[Ảnh ngoài không xuất được]"));}
+          }
+          var fontSize=14,weight=n.theme==="theme-blue"?700:600;ctx.font=weight+" "+fontSize+"px Arial";
+          var lines=wrapText(n.text,Math.max(20,tw),ctx);
+          lines.forEach(function(line,i){group.appendChild(svgEl("text",{x:n.x+d.w/2,y:n.y+th+14+i*18.9,"font-family":"Arial, sans-serif","font-size":fontSize,"font-weight":weight,"text-anchor":"middle",fill:p[2]},line));});
+          if(n.link){var badge=svgEl("text",{x:n.x+d.w-9,y:n.y+10,"text-anchor":"end",fill:"#075985","font-size":12},"↗");if(validHttp(n.link)){var a=svgEl("a",{target:"_blank"});a.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href",n.link);a.appendChild(badge);group.appendChild(a);}else group.appendChild(badge);}
+          if(n.collapsed)group.appendChild(svgEl("text",{x:n.x+d.w-6,y:n.y+d.h-3,"font-size":10,"text-anchor":"end",fill:"#075985"},"+"));
+          return group;
+        });
+      })).then(function(groups){groups.forEach(function(g){svg.appendChild(g);});return {svg:svg,missing:missing,w:b.w+pad*2,h:b.h+pad*2};});
+    }
+    function downloadBlob(blob,name){var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1500);}
+    var exporting=false;
+    function exportMap(type){
+      if(exporting||!storageReady)return;
+      exporting=true;hideMenus();
+      makeExport().then(function(out){
+        if(type==="pdf"){
+          var sheet=document.getElementById("printSheet");sheet.textContent="";sheet.appendChild(out.svg);document.body.classList.add("export-print");
+          // Second explicit click preserves user activation in embedded browsers.
+          showMessage((out.missing?"Có "+out.missing+" ảnh ngoài không thể đưa vào bản in.\n":"")+"Chọn Xác nhận để in hoặc lưu PDF khổ A4 ngang.",function(){window.print();},"Xuất PDF");
+        }else{
+          var blob=new Blob([new XMLSerializer().serializeToString(out.svg)],{type:"image/svg+xml;charset=utf-8"});
+          if(type==="svg")downloadBlob(blob,projectFilename()+".svg");
+          else return new Promise(function(resolve,reject){
+            var url=URL.createObjectURL(blob),img=new Image();img.onerror=function(){URL.revokeObjectURL(url);reject(Error("Không tạo được ảnh PNG."));};
+            img.onload=function(){URL.revokeObjectURL(url);try{var scale=Math.min(2,8192/Math.max(out.w,out.h),Math.sqrt(24000000/(out.w*out.h))),c=document.createElement("canvas");c.width=Math.max(1,Math.round(out.w*scale));c.height=Math.max(1,Math.round(out.h*scale));var ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);c.toBlob(function(b){if(!b)return reject(Error("Không tạo được ảnh PNG."));downloadBlob(b,projectFilename()+".png");resolve();},"image/png");}catch(e){reject(e);}};img.src=url;
+          }).then(function(){if(out.missing)showMessage("Đã tạo PNG; "+out.missing+" ảnh ngoài không xuất được.");});
+          if(out.missing)showMessage("Đã tạo SVG; "+out.missing+" ảnh ngoài không xuất được.");
+        }
+      }).catch(function(e){console.warn(e);showMessage(e.message||"Không xuất được sơ đồ.");}).then(function(){exporting=false;});
+    }
+    document.getElementById("btnPng").onclick=function(){exportMap("png");};
+    document.getElementById("btnSvg").onclick=function(){exportMap("svg");};
+    document.getElementById("btnPrint").onclick=function(){exportMap("pdf");};
+    window.addEventListener("afterprint",function(){document.body.classList.remove("export-print");});
+    function zoomAt(f,x,y){
+      var rect=viewport.getBoundingClientRect();x=x==null?rect.width/2:x-rect.left;y=y==null?rect.height/2:y-rect.top;
+      var z=Math.max(.05,Math.min(2,zoom*f));panX=x-(x-panX)*z/zoom;panY=y-(y-panY)*z/zoom;zoom=z;updateTransform();
+    }
+    document.getElementById("btnZoomIn").onclick=function(){zoomAt(1.15);scheduleSave();};
+    document.getElementById("btnZoomOut").onclick=function(){zoomAt(1/1.15);scheduleSave();};
+    document.getElementById("btnResetView").onclick=function(){fitView();};
 
     window.addEventListener("pagehide",function(){if(storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
