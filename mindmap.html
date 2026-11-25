@@ -432,6 +432,7 @@
   <header class="toolbar">
     <div class="brand">Sơ đồ tư duy</div>
     <button id="btnProjects" title="Quản lý sơ đồ">Sơ đồ của em</button>
+    <button id="btnLearning">Nhiệm vụ</button><button id="btnCheck">Kiểm tra</button><button id="btnSubmitWork">Nộp bài</button>
     <button class="primary" id="btnAddTopic">+ Chủ đề</button>
     <button id="btnAddChild" title="Tab">+ Nhánh con</button>
     <button id="btnAddSibling" title="Enter">+ Cùng cấp</button>
@@ -442,7 +443,7 @@
     <button id="btnMore" aria-expanded="false">Thêm ▾</button>
     <button id="btnExport" aria-expanded="false">Xuất bài ▾</button>
     <div id="moreMenu" class="tool-menu" hidden>
-      <button id="btnImage">Chèn hình</button>
+      <button id="btnTemplate">Mẫu sơ đồ</button><button id="btnNote">Ghi chú</button><button id="btnCross">Liên kết chéo</button><button id="btnTeacher">Giáo viên</button><button id="btnImage">Chèn hình</button>
       <button id="btnLink">Chèn liên kết</button>
       <button id="btnCollapse">Thu gọn nhánh</button>
       <div class="color-group" title="Đổi màu nhánh">
@@ -567,9 +568,10 @@
   <div class="modal-backdrop" id="layoutModal"><div class="modal" role="dialog" aria-modal="true">
     <h3>Sắp xếp sơ đồ</h3><div class="modal-actions"><button id="btnLayoutBoth">Tỏa hai bên</button><button id="btnLayoutRight">Cây ngang</button><button id="btnLayoutCancel">Hủy</button></div>
   </div></div>
+  <div class="modal-backdrop" id="learningModal"><div class="modal learning-modal" role="dialog" aria-modal="true"><h3 id="learningTitle"></h3><div id="learningContent"></div><div class="modal-actions"><button id="btnLearningClose">Đóng</button></div></div></div>
   <div id="printSheet" aria-hidden="true"></div>
   <style>
-    .toolbar {position:relative;gap:6px}
+    .learning-modal{max-width:660px;max-height:85vh;overflow:auto}.learning-modal input,.learning-modal textarea,.learning-modal select{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin:4px 0 10px;font-size:14px}.learning-modal textarea{min-height:80px}.learning-modal p{font-size:14px;line-height:1.55;margin:6px 0}.learning-modal label{display:block;font-size:13px;font-weight:600}.learning-modal button{margin:3px 4px 3px 0}.learning-modal .work-row{border-bottom:1px solid #e2e8f0;padding:8px 0}.note-badge{position:absolute;top:-10px;left:-8px;background:#fff;border:1px solid #94a3b8;border-radius:12px;padding:2px 5px;font-size:11px}.cross-edge{stroke:#9370a5;stroke-dasharray:6 4}.toolbar {position:relative;gap:6px}
     .tool-menu {position:absolute;top:100%;right:10px;background:#fff;border:1px solid #cbd5e1;box-shadow:0 8px 24px rgba(0,0,0,.14);border-radius:9px;padding:8px;z-index:120;max-width:calc(100vw - 20px);display:flex;flex-wrap:wrap;gap:6px}
     [hidden]{display:none!important}
     #projectLabel{font-weight:600;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -746,7 +748,7 @@
       try { return JSON.parse(localStorage.getItem(key) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
     }
     function captureState() {
-      return {version:2,nodes:JSON.parse(JSON.stringify(nodes)),panX:prePresentView?prePresentView.x:panX,panY:prePresentView?prePresentView.y:panY,zoom:prePresentView?prePresentView.z:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
+      return {version:3,nodes:JSON.parse(JSON.stringify(nodes)),panX:prePresentView?prePresentView.x:panX,panY:prePresentView?prePresentView.y:panY,zoom:prePresentView?prePresentView.z:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
     }
     function persistNow() {
       if(!storageReady) return;
@@ -793,7 +795,7 @@
       return value === "" || validHttp(value) || /^data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/i.test(value) && !/^data:(text\/html|image\/svg\+xml|application\/xhtml\+xml|application\/(javascript|x-msdownload|x-executable|x-sh|x-bat)|text\/javascript);/i.test(value);
     }
     function validateProject(parsed) {
-      if(!parsed || !Array.isArray(parsed.nodes) || parsed.nodes.length > MAX_NODES || (parsed.version != null && parsed.version !== 1 && parsed.version !== 2)) throw new Error("Tệp không đúng định dạng hoặc có quá nhiều nhánh.");
+      if(!parsed || !Array.isArray(parsed.nodes) || parsed.nodes.length > MAX_NODES || (parsed.version != null && parsed.version !== 1 && parsed.version !== 2 && parsed.version !== 3)) throw new Error("Tệp không đúng định dạng hoặc có quá nhiều nhánh.");
       var ids = Object.create(null), result = [];
       parsed.nodes.forEach(function(n){
         if(!n || typeof n.id !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(n.id) || ids[n.id]) throw new Error("Mã nhánh không hợp lệ hoặc bị trùng.");
@@ -803,7 +805,7 @@
         if(typeof image !== "string" || typeof link !== "string" || !validImage(image) || !validLink(link)) throw new Error("Tệp chứa hình ảnh hoặc liên kết không an toàn.");
         if(n.linkName != null && (typeof n.linkName !== "string" || n.linkName.length>1024)) throw new Error("Tên tệp không hợp lệ.");
         var theme = ["theme-blue","theme-gray","theme-green","theme-yellow","theme-pink"].indexOf(n.theme)>=0 ? n.theme : "theme-gray";
-        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||"",collapsed:n.collapsed===true};
+        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||"",collapsed:n.collapsed===true,note:typeof n.note==="string"?n.note.slice(0,4000):"",cross:Array.isArray(n.cross)?n.cross.filter(function(v){return typeof v==="string";}).slice(0,100):[]};
         ids[n.id] = clean; result.push(clean);
       });
       result.forEach(function(n){
@@ -815,6 +817,7 @@
           p = p.parentId ? ids[p.parentId] : null;
         }
       });
+      result.forEach(function(n){n.cross=n.cross.filter(function(id,i,a){return id!==n.id&&!!ids[id]&&a.indexOf(id)===i;});});
       if(JSON.stringify(result).length*2 > MAX_PROJECT) throw new Error("Sơ đồ quá lớn. Hãy giảm dung lượng hình và tệp.");
       return {nodes:result,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.05,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
     }
@@ -911,6 +914,7 @@
           var toggle=document.createElement("button");toggle.className="collapse-badge";toggle.textContent=node.collapsed?"+":"−";toggle.title=node.collapsed?"Mở rộng":"Thu gọn";
           toggle.addEventListener("mousedown",function(e){e.stopPropagation();});toggle.addEventListener("dblclick",function(e){e.stopPropagation();});toggle.addEventListener("click",function(e){e.stopPropagation();if(!presentation)toggleCollapse(node.id);});el.appendChild(toggle);
         }
+        if(node.note){var nb=document.createElement("button");nb.className="note-badge";nb.textContent="Ghi chú";nb.title=node.note;nb.onmousedown=function(e){e.stopPropagation();};nb.ondblclick=function(e){e.stopPropagation();};nb.onclick=function(e){e.stopPropagation();openNote(node.id,presentation);};el.appendChild(nb);}
         // Chọn và kéo thả
         el.addEventListener("mousedown", e => {
           if (presentation || !storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
@@ -1018,6 +1022,7 @@
         path.setAttribute("d", `M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`);
         edgesLayer.appendChild(path);
       });
+      nodes.forEach(function(n){(n.cross||[]).forEach(function(id){var a=nodeEls[n.id],b=nodeEls[id],m=nodes.find(function(x){return x.id===id;});if(!a||!b||!m)return;var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("class","edge-path cross-edge");p.setAttribute("d","M "+(n.x+a.offsetWidth/2)+" "+(n.y+a.offsetHeight/2)+" L "+(m.x+b.offsetWidth/2)+" "+(m.y+b.offsetHeight/2));edgesLayer.appendChild(p);});});
     }
 
     function selectNode(id) {
@@ -1140,6 +1145,7 @@
       }
       function removeBranch(){
         nodes = nodes.filter(n => !toDelete.has(n.id));
+        nodes.forEach(function(n){n.cross=(n.cross||[]).filter(function(id){return !toDelete.has(id);});});
         selectedId = nodes.length ? nodes[nodes.length-1].id : null;
         renderAll(); saveToLocal();
       }
@@ -1279,7 +1285,7 @@
       if(e.key === "Escape" && modalOpen()){
         e.preventDefault();
         if(messageModal.classList.contains("open")) closeMessage(false);
-        else {imageModal.classList.remove("open");linkModal.classList.remove("open");document.getElementById("projectModal").classList.remove("open");document.getElementById("layoutModal").classList.remove("open");imgReadToken++;linkReadToken++;}
+        else {imageModal.classList.remove("open");linkModal.classList.remove("open");document.getElementById("projectModal").classList.remove("open");document.getElementById("layoutModal").classList.remove("open");document.getElementById("learningModal").classList.remove("open");imgReadToken++;linkReadToken++;}
         return;
       }
       if(presentation){if(e.key==="Escape")exitPresentation();else if(e.key==="ArrowRight")stepPresentation(1);else if(e.key==="ArrowLeft")stepPresentation(-1);return;}
@@ -1511,7 +1517,7 @@
     document.getElementById("btnSaveJson").addEventListener("click", () => {
       if(!storageReady)return;
       finishEditing();
-      const dataStr = JSON.stringify({ version: 2, nodes, panX, panY, zoom }, null, 2);
+      const dataStr = JSON.stringify({ version: 3, nodes, panX, panY, zoom }, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1692,7 +1698,7 @@
       if(!list.length)return Promise.reject(Error("Chưa có sơ đồ để xuất."));
       var b=bounds(list,g),pad=28,svg=svgEl("svg",{width:b.w+pad*2,height:b.h+pad*2,viewBox:(b.x-pad)+" "+(b.y-pad)+" "+(b.w+pad*2)+" "+(b.h+pad*2),preserveAspectRatio:"xMidYMid meet"});
       svg.appendChild(svgEl("rect",{x:b.x-pad,y:b.y-pad,width:b.w+pad*2,height:b.h+pad*2,fill:"#fff"}));
-      edgesLayer.querySelectorAll("path").forEach(function(p){svg.appendChild(svgEl("path",{d:p.getAttribute("d"),fill:"none",stroke:"#8d99ae","stroke-width":1.8,"stroke-linecap":"round"}));});
+      edgesLayer.querySelectorAll("path").forEach(function(p){svg.appendChild(svgEl("path",{d:p.getAttribute("d"),fill:"none",stroke:p.classList.contains("cross-edge")?"#9370a5":"#8d99ae","stroke-dasharray":p.classList.contains("cross-edge")?"6 4":"none","stroke-width":1.8,"stroke-linecap":"round"}));});
       var ctx=document.createElement("canvas").getContext("2d"),missing=0;
       var palette={"theme-blue":["#29a8df","#1d8ec0","#1e293b"],"theme-gray":["#eaecef","#8d99ae","#2b2d42"],"theme-green":["#dcfce7","#4ade80","#14532d"],"theme-yellow":["#fef9c3","#facc15","#713f12"],"theme-pink":["#fce7f3","#f472b6","#831843"]};
       return Promise.all(list.map(function(n){
@@ -1749,6 +1755,107 @@
     window.addEventListener("pagehide",function(){if(storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
 
+    // V3.0 Learning Studio – offline-first; optional dedicated Apps Script endpoint.
+    var learningModal=document.getElementById("learningModal"), lc=document.getElementById("learningContent");
+    var endpoint="", teacherToken="", assignment=null, onlineBusy=false;
+    var LEARN_KEY="mindmap_learning_config_v3";
+    function getConfig(){try{return JSON.parse(localStorage.getItem(LEARN_KEY)||"{}")||{};}catch(e){return {};}}
+    function saveConfig(p){try{localStorage.setItem(LEARN_KEY,JSON.stringify(p));return true;}catch(e){return false;}}
+    endpoint=getConfig().endpoint||"";
+    function ui(tag,text,parent){var e=document.createElement(tag);if(text!=null)e.textContent=text;(parent||lc).appendChild(e);return e;}
+    function field(label,type,value,parent){var p=parent||lc;ui("label",label,p);var e=ui(type==="textarea"?"textarea":"input",null,p);if(type!=="textarea")e.type=type||"text";e.value=value||"";return e;}
+    function action(label,fn,parent){var b=ui("button",label,parent);b.type="button";b.onclick=fn;return b;}
+    function learning(title){finishEditing();hideMenus();lc.textContent="";document.getElementById("learningTitle").textContent=title;learningModal.classList.add("open");}
+    document.getElementById("btnLearningClose").onclick=function(){learningModal.classList.remove("open");};
+    function openNote(id,readonly){var n=nodes.find(function(x){return x.id===id;});if(!n)return;learning("Ghi chú: "+n.text.slice(0,60));var f=field("Nội dung chi tiết","textarea",n.note||"");f.maxLength=4000;f.readOnly=!!readonly;if(!readonly)action("Lưu ghi chú",function(){n.note=f.value.trim();learningModal.classList.remove("open");renderAll();saveToLocal();});}
+    document.getElementById("btnNote").onclick=function(){if(selectedId)openNote(selectedId,false);else showMessage("Hãy chọn một nhánh.");};
+    document.getElementById("btnCross").onclick=function(){
+      var n=nodes.find(function(x){return x.id===selectedId;});if(!n)return showMessage("Hãy chọn nhánh bắt đầu.");
+      learning("Liên kết chéo");ui("p","Chọn nhánh có liên quan. Đường nét đứt không thay đổi quan hệ cha – con.");
+      var list=ui("select");nodes.filter(function(x){return x.id!==n.id;}).forEach(function(x){var o=ui("option",x.text.slice(0,100),list);o.value=x.id;});
+      action("Thêm liên kết",function(){if(!list.value)return;n.cross=n.cross||[];if(n.cross.indexOf(list.value)<0&&n.cross.length<100)n.cross.push(list.value);learningModal.classList.remove("open");renderAll();saveToLocal();});
+      (n.cross||[]).forEach(function(id){var x=nodes.find(function(v){return v.id===id;});if(x)action("Gỡ: "+x.text.slice(0,40),function(){n.cross=n.cross.filter(function(v){return v!==id;});learningModal.classList.remove("open");renderAll();saveToLocal();});});
+    };
+    function makeTemplate(count,both){
+      var root=generateId(),arr=[{id:root,parentId:null,text:"Chủ đề chính",x:0,y:0,theme:"theme-blue",image:"",link:"",linkName:"",imgWidth:280}];
+      for(var i=0;i<count;i++)arr.push({id:generateId()+"_"+i,parentId:root,text:"Ý chính "+(i+1),x:200,y:i*80,theme:["theme-green","theme-yellow","theme-pink","theme-gray"][i%4],image:"",link:"",linkName:"",imgWidth:280});
+      nodes=arr;selectedId=root;imageEpoch++;learningModal.classList.remove("open");renderAll();autoLayout(both);
+    }
+    document.getElementById("btnTemplate").onclick=function(){
+      learning("Mẫu sơ đồ");ui("p","Mẫu chỉ có khung ý. Em tự thay nội dung bằng từ khóa.");
+      [["Trang trắng",0,true],["Tỏa hai bên – 4 ý",4,true],["Cây ngang – 3 ý",3,false]].forEach(function(t){action(t[0],function(){function apply(){if(!t[1]){nodes=[];selectedId=null;imageEpoch++;learningModal.classList.remove("open");renderAll();saveToLocal();}else makeTemplate(t[1],t[2]);}if(nodes.length)showMessage("Thay sơ đồ hiện tại bằng mẫu? Có thể Hoàn tác.",apply);else apply();});});
+    };
+    function inspectWork(list,g,req){
+      var issues=[],roots=list.filter(function(n){return !n.parentId;}),main=list.filter(function(n){return roots.some(function(r){return n.parentId===r.id;});}).length;
+      var blank=list.filter(function(n){return !n.text.trim()||/^(Chủ đề chính|Chủ đề mới|Nhánh con mới|Nhánh con|Ý chính [0-9]+)$/.test(n.text.trim());});
+      var long=list.filter(function(n){return n.text.trim().split(/\s+/).length>15;});
+      var overlaps=0,visible=list.filter(function(n){return !!g[n.id];});
+      for(var i=0;i<visible.length;i++)for(var j=i+1;j<visible.length;j++){var a=visible[i],b=visible[j],x=g[a.id],y=g[b.id];if(a.x<b.x+y.w&&b.x<a.x+x.w&&a.y<b.y+y.h&&b.y<a.y+x.h)overlaps++;}
+      if(!roots.length)issues.push("Chưa có chủ đề.");
+      if(blank.length)issues.push(blank.length+" nhánh còn nội dung mẫu hoặc trống.");
+      if(long.length)issues.push(long.length+" nhánh dài hơn 15 từ; cân nhắc đưa chi tiết vào ghi chú.");
+      if(overlaps)issues.push(overlaps+" cặp nhánh đang chồng lấn; hãy sắp xếp lại.");
+      if(req){if(main<req.minBranches)issues.push("Cần ít nhất "+req.minBranches+" nhánh chính.");if(list.filter(function(n){return !!n.image;}).length<req.minImages)issues.push("Cần ít nhất "+req.minImages+" nhánh có ảnh.");if(list.filter(function(n){return !!n.link;}).length<req.minLinks)issues.push("Cần ít nhất "+req.minLinks+" nhánh có liên kết.");}
+      return {issues:issues,main:main,total:list.length,blank:blank.length,long:long.length,overlaps:overlaps};
+    }
+    document.getElementById("btnCheck").onclick=function(){learning("Kiểm tra sản phẩm");var r=inspectWork(nodes,geometry(),assignment);ui("p",r.total+" nút · "+r.main+" nhánh chính");if(!r.issues.length)ui("p","Chưa phát hiện vấn đề theo các tiêu chí kiểm tra.");else r.issues.forEach(function(x){ui("p","• "+x);});ui("p","Đây là gợi ý tự kiểm tra, không phải điểm đánh giá nội dung.");};
+    function api(actionName,data){
+      if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint))return Promise.reject(Error("Chưa cấu hình đường dẫn Apps Script."));
+      var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);return v;},function(e){clearTimeout(timeout);throw e;});
+    }
+    function busy(fn){if(onlineBusy)return;onlineBusy=true;Promise.resolve().then(fn).catch(function(e){console.warn(e);showMessage(e.message||"Không kết nối được.");}).then(function(){onlineBusy=false;});}
+    function showAssignment(){learning("Nhiệm vụ học tập");if(assignment){ui("p",assignment.title);ui("p",assignment.instructions);ui("p","Tối thiểu: "+assignment.minBranches+" nhánh chính, "+assignment.minImages+" ảnh, "+assignment.minLinks+" liên kết.");}else ui("p","Chưa chọn nhiệm vụ. Em vẫn có thể thực hành tự do.");var code=field("Mã nhiệm vụ","text",assignment?assignment.id:"");action("Mở nhiệm vụ",function(){busy(function(){return api("assignment",{id:code.value.trim()}).then(function(r){assignment=r.assignment;showAssignment();});});});}
+    document.getElementById("btnLearning").onclick=showAssignment;
+    function receiptKey(id){return "mindmap_receipt_"+id;}
+    function readReceipt(id){try{return JSON.parse(localStorage.getItem(receiptKey(id))||"null");}catch(e){return null;}}
+    function writeReceipt(id,data){try{localStorage.setItem(receiptKey(id),JSON.stringify(data));return true;}catch(e){return false;}}
+    document.getElementById("btnSubmitWork").onclick=function(){
+      learning("Nộp bài");if(!assignment){ui("p","Hãy mở nhiệm vụ bằng mã giáo viên cung cấp trước khi nộp.");action("Mở nhiệm vụ",showAssignment);return;}
+      ui("p",assignment.title);var pref=getConfig(), name=field("Họ tên","text",pref.name),cls=field("Lớp","text",pref.cls),stt=field("STT (1–60)","number",pref.stt);
+      var current=readReceipt(assignment.id), key=assignment.id;
+      if(current&&current.receipt)ui("p","Đã nhận mã bài: "+current.receipt);
+      action("Xem nhận xét",function(){var rec=readReceipt(key);if(!rec||!rec.receipt)return showMessage("Chưa có mã bài trên máy này.");busy(function(){return api("feedback",{receipt:rec.receipt,secret:rec.secret}).then(function(r){showMessage(r.feedback.status+"\nĐiểm: "+(r.feedback.score===""?"Chưa chấm":r.feedback.score)+"\n"+(r.feedback.comment||"Chưa có nhận xét."));});});});
+      action("Nộp bài",function(){
+        var nm=name.value.trim(),cl=cls.value.trim(),no=Number(stt.value);
+        if(nm.length<2||nm.length>100||!cl||cl.length>30||!Number.isInteger(no)||no<1||no>60||!nodes.length)return showMessage("Hãy điền đúng thông tin và hoàn thành sơ đồ.");
+        finishEditing();var state=captureState(),raw=JSON.stringify(state);
+        if(raw.length>4*1024*1024)return showMessage("Bài nộp trực tuyến quá lớn (giới hạn 4 MB dữ liệu JSON). Hãy giảm ảnh hoặc dùng liên kết.");
+        var saved=readReceipt(key),fingerprint=nm+"|"+cl+"|"+no+"|"+JSON.stringify(state.nodes),requestId;
+        // Stable request ID for retries, including lost server response.
+        var hash=0;for(var i=0;i<fingerprint.length;i++)hash=(Math.imul(31,hash)+fingerprint.charCodeAt(i))|0;
+        var signature=String(hash)+":"+fingerprint.length;
+        requestId=saved&&saved.signature===signature?saved.requestId:generateId()+"_"+generateId();
+        var pending={requestId:requestId,signature:signature,receipt:saved&&saved.receipt||"",secret:saved&&saved.secret||""};
+        if(!writeReceipt(key,pending))return showMessage("Không thể lưu mã nộp bài. Hãy mở ứng dụng ngoài Google Sites hoặc lưu JSON.");
+        saveConfig(Object.assign(getConfig(),{name:nm,cls:cl,stt:String(no)}));
+        busy(function(){return api("submit",{id:key,name:nm,cls:cl,stt:no,requestId:requestId,project:state}).then(function(r){pending.receipt=r.receipt;pending.secret=r.secret;var ok=writeReceipt(key,pending);showMessage(ok?"Bài đã được nộp.":"Bài đã được nộp. Hãy ghi lại mã: "+r.receipt+" / "+r.secret);});});
+      });
+    };
+    function teacherPanel(){
+      learning("Giáo viên");var ep=field("URL Apps Script (Web app)","url",endpoint),pw=field("Mật khẩu giáo viên","password",teacherToken);
+      action("Lưu cấu hình / đăng nhập",function(){endpoint=ep.value.trim();teacherToken=pw.value;busy(function(){return api("teacherList",{password:teacherToken}).then(function(r){saveConfig(Object.assign(getConfig(),{endpoint:endpoint}));teacherDashboard(r);});});});
+      ui("p","Chức năng trực tuyến cần triển khai máy chủ MindmapServer.gs. Mật khẩu chỉ giữ trong phiên trang, không lưu vào tệp.");
+    }
+    function teacherDashboard(r){
+      learning("Quản lý nhiệm vụ và bài nộp");
+      var title=field("Tên nhiệm vụ","text",""),instructions=field("Yêu cầu","textarea",""),a=field("Số nhánh chính tối thiểu","number","3"),b=field("Số ảnh tối thiểu","number","0"),c=field("Số liên kết tối thiểu","number","0");
+      action("Tạo nhiệm vụ",function(){busy(function(){return api("createAssignment",{password:teacherToken,title:title.value,instructions:instructions.value,minBranches:Number(a.value),minImages:Number(b.value),minLinks:Number(c.value)}).then(function(x){showMessage("Mã nhiệm vụ: "+x.assignment.id);return api("teacherList",{password:teacherToken});}).then(teacherDashboard);});});
+      ui("h3","Nhiệm vụ");(r.assignments||[]).forEach(function(x){ui("p",x.id+" – "+x.title);});
+      var filter=field("Lọc lớp hoặc mã nhiệm vụ","text","");var rows=ui("div");
+      function draw(){rows.textContent="";(r.submissions||[]).filter(function(x){var q=filter.value.trim().toLowerCase();return !q||String(x.cls+" "+x.assignment).toLowerCase().indexOf(q)>=0;}).forEach(function(x){var row=ui("div",null,rows);row.className="work-row";ui("p",x.cls+" · "+x.stt+" · "+x.name+" · "+x.assignment+" · "+x.status,row);action("Xem bài / chấm",function(){busy(function(){return api("teacherGet",{password:teacherToken,receipt:x.receipt}).then(function(y){teacherReview(y);});});},row);});}
+      filter.oninput=draw;draw();action("Cập nhật",function(){busy(function(){return api("teacherList",{password:teacherToken}).then(teacherDashboard);});});action("Đăng xuất",function(){teacherToken="";teacherPanel();});
+    }
+    function teacherReview(r){
+      var p=validateProject(r.project);learning("Bài của "+r.submission.name);ui("p",r.submission.cls+" · STT "+r.submission.stt);
+      var map=Object.create(null);p.nodes.forEach(function(n){map[n.id]=n;});
+      p.nodes.forEach(function(n){var depth=0,x=n;while(x.parentId&&map[x.parentId]&&depth<15){depth++;x=map[x.parentId];}var line=ui("p",n.text+(n.note?" — "+n.note:""));line.style.paddingLeft=(depth*12)+"px";if(n.image&&validImage(n.image)){var img=ui("img");img.src=n.image;img.alt="Ảnh minh chứng";img.style.maxWidth="160px";img.style.maxHeight="100px";}if(validHttp(n.link)){var link=ui("a","Mở liên kết");link.href=n.link;link.target="_blank";link.rel="noopener noreferrer";}});
+      action("Tải sơ đồ JSON",function(){downloadBlob(new Blob([JSON.stringify(r.project)],{type:"application/json"}),"Bai_"+r.submission.receipt+".json");});
+      var score=field("Điểm (0–10, có thể để trống)","number",String(r.submission.score)),comment=field("Nhận xét","textarea",r.submission.comment),status=ui("select");
+      ["Đã nhận","Yêu cầu chỉnh sửa","Đã đánh giá"].forEach(function(v){var o=ui("option",v,status);o.value=v;});status.value=r.submission.status;
+      action("Lưu đánh giá",function(){busy(function(){return api("review",{password:teacherToken,receipt:r.submission.receipt,score:score.value,comment:comment.value,status:status.value}).then(function(){showMessage("Đã lưu đánh giá.");return api("teacherList",{password:teacherToken});}).then(teacherDashboard);});});
+      action("Quay lại",function(){busy(function(){return api("teacherList",{password:teacherToken}).then(teacherDashboard);});});
+    }
+    document.getElementById("btnTeacher").onclick=teacherPanel;
     // Khởi chạy với trang trống (hoặc khôi phục bài đang làm dở)
     loadInitialState();
   </script>
