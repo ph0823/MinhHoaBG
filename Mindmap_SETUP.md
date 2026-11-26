@@ -8,7 +8,7 @@
 - Trong Cài đặt dự án > Thuộc tính tập lệnh, thêm:
   - MINDMAP_SPREADSHEET_ID: ID bảng tính.
   - MINDMAP_FOLDER_ID: ID thư mục.
-  - MINDMAP_TEACHER_PASSWORD: mật khẩu mạnh, tối thiểu 12 ký tự. Không ghi vào HTML hoặc GitHub.
+  - MINDMAP_TEACHER_PASSWORD: mã giáo viên gồm đúng 8 chữ số, lưu dạng văn bản; tránh mã dễ đoán. Không ghi vào HTML hoặc GitHub.
 
 ## 2. Triển khai
 
