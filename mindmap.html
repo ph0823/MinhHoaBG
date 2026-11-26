@@ -263,6 +263,11 @@
 
     .node-add-child {position:absolute;right:-17px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;padding:0;justify-content:center;background:#0879b1;color:white;border:2px solid white;font-size:20px;line-height:1;display:none;z-index:16;box-shadow:0 1px 4px #64748b;}
     .node.selected .node-add-child{display:flex;}
+    .node-delete{position:absolute;left:-17px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;padding:0;justify-content:center;background:#dc2626;color:#fff;border:2px solid #fff;font-size:20px;line-height:1;display:none;z-index:16;box-shadow:0 1px 4px #64748b;}
+    .node.selected .node-delete{display:flex;}
+    .node-delete:hover:not(:disabled){background:#b91c1c;color:#fff;border-color:#fff;}
+    body.presenting .node-delete{display:none!important;}
+    @media print{.node-delete{display:none!important;}}
     .node-add-child:hover:not(:disabled){background:#075985;color:white;}
     body.presenting .node-add-child{display:none!important;}
     #selectedLabel{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#075985;font-weight:600;}
@@ -948,6 +953,11 @@
         add.addEventListener("dblclick",function(e){e.stopPropagation();});
         add.addEventListener("click",function(e){e.stopPropagation();if(!presentation && !modalOpen()){selectNode(node.id);addChildNode(node.id);}});
         el.appendChild(add);
+        var del=document.createElement("button");del.type="button";del.className="node-delete";del.textContent="×";del.title="Xóa nhánh";del.setAttribute("aria-label","Xóa nhánh");
+        del.addEventListener("mousedown",function(e){e.stopPropagation();e.preventDefault();});
+        del.addEventListener("dblclick",function(e){e.preventDefault();e.stopPropagation();});
+        del.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(presentation||!storageReady||modalOpen()||!nodes.some(function(n){return n.id===node.id;}))return;selectNode(node.id);deleteSelectedNode();});
+        el.appendChild(del);
         el.addEventListener("click",function(e){if(presentation||!storageReady||modalOpen()||e.target.closest("button,a"))return;e.stopPropagation();selectNode(node.id);});
         el.addEventListener("mousedown", e => {
           e.stopPropagation();
@@ -1180,6 +1190,9 @@
     function deleteSelectedNode() {
       if (!storageReady || !selectedId || modalOpen()) return;
       finishEditing();
+      const target=nodes.find(function(n){return n.id===selectedId;});
+      if(!target)return;
+      const parentId=target.parentId;
       const toDelete = new Set([selectedId]);
       let added = true;
       while (added) {
@@ -1194,7 +1207,8 @@
       function removeBranch(){
         nodes = nodes.filter(n => !toDelete.has(n.id));
         nodes.forEach(function(n){n.cross=(n.cross||[]).filter(function(id){return !toDelete.has(id);});});
-        selectedId = nodes.length ? nodes[nodes.length-1].id : null;
+        var visible=visibleNodes();
+        selectedId=visible.some(function(n){return n.id===parentId;})?parentId:(visible.length?visible[0].id:null);
         renderAll(); saveToLocal();
       }
       if(toDelete.size>1) showMessage("Xóa nhánh này cùng "+(toDelete.size-1)+" nhánh con?",removeBranch,"Xóa nhánh");
