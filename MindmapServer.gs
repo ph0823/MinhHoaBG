@@ -4,7 +4,7 @@
  * MINDMAP_SPREADSHEET_ID, MINDMAP_FOLDER_ID (private Drive folder).
  * Do not reuse the script of other teaching apps.
  */
-function doGet() { return output_({ok:true,service:"Mindmap V3.6.3"}); }
+function doGet() { return output_({ok:true,service:"Mindmap V3.6.5"}); }
 function output_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 function fail_(message){throw new Error(message);}
 function props_(){return PropertiesService.getScriptProperties();}
@@ -85,6 +85,35 @@ function validateProject_(p){
   });
   var raw=JSON.stringify(p);if(Utilities.newBlob(raw).getBytes().length>4*1024*1024)fail_("Bài vượt quá giới hạn 4 MB dữ liệu JSON.");return raw;
 }
+// Only non-identifying request/receipt digests are retained to prevent retry resurrection.
+function deletedRequests_(){return sheet_("Mindmap_DeletedRequests",["requestHash","receiptHash"]);}
+function deletedRequest_(req){return !!findDeleted_(deletedRequests_(),0,digest_(req));}
+function findDeleted_(sh,col,value){var n=sh.getLastRow();if(n<2)return null;var cell=sh.getRange(2,col+1,n-1,1).createTextFinder(value).matchEntireCell(true).matchCase(true).findNext();return cell;}
+function directChild_(item,rootId){var it=item.getParents();while(it.hasNext())if(it.next().getId()===rootId)return true;return false;}
+function purgeSubmission_(sh,sr,f){
+  var row=f.row,receipt=String(row[0]),rootId=props_().getProperty("MINDMAP_FOLDER_ID"),fileId=String(row[7]);
+  if(!rootId||!fileId||sr.some(function(r){return r!==row&&String(r[7])===fileId;}))fail_("Không thể xác định tệp riêng của bài.");
+  var file=DriveApp.getFileById(fileId);
+  if(!directChild_(file,rootId)||file.getName()!==receipt+".json")fail_("Tệp không thuộc thư mục bài nộp.");
+  var project=JSON.parse(readVerified_(row)),folder=null;
+  if(project.assetFolder){
+    if(!row[19])fail_("Không xác minh được thư mục tài nguyên.");
+    folder=DriveApp.getFolderById(project.assetFolder);
+    if(folder.getId()===rootId||!directChild_(folder,rootId)||!/^MM_assets_[A-Za-z0-9_-]+$/.test(folder.getName()))fail_("Thư mục tài nguyên không hợp lệ.");
+    var subfolders=folder.getFolders();if(subfolders.hasNext())fail_("Thư mục tài nguyên có nội dung ngoài dự kiến.");
+    var allowed=Object.create(null);assetRefs_(project).forEach(function(r){allowed[r.asset.hash]=true;});
+    var files=folder.getFiles();while(files.hasNext()){var child=files.next();if(!/^[a-f0-9]{64}$/.test(child.getName()))fail_("Thư mục có tệp ngoài dự kiến.");}
+  }
+  var tomb=deletedRequests_(),reqHash=digest_(String(row[1])),receiptHash=digest_(receipt);
+  if(!findDeleted_(tomb,1,receiptHash)){tomb.appendRow([reqHash,receiptHash]);SpreadsheetApp.flush();}
+  // Trash rather than irreversible Drive deletion; preserve row until Drive operations complete.
+  if(folder&&!folder.isTrashed())folder.setTrashed(true);
+  if(!file.isTrashed())file.setTrashed(true);
+  if(!file.isTrashed()||folder&&!folder.isTrashed())fail_("Chưa xác nhận xóa tài nguyên. Hãy thử lại.");
+  sh.deleteRow(f.number);SpreadsheetApp.flush();
+  if(find_(rows_(sh),0,receipt))fail_("Chưa xác nhận xóa dòng bài nộp. Hãy thử lại.");
+  return {ok:true,hardDeleted:true};
+}
 function doPost(e){
   var lock=null;
   try{
@@ -93,7 +122,7 @@ function doPost(e){
     var p=JSON.parse(raw),a=p.action;
     if(a==="teacherLogin"){teacher_(p.password);var token=id_()+id_();CacheService.getScriptCache().put("mm_session_"+digest_(token),"1",1200);return output_({ok:true,token:token,expiresIn:1200});}
     if(a==="teacherLogout"){if(typeof p.token==="string")CacheService.getScriptCache().remove("mm_session_"+digest_(p.token));return output_({ok:true});}
-    if(["teacherList","createAssignment","teacherGet","teacherMedia","teacherMediaBatch","review","teacherEdit","teacherDelete"].indexOf(a)>=0)teacher_(p.password,p.token);
+    if(["teacherList","createAssignment","teacherGet","teacherMedia","teacherMediaBatch","review","teacherEdit","teacherDelete","teacherPurge"].indexOf(a)>=0)teacher_(p.password,p.token);
     // Serialize sheet initialization, submission and assessment. No public listing of students.
     lock=LockService.getScriptLock();if(!lock.tryLock(15000))fail_("Hệ thống đang bận. Hãy thử lại.");
     var ash=assignments_(), ar=rows_(ash), sh=submissions_(), sr=rows_(sh);
@@ -108,6 +137,7 @@ function doPost(e){
     if(a==="uploadMedia"){
       var req=str_(p.requestId,120,true),secret=str_(p.clientSecret,128,true),aid=str_(p.id,64,true),hash=str_(p.hash,64,true),data=p.data;
       if(!/^[a-zA-Z0-9_-]{16,120}$/.test(req)||!/^[a-zA-Z0-9_-]{24,128}$/.test(secret)||!find_(ar,0,aid)||!dataMedia_(data,false)||data.length>4*1024*1024+100||mediaHash_(data)!==hash)fail_("Tài nguyên không hợp lệ hoặc quá lớn.");
+      if(deletedRequest_(req))fail_("Bài đã được giáo viên xóa. Hãy tạo lượt nộp mới.");
       var mime=data.slice(5,data.indexOf(";")),folder=stageFolder_(req,secret,true),it=folder.getFilesByName(hash);
       if(!it.hasNext()){var files=folder.getFiles(),count=0,total=0;while(files.hasNext()){var f=files.next();count++;total+=f.getSize();}var bytes=Utilities.base64Decode(data.slice(data.indexOf(",")+1));if(count>=100||total+bytes.length>12*1024*1024)fail_("Quá giới hạn tài nguyên của bài.");folder.createFile(Utilities.newBlob(bytes,mime,hash));}
       assetData_(folder,hash,mime);return output_({ok:true,hash:hash});
@@ -116,6 +146,7 @@ function doPost(e){
       var aid=str_(p.id,64,true),name=str_(p.name,100,true),cls=class_(p.cls),stt=integer_(p.stt,1,50),req=str_(p.requestId,120,true),secret=str_(p.clientSecret,128,true);
       if(!/^[a-zA-Z0-9_-]{16,120}$/.test(req)||! /^[a-zA-Z0-9_-]{24,128}$/.test(secret))fail_("Mã bài không hợp lệ.");
       if(!find_(ar,0,aid))fail_("Không tìm thấy nhiệm vụ.");
+      if(deletedRequest_(req))fail_("Bài đã được giáo viên xóa. Hãy tạo lượt nộp mới.");
       var existing=find_(sr,1,req);
       if(existing){if(existing.row[2]!==digest_(secret)||existing.row[3]!==aid)fail_("Mã bài không khớp.");if(existing.row[9]==="Đã xóa")fail_("Bài đã được giáo viên loại bỏ. Hãy liên hệ giáo viên.");verifyStored_(existing.row);return output_({ok:true,receipt:existing.row[0],secret:secret,duplicate:true,createdAt:iso_(existing.row[8])});}
       if(!p.project||typeof p.project!=="object")fail_("Thiếu dữ liệu sơ đồ.");
@@ -141,7 +172,7 @@ function doPost(e){
       return output_({ok:true,receipt:receipt,secret:secret,createdAt:now.toISOString(),attempt:attempt});
     }
     if(a==="status"){
-      var found=find_(sr,1,str_(p.requestId,120,true));if(!found)return output_({ok:true,saved:false});
+      var request=str_(p.requestId,120,true);if(deletedRequest_(request))fail_("Bài đã được giáo viên xóa.");var found=find_(sr,1,request);if(!found)return output_({ok:true,saved:false});
       if(found.row[2]!==digest_(str_(p.clientSecret,128,true)))fail_("Mã bài không khớp.");if(found.row[9]==="Đã xóa")fail_("Bài đã được giáo viên loại bỏ.");verifyStored_(found.row);return output_({ok:true,saved:true,receipt:String(found.row[0]),secret:p.clientSecret,createdAt:iso_(found.row[8])});
     }
     if(a==="feedback"){
@@ -153,6 +184,9 @@ function doPost(e){
     if(a==="teacherEdit"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f||f.row[9]==="Đã xóa")fail_("Không tìm thấy bài.");
       var name=str_(p.name,100,true),cls=class_(p.cls),stt=integer_(p.stt,1,50);sh.getRange(f.number,5,1,3).setValues([[safeCell_(name),cls,stt]]);sh.getRange(f.number,14).setValue(studentKey_(f.row[3],cls,stt));SpreadsheetApp.flush();return output_({ok:true});
+    }
+    if(a==="teacherPurge"){
+      var receipt=str_(p.receipt,80,true),f=find_(sr,0,receipt);if(!f){if(findDeleted_(deletedRequests_(),1,digest_(receipt)))return output_({ok:true,hardDeleted:true});fail_("Không tìm thấy bài.");}return output_(purgeSubmission_(sh,sr,f));
     }
     if(a==="teacherDelete"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f)fail_("Không tìm thấy bài.");sh.getRange(f.number,10).setValue("Đã xóa");return output_({ok:true});
