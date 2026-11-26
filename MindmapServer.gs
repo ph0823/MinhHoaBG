@@ -1,6 +1,6 @@
 /**
  * Mindmap Learning Studio V3.0 – dedicated Google Apps Script Web App.
- * Script properties: MINDMAP_TEACHER_PASSWORD (at least 12 characters),
+ * Script properties: MINDMAP_TEACHER_PASSWORD (exactly 8 digits, stored as text),
  * MINDMAP_SPREADSHEET_ID, MINDMAP_FOLDER_ID (private Drive folder).
  * Do not reuse the script of other teaching apps.
  */
@@ -22,8 +22,8 @@ function digest_(v){return Utilities.base64EncodeWebSafe(Utilities.computeDigest
 function teacher_(p,token){
   if(typeof token==="string"&&/^[a-f0-9]{64}$/.test(token)&&CacheService.getScriptCache().get("mm_session_"+digest_(token))==="1")return;
   var expected=props_().getProperty("MINDMAP_TEACHER_PASSWORD");
-  if(!expected||expected.length<12)fail_("Chưa thiết lập mật khẩu giáo viên (ít nhất 12 ký tự).");
-  if(typeof p!=="string"||digest_(p)!==digest_(expected))fail_("Mật khẩu không đúng.");
+  if(!expected||!/^\d{8}$/.test(expected))fail_("Chưa thiết lập mã giáo viên gồm đúng 8 chữ số.");
+  if(typeof p!=="string"||!/^\d{8}$/.test(p)||digest_(p)!==digest_(expected))fail_("Mật khẩu không đúng.");
 }
 function class_(v){var c=str_(v,30,true).toUpperCase();if(!/^9A[1-9]$/.test(c))fail_("Lớp không hợp lệ.");return c;}
 function str_(v,max,required){if(typeof v!=="string"||v.length>max||required&&!v.trim())fail_("Thông tin không hợp lệ.");return v.trim();}
