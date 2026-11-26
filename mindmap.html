@@ -559,7 +559,7 @@
       <div class="form-group">
         <label>Cách 2: Đính kèm tệp từ máy tính (.docx, .xlsx, .pdf, ảnh, âm thanh...)</label>
         <input type="file" id="linkFileInput" />
-        <div class="hint">Tệp tối đa 2 MB; tệp lớn hơn nên dùng liên kết Google Drive.</div>
+        <div class="hint">Tệp tối đa 3 MB; tệp lớn hơn nên dùng liên kết Google Drive.</div>
       </div>
       <div class="form-group">
         <label>Tên hiển thị khi rê chuột vào biểu tượng liên kết (tùy chọn)</label>
@@ -652,7 +652,7 @@
     }
 
     // V2.0 – Reliable Mindmap. IndexedDB stores large payloads; localStorage is a fallback.
-    var MAX_FILE = 2 * 1024 * 1024;
+    var MAX_FILE = 3 * 1024 * 1024;
     var ONLINE_LIMIT=4*1024*1024, pendingMedia=0;
     var MAX_IMAGE = 3 * 1024 * 1024;
     var MAX_PROJECT = 32 * 1024 * 1024;
@@ -856,7 +856,7 @@
       var size = JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;})).length*2;
       if(size>MAX_PROJECT){showMessage("Sơ đồ đã gần đầy. Hãy giảm dung lượng ảnh hoặc dùng liên kết Google Drive.");return false;}
       var currentLength=JSON.stringify(nodes).length;
-      if(new Blob([JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;}))]).size+4096>ONLINE_LIMIT && size/2>currentLength){showMessage("Bài vượt giới hạn nộp trực tuyến 4 MB JSON. Hãy giảm ảnh hoặc dùng liên kết Drive; dữ liệu cũ vẫn được giữ.");return false;}
+      var list=nodes.map(function(n){return n.id===node.id?copy:n;}),unique=Object.create(null),total=0,count=0;list.forEach(function(n){[n.image,n.link].forEach(function(v){if(typeof v==="string"&&v.indexOf("data:")===0&&!unique[v]){unique[v]=true;total+=mediaBytes(v);count++;}});});if((total>12*1024*1024||count>100)&&size/2>currentLength){showMessage("Tổng tài nguyên vượt 12 MB hoặc 100 tệp. Hãy giảm ảnh hoặc dùng liên kết Drive.");return false;}
       if(size>MAX_PROJECT*.75) setStatus("Sơ đồ có dung lượng lớn – nên lưu tệp JSON",true);
       return true;
     }
@@ -1542,7 +1542,7 @@
       var token=++linkReadToken,file=e.target.files[0],btn=document.getElementById("btnApplyLink");
       pendingFileLinkData=null;pendingFileLinkName="";
       if(!file){btn.disabled=false;return;}
-      if(file.size>MAX_FILE){linkFileInput.value="";btn.disabled=false;showMessage("Tệp lớn hơn 2 MB. Hãy dùng liên kết Google Drive.");return;}
+      if(file.size>MAX_FILE){linkFileInput.value="";btn.disabled=false;showMessage("Tệp lớn hơn 3 MB. Hãy dùng liên kết Google Drive.");return;}
       if(/\.(exe|bat|cmd|com|msi|js|html?|svg|vbs|ps1|scr|sh)$/i.test(file.name)){linkFileInput.value="";btn.disabled=false;showMessage("Loại tệp này không được hỗ trợ.");return;}
       btn.disabled=true;
       var reader=new FileReader();
@@ -1890,7 +1890,7 @@
     }
     document.getElementById("btnCheck").onclick=function(){learning("Kiểm tra sản phẩm");var r=inspectWork(nodes,geometry(),assignment);ui("p",r.total+" nút · "+r.main+" nhánh chính");if(!r.issues.length)ui("p","Chưa phát hiện vấn đề theo các tiêu chí kiểm tra.");else r.issues.forEach(function(x){ui("p","• "+x);});ui("p","Đây là gợi ý tự kiểm tra, không phải điểm đánh giá nội dung.");};
     function api(actionName,data){
-      data=Object.assign({},data||{});if(teacherSession&&/^(teacherList|teacherGet|teacherEdit|teacherDelete|review|createAssignment|teacherLogout)$/.test(actionName))data.token=teacherSession;
+      data=Object.assign({},data||{});if(teacherSession&&/^(teacherList|teacherGet|teacherMedia|teacherEdit|teacherDelete|review|createAssignment|teacherLogout)$/.test(actionName))data.token=teacherSession;
       if(!validEndpoint(endpoint))return Promise.reject(Error("Chưa mở chức năng nộp bài. Em hãy báo giáo viên."));
       var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);return v;},function(e){clearTimeout(timeout);throw e;});
     }
@@ -1902,6 +1902,21 @@
     function fingerprintHash(state){var bytes=new TextEncoder().encode(submitFingerprint(state));return window.crypto.subtle.digest("SHA-256",bytes).then(function(b){return Array.from(new Uint8Array(b)).map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");});}
     function receiptMatches(r,p){return !!r&&/^MMB-[a-f0-9]{32}$/i.test(r.receipt||"")&&r.secret===p.secret;}
     function submitReliable(payload,pending){return api("submit",payload).then(function(r){if(!receiptMatches(r,pending))throw Error("Phản hồi không hợp lệ.");return r;}).catch(function(err){console.warn("Mindmap submit",err);return api("status",{requestId:pending.requestId,clientSecret:pending.secret}).then(function(r){if(r.saved&&receiptMatches(r,pending))return r;throw err;},function(){throw err;});});}
+    function hashMedia(v){return window.crypto.subtle.digest("SHA-256",new TextEncoder().encode(v)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return ("0"+x.toString(16)).slice(-2);}).join("");});}
+    function splitMedia(state){
+      var manifest=JSON.parse(JSON.stringify(state)),files=[],seen=Object.create(null),chain=Promise.resolve();
+      manifest.nodes.forEach(function(n){["image","link"].forEach(function(k){var v=n[k];if(typeof v!=="string"||v.indexOf("data:")!==0)return;
+        chain=chain.then(function(){return hashMedia(v).then(function(hash){if(!seen[hash]){seen[hash]=true;files.push({hash:hash,data:v,bytes:mediaBytes(v)});}n[k]="";n[k+"Asset"]={hash:hash,mime:v.slice(5,v.indexOf(";"))};});});
+      });});
+      return chain.then(function(){var total=files.reduce(function(a,f){return a+f.bytes;},0);if(files.length>100||total>12*1024*1024||files.some(function(f){return f.bytes>3*1024*1024;}))throw Error("Tài nguyên vượt giới hạn 3 MB/tệp, 12 MB/bài hoặc 100 tệp.");if(new Blob([JSON.stringify(manifest)]).size>ONLINE_LIMIT)throw Error("Nội dung sơ đồ vượt 4 MB JSON.");return {project:manifest,files:files};});
+    }
+    function uploadMediaSequential(bundle,pending,aid,progress){
+      var chain=Promise.resolve();bundle.files.forEach(function(f,i){chain=chain.then(function(){progress.textContent="Đang lưu tài nguyên "+(i+1)+"/"+bundle.files.length+"…";return api("uploadMedia",{id:aid,requestId:pending.requestId,clientSecret:pending.secret,hash:f.hash,data:f.data}).then(function(r){if(r.hash!==f.hash)throw Error("Chưa xác nhận tài nguyên.");});});});return chain;
+    }
+    function hydrateTeacher(r){
+      var refs=[],cache=Object.create(null),chain=Promise.resolve();r.project.nodes.forEach(function(n){["image","link"].forEach(function(k){if(n[k+"Asset"])refs.push({node:n,key:k,asset:n[k+"Asset"]});});});
+      refs.forEach(function(ref){chain=chain.then(function(){var a=ref.asset;var fetchData=cache[a.hash]?Promise.resolve(cache[a.hash]):api("teacherMedia",{receipt:r.submission.receipt,hash:a.hash}).then(function(v){if(v.hash!==a.hash)throw Error("Tài nguyên không khớp.");return hashMedia(v.data).then(function(hash){if(hash!==a.hash)throw Error("Tài nguyên bị lỗi.");cache[a.hash]=v.data;return v.data;});});return fetchData.then(function(v){ref.node[ref.key]=v;delete ref.node[ref.key+"Asset"];});});});return chain.then(function(){return r;});
+    }
     function readReceipt(id){try{return JSON.parse(localStorage.getItem(receiptKey(id))||"null");}catch(e){return null;}}
     function newSecret(){var a=new Uint8Array(32);if(!window.crypto||!window.crypto.getRandomValues)throw Error("Trình duyệt không hỗ trợ tạo mã bảo mật.");window.crypto.getRandomValues(a);return Array.from(a).map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");}
     function writeReceipt(id,data){try{localStorage.setItem(receiptKey(id),JSON.stringify(data));return true;}catch(e){return false;}}
@@ -1918,7 +1933,7 @@
         if(onlineBusy)return;if(pendingMedia)return showMessage("Ảnh đang được xử lý. Hãy thử lại sau khi ảnh xuất hiện.");var nm=name.value.trim(),cl=cls.value.trim(),no=Number(stt.value);
         if(nm.length<2||nm.length>100||!/^9A[1-9]$/.test(cl)||!Number.isInteger(no)||no<1||no>50||!nodes.length)return showMessage("Hãy điền đúng thông tin và hoàn thành sơ đồ.");
         finishEditing();setStudent({name:nm,cls:cl,stt:String(no)});saveToLocal(false);var state=captureState(),raw=JSON.stringify(state);
-        if(new Blob([raw]).size>ONLINE_LIMIT)return showMessage("Bài nộp trực tuyến quá lớn (giới hạn 4 MB dữ liệu JSON). Hãy giảm ảnh hoặc dùng liên kết.");
+        if(raw.length*2>MAX_PROJECT)return showMessage("Bài quá lớn để lưu trên máy. Hãy giảm tài nguyên.");
         var saved=readReceipt(key);
         submitButton.disabled=true;submitButton.textContent="Đang nộp…";progress.textContent="Đang gửi bài. Em không cần nhấn lại.";
         busy(function(){
@@ -1927,7 +1942,7 @@
             var pending={requestId:same?saved.requestId:"mm_"+newSecret(),signature:signature,receipt:same?saved.receipt||"":"",secret:same&&saved.secret?saved.secret:newSecret(),createdAt:same?saved.createdAt||"":"",endpoint:endpoint};
             if(!writeReceipt(key,pending))throw Error("Không thể lưu mã nộp bài. Hãy lưu tệp JSON và báo giáo viên.");
             saveConfig(Object.assign(getConfig(),{name:nm,cls:cl,stt:String(no)}));
-            return submitReliable({id:assignmentId,name:nm,cls:cl,stt:no,requestId:pending.requestId,clientSecret:pending.secret,project:state},pending).then(function(r){
+            return splitMedia(state).then(function(bundle){return uploadMediaSequential(bundle,pending,assignmentId,progress).then(function(){progress.textContent="Đang xác nhận bài nộp…";return submitReliable({id:assignmentId,name:nm,cls:cl,stt:no,requestId:pending.requestId,clientSecret:pending.secret,project:bundle.project},pending);});}).then(function(r){
               pending.receipt=r.receipt;pending.createdAt=r.createdAt||"";var ok=writeReceipt(key,pending);
               progress.textContent="Bài đã được nộp.";submitButton.textContent="Đã nộp";
               showMessage(ok?"Bài đã được nộp.":"Bài đã được nộp. Hãy ghi lại mã: "+r.receipt+" / "+r.secret);
@@ -1981,7 +1996,7 @@
         stats.textContent="Đã nộp: "+latest.length+" · Đã chấm: "+graded+" · Lượt nộp: "+base.length;
         if(cls.value&&ass.value){var done=Object.create(null);latest.forEach(function(x){done[x.stt]=true;});var left=[];for(var i=1;i<=teacherFilter.size;i++)if(!done[i])left.push(i);missing.textContent="Chưa nộp ("+left.length+"): "+(left.join(", ")||"Không có");}else missing.textContent="Chọn lớp và nhiệm vụ để xem STT chưa nộp.";
         rows.textContent="";var table=ui("table",null,rows);table.className="teacher-table";var head=ui("thead",null,table),tr=ui("tr",null,head);["Lớp","STT","Họ tên","Điểm","Trạng thái","Thời gian","Thao tác"].forEach(function(t){ui("th",t,tr);});var body=ui("tbody",null,table);
-        visible.forEach(function(x){var row=ui("tr",null,body);[x.cls,x.stt,x.name,x.score===""?"—":x.score,x.status,formatWorkDate(x.createdAt)].forEach(function(v){ui("td",String(v),row);});var cell=ui("td",null,row);action("Xem / chấm",function(){stopTeacherRefresh();busy(function(){return api("teacherGet",{receipt:x.receipt}).then(teacherReview);});},cell);});
+        visible.forEach(function(x){var row=ui("tr",null,body);[x.cls,x.stt,x.name,x.score===""?"—":x.score,x.status,formatWorkDate(x.createdAt)].forEach(function(v){ui("td",String(v),row);});var cell=ui("td",null,row);action("Xem / chấm",function(){stopTeacherRefresh();busy(function(){return api("teacherGet",{receipt:x.receipt}).then(hydrateTeacher).then(teacherReview);});},cell);});
         if(!visible.length)ui("p","Chưa có bài phù hợp.",rows);
       }
       [ass,cls,mode,size].forEach(function(el){el.onchange=draw;});search.oninput=draw;draw();
