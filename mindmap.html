@@ -142,6 +142,7 @@
       transform-origin: 0 0;
     }
 
+    #studentInfo{margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;padding:5px 8px;border:1px solid #cbd5e1;border-radius:7px;background:#f8fafc;font-size:12px;}#studentInfo label{font-weight:600;margin:0 5px 0 6px;}#studentInfo select,#studentInfo input{height:30px;border:1px solid #b6c6d5;border-radius:5px;background:#fff;color:#1e293b;padding:3px 6px;font-size:13px;user-select:text;}#studentStt{width:65px;}#studentName{width:185px;max-width:40vw;}#studentInfo select{width:87px;}@media(max-width:700px){#studentInfo{margin-left:auto;max-width:100%;}#studentInfo label{margin-left:3px;}#studentName{width:140px;}}
     #nodes-layer {position:absolute;left:0;top:0;width:0;height:0;overflow:visible;pointer-events:none;}
     #nodes-layer .node {pointer-events:auto;}
     #viewport {min-height:0;outline:none;}
@@ -471,6 +472,7 @@
       <button id="btnSvg">Xuất SVG (nhánh đang hiện)</button>
       <button id="btnPrint">Xuất PDF / In</button>
     </div>
+    <div id="studentInfo" aria-label="Thông tin học sinh"><label for="studentClass">Lớp</label><select id="studentClass"><option value="">Chọn lớp</option><option value="9A1">9A1</option><option value="9A2">9A2</option><option value="9A3">9A3</option><option value="9A4">9A4</option><option value="9A5">9A5</option><option value="9A6">9A6</option><option value="9A7">9A7</option><option value="9A8">9A8</option><option value="9A9">9A9</option></select><label for="studentStt">STT</label><input id="studentStt" type="number" min="1" max="60" step="1" placeholder="STT" inputmode="numeric"><label for="studentName">Họ tên</label><input id="studentName" type="text" maxlength="100" placeholder="Nhập họ và tên" autocomplete="off"></div>
     <input type="file" id="fileOpenInput" accept=".json" style="display:none" />
   </header>
 
@@ -756,7 +758,7 @@
       try { return JSON.parse(localStorage.getItem(key) || "null"); } catch(e){ console.warn("Mindmap local read",e); return null; }
     }
     function captureState() {
-      return {version:3,nodes:JSON.parse(JSON.stringify(nodes)),panX:prePresentView?prePresentView.x:panX,panY:prePresentView?prePresentView.y:panY,zoom:prePresentView?prePresentView.z:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
+      return {version:3,student:readStudent(),nodes:JSON.parse(JSON.stringify(nodes)),panX:prePresentView?prePresentView.x:panX,panY:prePresentView?prePresentView.y:panY,zoom:prePresentView?prePresentView.z:zoom,updatedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1))};
     }
     function persistNow() {
       if(!storageReady) return;
@@ -827,7 +829,7 @@
       });
       result.forEach(function(n){n.cross=n.cross.filter(function(id,i,a){return id!==n.id&&!!ids[id]&&a.indexOf(id)===i;});});
       if(JSON.stringify(result).length*2 > MAX_PROJECT) throw new Error("Sơ đồ quá lớn. Hãy giảm dung lượng hình và tệp.");
-      return {nodes:result,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.05,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
+      return {nodes:result,student:parsed.student&&typeof parsed.student==="object"?normalizeStudent(parsed.student):null,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.05,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
     }
     function canAddMedia(node,key,value) {
       var copy = Object.assign({},node); copy[key] = value;
@@ -853,6 +855,7 @@
           var state=candidates[0]; nodes=state.nodes;panX=state.panX;panY=state.panY;zoom=state.zoom;
           selectedId=nodes.length?nodes[nodes.length-1].id:null;
           lastSavedAt=state.updatedAt;
+          if(state.student)setStudent(state.student);
         }
         lastSnapshot=JSON.stringify(nodes);
         storageReady=true;
@@ -867,6 +870,8 @@
     function updateTransform() {
       world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
       zoomLabel.textContent = Math.round(zoom * 100) + "%";
+      document.getElementById("btnZoomIn").disabled=zoom>=2-0.00001;
+      document.getElementById("btnZoomOut").disabled=zoom<=.05+0.00001;
     }
 
     function renderAll() {
@@ -1297,14 +1302,8 @@
     });
 
     window.addEventListener("blur",function(){if(dragNodeId||isPanning){dragNodeId=null;isPanning=false;viewport.classList.remove("panning");saveToLocal();}});
-    // Thu phóng bằng con lăn chuột
-    viewport.addEventListener("wheel", e => {
-      if(!storageReady || modalOpen()) return;
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.1 : -0.1;
-      zoomAt(delta>0?1.15:1/1.15,e.clientX,e.clientY);
-      updateTransform(); if(!presentation)scheduleSave();
-    }, { passive: false });
+    // Zoom is controlled exclusively by the visible zoom buttons (and explicit fit/layout).
+    viewport.addEventListener("wheel",function(e){if(e.ctrlKey || e.metaKey)e.preventDefault();},{passive:false});
 
     // Phím tắt
     window.addEventListener("keydown", e => {
@@ -1318,7 +1317,7 @@
       if(presentation){if(e.key==="Escape")exitPresentation();else if(e.key==="ArrowRight")stepPresentation(1);else if(e.key==="ArrowLeft")stepPresentation(-1);return;}
       if(!storageReady || modalOpen() || e.isComposing || e.keyCode===229) return;
       const active = document.activeElement;
-      const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+      const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || active.isContentEditable);
       if (isTyping) return;
       if((e.ctrlKey || e.metaKey) && !e.altKey){
         var key=e.key.toLowerCase();
@@ -1371,7 +1370,7 @@
       if(presentation || !storageReady || modalOpen() || !selectedId) return;
       var active=document.activeElement;
       var items=e.clipboardData && e.clipboardData.items;
-      if(!items || active && (active.tagName==="INPUT" || active.tagName==="TEXTAREA")) return;
+      if(!items || active && (active.tagName==="INPUT" || active.tagName==="TEXTAREA" || active.tagName==="SELECT")) return;
       for(var i=0;i<items.length;i++){
         if(items[i].type.indexOf("image/")===0){
           e.preventDefault(); var target=selectedId, epoch=imageEpoch; finishEditing();
@@ -1544,7 +1543,7 @@
     document.getElementById("btnSaveJson").addEventListener("click", () => {
       if(!storageReady)return;
       finishEditing();
-      const dataStr = JSON.stringify({ version: 3, nodes, panX, panY, zoom }, null, 2);
+      const dataStr = JSON.stringify({ version: 3, student:readStudent(), nodes, panX, panY, zoom }, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1566,7 +1565,7 @@
         try{
           var project=validateProject(JSON.parse(reader.result));
           function apply(){
-            finishEditing();imageEpoch++;nodes=project.nodes;panX=project.panX;panY=project.panY;zoom=project.zoom;
+            finishEditing();imageEpoch++;nodes=project.nodes;if(project.student)setStudent(project.student);panX=project.panX;panY=project.panY;zoom=project.zoom;
             selectedId=nodes.length?nodes[0].id:null;renderAll();saveToLocal();
           }
           if(nodes.length)showMessage("Mở tệp sẽ thay sơ đồ hiện tại. Em có thể dùng Hoàn tác để khôi phục.",apply,"Mở sơ đồ");
@@ -1633,7 +1632,7 @@
         STORAGE_KEY=key;
         return saveCatalog().then(function(ok){
           if(!ok){STORAGE_KEY=oldKey;if(newEntry)projects=projects.filter(function(p){return p.id!==key;});throw Error("Không lưu được danh mục sơ đồ.");}
-          imageEpoch++;nodes=state.nodes;panX=state.panX||0;panY=state.panY||0;zoom=state.zoom||1;lastSavedAt=state.updatedAt||0;
+          imageEpoch++;nodes=state.nodes;if(state.student)setStudent(state.student);else setStudent({});panX=state.panX||0;panY=state.panY||0;zoom=state.zoom||1;lastSavedAt=state.updatedAt||0;
           selectedId=nodes.length?nodes[0].id:null;undoStack=[];redoStack=[];lastSnapshot=JSON.stringify(nodes);
           projectModal.classList.remove("open");renderAll();updateProjectLabel();persistNow();
         });
@@ -1644,7 +1643,7 @@
       if(projectSwitching)return;
       var id="mindmap_p_"+generateId(),name=projectName();
       if(copy&&name===currentProject().name)name=(name+" - bản sao").slice(0,100);
-      var state=copy?captureState():{version:2,nodes:[],panX:0,panY:0,zoom:1,updatedAt:Date.now()};
+      var state=copy?captureState():{version:3,student:readStudent(),nodes:[],panX:0,panY:0,zoom:1,updatedAt:Date.now()};
       switchProject(id,state,{id:id,name:name});
     }
     document.getElementById("btnProjects").onclick=function(){if(!storageReady||projectSwitching)return;finishEditing();drawProjects();projectModal.classList.add("open");};
@@ -1673,7 +1672,7 @@
     document.getElementById("btnMore").onclick=function(){menu(this,"moreMenu");};
     document.getElementById("btnExport").onclick=function(){menu(this,"exportMenu");};
     document.addEventListener("click",function(e){if(!e.target.closest("#btnMore,#btnExport,.tool-menu")||e.target.closest(".tool-menu button"))hideMenus();});
-    document.getElementById("btnHelp").onclick=function(){showMessage("Nhấn một lần để chọn nhánh; nhấn dấu + cạnh nhánh hoặc Tab để thêm nhánh con. Nháy đúp để sửa chữ. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; lăn chuột để thu phóng.");};
+    document.getElementById("btnHelp").onclick=function(){showMessage("Nhấn một lần để chọn nhánh; nhấn dấu + cạnh nhánh hoặc Tab để thêm nhánh con. Nháy đúp để sửa chữ. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; dùng nút −, + hoặc Vừa màn hình để thu phóng.");};
     document.getElementById("btnCollapse").onclick=function(){if(selectedId)toggleCollapse(selectedId);};
     document.getElementById("btnLayoutBoth").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(true);viewport.focus();};
     document.getElementById("btnLayoutRight").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(false);viewport.focus();};
@@ -1775,9 +1774,9 @@
       var rect=viewport.getBoundingClientRect();x=x==null?rect.width/2:x-rect.left;y=y==null?rect.height/2:y-rect.top;
       var z=Math.max(.05,Math.min(2,zoom*f));panX=x-(x-panX)*z/zoom;panY=y-(y-panY)*z/zoom;zoom=z;updateTransform();
     }
-    document.getElementById("btnZoomIn").onclick=function(){zoomAt(1.15);scheduleSave();};
-    document.getElementById("btnZoomOut").onclick=function(){zoomAt(1/1.15);scheduleSave();};
-    document.getElementById("btnResetView").onclick=function(){fitView();};
+    document.getElementById("btnZoomIn").onclick=function(){if(!storageReady||modalOpen())return;finishEditing();zoomAt(1.15);scheduleSave();};
+    document.getElementById("btnZoomOut").onclick=function(){if(!storageReady||modalOpen())return;finishEditing();zoomAt(1/1.15);scheduleSave();};
+    document.getElementById("btnResetView").onclick=function(){if(!storageReady||modalOpen())return;finishEditing();fitView();};
 
     window.addEventListener("pagehide",function(){if(storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
@@ -1788,6 +1787,11 @@
     var LEARN_KEY="mindmap_learning_config_v3";
     function getConfig(){try{return JSON.parse(localStorage.getItem(LEARN_KEY)||"{}")||{};}catch(e){return {};}}
     function saveConfig(p){try{localStorage.setItem(LEARN_KEY,JSON.stringify(p));return true;}catch(e){return false;}}
+    function normalizeStudent(p){p=p||{};var cls=String(p.cls||"").trim().toUpperCase(),no=String(p.stt||"").trim();return {cls:/^9A[1-9]$/.test(cls)?cls:"",stt:/^[0-9]+$/.test(no)&&Number(no)>=1&&Number(no)<=60?String(Number(no)):"",name:typeof p.name==="string"?p.name.slice(0,100).trim():""};}
+    function readStudent(){return normalizeStudent({cls:document.getElementById("studentClass").value,stt:document.getElementById("studentStt").value,name:document.getElementById("studentName").value});}
+    function setStudent(p){p=normalizeStudent(p);document.getElementById("studentClass").value=p.cls;document.getElementById("studentStt").value=p.stt;document.getElementById("studentName").value=p.name;}
+    setStudent(getConfig());
+    ["studentClass","studentStt","studentName"].forEach(function(id){var el=document.getElementById(id);el.addEventListener("input",function(){if(storageReady&&!projectSwitching){saveConfig(Object.assign(getConfig(),readStudent()));scheduleSave();}});el.addEventListener("change",function(){if(storageReady&&!projectSwitching){setStudent(readStudent());saveConfig(Object.assign(getConfig(),readStudent()));persistNow();}});});
     endpoint=getConfig().endpoint||"";
     assignment=getConfig().assignment||null;
     function ui(tag,text,parent){var e=document.createElement(tag);if(text!=null)e.textContent=text;(parent||lc).appendChild(e);return e;}
@@ -1840,15 +1844,15 @@
     function writeReceipt(id,data){try{localStorage.setItem(receiptKey(id),JSON.stringify(data));return true;}catch(e){return false;}}
     document.getElementById("btnSubmitWork").onclick=function(){
       learning("Nộp bài");if(!assignment){ui("p","Hãy mở nhiệm vụ bằng mã giáo viên cung cấp trước khi nộp.");action("Mở nhiệm vụ",showAssignment);return;}
-      ui("p",assignment.title);var pref=getConfig(), name=field("Họ tên","text",pref.name),cls=field("Lớp","text",pref.cls),stt=field("STT (1–60)","number",pref.stt);
+      ui("p",assignment.title);var pref=readStudent(), name=field("Họ tên","text",pref.name);name.maxLength=100;ui("label","Lớp");var cls=ui("select");var opt=ui("option","Chọn lớp",cls);opt.value="";for(var ci=1;ci<=9;ci++){var opt=ui("option","9A"+ci,cls);opt.value="9A"+ci;}cls.value=pref.cls;var stt=field("STT (1–60)","number",pref.stt);stt.min=1;stt.max=60;stt.step=1;
       var key=assignment.id+"_"+STORAGE_KEY, current=readReceipt(key), assignmentId=assignment.id;
       if(current&&current.receipt){ui("p","Đã nhận mã bài: "+current.receipt);action("Lưu mã xem nhận xét",function(){downloadBlob(new Blob([JSON.stringify({receipt:current.receipt,secret:current.secret})],{type:"application/json"}),"MaXemNhanXet.json");});}
       action("Xem nhận xét",function(){var rec=readReceipt(key);if(!rec||!rec.receipt)return showMessage("Chưa có mã bài trên máy này.");busy(function(){return api("feedback",{receipt:rec.receipt,secret:rec.secret}).then(function(r){showMessage(r.feedback.status+"\nĐiểm: "+(r.feedback.score===""?"Chưa chấm":r.feedback.score)+"\n"+(r.feedback.comment||"Chưa có nhận xét."));});});});
       action("Nhập mã xem nhận xét",function(){learning("Xem nhận xét");var rc=field("Mã bài","text",""),sec=field("Mã truy cập","password","");action("Xem",function(){busy(function(){return api("feedback",{receipt:rc.value.trim(),secret:sec.value.trim()}).then(function(r){showMessage(r.feedback.status+"\nĐiểm: "+(r.feedback.score===""?"Chưa chấm":r.feedback.score)+"\n"+(r.feedback.comment||"Chưa có nhận xét."));});});});});
       action("Nộp bài",function(){
         if(onlineBusy)return;var nm=name.value.trim(),cl=cls.value.trim(),no=Number(stt.value);
-        if(nm.length<2||nm.length>100||!cl||cl.length>30||!Number.isInteger(no)||no<1||no>60||!nodes.length)return showMessage("Hãy điền đúng thông tin và hoàn thành sơ đồ.");
-        finishEditing();var state=captureState(),raw=JSON.stringify(state);
+        if(nm.length<2||nm.length>100||!/^9A[1-9]$/.test(cl)||!Number.isInteger(no)||no<1||no>60||!nodes.length)return showMessage("Hãy điền đúng thông tin và hoàn thành sơ đồ.");
+        finishEditing();setStudent({name:nm,cls:cl,stt:String(no)});saveToLocal(false);var state=captureState(),raw=JSON.stringify(state);
         if(raw.length>4*1024*1024)return showMessage("Bài nộp trực tuyến quá lớn (giới hạn 4 MB dữ liệu JSON). Hãy giảm ảnh hoặc dùng liên kết.");
         var saved=readReceipt(key),fingerprint=nm+"|"+cl+"|"+no+"|"+JSON.stringify(state.nodes),requestId;
         // Stable request ID for retries, including lost server response.
