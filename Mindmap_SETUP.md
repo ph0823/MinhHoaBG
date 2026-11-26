@@ -39,3 +39,12 @@ Bài mặc định TIN9_B7 không cần nhập mã nhiệm vụ. Không nhập U
 ## Cấu hình tập trung V3.1.3
 
 Sau khi triển khai Web App, sửa tệp `mindmap-config.js` trên nhánh main: đặt `window.MINDMAP_CONFIG = { endpoint: "URL /exec thực tế của Mindmap" };`. Không dùng URL ứng dụng khác và không đưa mật khẩu vào tệp. Lưu commit, đợi GitHub Pages cập nhật và tải lại trang. Học sinh không cần nhập URL; giáo viên chỉ nhập mật khẩu. Nếu cấu hình trống, chức năng nộp trực tuyến chưa mở; vẫn lưu cục bộ và xuất JSON được. Các URL đã nhập cục bộ từ phiên bản cũ không được sử dụng nữa.
+
+## V3.4 – Tài nguyên riêng trên Drive
+
+- Cập nhật mã MindmapServer.gs và triển khai phiên bản mới trên cùng Web App để giữ URL trong mindmap-config.js. Không cần đổi sheet hay thuộc tính.
+- Ảnh/tệp nhúng được gửi lần lượt, lưu dạng nhị phân vào thư mục MM_assets_... riêng tư theo requestId và mã truy cập; JSON trên Drive chỉ chứa tham chiếu SHA-256. URL web vẫn là URL.
+- Tối đa 3 MiB/tài nguyên, 12 MiB tài nguyên không trùng, 100 tài nguyên và 4 MiB JSON cấu trúc; giới hạn lưu cục bộ 32 MiB theo UTF-16 vẫn có thể làm giới hạn thực tế thấp hơn. Tệp JSON xuất trên máy và từ giáo viên vẫn nhúng dữ liệu đầy đủ.
+- Tài nguyên chưa hoàn tất được giữ để thử lại cùng requestId; chưa tự dọn thư mục bỏ dở. Không chia sẻ thư mục Drive công khai.
+- Giáo viên: Thêm > Giáo viên > mã 8 chữ số trong MINDMAP_TEACHER_PASSWORD. Khi xem bài, ứng dụng tải tài nguyên qua API giáo viên và kiểm tra SHA-256. Bài cũ tiếp tục dùng JSON nhúng.
+- Kiểm thử thực tế nộp nhiều ảnh, mất mạng giữa chừng, F5, mở/tải lại bài trước khi triển khai toàn lớp.
