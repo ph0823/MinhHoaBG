@@ -1,4 +1,4 @@
-# Mindmap V3.0 – cấu hình nộp bài
+# Mindmap V3.1 – cấu hình nộp bài
 
 ## 1. Chuẩn bị
 
@@ -16,11 +16,11 @@ Triển khai > Tùy chọn triển khai mới > Ứng dụng web. Thực thi v�
 
 ## 3. Giáo viên
 
-Mở mindmap.html > Thêm > Giáo viên. Nhập URL /exec và mật khẩu. Tạo nhiệm vụ, ghi lại mã MM-... và gửi cho học sinh cùng URL /exec. Khi có bài nộp, lọc theo lớp hoặc mã nhiệm vụ, mở bài để xem nội dung phân cấp, ghi chú, ảnh, liên kết hoặc tải JSON, chấm điểm và nhận xét. Đăng xuất khi dùng máy chung.
+Mở mindmap.html > Thêm > Giáo viên. Nhập URL /exec và mật khẩu. Nhiệm vụ mặc định TIN9_B7 được tạo tự động. Có thể tạo nhiệm vụ riêng, ghi lại mã MM-... và gửi cho học sinh cùng URL /exec. Lọc theo lớp, nhiệm vụ, tên/STT, Mới nhất/Điểm cao nhất/Tất cả lượt; đặt sĩ số thực tế (1–50) để xem STT chưa nộp. Xem sơ đồ, tải JSON, sửa thông tin, nhập điểm và nhận xét, ẩn bài sai, xuất CSV. Danh sách tự cập nhật 45 giây khi đang mở bảng. Phiên giáo viên 20 phút, dùng sessionStorage lưu token, không lưu mật khẩu. Đăng xuất khi dùng máy chung.
 
 ## 4. Học sinh
 
-Nhiệm vụ > nhập mã và URL /exec > Mở nhiệm vụ. Tạo sơ đồ, Kiểm tra, Nộp bài. Nhập họ tên, lớp, STT. Chỉ coi là đã nộp khi ứng dụng xác nhận. Lưu mã xem nhận xét trên thiết bị riêng nếu cần chuyển máy. Khi mất kết nối, giữ nguyên sơ đồ và thông tin, thử lại; không tạo bài mới chỉ để gửi lại.
+Bài mặc định TIN9_B7 không cần nhập mã nhiệm vụ. Lần đầu nhập URL /exec tại Nộp bài hoặc Nhiệm vụ. Nếu giáo viên giao nhiệm vụ riêng, nhập mã nhiệm vụ tương ứng. Tạo sơ đồ, Kiểm tra, Nộp bài. Nhập họ tên, lớp 9A1–9A9, STT 1–50. Chỉ coi là đã nộp khi ứng dụng xác nhận. Lưu mã xem nhận xét trên thiết bị riêng nếu cần chuyển máy. Khi mất kết nối, giữ nguyên sơ đồ và thông tin, dùng Kiểm tra bài đã lưu hoặc thử lại; không tạo bài mới chỉ để gửi lại.
 
 ## 5. Dữ liệu và giới hạn
 
@@ -32,3 +32,6 @@ Nhiệm vụ > nhập mã và URL /exec > Mở nhiệm vụ. Tạo sơ đồ, Ki
 - Chưa có giới hạn tần suất theo IP hoặc xác thực danh tính học sinh. Chỉ dùng trong phạm vi lớp học có giám sát; không coi đây là cổng thi bảo mật cao.
 - Kiểm tra CORS/redirect, quyền tải file và IndexedDB trong Chrome 75 và iframe Google Sites. Nếu môi trường nhúng chặn, thử mở trang trực tiếp. Không coi HTTP no-cors là xác nhận nộp thành công.
 - Khi thay đổi Apps Script, cập nhật bản triển khai (Manage deployments > Edit > New version).
+
+- Xóa bài trong dashboard là xóa mềm: trạng thái Đã xóa, không xóa file Drive hoặc dòng dữ liệu. Các bản ghi cũ có STT ngoài 1–50 không bị tự động xóa.
+- V3.1 dùng Apps Script riêng của Mindmap; không sửa các Web App của các bài học khác.
