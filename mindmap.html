@@ -1849,7 +1849,7 @@
     }
     document.getElementById("btnCheck").onclick=function(){learning("Kiểm tra sản phẩm");var r=inspectWork(nodes,geometry(),assignment);ui("p",r.total+" nút · "+r.main+" nhánh chính");if(!r.issues.length)ui("p","Chưa phát hiện vấn đề theo các tiêu chí kiểm tra.");else r.issues.forEach(function(x){ui("p","• "+x);});ui("p","Đây là gợi ý tự kiểm tra, không phải điểm đánh giá nội dung.");};
     function api(actionName,data){
-      data=Object.assign({},data||{});if(teacherSession&&/^(teacherList|teacherGet|teacherMedia|teacherEdit|teacherDelete|review|createAssignment|teacherLogout)$/.test(actionName))data.token=teacherSession;
+      data=Object.assign({},data||{});if(teacherSession&&/^(teacherList|teacherGet|teacherMedia|teacherMediaBatch|teacherEdit|teacherDelete|review|createAssignment|teacherLogout)$/.test(actionName))data.token=teacherSession;
       if(!validEndpoint(endpoint))return Promise.reject(Error("Chưa mở chức năng nộp bài. Em hãy báo giáo viên."));
       var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);return v;},function(e){clearTimeout(timeout);throw e;});
     }
@@ -1873,8 +1873,14 @@
       var chain=Promise.resolve();bundle.files.forEach(function(f,i){chain=chain.then(function(){progress.textContent="Đang lưu tài nguyên "+(i+1)+"/"+bundle.files.length+"…";return api("uploadMedia",{id:aid,requestId:pending.requestId,clientSecret:pending.secret,hash:f.hash,data:f.data}).then(function(r){if(r.hash!==f.hash)throw Error("Chưa xác nhận tài nguyên.");});});});return chain;
     }
     function hydrateTeacher(r){
-      var refs=[],cache=Object.create(null),chain=Promise.resolve();r.project.nodes.forEach(function(n){["image","link"].forEach(function(k){if(n[k+"Asset"])refs.push({node:n,key:k,asset:n[k+"Asset"]});});});
-      refs.forEach(function(ref){chain=chain.then(function(){var a=ref.asset;var fetchData=cache[a.hash]?Promise.resolve(cache[a.hash]):api("teacherMedia",{receipt:r.submission.receipt,hash:a.hash}).then(function(v){if(v.hash!==a.hash)throw Error("Tài nguyên không khớp.");return hashMedia(v.data).then(function(hash){if(hash!==a.hash)throw Error("Tài nguyên bị lỗi.");cache[a.hash]=v.data;return v.data;});});return fetchData.then(function(v){ref.node[ref.key]=v;delete ref.node[ref.key+"Asset"];});});});return chain.then(function(){return r;});
+      var refs=[],hashes=[],seen=Object.create(null),cache=Object.create(null);
+      r.project.nodes.forEach(function(n){["image","link"].forEach(function(k){var a=n[k+"Asset"];if(a){refs.push({node:n,key:k,asset:a});if(!seen[a.hash]){seen[a.hash]=true;hashes.push(a.hash);}}});});
+      function accept(hash,data){return hashMedia(data).then(function(h){if(h!==hash)throw Error("Tài nguyên bị lỗi.");cache[hash]=data;});}
+      function single(hash){return api("teacherMedia",{receipt:r.submission.receipt,hash:hash}).then(function(v){if(v.hash!==hash)throw Error("Tài nguyên không khớp.");return accept(hash,v.data);});}
+      function fallback(){var chain=Promise.resolve();hashes.forEach(function(h){if(!cache[h])chain=chain.then(function(){return single(h);});});return chain;}
+      function batch(index){if(index>=hashes.length)return Promise.resolve();var group=hashes.slice(index,index+8);return api("teacherMediaBatch",{receipt:r.submission.receipt,hashes:group}).then(function(v){if(!Array.isArray(v.items)||!v.items.length)throw Error("Phản hồi tài nguyên không hợp lệ.");var expected=Object.create(null);group.forEach(function(h){expected[h]=true;});return Promise.all(v.items.map(function(x){if(!expected[x.hash])throw Error("Tài nguyên không khớp.");delete expected[x.hash];return accept(x.hash,x.data);})).then(function(){var consumed=0;while(consumed<group.length&&cache[group[consumed]])consumed++;if(!consumed)throw Error("Thiếu tài nguyên.");return batch(index+consumed);});});}
+      var task=hashes.length?(r.mediaBatch===true?batch(0).catch(function(e){console.warn("Mindmap batch fallback",e);return fallback();}):fallback()):Promise.resolve();
+      return task.then(function(){refs.forEach(function(ref){if(!cache[ref.asset.hash])throw Error("Thiếu tài nguyên.");ref.node[ref.key]=cache[ref.asset.hash];delete ref.node[ref.key+"Asset"];});return r;});
     }
     function readReceipt(id){try{return JSON.parse(localStorage.getItem(receiptKey(id))||"null");}catch(e){return null;}}
     function newSecret(){var a=new Uint8Array(32);if(!window.crypto||!window.crypto.getRandomValues)throw Error("Trình duyệt không hỗ trợ tạo mã bảo mật.");window.crypto.getRandomValues(a);return Array.from(a).map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");}
@@ -1914,10 +1920,20 @@
     };
     function stopTeacherRefresh(){if(teacherTimer!==null){clearInterval(teacherTimer);teacherTimer=null;}}
     function rememberTeacher(){try{sessionStorage.setItem("mm_teacher_session",JSON.stringify({token:teacherSession,endpoint:endpoint,until:Date.now()+1200000}));}catch(e){}}
-    function clearTeacher(){teacherSession="";teacherToken="";stopTeacherRefresh();try{sessionStorage.removeItem("mm_teacher_session");}catch(e){}}
+    function clearTeacher(){clearReviewCache();teacherSession="";teacherToken="";stopTeacherRefresh();try{sessionStorage.removeItem("mm_teacher_session");}catch(e){}}
     function restoreTeacher(){try{var x=JSON.parse(sessionStorage.getItem("mm_teacher_session")||"null");if(x&&x.until>Date.now()&&x.endpoint===endpoint)teacherSession=x.token;}catch(e){}}
     restoreTeacher();
-    function teacherFetch(){return api("teacherList",{});}
+    var dashboardCache=null,dashboardScroll=0,reviewCache=Object.create(null),reviewCacheOrder=[],reviewCacheBytes=0,reviewCacheSession="",dashboardResume=false;
+    function clearReviewCache(){dashboardCache=null;dashboardScroll=0;reviewCache=Object.create(null);reviewCacheOrder=[];reviewCacheBytes=0;reviewCacheSession="";}
+    function checkReviewSession(){if(reviewCacheSession!==teacherSession){clearReviewCache();reviewCacheSession=teacherSession;}}
+    function teacherFetch(){checkReviewSession();var token=teacherSession;return api("teacherList",{}).then(function(r){if(token===teacherSession){dashboardCache=r;pruneReviewCache(r);}return r;});}
+    function removeReviewCache(id){var item=reviewCache[id];if(item){reviewCacheBytes-=item.bytes;delete reviewCache[id];}reviewCacheOrder=reviewCacheOrder.filter(function(k){return k!==id;});}
+    function pruneReviewCache(r){var current=Object.create(null);(r.submissions||[]).forEach(function(x){current[x.receipt]=x;});reviewCacheOrder.slice().forEach(function(id){var x=current[id],cached=reviewCache[id];if(!x||!cached||reviewMetaKey(x)!==reviewMetaKey(cached.value.submission))removeReviewCache(id);});}
+    function reviewMetaKey(x){return JSON.stringify([x.name,x.cls,x.stt,x.score===""?"":Number(x.score),x.comment||"",x.status,x.reviewedAt||""]);}
+    function putReviewCache(r){var id=r.submission.receipt,raw=JSON.stringify(r),bytes=raw.length*2;removeReviewCache(id);if(bytes>24*1024*1024)return;reviewCache[id]={value:JSON.parse(raw),bytes:bytes,at:Date.now()};reviewCacheOrder.push(id);reviewCacheBytes+=bytes;while(reviewCacheOrder.length>5||reviewCacheBytes>24*1024*1024)removeReviewCache(reviewCacheOrder[0]);}
+    function getReviewCache(id){var x=reviewCache[id];if(!x)return null;if(Date.now()-x.at>45000){removeReviewCache(id);return null;}reviewCacheOrder=reviewCacheOrder.filter(function(k){return k!==id;});reviewCacheOrder.push(id);return JSON.parse(JSON.stringify(x.value));}
+    function patchDashboard(sub,changes){if(dashboardCache)(dashboardCache.submissions||[]).forEach(function(x){if(x.receipt===sub.receipt)Object.assign(x,changes);});removeReviewCache(sub.receipt);}
+    function backToDashboard(){checkReviewSession();if(dashboardCache){dashboardResume=true;teacherDashboard(dashboardCache);return Promise.resolve();}return teacherFetch().then(teacherDashboard);}
     function teacherPanel(){
       stopTeacherRefresh();
       if(teacherSession){busy(function(){return teacherFetch().then(teacherDashboard).catch(function(){clearTeacher();teacherPanel();});});return;}
@@ -1938,7 +1954,7 @@
     function csvCell(v){v=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
     function exportScores(list){var lines=[["Lớp","STT","Họ tên","Nhiệm vụ","Điểm","Trạng thái","Nhận xét","Thời gian"]];list.forEach(function(x){lines.push([x.cls,x.stt,x.name,x.assignment,x.score,x.status,x.comment,x.createdAt]);});downloadBlob(new Blob(["\ufeff"+lines.map(function(row){return row.map(csvCell).join(",");}).join("\r\n")],{type:"text/csv;charset=utf-8"}),"Mindmap_BangDiem.csv");}
     function teacherDashboard(r){
-      stopTeacherRefresh();learning("Quản lý bài học sinh");var all=r;
+      stopTeacherRefresh();learning("Quản lý bài học sinh");checkReviewSession();dashboardCache=r;var all=r,resume=dashboardResume;dashboardResume=false;
       var top=ui("div");top.className="dashboard-top";ui("h3","Quản lý bài học sinh",top);
       action("Đăng xuất",function(){if(onlineBusy)return;var token=teacherSession;clearTeacher();api("teacherLogout",{token:token}).catch(function(){});teacherPanel();},top);
       var close=action("×",function(){if(onlineBusy)return;document.getElementById("btnLearningClose").click();},top);close.className="dashboard-close";close.title="Đóng";close.setAttribute("aria-label","Đóng");
@@ -1969,14 +1985,14 @@
         if(!missing.hidden){var done=Object.create(null);latest.forEach(function(x){done[x.stt]=true;});var left=[];for(var i=1;i<=teacherFilter.size;i++)if(!done[i])left.push(i);missing.textContent="Chưa nộp ("+left.length+"): "+(left.join(", ")||"Không có");}
         exportButton.disabled=!visible.length;
         rows.textContent="";var table=ui("table",null,rows);table.className="teacher-table";var head=ui("thead",null,table),tr=ui("tr",null,head);["Lớp","STT","Họ tên","Điểm","Trạng thái","Thời gian","Thao tác"].forEach(function(t){ui("th",t,tr);});var body=ui("tbody",null,table);
-        visible.forEach(function(x,idx){var row=ui("tr",null,body);[x.cls,x.stt,x.name,x.score===""?"—":x.score,x.status,formatWorkDate(x.createdAt)].forEach(function(v){ui("td",String(v),row);});var cell=ui("td",null,row);action("Xem / chấm",function(){if(onlineBusy)return;stopTeacherRefresh();reviewQueue=visible.map(function(v){return v.receipt;});reviewIndex=idx;busy(function(){return loadReview(idx).catch(function(e){startRefresh();throw e;});});},cell);});
+        visible.forEach(function(x,idx){var row=ui("tr",null,body);[x.cls,x.stt,x.name,x.score===""?"—":x.score,x.status,formatWorkDate(x.createdAt)].forEach(function(v){ui("td",String(v),row);});var cell=ui("td",null,row);action("Xem / chấm",function(e){if(onlineBusy)return;dashboardScroll=rows.scrollTop;stopTeacherRefresh();reviewQueue=visible.map(function(v){return v.receipt;});reviewIndex=idx;var btn=e.currentTarget;btn.disabled=true;btn.textContent="Đang mở…";busy(function(){return loadReview(idx).catch(function(e){startRefresh();throw e;}).then(function(){btn.disabled=false;btn.textContent="Xem / chấm";},function(e){btn.disabled=false;btn.textContent="Xem / chấm";throw e;});});},cell);});
         if(!visible.length){var empty=ui("div","Chưa có bài phù hợp.",rows);empty.className="dashboard-empty";}rows.scrollTop=oldScroll;
       }
-      [ass,cls,mode,size].forEach(function(el){el.onchange=draw;});search.oninput=draw;draw();
+      [ass,cls,mode,size].forEach(function(el){el.onchange=draw;});search.oninput=draw;draw();if(resume)rows.scrollTop=dashboardScroll;
       function active(){return top.isConnected&&learningModal.classList.contains("open")&&document.getElementById("learningTitle").textContent==="Quản lý bài học sinh";}
       function refresh(manual){if(onlineBusy||!active())return;refreshButton.disabled=true;onlineBusy=true;teacherFetch().then(function(v){if(active()){all=v;var selected=ass.value;ass.textContent="";[["","Tất cả nhiệm vụ"]].concat((v.assignments||[]).map(function(x){return [x.id,x.title];})).forEach(function(a){var o=ui("option",a[1],ass);o.value=a[0];});ass.value=selected;if(ass.selectedIndex<0)ass.value="";draw();}}).catch(function(e){console.warn("Mindmap dashboard refresh",e);if(manual&&active())showMessage("Chưa cập nhật được danh sách. Hãy thử lại.");}).then(function(){onlineBusy=false;refreshButton.disabled=false;});}
       function startRefresh(){stopTeacherRefresh();teacherTimer=setInterval(function(){if(!active()){stopTeacherRefresh();return;}refresh(false);},45000);}
-      startRefresh();
+      startRefresh();if(resume)setTimeout(function(){if(active())refresh(false);},100);
     }
     function formatWorkDate(v){var d=new Date(v);if(!Number.isFinite(d.getTime()))return String(v||"");var p=function(n){return ("0"+n).slice(-2);};return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+p(d.getFullYear()%100)+" "+p(d.getHours())+":"+p(d.getMinutes());}
     function teacherCreate(){
@@ -1986,7 +2002,7 @@
     function downloadAttachment(data,name){try{if(!validLink(data)||data.indexOf("data:")!==0)throw Error("Tệp không hợp lệ.");var b=atob(data.slice(data.indexOf(",")+1)),arr=new Uint8Array(b.length);for(var i=0;i<b.length;i++)arr[i]=b.charCodeAt(i);downloadBlob(new Blob([arr],{type:"application/octet-stream"}),(name||"tep-dinh-kem").replace(/[\\/:*?"<>|]/g,"_").slice(0,200));}catch(e){showMessage("Không đọc được tệp đính kèm.");}}
     function loadReview(index){
       if(index<0||index>=reviewQueue.length)return Promise.resolve();
-      return api("teacherGet",{receipt:reviewQueue[index]}).then(hydrateTeacher).then(function(r){reviewIndex=index;teacherReview(r);});
+      checkReviewSession();var id=reviewQueue[index],cached=getReviewCache(id),token=teacherSession;var request=cached?Promise.resolve(cached):api("teacherGet",{receipt:id}).then(hydrateTeacher).then(function(r){if(token===teacherSession)putReviewCache(r);return r;});return request.then(function(r){if(token!==teacherSession)throw Error("Phiên giáo viên đã thay đổi.");reviewIndex=index;teacherReview(r);});
     }
     function reviewFit(b,w,h){
       if(!b||w<=0||h<=0)return {z:1,x:0,y:0};
@@ -2040,7 +2056,7 @@
     }
     function teacherReview(r){
       stopTeacherRefresh();var p=validateProject(r.project),sub=r.submission;learning("Bài của "+sub.name);var modal=learningModal.querySelector(".modal");modal.classList.add("review-studio");
-      var head=ui("div");head.className="review-head";action("‹ Danh sách",function(){leave(function(){run(function(){return teacherFetch().then(teacherDashboard);});});},head);
+      var head=ui("div");head.className="review-head";action("‹ Danh sách",function(){leave(function(){backToDashboard().catch(function(e){showMessage(e.message||"Không mở được danh sách.");});});},head);
       var identity=ui("div",null,head);identity.className="review-identity";
       var name=ui("input",null,identity);name.type="text";name.className="review-name";name.value=sub.name;name.maxLength=100;name.title="Họ tên";name.setAttribute("aria-label","Họ tên");
       var cls=ui("select",null,identity);classes().slice(1).forEach(function(c){var o=ui("option",c[1],cls);o.value=c[0];});cls.value=sub.cls.toUpperCase();cls.title="Lớp";cls.setAttribute("aria-label","Lớp");
@@ -2056,8 +2072,8 @@
       ["Bố cục rõ ràng.","Nội dung đầy đủ.","Từ khóa phù hợp.","Hình ảnh phù hợp.","Cần bổ sung nội dung.","Liên kết chưa phù hợp."].forEach(function(t){action(t,function(){if(comment.value.indexOf(t)<0){comment.value=(comment.value.trim()?comment.value.trim()+"\n":"")+t;changed();}},quick);});
       var status=selectField("Trạng thái",[["Đã nhận","Đã nhận"],["Yêu cầu chỉnh sửa","Yêu cầu chỉnh sửa"],["Đã đánh giá","Đã đánh giá"]],sub.status,content);
       var infoSaved=JSON.stringify([name.value,cls.value,stt.value]);
-      var saveInfo=action("Lưu thông tin",function(){if(onlineBusy)return;var v=[name.value.trim(),cls.value,stt.value];if(!v[0]||!/^9A[1-9]$/.test(v[1])||!Number.isInteger(Number(v[2]))||Number(v[2])<1||Number(v[2])>50){notice("Thông tin chưa hợp lệ.",true);return;}run(function(){return api("teacherEdit",{receipt:sub.receipt,name:v[0],cls:v[1],stt:Number(v[2])}).then(function(){sub.name=v[0];sub.cls=v[1];sub.stt=Number(v[2]);r.project.student={name:v[0],cls:v[1],stt:v[2]};infoSaved=JSON.stringify(v);if(name.value.trim()===v[0])name.value=v[0];changed();notice(dirty()?"Đã lưu thông tin · còn đánh giá chưa lưu.":"Đã lưu thông tin.");});});},identity);
-      var deleteWork=action("Xóa bài",function(){if(onlineBusy)return;leave(function(){showMessage("Ẩn bài này khỏi danh sách? Dữ liệu gốc vẫn được giữ.",function(){run(function(){return api("teacherDelete",{receipt:sub.receipt}).then(teacherFetch).then(teacherDashboard);});},"Xóa bài");});},head);deleteWork.className="danger";
+      var saveInfo=action("Lưu thông tin",function(){if(onlineBusy)return;var v=[name.value.trim(),cls.value,stt.value];if(!v[0]||!/^9A[1-9]$/.test(v[1])||!Number.isInteger(Number(v[2]))||Number(v[2])<1||Number(v[2])>50){notice("Thông tin chưa hợp lệ.",true);return;}run(function(){return api("teacherEdit",{receipt:sub.receipt,name:v[0],cls:v[1],stt:Number(v[2])}).then(function(){sub.name=v[0];sub.cls=v[1];sub.stt=Number(v[2]);patchDashboard(sub,{name:v[0],cls:v[1],stt:Number(v[2])});r.project.student={name:v[0],cls:v[1],stt:v[2]};infoSaved=JSON.stringify(v);if(name.value.trim()===v[0])name.value=v[0];changed();notice(dirty()?"Đã lưu thông tin · còn đánh giá chưa lưu.":"Đã lưu thông tin.");});});},identity);
+      var deleteWork=action("Xóa bài",function(){if(onlineBusy)return;leave(function(){showMessage("Ẩn bài này khỏi danh sách? Dữ liệu gốc vẫn được giữ.",function(){run(function(){return api("teacherDelete",{receipt:sub.receipt}).then(function(){removeReviewCache(sub.receipt);if(dashboardCache)dashboardCache.submissions=dashboardCache.submissions.filter(function(x){return x.receipt!==sub.receipt;});return backToDashboard();});});},"Xóa bài");});},head);deleteWork.className="danger";
       var saved=JSON.stringify([score.value,comment.value,status.value]),msg=ui("p","",right);msg.className="review-status";msg.setAttribute("role","status");msg.setAttribute("aria-live","polite");
       var footer=ui("div",null,right);footer.className="review-actions";var save=action("Lưu đánh giá",saveReview,footer);save.className="primary";
       var preview=teacherPreview(p,left);
@@ -2074,7 +2090,7 @@
       function leave(fn){if(onlineBusy)return;if(dirty())showMessage("Có thay đổi chưa lưu. Rời bài mà không lưu?",fn,"Chưa lưu");else fn();}
       reviewGuard=function(fn){if(preview.closeImage())return;leave(fn);};
       function navigate(delta){leave(function(){run(function(){return loadReview(reviewIndex+delta);});});}
-      function saveReview(){if(onlineBusy||!gradeDirty())return;var v=score.value;if(score.validity.badInput||v!==""&&(!Number.isFinite(Number(v))||Number(v)<0||Number(v)>10)){notice("Điểm phải từ 0 đến 10.",true);return;}var c=comment.value,t=status.value;notice("Đang lưu…");run(function(){return api("review",{receipt:sub.receipt,score:v,comment:c,status:t}).then(function(){saved=JSON.stringify([v,c,t]);sub.score=v;sub.comment=c;sub.status=t;notice(dirty()?"Đã lưu đánh giá · còn thay đổi chưa lưu.":"Đã lưu đánh giá.");});});}
+      function saveReview(){if(onlineBusy||!gradeDirty())return;var v=score.value;if(score.validity.badInput||v!==""&&(!Number.isFinite(Number(v))||Number(v)<0||Number(v)>10)){notice("Điểm phải từ 0 đến 10.",true);return;}var c=comment.value,t=status.value;notice("Đang lưu…");run(function(){return api("review",{receipt:sub.receipt,score:v,comment:c,status:t}).then(function(){saved=JSON.stringify([v,c,t]);sub.score=v;sub.comment=c;sub.status=t;patchDashboard(sub,{score:v===""?"":Number(v),comment:c,status:t});notice(dirty()?"Đã lưu đánh giá · còn thay đổi chưa lưu.":"Đã lưu đánh giá.");});});}
     }
     document.getElementById("btnTeacher").onclick=teacherPanel;
     // Khởi chạy với trang trống (hoặc khôi phục bài đang làm dở)
