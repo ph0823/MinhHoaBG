@@ -142,6 +142,9 @@
       transform-origin: 0 0;
     }
 
+    #nodes-layer {position:absolute;left:0;top:0;width:0;height:0;overflow:visible;pointer-events:none;}
+    #nodes-layer .node {pointer-events:auto;}
+    #viewport {min-height:0;outline:none;}
     #edges-layer {
       position: absolute;
       top: 0;
@@ -250,12 +253,17 @@
 
     /* Viền nét đứt xanh dương khi chọn nhánh */
     .node.selected {
-      outline: 2.5px dashed #38bdf8;
-      outline-offset: -3px;
+      outline: 3px solid #075985;
+      outline-offset: 3px;
       box-shadow: 0 0 0 2px #ffffff, 0 4px 12px rgba(41, 168, 223, 0.35);
       z-index: 10;
     }
 
+    .node-add-child {position:absolute;right:-17px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;padding:0;justify-content:center;background:#0879b1;color:white;border:2px solid white;font-size:20px;line-height:1;display:none;z-index:16;box-shadow:0 1px 4px #64748b;}
+    .node.selected .node-add-child{display:flex;}
+    .node-add-child:hover:not(:disabled){background:#075985;color:white;}
+    body.presenting .node-add-child{display:none!important;}
+    #selectedLabel{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#075985;font-weight:600;}
     .node-img {
       height: auto;
       max-width: 100%;
@@ -488,7 +496,7 @@
 
   <!-- Thanh trạng thái -->
   <footer class="statusbar">
-    <div id="projectLabel">Sơ đồ của em</div>
+    <div id="projectLabel">Sơ đồ của em</div><div id="selectedLabel" aria-live="polite">Chọn một nhánh</div>
     <button id="btnHelp" title="Hướng dẫn">?</button>
     <div id="saveStatus" role="status" aria-live="polite">Đang khôi phục bài...</div>
     <div class="zoom-controls">
@@ -863,6 +871,7 @@
 
     function renderAll() {
       if (!storageReady) return;
+      if(selectedId && !visibleNodes().some(function(n){return n.id===selectedId;})) selectedId=null;
       updateTransform();
       emptyHint.style.display = nodes.length === 0 ? "flex" : "none";
       nodesLayer.innerHTML = "";
@@ -915,13 +924,20 @@
           toggle.addEventListener("mousedown",function(e){e.stopPropagation();});toggle.addEventListener("dblclick",function(e){e.stopPropagation();});toggle.addEventListener("click",function(e){e.stopPropagation();if(!presentation)toggleCollapse(node.id);});el.appendChild(toggle);
         }
         if(node.note){var nb=document.createElement("button");nb.className="note-badge";nb.textContent="Ghi chú";nb.title=node.note;nb.onmousedown=function(e){e.stopPropagation();};nb.ondblclick=function(e){e.stopPropagation();};nb.onclick=function(e){e.stopPropagation();openNote(node.id,presentation);};el.appendChild(nb);}
-        // Chọn và kéo thả
+        var add=document.createElement("button");add.type="button";add.className="node-add-child";add.textContent="+";add.title="Thêm nhánh con";add.setAttribute("aria-label","Thêm nhánh con");
+        add.addEventListener("mousedown",function(e){e.stopPropagation();e.preventDefault();});
+        add.addEventListener("dblclick",function(e){e.stopPropagation();});
+        add.addEventListener("click",function(e){e.stopPropagation();if(!presentation && !modalOpen()){selectNode(node.id);addChildNode(node.id);}});
+        el.appendChild(add);
+        el.addEventListener("click",function(e){if(presentation||!storageReady||modalOpen()||e.target.closest("button,a"))return;e.stopPropagation();selectNode(node.id);});
         el.addEventListener("mousedown", e => {
-          if (presentation || !storageReady || modalOpen() || e.button !== 0 || textEl.isContentEditable) return;
           e.stopPropagation();
+          if (presentation || !storageReady || modalOpen() || e.button !== 0 || e.target.closest("button,a")) return;
+          selectNode(node.id);
+          if(textEl.isContentEditable) return;
           finishEditing();
           viewport.focus();
-          selectNode(node.id);
+          e.preventDefault();
           dragNodeId = node.id;
           const rect = viewport.getBoundingClientRect();
           const worldX = (e.clientX - rect.left - panX) / zoom;
@@ -933,7 +949,7 @@
         // Nháy đúp để sửa chữ
         el.addEventListener("dblclick", e => {
           e.stopPropagation();
-          if(!presentation)startEditing(el, node);
+          if(!presentation && !modalOpen() && !e.target.closest("button,a")){selectNode(node.id);startEditing(el, node);}
         });
 
         nodesLayer.appendChild(el);
@@ -945,6 +961,7 @@
 
     function startEditing(el, node) {
       const textEl = el.querySelector(".node-text");
+      selectNode(node.id);
       if (textEl.isContentEditable) return;
       textEl.contentEditable = "true";
       textEl.focus();
@@ -961,17 +978,21 @@
         node.text = newText || (node.parentId ? "Nhánh con" : "Chủ đề mới");
         textEl.textContent = node.text;
         renderEdges();
+        updateButtonsState();
         saveToLocal();
       };
 
       const onKeyDown = e => {
         if (e.isComposing || e.keyCode === 229) return;
+        if(e.key==="Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey){
+          e.preventDefault();e.stopPropagation();textEl.blur();addChildNode(node.id);return;
+        }
         if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          textEl.blur();
+          e.preventDefault();e.stopPropagation();
+          textEl.blur();viewport.focus();
         } else if (e.key === "Escape") {
-          textEl.textContent = node.text;
-          textEl.blur();
+          e.preventDefault();e.stopPropagation();textEl.textContent = node.text;
+          textEl.blur();viewport.focus();
         }
       };
 
@@ -1036,8 +1057,12 @@
     function updateButtonsState() {
       const selNode = nodes.find(n => n.id === selectedId);
       const hasSel = !!selNode;
+      document.getElementById("selectedLabel").textContent=hasSel?"Đang chọn: "+selNode.text.slice(0,80):"Chọn một nhánh";
+      document.getElementById("btnAddChild").classList.toggle("primary",hasSel);
       document.getElementById("btnAddChild").disabled = !hasSel;
       document.getElementById("btnAddSibling").disabled = !hasSel || !selNode.parentId;
+      document.getElementById("btnNote").disabled=!hasSel;
+      document.getElementById("btnCross").disabled=!hasSel || nodes.length<2;
       document.getElementById("btnImage").disabled = !hasSel;
       document.getElementById("btnLink").disabled = !hasSel;
       document.getElementById("btnDelete").disabled = !hasSel;
@@ -1076,7 +1101,7 @@
       saveToLocal();
 
       const el = nodesLayer.querySelector(`.node[data-id="${newNode.id}"]`);
-      if (el) startEditing(el, newNode);
+      if (el) {ensureNodeVisible(el);startEditing(el, newNode);}
     }
 
     // Tạo nhánh con
@@ -1120,9 +1145,10 @@
       saveToLocal();
 
       const el = nodesLayer.querySelector(`.node[data-id="${newNode.id}"]`);
-      if (el) startEditing(el, newNode);
+      if (el) {ensureNodeVisible(el);startEditing(el, newNode);}
     }
 
+    function ensureNodeVisible(el){var b=el.getBoundingClientRect(),v=viewport.getBoundingClientRect(),margin=42; if(b.right>v.right-margin)panX-=b.right-v.right+margin;else if(b.left<v.left+margin)panX+=v.left+margin-b.left;if(b.bottom>v.bottom-margin)panY-=b.bottom-v.bottom+margin;else if(b.top<v.top+margin)panY+=v.top+margin-b.top;updateTransform();scheduleSave();}
     function addSiblingNode() {
       const current = nodes.find(n => n.id === selectedId);
       if (!current || !current.parentId) return;
@@ -1229,7 +1255,6 @@
       if (presentation || !storageReady || modalOpen()) return;
       if (e.button === 0 && (e.target === viewport || e.target === world || e.target === nodesLayer)) {
         finishEditing();
-        selectNode(null);
         isPanning = true;
         viewport.classList.add("panning");
         panStartX = e.clientX - panX;
@@ -1239,6 +1264,7 @@
 
     window.addEventListener("mousemove", e => {
       if (dragNodeId) {
+        if(e.buttons===0){dragNodeId=null;saveToLocal();return;}
         const node = nodes.find(n => n.id === dragNodeId);
         if (!node) return;
         const rect = viewport.getBoundingClientRect();
@@ -1270,6 +1296,7 @@
       }
     });
 
+    window.addEventListener("blur",function(){if(dragNodeId||isPanning){dragNodeId=null;isPanning=false;viewport.classList.remove("panning");saveToLocal();}});
     // Thu phóng bằng con lăn chuột
     viewport.addEventListener("wheel", e => {
       if(!storageReady || modalOpen()) return;
@@ -1646,7 +1673,7 @@
     document.getElementById("btnMore").onclick=function(){menu(this,"moreMenu");};
     document.getElementById("btnExport").onclick=function(){menu(this,"exportMenu");};
     document.addEventListener("click",function(e){if(!e.target.closest("#btnMore,#btnExport,.tool-menu")||e.target.closest(".tool-menu button"))hideMenus();});
-    document.getElementById("btnHelp").onclick=function(){showMessage("Nháy đúp để sửa chữ. Tab: nhánh con. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; lăn chuột để thu phóng.");};
+    document.getElementById("btnHelp").onclick=function(){showMessage("Nhấn một lần để chọn nhánh; nhấn dấu + cạnh nhánh hoặc Tab để thêm nhánh con. Nháy đúp để sửa chữ. Enter: cùng cấp. Ctrl+Z: hoàn tác. Ctrl+V: dán ảnh. Kéo vùng trống để di chuyển; lăn chuột để thu phóng.");};
     document.getElementById("btnCollapse").onclick=function(){if(selectedId)toggleCollapse(selectedId);};
     document.getElementById("btnLayoutBoth").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(true);viewport.focus();};
     document.getElementById("btnLayoutRight").onclick=function(){document.getElementById("layoutModal").classList.remove("open");autoLayout(false);viewport.focus();};
