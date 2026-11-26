@@ -4,7 +4,7 @@
  * MINDMAP_SPREADSHEET_ID, MINDMAP_FOLDER_ID (private Drive folder).
  * Do not reuse the script of other teaching apps.
  */
-function doGet() { return output_({ok:true,service:"Mindmap V3.1"}); }
+function doGet() { return output_({ok:true,service:"Mindmap V3.2"}); }
 function output_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 function fail_(message){throw new Error(message);}
 function props_(){return PropertiesService.getScriptProperties();}
@@ -12,12 +12,23 @@ function sheet_(name,headers){
   var id=props_().getProperty("MINDMAP_SPREADSHEET_ID");
   if(!id)fail_("Máy chủ chưa được cấu hình.");
   var ss=SpreadsheetApp.openById(id),sh=ss.getSheetByName(name);
-  if(!sh){sh=ss.insertSheet(name);sh.appendRow(headers);sh.setFrozenRows(1);}
+  if(!sh)sh=ss.insertSheet(name);
+  if(sh.getLastRow()===0){sh.getRange(1,1,1,headers.length).setValues([headers]);sh.setFrozenRows(1);}
+  else{
+    var actual=sh.getRange(1,1,1,headers.length).getValues()[0];
+    var oldCount=name==="Mindmap_BaiNop"?13:headers.length;
+    for(var i=0;i<oldCount;i++)if(String(actual[i]).trim()!==headers[i])fail_("Cấu trúc sheet "+name+" không đúng. Kiểm tra hàng tiêu đề trước khi lưu.");
+    for(var j=oldCount;j<headers.length;j++)if(actual[j]!==""&&String(actual[j]).trim()!==headers[j])fail_("Cột bổ sung của "+name+" đang chứa dữ liệu khác.");
+    if(actual.slice(oldCount).some(function(x){return x==="";})){
+      if(sh.getLastRow()>1&&sh.getRange(2,oldCount+1,sh.getLastRow()-1,headers.length-oldCount).getValues().some(function(row){return row.some(function(v){return v!=="";});}))fail_("Các cột bổ sung đang có dữ liệu. Không tự ghi đè.");
+      sh.getRange(1,oldCount+1,1,headers.length-oldCount).setValues([headers.slice(oldCount)]);
+    }
+  }
   return sh;
 }
 function assignments_(){return sheet_("Mindmap_NhiemVu",["id","title","instructions","minBranches","minImages","minLinks","createdAt"]);}
-function submissions_(){return sheet_("Mindmap_BaiNop",["receipt","requestId","secretHash","assignment","name","cls","stt","fileId","createdAt","status","score","comment","reviewedAt"]);}
-function rows_(sh){var n=sh.getLastRow();return n<2?[]:sh.getRange(2,1,n-1,sh.getLastColumn()).getValues();}
+function submissions_(){return sheet_("Mindmap_BaiNop",["receipt","requestId","secretHash","assignment","name","cls","stt","fileId","createdAt","status","score","comment","reviewedAt","studentKey","attempt","nodeCount","imageCount","linkCount","fileUrl","contentHash"]);}
+function rows_(sh){var n=sh.getLastRow();return n<2?[]:sh.getRange(2,1,n-1,sh.getName()==="Mindmap_BaiNop"?20:7).getValues();}
 function digest_(v){return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(v))).replace(/=+$/,"");}
 function teacher_(p,token){
   if(typeof token==="string"&&/^[a-f0-9]{64}$/.test(token)&&CacheService.getScriptCache().get("mm_session_"+digest_(token))==="1")return;
@@ -31,7 +42,9 @@ function integer_(v,min,max){if(typeof v!=="number"||!isFinite(v)||Math.floor(v)
 function safeCell_(v){v=String(v);return /^[=+\-@\t\r]/.test(v)?"'"+v:v;}
 function id_(){return Utilities.getUuid().replace(/-/g,"");}
 function assignmentView_(r){return {id:String(r[0]),title:String(r[1]),instructions:String(r[2]),minBranches:Number(r[3]),minImages:Number(r[4]),minLinks:Number(r[5])};}
-function submissionView_(r){return {receipt:String(r[0]),assignment:String(r[3]),name:String(r[4]),cls:String(r[5]),stt:Number(r[6]),createdAt:String(r[8]),status:String(r[9]),score:r[10]===""?"":Number(r[10]),comment:String(r[11]),reviewedAt:String(r[12])};}
+function iso_(v){return v instanceof Date?v.toISOString():String(v||"");}
+function studentKey_(aid,cls,stt){return aid+"|"+cls+"|"+stt;}
+function submissionView_(r){return {receipt:String(r[0]),assignment:String(r[3]),name:String(r[4]),cls:String(r[5]),stt:Number(r[6]),createdAt:iso_(r[8]),status:String(r[9]),score:r[10]===""?"":Number(r[10]),comment:String(r[11]),reviewedAt:iso_(r[12]),attempt:r[14]||"",nodeCount:r[15]||"",imageCount:r[16]||"",linkCount:r[17]||""};}
 function find_(rows,index,value){for(var i=0;i<rows.length;i++)if(String(rows[i][index])===String(value))return {row:rows[i],number:i+2};return null;}
 function validateProject_(p){
   if(!p||[1,2,3].indexOf(p.version)<0||!Array.isArray(p.nodes)||p.nodes.length<1||p.nodes.length>500)fail_("Sơ đồ không hợp lệ.");
@@ -75,17 +88,30 @@ function doPost(e){
       if(!/^[a-zA-Z0-9_-]{16,120}$/.test(req)||! /^[a-zA-Z0-9_-]{24,128}$/.test(secret))fail_("Mã bài không hợp lệ.");
       if(!find_(ar,0,aid))fail_("Không tìm thấy nhiệm vụ.");
       var existing=find_(sr,1,req);
-      if(existing){if(existing.row[2]!==digest_(secret)||existing.row[3]!==aid)fail_("Mã bài không khớp.");return output_({ok:true,receipt:existing.row[0],secret:secret});}
+      if(existing){if(existing.row[2]!==digest_(secret)||existing.row[3]!==aid)fail_("Mã bài không khớp.");if(existing.row[9]==="Đã xóa")fail_("Bài đã được giáo viên loại bỏ. Hãy liên hệ giáo viên.");return output_({ok:true,receipt:existing.row[0],secret:secret,duplicate:true,createdAt:iso_(existing.row[8])});}
+      if(!p.project||typeof p.project!=="object")fail_("Thiếu dữ liệu sơ đồ.");
       p.project.student={name:name,cls:cls,stt:String(stt)};
       var project=validateProject_(p.project),folderId=props_().getProperty("MINDMAP_FOLDER_ID");
       if(!folderId)fail_("Chưa cấu hình thư mục lưu bài.");
-      var receipt="MMB-"+id_(),file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(project,"application/json",receipt+".json"));
-      try{sh.appendRow([receipt,req,digest_(secret),aid,safeCell_(name),safeCell_(cls),stt,file.getId(),new Date(),"Đã nhận","","",""]);}catch(err){try{file.setTrashed(true);}catch(ignore){}throw err;}
-      return output_({ok:true,receipt:receipt,secret:secret});
+      var key=studentKey_(aid,cls,stt), attempt=0, count=0;
+      sr.forEach(function(row){if(studentKey_(String(row[3]),String(row[5]).toUpperCase(),Number(row[6]))===key){count++;attempt=Math.max(attempt,Number(row[14])||0);}});
+      attempt=Math.max(attempt,count)+1;
+      var receipt="MMB-"+id_(),file=DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(project,"application/json",receipt+".json")),now=new Date();
+      var entry=[receipt,req,digest_(secret),aid,safeCell_(name),cls,stt,file.getId(),now,"Đã nhận","","","",key,attempt,p.project.nodes.length,p.project.nodes.filter(function(n){return !!n.image;}).length,p.project.nodes.filter(function(n){return !!n.link;}).length,file.getUrl(),digest_(project)];
+      try{
+        sh.appendRow(entry);SpreadsheetApp.flush();
+        var committed=find_(rows_(sh),1,req);
+        if(!committed||String(committed.row[0])!==receipt||String(committed.row[7])!==file.getId())fail_("Chưa xác nhận được dữ liệu bài nộp.");
+      }catch(err){
+        // A flush/read can fail after the row was committed. Never trash a file that might already be referenced.
+        console.error("Mindmap commit uncertain",receipt,err);
+        fail_("Chưa xác nhận được bài nộp. Hãy kiểm tra trạng thái hoặc gửi lại.");
+      }
+      return output_({ok:true,receipt:receipt,secret:secret,createdAt:now.toISOString(),attempt:attempt});
     }
     if(a==="status"){
       var found=find_(sr,1,str_(p.requestId,120,true));if(!found)return output_({ok:true,saved:false});
-      if(found.row[2]!==digest_(str_(p.clientSecret,128,true)))fail_("Mã bài không khớp.");return output_({ok:true,saved:true,receipt:String(found.row[0]),secret:p.clientSecret});
+      if(found.row[2]!==digest_(str_(p.clientSecret,128,true)))fail_("Mã bài không khớp.");if(found.row[9]==="Đã xóa")fail_("Bài đã được giáo viên loại bỏ.");return output_({ok:true,saved:true,receipt:String(found.row[0]),secret:p.clientSecret,createdAt:iso_(found.row[8])});
     }
     if(a==="feedback"){
       var f=find_(sr,0,str_(p.receipt,80,true));
@@ -95,7 +121,7 @@ function doPost(e){
     if(a==="teacherList")return output_({ok:true,assignments:ar.map(assignmentView_),submissions:sr.filter(function(r){return r[9]!=="Đã xóa";}).map(submissionView_).reverse()});
     if(a==="teacherEdit"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f||f.row[9]==="Đã xóa")fail_("Không tìm thấy bài.");
-      var name=str_(p.name,100,true),cls=class_(p.cls),stt=integer_(p.stt,1,50);sh.getRange(f.number,5,1,3).setValues([[safeCell_(name),cls,stt]]);return output_({ok:true});
+      var name=str_(p.name,100,true),cls=class_(p.cls),stt=integer_(p.stt,1,50);sh.getRange(f.number,5,1,3).setValues([[safeCell_(name),cls,stt]]);sh.getRange(f.number,14).setValue(studentKey_(f.row[3],cls,stt));SpreadsheetApp.flush();return output_({ok:true});
     }
     if(a==="teacherDelete"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f)fail_("Không tìm thấy bài.");sh.getRange(f.number,10).setValue("Đã xóa");return output_({ok:true});
