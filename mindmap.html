@@ -1916,8 +1916,8 @@
     function teacherPanel(){
       stopTeacherRefresh();
       if(teacherSession){busy(function(){return teacherFetch().then(teacherDashboard).catch(function(){clearTeacher();teacherPanel();});});return;}
-      learning("Giáo viên");if(!validEndpoint(endpoint)){ui("p","Chưa cấu hình máy chủ chung. Cập nhật endpoint trong mindmap-config.js trên GitHub, sau đó tải lại ứng dụng.");var a=ui("a","Mở tệp cấu hình");a.href="https://github.com/ph0823/MinhHoaBG/blob/main/mindmap-config.js";a.target="_blank";a.rel="noopener noreferrer";return;}var pw=field("Mã giáo viên","password","");
-      function login(){busy(function(){return api("teacherLogin",{password:pw.value}).then(function(r){teacherSession=r.token;pw.value="";rememberTeacher();return teacherFetch();}).then(teacherDashboard);});}
+      learning("Giáo viên");if(!validEndpoint(endpoint)){ui("p","Chưa cấu hình máy chủ chung. Cập nhật endpoint trong mindmap-config.js trên GitHub, sau đó tải lại ứng dụng.");var a=ui("a","Mở tệp cấu hình");a.href="https://github.com/ph0823/MinhHoaBG/blob/main/mindmap-config.js";a.target="_blank";a.rel="noopener noreferrer";return;}var pw=field("Mã giáo viên","password","");pw.maxLength=8;pw.inputMode="numeric";pw.pattern="[0-9]{8}";pw.placeholder="Nhập 8 chữ số";
+      function login(){if(!/^\d{8}$/.test(pw.value)){showMessage("Mã giáo viên gồm đúng 8 chữ số.");return;}busy(function(){return api("teacherLogin",{password:pw.value}).then(function(r){teacherSession=r.token;pw.value="";rememberTeacher();return teacherFetch();}).then(teacherDashboard);});}
       action("Đăng nhập",login);pw.onkeydown=function(e){if(e.key==="Enter")login();};pw.focus();
     }
     function selectField(label,options,value,parent){
