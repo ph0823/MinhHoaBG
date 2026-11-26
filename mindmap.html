@@ -203,7 +203,8 @@
     .node {
       position: absolute;
       min-width: 84px;
-      max-width: 460px;
+      max-width: 1236px;
+      width: max-content;
       padding: 9px 16px;
       border-radius: 12px;
       background: var(--node-bg);
@@ -265,6 +266,9 @@
     .node-add-child:hover:not(:disabled){background:#075985;color:white;}
     body.presenting .node-add-child{display:none!important;}
     #selectedLabel{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#075985;font-weight:600;}
+    .node-resize{position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;background:#075985;border:2px solid white;border-radius:3px;cursor:ew-resize;z-index:18;display:none;padding:0;touch-action:none;}
+    .node.selected .node-resize{display:block;}
+    body.presenting .node-resize{display:none!important;}
     .node-img {
       height: auto;
       max-width: 100%;
@@ -273,6 +277,8 @@
       background: #ffffff;
       display: block;
       pointer-events: none;
+      flex-shrink: 0;
+      object-fit: contain;
     }
 
     .node-text {
@@ -283,6 +289,9 @@
       word-break: break-word;
       outline: none;
       min-width: 36px;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      flex-shrink: 0;
     }
 
     .node-text[contenteditable="true"] {
@@ -523,8 +532,8 @@
         <input type="url" id="imgUrlInput" placeholder="https://..." />
       </div>
       <div class="form-group">
-        <label>Chiều rộng ảnh: <span id="imgWidthVal">280</span> px</label>
-        <input type="range" id="imgWidthInput" min="120" max="420" step="10" value="280" />
+        <label>Chiều rộng ảnh: <span id="imgWidthVal">480</span> px</label>
+        <input type="range" id="imgWidthInput" min="120" max="1200" step="10" value="480" />
       </div>
       <div class="modal-actions">
         <button class="danger" id="btnRemoveImg">Xóa hình</button>
@@ -815,7 +824,7 @@
         if(typeof image !== "string" || typeof link !== "string" || !validImage(image) || !validLink(link)) throw new Error("Tệp chứa hình ảnh hoặc liên kết không an toàn.");
         if(n.linkName != null && (typeof n.linkName !== "string" || n.linkName.length>1024)) throw new Error("Tên tệp không hợp lệ.");
         var theme = ["theme-blue","theme-gray","theme-green","theme-yellow","theme-pink"].indexOf(n.theme)>=0 ? n.theme : "theme-gray";
-        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(420,n.imgWidth)):280,link:link,linkName:n.linkName||"",collapsed:n.collapsed===true,note:typeof n.note==="string"?n.note.slice(0,4000):"",cross:Array.isArray(n.cross)?n.cross.filter(function(v){return typeof v==="string";}).slice(0,100):[]};
+        var clean = {id:n.id,parentId:n.parentId || null,text:n.text,x:n.x,y:n.y,theme:theme,image:image,imgWidth:Number.isFinite(n.imgWidth)?Math.max(120,Math.min(1200,n.imgWidth)):480,link:link,linkName:n.linkName||"",width:Number.isFinite(n.width)?Math.max(84,Math.min(1236,n.width)):null,collapsed:n.collapsed===true,note:typeof n.note==="string"?n.note.slice(0,4000):"",cross:Array.isArray(n.cross)?n.cross.filter(function(v){return typeof v==="string";}).slice(0,100):[]};
         ids[n.id] = clean; result.push(clean);
       });
       result.forEach(function(n){
@@ -874,6 +883,9 @@
       document.getElementById("btnZoomOut").disabled=zoom<=.05+0.00001;
     }
 
+    var resizeDrag=null;
+    function applyNodeSize(el,node){var iw=node.image?(node.imgWidth||480):0;el.style.width=node.width?Math.max(84,Math.min(1236,node.width))+"px":(iw?Math.min(1236,iw+36)+"px":"max-content");if(!node.width&&!iw)el.style.maxWidth="460px";else el.style.maxWidth="1236px";var im=el.querySelector(".node-img");if(im)im.style.width=(node.imgWidth||480)+"px";}
+    function finishResize(){if(!resizeDrag)return;var d=resizeDrag;resizeDrag=null;document.body.style.cursor="";if(d.changed)saveToLocal();}
     function renderAll() {
       if (!storageReady) return;
       if(selectedId && !visibleNodes().some(function(n){return n.id===selectedId;})) selectedId=null;
@@ -912,7 +924,7 @@
           const img = document.createElement("img");
           img.className = "node-img";
           img.src = node.image;
-          img.style.width = (node.imgWidth || 280) + "px";
+          img.style.width = (node.imgWidth || 480) + "px";
           img.alt = node.text;
           img.onload = () => renderEdges();
           el.appendChild(img);
@@ -923,6 +935,8 @@
         textEl.className = "node-text";
         textEl.textContent = node.text;
         el.appendChild(textEl);
+        applyNodeSize(el,node);
+        var handle=document.createElement("button");handle.type="button";handle.className="node-resize";handle.title="Kéo sang trái hoặc phải để đổi chiều rộng";handle.setAttribute("aria-label","Đổi chiều rộng nhánh");handle.addEventListener("mousedown",function(e){e.preventDefault();e.stopPropagation();if(e.button!==0||presentation||modalOpen())return;finishEditing();selectNode(node.id);dragNodeId=null;resizeDrag={node:node,el:el,x:e.clientX,w:el.offsetWidth,changed:false};document.body.style.cursor="ew-resize";});handle.addEventListener("click",function(e){e.stopPropagation();});handle.addEventListener("dblclick",function(e){e.stopPropagation();if(presentation||modalOpen())return;node.width=null;applyNodeSize(el,node);renderEdges();saveToLocal();});handle.addEventListener("keydown",function(e){if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();e.stopPropagation();node.width=Math.max(84,Math.min(1236,el.offsetWidth+(e.key==="ArrowRight"?20:-20)));if(node.image)node.imgWidth=Math.max(120,Math.min(1200,node.width-36));applyNodeSize(el,node);renderEdges();saveToLocal();});el.appendChild(handle);
 
         if(nodes.some(function(n){return n.parentId===node.id;})) {
           var toggle=document.createElement("button");toggle.className="collapse-badge";toggle.textContent=node.collapsed?"+":"−";toggle.title=node.collapsed?"Mở rộng":"Thu gọn";
@@ -978,8 +992,8 @@
       sel.addRange(range);
 
       const finish = () => {
+        const newText = textEl.innerText.trim().slice(0,20000);
         textEl.contentEditable = "false";
-        const newText = textEl.textContent.trim().slice(0,20000);
         node.text = newText || (node.parentId ? "Nhánh con" : "Chủ đề mới");
         textEl.textContent = node.text;
         renderEdges();
@@ -1001,8 +1015,11 @@
         }
       };
 
+      const onInput=()=>{renderEdges();};
+      textEl.addEventListener("input",onInput);
       textEl.addEventListener("keydown", onKeyDown);
       textEl.addEventListener("blur", () => {
+        textEl.removeEventListener("input",onInput);
         textEl.removeEventListener("keydown", onKeyDown);
         finish();
       }, { once: true });
@@ -1094,7 +1111,7 @@
         y: y !== null ? y : defaultY,
         theme: "theme-blue",
         image: "",
-        imgWidth: 280,
+        imgWidth: 480,
         link: "",
         linkName: ""
       };
@@ -1138,7 +1155,7 @@
         y: nextY,
         theme: "theme-gray",
         image: "",
-        imgWidth: 280,
+        imgWidth: 480,
         link: "",
         linkName: ""
       };
@@ -1268,6 +1285,7 @@
     });
 
     window.addEventListener("mousemove", e => {
+      if(resizeDrag){if(e.buttons===0){finishResize();return;}var d=resizeDrag,w=Math.max(d.node.image?156:84,Math.min(1236,Math.round(d.w+(e.clientX-d.x)/zoom)));if(Math.abs(e.clientX-d.x)<2&&!d.changed)return;d.changed=true;d.node.width=w;if(d.node.image)d.node.imgWidth=Math.max(120,Math.min(1200,w-36));applyNodeSize(d.el,d.node);renderEdges();return;}
       if (dragNodeId) {
         if(e.buttons===0){dragNodeId=null;saveToLocal();return;}
         const node = nodes.find(n => n.id === dragNodeId);
@@ -1290,6 +1308,7 @@
     });
 
     window.addEventListener("mouseup", () => {
+      finishResize();
       if (dragNodeId) {
         dragNodeId = null;
         saveToLocal();
@@ -1301,7 +1320,7 @@
       }
     });
 
-    window.addEventListener("blur",function(){if(dragNodeId||isPanning){dragNodeId=null;isPanning=false;viewport.classList.remove("panning");saveToLocal();}});
+    window.addEventListener("blur",function(){finishResize();if(dragNodeId||isPanning){dragNodeId=null;isPanning=false;viewport.classList.remove("panning");saveToLocal();}});
     // Zoom is controlled exclusively by the visible zoom buttons (and explicit fit/layout).
     viewport.addEventListener("wheel",function(e){if(e.ctrlKey || e.metaKey)e.preventDefault();},{passive:false});
 
@@ -1428,7 +1447,7 @@
       pendingImgData = null;
       imgFileInput.value = "";
       imgUrlInput.value = node.image && !node.image.startsWith("data:") ? node.image : "";
-      imgWidthInput.value = node.imgWidth || 280;
+      imgWidthInput.value = node.image ? (node.imgWidth || 480) : 480;
       imgWidthVal.textContent = imgWidthInput.value;
       imageModal.classList.add("open");
     });
@@ -1447,7 +1466,8 @@
         if(value && !validImage(value)){showMessage("Đường dẫn ảnh không hợp lệ. Hãy dùng HTTP hoặc HTTPS.");return;}
         if(!canAddMedia(node,"image",value))return;
         node.image=value;
-        node.imgWidth = Number(imgWidthInput.value) || 280;
+        node.imgWidth = Number(imgWidthInput.value) || 480;
+        node.width=Math.min(1236,Math.max(node.width||0,node.imgWidth+36));
         renderAll();
         saveToLocal();
       }
@@ -1811,8 +1831,8 @@
       (n.cross||[]).forEach(function(id){var x=nodes.find(function(v){return v.id===id;});if(x)action("Gỡ: "+x.text.slice(0,40),function(){n.cross=n.cross.filter(function(v){return v!==id;});learningModal.classList.remove("open");renderAll();saveToLocal();});});
     };
     function makeTemplate(count,both){
-      var root=generateId(),arr=[{id:root,parentId:null,text:"Chủ đề chính",x:0,y:0,theme:"theme-blue",image:"",link:"",linkName:"",imgWidth:280}];
-      for(var i=0;i<count;i++)arr.push({id:generateId()+"_"+i,parentId:root,text:"Ý chính "+(i+1),x:200,y:i*80,theme:["theme-green","theme-yellow","theme-pink","theme-gray"][i%4],image:"",link:"",linkName:"",imgWidth:280});
+      var root=generateId(),arr=[{id:root,parentId:null,text:"Chủ đề chính",x:0,y:0,theme:"theme-blue",image:"",link:"",linkName:"",imgWidth:480}];
+      for(var i=0;i<count;i++)arr.push({id:generateId()+"_"+i,parentId:root,text:"Ý chính "+(i+1),x:200,y:i*80,theme:["theme-green","theme-yellow","theme-pink","theme-gray"][i%4],image:"",link:"",linkName:"",imgWidth:480});
       nodes=arr;selectedId=root;imageEpoch++;learningModal.classList.remove("open");renderAll();autoLayout(both);
     }
     document.getElementById("btnTemplate").onclick=function(){
@@ -1931,7 +1951,7 @@
     function teacherPreview(p){
       var wrap=ui("div");wrap.style.cssText="overflow:auto;max-height:42vh;border:1px solid #cbd5e1;background:#f8fafc;padding:6px";
       var preview=ui("div",null,wrap);preview.style.position="relative";var svg=svgEl("svg",{});svg.style.cssText="position:absolute;left:0;top:0;overflow:visible;pointer-events:none";preview.appendChild(svg);
-      var map=Object.create(null),elmap=Object.create(null),g=Object.create(null);p.nodes.forEach(function(n){map[n.id]=n;var el=ui("div",null,preview);el.className="node "+n.theme;el.style.cursor="default";el.style.left="0px";el.style.top="0px";if(n.image){var im=ui("img",null,el);im.className="node-img";im.src=n.image;im.style.width=(n.imgWidth||280)+"px";im.onload=draw;}var t=ui("div",n.text,el);t.className="node-text";elmap[n.id]=el;});
+      var map=Object.create(null),elmap=Object.create(null),g=Object.create(null);p.nodes.forEach(function(n){map[n.id]=n;var el=ui("div",null,preview);el.className="node "+n.theme;el.style.cursor="default";el.style.left="0px";el.style.top="0px";if(n.image){var im=ui("img",null,el);im.className="node-img";im.src=n.image;im.style.width=(n.imgWidth||480)+"px";im.onload=draw;}var t=ui("div",n.text,el);t.className="node-text";applyNodeSize(el,n);elmap[n.id]=el;});
       function draw(){p.nodes.forEach(function(n){var el=elmap[n.id];g[n.id]={w:el.offsetWidth||150,h:el.offsetHeight||48};});var b=bounds(p.nodes,g);if(!b)return;var dx=20-b.x,dy=20-b.y;preview.style.width=(b.w+40)+"px";preview.style.height=(b.h+40)+"px";svg.setAttribute("width",b.w+40);svg.setAttribute("height",b.h+40);svg.textContent="";p.nodes.forEach(function(n){var el=elmap[n.id];el.style.left=(n.x+dx)+"px";el.style.top=(n.y+dy)+"px";var a=map[n.parentId];if(a){svg.appendChild(svgEl("line",{x1:a.x+dx+g[a.id].w/2,y1:a.y+dy+g[a.id].h/2,x2:n.x+dx+g[n.id].w/2,y2:n.y+dy+g[n.id].h/2,stroke:"#94a3b8","stroke-width":2}));}});}
       draw();
     }
