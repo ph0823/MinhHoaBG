@@ -1812,8 +1812,8 @@
     function ui(tag,text,parent){var e=document.createElement(tag);if(text!=null)e.textContent=text;(parent||lc).appendChild(e);return e;}
     function field(label,type,value,parent){var p=parent||lc;ui("label",label,p);var e=ui(type==="textarea"?"textarea":"input",null,p);if(type!=="textarea")e.type=type||"text";e.value=value||"";return e;}
     function action(label,fn,parent){var b=ui("button",label,parent);b.type="button";b.onclick=fn;return b;}
-    var reviewQueue=[],reviewIndex=-1,reviewGuard=null,reviewCleanup=null;
-    function resetReview(){if(reviewCleanup)reviewCleanup();reviewCleanup=null;reviewGuard=null;learningModal.querySelector(".modal").classList.remove("review-studio","review-focus");}
+    var reviewQueue=[],reviewIndex=-1,reviewGuard=null,reviewCleanup=null,reviewButtonsSync=null;
+    function resetReview(){if(reviewCleanup)reviewCleanup();reviewCleanup=null;reviewGuard=null;reviewButtonsSync=null;learningModal.querySelector(".modal").classList.remove("review-studio","review-focus");}
     function learning(title){if(!storageReady)return;resetReview();finishEditing();hideMenus();learningModal.querySelector(".modal").classList.toggle("teacher-wide",title==="Quản lý bài học sinh"||title.indexOf("Bài của ")===0);learningModal.querySelector(".modal").classList.toggle("dashboard-view",title==="Quản lý bài học sinh");lc.textContent="";document.getElementById("learningTitle").textContent=title;learningModal.classList.add("open");}
     document.getElementById("btnLearningClose").onclick=function(){if(reviewGuard){reviewGuard(function(){resetReview();learningModal.classList.remove("open");});return;}stopTeacherRefresh();learningModal.classList.remove("open");};
     function openNote(id,readonly){var n=nodes.find(function(x){return x.id===id;});if(!n)return;learning("Ghi chú: "+n.text.slice(0,60));var f=field("Nội dung chi tiết","textarea",n.note||"");f.maxLength=4000;f.readOnly=!!readonly;if(!readonly)action("Lưu ghi chú",function(){n.note=f.value.trim();learningModal.classList.remove("open");renderAll();saveToLocal();});}
@@ -1853,7 +1853,8 @@
       if(!validEndpoint(endpoint))return Promise.reject(Error("Chưa mở chức năng nộp bài. Em hãy báo giáo viên."));
       var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);return v;},function(e){clearTimeout(timeout);throw e;});
     }
-    function busy(fn){if(onlineBusy)return;onlineBusy=true;Promise.resolve().then(fn).catch(function(e){console.warn(e);showMessage(e.message||"Không kết nối được.");}).then(function(){onlineBusy=false;});}
+    function setOnlineBusy(value){onlineBusy=!!value;if(typeof reviewButtonsSync==="function")reviewButtonsSync();}
+    function busy(fn){if(onlineBusy)return;setOnlineBusy(true);Promise.resolve().then(fn).catch(function(e){console.warn(e);showMessage(e.message||"Không kết nối được.");}).then(function(){setOnlineBusy(false);});}
     function showAssignment(){learning("Nhiệm vụ học tập");if(assignment){ui("p",assignment.title);ui("p",assignment.instructions);ui("p","Tối thiểu: "+assignment.minBranches+" nhánh chính, "+assignment.minImages+" ảnh, "+assignment.minLinks+" liên kết.");}else ui("p","Chưa chọn nhiệm vụ. Em vẫn có thể thực hành tự do.");var code=field("Mã nhiệm vụ","text",assignment?assignment.id:"");action("Mở nhiệm vụ",function(){busy(function(){return api("assignment",{id:code.value.trim()}).then(function(r){assignment=r.assignment;saveConfig(Object.assign(getConfig(),{assignment:assignment}));showAssignment();});});});}
     document.getElementById("btnLearning").onclick=showAssignment;
     function receiptKey(id){return "mindmap_receipt_"+id;}
@@ -1990,7 +1991,7 @@
       }
       [ass,cls,mode,size].forEach(function(el){el.onchange=draw;});search.oninput=draw;draw();if(resume)rows.scrollTop=dashboardScroll;
       function active(){return top.isConnected&&learningModal.classList.contains("open")&&document.getElementById("learningTitle").textContent==="Quản lý bài học sinh";}
-      function refresh(manual){if(onlineBusy||!active())return;refreshButton.disabled=true;onlineBusy=true;teacherFetch().then(function(v){if(active()){all=v;var selected=ass.value;ass.textContent="";[["","Tất cả nhiệm vụ"]].concat((v.assignments||[]).map(function(x){return [x.id,x.title];})).forEach(function(a){var o=ui("option",a[1],ass);o.value=a[0];});ass.value=selected;if(ass.selectedIndex<0)ass.value="";draw();}}).catch(function(e){console.warn("Mindmap dashboard refresh",e);if(manual&&active())showMessage("Chưa cập nhật được danh sách. Hãy thử lại.");}).then(function(){onlineBusy=false;refreshButton.disabled=false;});}
+      function refresh(manual){if(onlineBusy||!active())return;refreshButton.disabled=true;setOnlineBusy(true);teacherFetch().then(function(v){if(active()){all=v;var selected=ass.value;ass.textContent="";[["","Tất cả nhiệm vụ"]].concat((v.assignments||[]).map(function(x){return [x.id,x.title];})).forEach(function(a){var o=ui("option",a[1],ass);o.value=a[0];});ass.value=selected;if(ass.selectedIndex<0)ass.value="";draw();}}).catch(function(e){console.warn("Mindmap dashboard refresh",e);if(manual&&active())showMessage("Chưa cập nhật được danh sách. Hãy thử lại.");}).then(function(){setOnlineBusy(false);refreshButton.disabled=false;});}
       function startRefresh(){stopTeacherRefresh();teacherTimer=setInterval(function(){if(!active()){stopTeacherRefresh();return;}refresh(false);},45000);}
       startRefresh();if(resume)setTimeout(function(){if(active())refresh(false);},100);
     }
@@ -2085,8 +2086,8 @@
       function changed(){updateSaveButtons();notice(dirty()?"Chưa lưu thay đổi":"");buttons.forEach(function(b,i){b.classList.toggle("primary",score.value!==""&&Number(score.value)===i);});}
       function scoreChanged(){if(score.value!==""&&status.value!=="Yêu cầu chỉnh sửa")status.value="Đã đánh giá";changed();}
       score.oninput=scoreChanged;comment.oninput=changed;status.onchange=changed;name.oninput=changed;cls.onchange=changed;stt.oninput=changed;buttons.forEach(function(b,i){b.classList.toggle("primary",score.value!==""&&Number(score.value)===i);});
-      updateSaveButtons();
-      function run(fn){if(onlineBusy)return;onlineBusy=true;updateSaveButtons();Promise.resolve().then(fn).catch(function(e){console.warn(e);if(msg.isConnected)notice(e.message||"Chưa lưu được. Hãy thử lại.",true);else showMessage(e.message||"Không thực hiện được.");}).then(function(){onlineBusy=false;updateSaveButtons();});}
+      reviewButtonsSync=updateSaveButtons;updateSaveButtons();
+      function run(fn){if(onlineBusy)return;setOnlineBusy(true);Promise.resolve().then(fn).catch(function(e){console.warn(e);if(msg.isConnected)notice(e.message||"Chưa lưu được. Hãy thử lại.",true);else showMessage(e.message||"Không thực hiện được.");}).then(function(){setOnlineBusy(false);});}
       function leave(fn){if(onlineBusy)return;if(dirty())showMessage("Có thay đổi chưa lưu. Rời bài mà không lưu?",fn,"Chưa lưu");else fn();}
       reviewGuard=function(fn){if(preview.closeImage())return;leave(fn);};
       function navigate(delta){leave(function(){run(function(){return loadReview(reviewIndex+delta);});});}
