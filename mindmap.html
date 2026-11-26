@@ -856,7 +856,7 @@
       var size = JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;})).length*2;
       if(size>MAX_PROJECT){showMessage("Sơ đồ đã gần đầy. Hãy giảm dung lượng ảnh hoặc dùng liên kết Google Drive.");return false;}
       var currentLength=JSON.stringify(nodes).length;
-      if(size/2+4096>ONLINE_LIMIT && size/2>currentLength){showMessage("Bài vượt giới hạn nộp trực tuyến 4 MB JSON. Hãy giảm ảnh hoặc dùng liên kết Drive; dữ liệu cũ vẫn được giữ.");return false;}
+      if(new Blob([JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;}))]).size+4096>ONLINE_LIMIT && size/2>currentLength){showMessage("Bài vượt giới hạn nộp trực tuyến 4 MB JSON. Hãy giảm ảnh hoặc dùng liên kết Drive; dữ liệu cũ vẫn được giữ.");return false;}
       if(size>MAX_PROJECT*.75) setStatus("Sơ đồ có dung lượng lớn – nên lưu tệp JSON",true);
       return true;
     }
@@ -923,6 +923,7 @@
 
           if (node.link.startsWith("data:")) {
             badge.download = node.linkName || "tep-dinh-kem";
+            badge.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();downloadAttachment(node.link,node.linkName);});
           } else {
             badge.target = "_blank";
             badge.rel = "noopener noreferrer";
@@ -1388,7 +1389,7 @@
       if(file.size>20*1024*1024){showMessage("Ảnh lớn hơn 20 MB. Hãy chọn ảnh nhỏ hơn.");callback(null);return;}
       var reader=new FileReader();
       function failed(){showMessage("Không đọc được ảnh.");callback(null);}
-      reader.onerror=failed;
+      reader.onerror=reader.onabort=failed;
       reader.onload=function(){
         var original=reader.result;
         if(!validImage(original)){failed();return;}
