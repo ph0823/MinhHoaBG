@@ -4,7 +4,7 @@
  * MINDMAP_SPREADSHEET_ID, MINDMAP_FOLDER_ID (private Drive folder).
  * Do not reuse the script of other teaching apps.
  */
-function doGet() { return output_({ok:true,service:"Mindmap V3.4"}); }
+function doGet() { return output_({ok:true,service:"Mindmap V3.6.3"}); }
 function output_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 function fail_(message){throw new Error(message);}
 function props_(){return PropertiesService.getScriptProperties();}
@@ -93,7 +93,7 @@ function doPost(e){
     var p=JSON.parse(raw),a=p.action;
     if(a==="teacherLogin"){teacher_(p.password);var token=id_()+id_();CacheService.getScriptCache().put("mm_session_"+digest_(token),"1",1200);return output_({ok:true,token:token,expiresIn:1200});}
     if(a==="teacherLogout"){if(typeof p.token==="string")CacheService.getScriptCache().remove("mm_session_"+digest_(p.token));return output_({ok:true});}
-    if(["teacherList","createAssignment","teacherGet","teacherMedia","review","teacherEdit","teacherDelete"].indexOf(a)>=0)teacher_(p.password,p.token);
+    if(["teacherList","createAssignment","teacherGet","teacherMedia","teacherMediaBatch","review","teacherEdit","teacherDelete"].indexOf(a)>=0)teacher_(p.password,p.token);
     // Serialize sheet initialization, submission and assessment. No public listing of students.
     lock=LockService.getScriptLock();if(!lock.tryLock(15000))fail_("Hệ thống đang bận. Hãy thử lại.");
     var ash=assignments_(), ar=rows_(ash), sh=submissions_(), sr=rows_(sh);
@@ -159,7 +159,17 @@ function doPost(e){
     }
     if(a==="teacherGet"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f||f.row[9]==="Đã xóa")fail_("Không tìm thấy bài.");
-      var project=JSON.parse(readVerified_(f.row));delete project.assetFolder;project.student={name:String(f.row[4]),cls:String(f.row[5]),stt:String(f.row[6])};return output_({ok:true,submission:submissionView_(f.row),project:project,integrity:f.row[19]?"verified":"legacy"});
+      var project=JSON.parse(readVerified_(f.row));delete project.assetFolder;project.student={name:String(f.row[4]),cls:String(f.row[5]),stt:String(f.row[6])};return output_({ok:true,submission:submissionView_(f.row),project:project,integrity:f.row[19]?"verified":"legacy",mediaBatch:true});
+    }
+    if(a==="teacherMediaBatch"){
+      var f=find_(sr,0,str_(p.receipt,80,true));if(!f||f.row[9]==="Đã xóa")fail_("Không tìm thấy bài.");
+      if(!Array.isArray(p.hashes)||!p.hashes.length||p.hashes.length>8)fail_("Danh sách tài nguyên không hợp lệ.");
+      var project=JSON.parse(readVerified_(f.row)),refs=assetRefs_(project),map=Object.create(null);
+      refs.forEach(function(r){map[r.asset.hash]=r.asset;});
+      if(!project.assetFolder||p.hashes.some(function(h){return typeof h!=="string"||!map[h];}))fail_("Không tìm thấy tài nguyên.");
+      var folder=DriveApp.getFolderById(project.assetFolder),items=[],total=0;
+      for(var j=0;j<p.hashes.length;j++){var h=p.hashes[j],data=assetData_(folder,h,map[h].mime);if(items.length&&total+data.length>5*1024*1024)break;items.push({hash:h,data:data});total+=data.length;}
+      return output_({ok:true,items:items});
     }
     if(a==="teacherMedia"){
       var f=find_(sr,0,str_(p.receipt,80,true));if(!f||f.row[9]==="Đã xóa")fail_("Không tìm thấy bài.");
