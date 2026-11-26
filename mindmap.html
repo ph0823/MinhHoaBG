@@ -534,7 +534,7 @@
       </div>
       <div class="form-group">
         <label>Cách 2: Dán đường dẫn hình ảnh (URL)</label>
-        <input type="url" id="imgUrlInput" placeholder="https://..." />
+        <input type="url" id="imgUrlInput" placeholder="https://..." /><button type="button" id="btnEmbedImage">Lưu bản sao ảnh từ URL</button><div class="hint" id="imgMediaState"></div>
       </div>
       <div class="form-group">
         <label>Chiều rộng ảnh: <span id="imgWidthVal">480</span> px</label>
@@ -559,11 +559,11 @@
       <div class="form-group">
         <label>Cách 2: Đính kèm tệp từ máy tính (.docx, .xlsx, .pdf, ảnh, âm thanh...)</label>
         <input type="file" id="linkFileInput" />
-        <div class="hint">Tệp tối đa 4 MB; tệp lớn hơn nên dùng liên kết Google Drive.</div>
+        <div class="hint">Tệp tối đa 2 MB; tệp lớn hơn nên dùng liên kết Google Drive.</div>
       </div>
       <div class="form-group">
         <label>Tên hiển thị khi rê chuột vào biểu tượng liên kết (tùy chọn)</label>
-        <input type="text" id="linkLabelInput" placeholder="Ví dụ: CharlesBabbage.docx hoặc Bài viết dốc Thẩm Mã" />
+        <div class="hint" id="linkMediaState"></div><input maxlength="1024" type="text" id="linkLabelInput" placeholder="Ví dụ: CharlesBabbage.docx hoặc Bài viết dốc Thẩm Mã" />
       </div>
       <div class="modal-actions">
         <button class="danger" id="btnRemoveLink">Gỡ liên kết</button>
@@ -652,7 +652,8 @@
     }
 
     // V2.0 – Reliable Mindmap. IndexedDB stores large payloads; localStorage is a fallback.
-    var MAX_FILE = 4 * 1024 * 1024;
+    var MAX_FILE = 2 * 1024 * 1024;
+    var ONLINE_LIMIT=4*1024*1024, pendingMedia=0;
     var MAX_IMAGE = 3 * 1024 * 1024;
     var MAX_PROJECT = 32 * 1024 * 1024;
     var MAX_NODES = 500;
@@ -785,6 +786,7 @@
       var localOK = false;
       // Synchronous small backup protects refresh before the asynchronous DB transaction commits.
       try { localStorage.setItem(key,raw); localOK = true; } catch(e){ console.warn("Mindmap local backup",e); }
+      saveFailed=!localOK;
       setStatus(localOK ? savedLabel : "Đang lưu...",false);
       saveQueue = saveQueue.catch(function(){}).then(function(){
         return dbWrite(state,key).then(function(){
@@ -811,7 +813,7 @@
     }
     function validHttp(value) {
       if(typeof value !== "string" || !/^https?:\/\//i.test(value)) return false;
-      try { var url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !!url.hostname; } catch(e){ return false; }
+      try { var url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !!url.hostname && !url.username && !url.password && value.length<=8192 && !/[\s\x00-\x1f]/.test(value); } catch(e){ return false; }
     }
     function validImage(value) {
       return value === "" || validHttp(value) || /^data:image\/(png|jpeg|jpg|gif|webp|bmp|x-icon);base64,[A-Za-z0-9+/=]+$/i.test(value);
@@ -846,10 +848,15 @@
       if(JSON.stringify(result).length*2 > MAX_PROJECT) throw new Error("Sơ đồ quá lớn. Hãy giảm dung lượng hình và tệp.");
       return {nodes:result,student:parsed.student&&typeof parsed.student==="object"?normalizeStudent(parsed.student):null,panX:Number.isFinite(parsed.panX)?Math.max(-1000000,Math.min(1000000,parsed.panX)):0,panY:Number.isFinite(parsed.panY)?Math.max(-1000000,Math.min(1000000,parsed.panY)):0,zoom:Number.isFinite(parsed.zoom)?Math.max(.05,Math.min(2,parsed.zoom)):1,updatedAt:Number.isFinite(parsed.updatedAt)?parsed.updatedAt:0};
     }
+    function mediaBytes(v){if(typeof v!=="string"||v.indexOf("data:")!==0)return 0;var b=v.slice(v.indexOf(",")+1);return Math.floor(b.length*3/4)-(b.endsWith("==")?2:b.endsWith("=")?1:0);}
+    function mediaSummary(list){var r={images:0,external:0,files:0,links:0,bytes:0};list.forEach(function(n){if(n.image){r.images++;if(validHttp(n.image))r.external++;}if(n.link){if(n.link.indexOf("data:")===0)r.files++;else r.links++;}r.bytes+=mediaBytes(n.image)+mediaBytes(n.link);});return r;}
+    function mediaText(list){var r=mediaSummary(list);return r.images+" ảnh ("+r.external+" ảnh từ web) · "+r.links+" liên kết · "+r.files+" tệp · "+(r.bytes/1048576).toFixed(2)+" MB đính kèm";}
     function canAddMedia(node,key,value) {
       var copy = Object.assign({},node); copy[key] = value;
       var size = JSON.stringify(nodes.map(function(n){return n.id===node.id?copy:n;})).length*2;
       if(size>MAX_PROJECT){showMessage("Sơ đồ đã gần đầy. Hãy giảm dung lượng ảnh hoặc dùng liên kết Google Drive.");return false;}
+      var currentLength=JSON.stringify(nodes).length;
+      if(size/2+4096>ONLINE_LIMIT && size/2>currentLength){showMessage("Bài vượt giới hạn nộp trực tuyến 4 MB JSON. Hãy giảm ảnh hoặc dùng liên kết Drive; dữ liệu cũ vẫn được giữ.");return false;}
       if(size>MAX_PROJECT*.75) setStatus("Sơ đồ có dung lượng lớn – nên lưu tệp JSON",true);
       return true;
     }
@@ -932,7 +939,8 @@
           img.src = node.image;
           img.style.width = (node.imgWidth || 480) + "px";
           img.alt = node.text;
-          img.onload = () => renderEdges();
+          img.referrerPolicy="no-referrer";img.onload = () => renderEdges();
+          img.onerror=function(){img.style.display="none";var fail=document.createElement("div");fail.className="hint";fail.textContent="Ảnh chưa tải được";el.appendChild(fail);renderEdges();};
           el.appendChild(img);
         }
 
@@ -1408,7 +1416,7 @@
       for(var i=0;i<items.length;i++){
         if(items[i].type.indexOf("image/")===0){
           e.preventDefault(); var target=selectedId, epoch=imageEpoch; finishEditing();
-          readImage(items[i].getAsFile(),function(data){
+          pendingMedia++;readImage(items[i].getAsFile(),function(data){pendingMedia=Math.max(0,pendingMedia-1);
             var node=nodes.find(function(n){return n.id===target;});
             if(epoch===imageEpoch && data && node && canAddMedia(node,"image",data)){node.image=data;renderAll();saveToLocal();}
           });break;
@@ -1462,6 +1470,8 @@
       pendingImgData = null;
       imgFileInput.value = "";
       imgUrlInput.value = node.image && !node.image.startsWith("data:") ? node.image : "";
+      document.getElementById("imgMediaState").textContent=node.image?(validHttp(node.image)?"Ảnh từ web – phụ thuộc kết nối và quyền truy cập.":"Ảnh đã nhúng vào bài ("+Math.ceil(mediaBytes(node.image)/1024)+" KB)."):"Chưa có ảnh.";
+      document.getElementById("btnEmbedImage").disabled=false;
       imgWidthInput.value = node.image ? (node.imgWidth || 480) : 480;
       imgWidthVal.textContent = imgWidthInput.value;
       imageModal.classList.add("open");
@@ -1471,11 +1481,14 @@
       var token=++imgReadToken, file=e.target.files[0], btn=document.getElementById("btnApplyImg");
       pendingImgData=null; if(!file){btn.disabled=false;return;}
       btn.disabled=true;
-      readImage(file,function(data){if(token!==imgReadToken)return;pendingImgData=data;btn.disabled=false;if(!data)imgFileInput.value="";});
+      readImage(file,function(data){if(token!==imgReadToken)return;pendingImgData=data;btn.disabled=false;if(!data)imgFileInput.value="";else{imgUrlInput.value="";document.getElementById("imgMediaState").textContent="Ảnh sẵn sàng lưu ("+Math.ceil(mediaBytes(data)/1024)+" KB).";}});
     });
 
+    imgUrlInput.addEventListener("input",function(){imgReadToken++;pendingImgData=null;imgFileInput.value="";document.getElementById("btnApplyImg").disabled=false;document.getElementById("btnEmbedImage").disabled=false;});
+    document.getElementById("btnEmbedImage").onclick=function(){var url=imgUrlInput.value.trim();if(!validHttp(url))return showMessage("Hãy nhập đường dẫn ảnh hợp lệ.");var token=++imgReadToken,b=document.getElementById("btnEmbedImage"),apply=document.getElementById("btnApplyImg");b.disabled=true;apply.disabled=true;fetchExportImage(url).then(function(data){if(token!==imgReadToken)return;b.disabled=false;apply.disabled=false;if(!data||!validImage(data)||mediaBytes(data)>MAX_IMAGE)return showMessage("Không thể nhúng ảnh từ web. Hãy tải ảnh về máy rồi chèn tệp ảnh.");pendingImgData=data;imgFileInput.value="";document.getElementById("imgMediaState").textContent="Bản sao ảnh sẵn sàng lưu ("+Math.ceil(mediaBytes(data)/1024)+" KB).";});};
     document.getElementById("btnApplyImg").addEventListener("click", () => {
       const node = nodes.find(n => n.id === imageTarget);
+      if(document.getElementById("btnApplyImg").disabled)return;
       if (node) {
         var value=pendingImgData || imgUrlInput.value.trim() || node.image;
         if(value && !validImage(value)){showMessage("Đường dẫn ảnh không hợp lệ. Hãy dùng HTTP hoặc HTTPS.");return;}
@@ -1519,6 +1532,8 @@
       linkFileInput.value = "";
       linkUrlInput.value = node.link && !node.link.startsWith("data:") ? node.link : "";
       linkLabelInput.value = node.linkName || "";
+      document.getElementById("linkMediaState").textContent=node.link?(validHttp(node.link)?"Liên kết web đã lưu.":"Tệp đã nhúng ("+Math.ceil(mediaBytes(node.link)/1024)+" KB)."):"Chưa có liên kết hoặc tệp.";
+      linkLabelInput.maxLength=1024;
       linkModal.classList.add("open");
     });
 
@@ -1526,22 +1541,24 @@
       var token=++linkReadToken,file=e.target.files[0],btn=document.getElementById("btnApplyLink");
       pendingFileLinkData=null;pendingFileLinkName="";
       if(!file){btn.disabled=false;return;}
-      if(file.size>MAX_FILE){linkFileInput.value="";btn.disabled=false;showMessage("Tệp lớn hơn 4 MB. Hãy dùng liên kết Google Drive.");return;}
+      if(file.size>MAX_FILE){linkFileInput.value="";btn.disabled=false;showMessage("Tệp lớn hơn 2 MB. Hãy dùng liên kết Google Drive.");return;}
       if(/\.(exe|bat|cmd|com|msi|js|html?|svg|vbs|ps1|scr|sh)$/i.test(file.name)){linkFileInput.value="";btn.disabled=false;showMessage("Loại tệp này không được hỗ trợ.");return;}
       btn.disabled=true;
       var reader=new FileReader();
       reader.onload=function(){
         if(token!==linkReadToken)return;btn.disabled=false;
         if(!validLink(reader.result)){linkFileInput.value="";showMessage("Loại tệp này không được hỗ trợ.");return;}
-        pendingFileLinkData=reader.result;pendingFileLinkName=file.name;
-        if(!linkLabelInput.value.trim())linkLabelInput.value=file.name;
+        pendingFileLinkData=reader.result;pendingFileLinkName=file.name;linkUrlInput.value="";
+        linkLabelInput.value=file.name.slice(0,1024);document.getElementById("linkMediaState").textContent="Tệp sẵn sàng lưu ("+Math.ceil(file.size/1024)+" KB).";
       };
       reader.onerror=function(){if(token!==linkReadToken)return;btn.disabled=false;linkFileInput.value="";showMessage("Không đọc được tệp.");};
       reader.readAsDataURL(file);
     });
 
+    linkUrlInput.addEventListener("input",function(){linkReadToken++;pendingFileLinkData=null;pendingFileLinkName="";linkFileInput.value="";document.getElementById("btnApplyLink").disabled=false;});
     document.getElementById("btnApplyLink").addEventListener("click", () => {
       const node = nodes.find(n => n.id === linkTarget);
+      if(document.getElementById("btnApplyLink").disabled)return;
       if (node) {
         if (pendingFileLinkData) {
           if(!canAddMedia(node,"link",pendingFileLinkData))return;
@@ -1549,10 +1566,11 @@
           node.linkName = linkLabelInput.value.trim() || pendingFileLinkName;
         } else if (linkUrlInput.value.trim()) {
           let url = linkUrlInput.value.trim();
-          if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+          if (!/^https?:\/\//i.test(url)){if(/^[a-z][a-z0-9+.-]*:/i.test(url))return showMessage("Chỉ hỗ trợ liên kết HTTP hoặc HTTPS.");url = "https://" + url;}
           if(!validHttp(url)){showMessage("Đường dẫn không hợp lệ.");return;}
+          if(!canAddMedia(node,"link",url))return;
           node.link = url;
-          node.linkName = linkLabelInput.value.trim() || url;
+          node.linkName = (linkLabelInput.value.trim() || url).slice(0,1024);
         }
         renderAll();
         saveToLocal();
@@ -1813,8 +1831,8 @@
     document.getElementById("btnZoomOut").onclick=function(){if(!storageReady||modalOpen())return;finishEditing();zoomAt(1/1.15);scheduleSave();};
     document.getElementById("btnResetView").onclick=function(){if(!storageReady||modalOpen())return;finishEditing();fitView();};
 
-    window.addEventListener("pagehide",function(){if(storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
-    document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady){finishEditing();if(saveTimer!==null)persistNow();}});
+    window.addEventListener("pagehide",function(){if(storageReady&&!projectSwitching){finishEditing();if(saveTimer!==null)persistNow();}});
+    document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden" && storageReady && !projectSwitching){finishEditing();if(saveTimer!==null)persistNow();}});
 
     // V3.0 Learning Studio – offline-first; optional dedicated Apps Script endpoint.
     var learningModal=document.getElementById("learningModal"), lc=document.getElementById("learningContent");
@@ -1888,7 +1906,7 @@
     function writeReceipt(id,data){try{localStorage.setItem(receiptKey(id),JSON.stringify(data));return true;}catch(e){return false;}}
     document.getElementById("btnSubmitWork").onclick=function(){
       learning("Nộp bài");if(!validEndpoint(endpoint)){ui("p","Chưa mở chức năng nộp bài. Em hãy báo giáo viên.");ui("p","Bài làm vẫn được lưu trên máy. Em có thể xuất tệp JSON để giữ bản sao.");action("Lưu tệp JSON",function(){learningModal.classList.remove("open");document.getElementById("btnSaveJson").click();});return;}if(!assignment){ui("p","Hãy mở nhiệm vụ bằng mã giáo viên cung cấp trước khi nộp.");action("Mở nhiệm vụ",showAssignment);return;}
-      ui("p",assignment.title);var pref=readStudent(), name=field("Họ tên","text",pref.name);name.maxLength=100;ui("label","Lớp");var cls=ui("select");var opt=ui("option","Chọn lớp",cls);opt.value="";for(var ci=1;ci<=9;ci++){var opt=ui("option","9A"+ci,cls);opt.value="9A"+ci;}cls.value=pref.cls;var stt=field("STT (1–50)","number",pref.stt);stt.min=1;stt.max=50;stt.step=1;
+      ui("p",assignment.title);ui("p",mediaText(nodes));if(mediaSummary(nodes).external)ui("p","Ảnh từ web có thể không mở được trên máy khác. Nên nhúng bản sao ảnh trước khi nộp.");var pref=readStudent(), name=field("Họ tên","text",pref.name);name.maxLength=100;ui("label","Lớp");var cls=ui("select");var opt=ui("option","Chọn lớp",cls);opt.value="";for(var ci=1;ci<=9;ci++){var opt=ui("option","9A"+ci,cls);opt.value="9A"+ci;}cls.value=pref.cls;var stt=field("STT (1–50)","number",pref.stt);stt.min=1;stt.max=50;stt.step=1;
       var key=assignment.id+"_"+STORAGE_KEY, current=readReceipt(key), assignmentId=assignment.id;
       if(current&&current.receipt){ui("p","Đã nhận mã bài: "+current.receipt);action("Lưu mã xem nhận xét",function(){downloadBlob(new Blob([JSON.stringify({receipt:current.receipt,secret:current.secret})],{type:"application/json"}),"MaXemNhanXet.json");});}
       action("Xem nhận xét",function(){var rec=readReceipt(key);if(!rec||!rec.receipt)return showMessage("Chưa có mã bài trên máy này.");busy(function(){return api("feedback",{receipt:rec.receipt,secret:rec.secret}).then(function(r){showMessage(r.feedback.status+"\nĐiểm: "+(r.feedback.score===""?"Chưa chấm":r.feedback.score)+"\n"+(r.feedback.comment||"Chưa có nhận xét."));});});});
@@ -1896,10 +1914,10 @@
       if(current&&!current.receipt&&current.requestId&&current.secret)action("Kiểm tra bài đã lưu",function(){busy(function(){return api("status",{requestId:current.requestId,clientSecret:current.secret}).then(function(r){if(r.saved&&receiptMatches(r,current)){current.receipt=r.receipt;current.createdAt=r.createdAt||"";writeReceipt(key,current);showMessage("Bài đã được nộp.");learningModal.classList.remove("open");}else showMessage("Chưa nhận được bài. Em hãy nộp lại.");});});});
       var progress=ui("p","");progress.setAttribute("role","status");progress.setAttribute("aria-live","polite");
       var submitButton=action("Nộp bài",function(){
-        if(onlineBusy)return;var nm=name.value.trim(),cl=cls.value.trim(),no=Number(stt.value);
+        if(onlineBusy)return;if(pendingMedia)return showMessage("Ảnh đang được xử lý. Hãy thử lại sau khi ảnh xuất hiện.");var nm=name.value.trim(),cl=cls.value.trim(),no=Number(stt.value);
         if(nm.length<2||nm.length>100||!/^9A[1-9]$/.test(cl)||!Number.isInteger(no)||no<1||no>50||!nodes.length)return showMessage("Hãy điền đúng thông tin và hoàn thành sơ đồ.");
         finishEditing();setStudent({name:nm,cls:cl,stt:String(no)});saveToLocal(false);var state=captureState(),raw=JSON.stringify(state);
-        if(raw.length>4*1024*1024)return showMessage("Bài nộp trực tuyến quá lớn (giới hạn 4 MB dữ liệu JSON). Hãy giảm ảnh hoặc dùng liên kết.");
+        if(new Blob([raw]).size>ONLINE_LIMIT)return showMessage("Bài nộp trực tuyến quá lớn (giới hạn 4 MB dữ liệu JSON). Hãy giảm ảnh hoặc dùng liên kết.");
         var saved=readReceipt(key);
         submitButton.disabled=true;submitButton.textContent="Đang nộp…";progress.textContent="Đang gửi bài. Em không cần nhấn lại.";
         busy(function(){
@@ -1977,15 +1995,17 @@
       learning("Tạo nhiệm vụ");var title=field("Tên nhiệm vụ","text",""),instructions=field("Yêu cầu","textarea",""),a=field("Số nhánh chính tối thiểu","number","3"),b=field("Số ảnh tối thiểu","number","0"),c=field("Số liên kết tối thiểu","number","0");
       action("Tạo",function(){busy(function(){return api("createAssignment",{title:title.value,instructions:instructions.value,minBranches:Number(a.value),minImages:Number(b.value),minLinks:Number(c.value)}).then(function(x){teacherFilter.assignment=x.assignment.id;showMessage("Mã nhiệm vụ: "+x.assignment.id);return teacherFetch();}).then(teacherDashboard);});});action("Quay lại",function(){busy(function(){return teacherFetch().then(teacherDashboard);});});
     }
+    function downloadAttachment(data,name){try{if(!validLink(data)||data.indexOf("data:")!==0)throw Error("Tệp không hợp lệ.");var b=atob(data.slice(data.indexOf(",")+1)),arr=new Uint8Array(b.length);for(var i=0;i<b.length;i++)arr[i]=b.charCodeAt(i);downloadBlob(new Blob([arr],{type:"application/octet-stream"}),(name||"tep-dinh-kem").replace(/[\\/:*?"<>|]/g,"_").slice(0,200));}catch(e){showMessage("Không đọc được tệp đính kèm.");}}
     function teacherPreview(p){
       var wrap=ui("div");wrap.style.cssText="overflow:auto;max-height:42vh;border:1px solid #cbd5e1;background:#f8fafc;padding:6px";
       var preview=ui("div",null,wrap);preview.style.position="relative";var svg=svgEl("svg",{});svg.style.cssText="position:absolute;left:0;top:0;overflow:visible;pointer-events:none";preview.appendChild(svg);
-      var map=Object.create(null),elmap=Object.create(null),g=Object.create(null);p.nodes.forEach(function(n){map[n.id]=n;var el=ui("div",null,preview);el.className="node "+n.theme;el.style.cursor="default";el.style.left="0px";el.style.top="0px";if(n.image){var im=ui("img",null,el);im.className="node-img";im.src=n.image;im.style.width=(n.imgWidth||480)+"px";im.onload=draw;}var t=ui("div",n.text,el);t.className="node-text";applyNodeSize(el,n);elmap[n.id]=el;});
+      var map=Object.create(null),elmap=Object.create(null),g=Object.create(null);p.nodes.forEach(function(n){map[n.id]=n;var el=ui("div",null,preview);el.className="node "+n.theme;el.style.cursor="default";el.style.left="0px";el.style.top="0px";if(n.image){var im=ui("img",null,el);im.className="node-img";im.src=n.image;im.style.width=(n.imgWidth||480)+"px";im.referrerPolicy="no-referrer";im.onload=draw;im.onerror=function(){im.style.display="none";ui("p","Ảnh chưa tải được",el);draw();};}var t=ui("div",n.text,el);t.className="node-text";applyNodeSize(el,n);elmap[n.id]=el;});
       function draw(){p.nodes.forEach(function(n){var el=elmap[n.id];g[n.id]={w:el.offsetWidth||150,h:el.offsetHeight||48};});var b=bounds(p.nodes,g);if(!b)return;var dx=20-b.x,dy=20-b.y;preview.style.width=(b.w+40)+"px";preview.style.height=(b.h+40)+"px";svg.setAttribute("width",b.w+40);svg.setAttribute("height",b.h+40);svg.textContent="";p.nodes.forEach(function(n){var el=elmap[n.id];el.style.left=(n.x+dx)+"px";el.style.top=(n.y+dy)+"px";var a=map[n.parentId];if(a){svg.appendChild(svgEl("line",{x1:a.x+dx+g[a.id].w/2,y1:a.y+dy+g[a.id].h/2,x2:n.x+dx+g[n.id].w/2,y2:n.y+dy+g[n.id].h/2,stroke:"#94a3b8","stroke-width":2}));}});}
       draw();
     }
     function teacherReview(r){
-      stopTeacherRefresh();var p=validateProject(r.project);learning("Bài của "+r.submission.name);ui("p",r.submission.cls+" · STT "+r.submission.stt);teacherPreview(p);
+      stopTeacherRefresh();var p=validateProject(r.project);learning("Bài của "+r.submission.name);ui("p",r.submission.cls+" · STT "+r.submission.stt);teacherPreview(p);ui("p",mediaText(p.nodes));if(r.integrity)ui("p",r.integrity==="verified"?"Đã kiểm tra tính toàn vẹn tệp lưu.":"Bài cũ chưa có mã kiểm tra.");
+      p.nodes.filter(function(n){return n.link||n.note;}).forEach(function(n){var row=ui("div");row.className="work-row";ui("p",n.text.slice(0,120),row);if(n.note)ui("p",n.note,row);if(n.link){if(validHttp(n.link)){var a=ui("a",n.linkName||n.link,row);a.href=n.link;a.target="_blank";a.rel="noopener noreferrer";}else{action("Tải tệp: "+(n.linkName||"Đính kèm")+" ("+Math.ceil(mediaBytes(n.link)/1024)+" KB)",function(){downloadAttachment(n.link,n.linkName);},row);}}});
       action("Tải sơ đồ JSON",function(){downloadBlob(new Blob([JSON.stringify(r.project)],{type:"application/json"}),"Bai_"+r.submission.receipt+".json");});
       var name=field("Họ tên","text",r.submission.name),cls=selectField("Lớp",classes().slice(1),r.submission.cls.toUpperCase()),stt=field("STT","number",String(r.submission.stt));stt.min=1;stt.max=50;
       action("Lưu thông tin",function(){busy(function(){return api("teacherEdit",{receipt:r.submission.receipt,name:name.value,cls:cls.value,stt:Number(stt.value)}).then(function(){showMessage("Đã cập nhật thông tin.");});});});
