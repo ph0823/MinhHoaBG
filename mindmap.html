@@ -1355,10 +1355,11 @@
         img.onload=function(){
           try{
             var scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));
-            if(scale===1 && file.size<=500*1024){callback(original);return;}
+            if(scale===1 && file.size<=100*1024){callback(original);return;}
             var c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));
             var ctx=c.getContext("2d");ctx.drawImage(img,0,0,c.width,c.height);
-            var data=c.toDataURL("image/webp",.82);
+            var data=c.toDataURL("image/webp",.86);
+            if(data.indexOf("data:image/webp;")!==0)data=c.toDataURL("image/png");
             if(data.length>MAX_IMAGE*4/3){ctx.globalCompositeOperation="destination-over";ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);data=c.toDataURL("image/jpeg",.78);}
             if(file.size<=MAX_IMAGE && original.length<data.length && scale===1)data=original;
             if(!validImage(data)||data.length>MAX_IMAGE*4/3){showMessage("Ảnh vẫn quá lớn sau khi nén.");callback(null);return;}callback(data);
@@ -1719,7 +1720,7 @@
         var img=new Image(),done=false,timer=setTimeout(function(){finish(null);},4000);
         function finish(v){if(done)return;done=true;clearTimeout(timer);resolve(v);}
         img.crossOrigin="anonymous";img.onerror=function(){finish(null);};
-        img.onload=function(){try{var c=document.createElement("canvas"),scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);finish(c.toDataURL("image/png"));}catch(e){finish(null);}};
+        img.onload=function(){try{var c=document.createElement("canvas"),scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);var data=c.toDataURL("image/webp",.86);finish(data.indexOf("data:image/webp;")===0?data:c.toDataURL("image/png"));}catch(e){finish(null);}};
         img.src=src;
       });
     }
@@ -1870,8 +1871,15 @@
       });});
       return chain.then(function(){var total=files.reduce(function(a,f){return a+f.bytes;},0);if(files.length>100||total>12*1024*1024||files.some(function(f){return f.bytes>3*1024*1024;}))throw Error("Tài nguyên vượt giới hạn 3 MB/tệp, 12 MB/bài hoặc 100 tệp.");if(new Blob([JSON.stringify(manifest)]).size>ONLINE_LIMIT)throw Error("Nội dung sơ đồ vượt 4 MB JSON.");return {project:manifest,files:files};});
     }
+    function mediaGroups(files){
+      var groups=[],group=[],length=0;
+      files.forEach(function(f){var cost=f.data.length+200;if(group.length&&(group.length>=8||length+cost>4.5*1024*1024)){groups.push(group);group=[];length=0;}group.push(f);length+=cost;});if(group.length)groups.push(group);return groups;
+    }
     function uploadMediaSequential(bundle,pending,aid,progress){
-      var chain=Promise.resolve();bundle.files.forEach(function(f,i){chain=chain.then(function(){progress.textContent="Đang lưu tài nguyên "+(i+1)+"/"+bundle.files.length+"…";return api("uploadMedia",{id:aid,requestId:pending.requestId,clientSecret:pending.secret,hash:f.hash,data:f.data}).then(function(r){if(r.hash!==f.hash)throw Error("Chưa xác nhận tài nguyên.");});});});return chain;
+      var groups=mediaGroups(bundle.files),done=0,chain=Promise.resolve(),legacy=false;
+      function single(f){return api("uploadMedia",{id:aid,requestId:pending.requestId,clientSecret:pending.secret,hash:f.hash,data:f.data}).then(function(r){if(r.hash!==f.hash)throw Error("Chưa xác nhận tài nguyên.");});}
+      function singles(group){var c=Promise.resolve();group.forEach(function(f){c=c.then(function(){return single(f);});});return c;}
+      groups.forEach(function(group){chain=chain.then(function(){progress.textContent="Đang lưu tài nguyên "+(done+1)+"–"+(done+group.length)+"/"+bundle.files.length+"…";if(legacy||group.length===1)return singles(group);return api("uploadMediaBatch",{id:aid,requestId:pending.requestId,clientSecret:pending.secret,items:group.map(function(f){return {hash:f.hash,data:f.data};})}).then(function(r){if(!Array.isArray(r.hashes)||r.hashes.length!==group.length||group.some(function(f){return r.hashes.indexOf(f.hash)<0;}))throw Error("Chưa xác nhận đủ tài nguyên.");}).catch(function(e){if(e.message==="Yêu cầu không được hỗ trợ."){legacy=true;return singles(group);}throw e;});}).then(function(){done+=group.length;});});return chain;
     }
     function hydrateTeacher(r){
       var refs=[],hashes=[],seen=Object.create(null),cache=Object.create(null);
