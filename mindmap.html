@@ -1850,9 +1850,10 @@
     }
     document.getElementById("btnCheck").onclick=function(){learning("Kiểm tra sản phẩm");var r=inspectWork(nodes,geometry(),assignment);ui("p",r.total+" nút · "+r.main+" nhánh chính");if(!r.issues.length)ui("p","Chưa phát hiện vấn đề theo các tiêu chí kiểm tra.");else r.issues.forEach(function(x){ui("p","• "+x);});ui("p","Đây là gợi ý tự kiểm tra, không phải điểm đánh giá nội dung.");};
     function api(actionName,data){
+      var apiStarted=Date.now();
       data=Object.assign({},data||{});if(teacherSession&&/^(teacherList|teacherGet|teacherMedia|teacherMediaBatch|teacherEdit|teacherDelete|teacherPurge|review|createAssignment|teacherLogout)$/.test(actionName))data.token=teacherSession;
       if(!validEndpoint(endpoint))return Promise.reject(Error("Chưa mở chức năng nộp bài. Em hãy báo giáo viên."));
-      var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);return v;},function(e){clearTimeout(timeout);throw e;});
+      var timeout;return Promise.race([fetch(endpoint,{method:"POST",body:JSON.stringify(Object.assign({action:actionName},data||{})),redirect:"follow",credentials:"omit"}).then(function(res){if(!res.ok)throw Error("Lỗi kết nối.");return res.json();}).then(function(res){if(!res.ok)throw Error(res.error||"Không thực hiện được.");return res;}),new Promise(function(_,reject){timeout=setTimeout(function(){reject(Error("Chưa nhận được phản hồi. Có thể thử lại."));},25000);})]).then(function(v){clearTimeout(timeout);console.log("Mindmap "+actionName+" ms="+(Date.now()-apiStarted));return v;},function(e){clearTimeout(timeout);console.warn("Mindmap "+actionName+" failed ms="+(Date.now()-apiStarted));throw e;});
     }
     function setOnlineBusy(value){onlineBusy=!!value;if(typeof reviewButtonsSync==="function")reviewButtonsSync();}
     function busy(fn){if(onlineBusy)return;setOnlineBusy(true);Promise.resolve().then(fn).catch(function(e){console.warn(e);showMessage(e.message||"Không kết nối được.");}).then(function(){setOnlineBusy(false);});}
@@ -1865,9 +1866,9 @@
     function submitReliable(payload,pending){return api("submit",payload).then(function(r){if(!receiptMatches(r,pending))throw Error("Phản hồi không hợp lệ.");return r;}).catch(function(err){console.warn("Mindmap submit",err);return api("status",{requestId:pending.requestId,clientSecret:pending.secret}).then(function(r){if(r.saved&&receiptMatches(r,pending))return r;throw err;},function(){throw err;});});}
     function hashMedia(v){return window.crypto.subtle.digest("SHA-256",new TextEncoder().encode(v)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return ("0"+x.toString(16)).slice(-2);}).join("");});}
     function splitMedia(state){
-      var manifest=JSON.parse(JSON.stringify(state)),files=[],seen=Object.create(null),chain=Promise.resolve();
+      var manifest=JSON.parse(JSON.stringify(state)),files=[],seen=Object.create(null),hashMemo=Object.create(null),chain=Promise.resolve();
       manifest.nodes.forEach(function(n){["image","link"].forEach(function(k){var v=n[k];if(typeof v!=="string"||v.indexOf("data:")!==0)return;
-        chain=chain.then(function(){return hashMedia(v).then(function(hash){if(!seen[hash]){seen[hash]=true;files.push({hash:hash,data:v,bytes:mediaBytes(v)});}n[k]="";n[k+"Asset"]={hash:hash,mime:v.slice(5,v.indexOf(";"))};});});
+        chain=chain.then(function(){var job=hashMemo[v]||(hashMemo[v]=hashMedia(v));return job.then(function(hash){if(!seen[hash]){seen[hash]=true;files.push({hash:hash,data:v,bytes:mediaBytes(v)});}n[k]="";n[k+"Asset"]={hash:hash,mime:v.slice(5,v.indexOf(";"))};});});
       });});
       return chain.then(function(){var total=files.reduce(function(a,f){return a+f.bytes;},0);if(files.length>100||total>12*1024*1024||files.some(function(f){return f.bytes>3*1024*1024;}))throw Error("Tài nguyên vượt giới hạn 3 MB/tệp, 12 MB/bài hoặc 100 tệp.");if(new Blob([JSON.stringify(manifest)]).size>ONLINE_LIMIT)throw Error("Nội dung sơ đồ vượt 4 MB JSON.");return {project:manifest,files:files};});
     }
@@ -1888,8 +1889,9 @@
       function single(hash){return api("teacherMedia",{receipt:r.submission.receipt,hash:hash}).then(function(v){if(v.hash!==hash)throw Error("Tài nguyên không khớp.");return accept(hash,v.data);});}
       function fallback(){var chain=Promise.resolve();hashes.forEach(function(h){if(!cache[h])chain=chain.then(function(){return single(h);});});return chain;}
       function batch(index){if(index>=hashes.length)return Promise.resolve();var group=hashes.slice(index,index+8);return api("teacherMediaBatch",{receipt:r.submission.receipt,hashes:group}).then(function(v){if(!Array.isArray(v.items)||!v.items.length)throw Error("Phản hồi tài nguyên không hợp lệ.");var expected=Object.create(null);group.forEach(function(h){expected[h]=true;});return Promise.all(v.items.map(function(x){if(!expected[x.hash])throw Error("Tài nguyên không khớp.");delete expected[x.hash];return accept(x.hash,x.data);})).then(function(){var consumed=0;while(consumed<group.length&&cache[group[consumed]])consumed++;if(!consumed)throw Error("Thiếu tài nguyên.");return batch(index+consumed);});});}
-      var task=hashes.length?(r.mediaBatch===true?batch(0).catch(function(e){console.warn("Mindmap batch fallback",e);return fallback();}):fallback()):Promise.resolve();
-      return task.then(function(){refs.forEach(function(ref){if(!cache[ref.asset.hash])throw Error("Thiếu tài nguyên.");ref.node[ref.key]=cache[ref.asset.hash];delete ref.node[ref.key+"Asset"];});return r;});
+      var inline=r.inlineAssets||{},inlineTask=Promise.all(hashes.filter(function(h){return typeof inline[h]==="string";}).map(function(h){return accept(h,inline[h]).catch(function(e){console.warn("Mindmap inline asset",e);});}));
+      var task=inlineTask.then(function(){hashes=hashes.filter(function(h){return !cache[h];});return hashes.length?(r.mediaBatch===true?batch(0).catch(function(e){console.warn("Mindmap batch fallback",e);return fallback();}):fallback()):Promise.resolve();});
+      return task.then(function(){refs.forEach(function(ref){if(!cache[ref.asset.hash])throw Error("Thiếu tài nguyên.");ref.node[ref.key]=cache[ref.asset.hash];delete ref.node[ref.key+"Asset"];});delete r.inlineAssets;return r;});
     }
     function readReceipt(id){try{return JSON.parse(localStorage.getItem(receiptKey(id))||"null");}catch(e){return null;}}
     function newSecret(){var a=new Uint8Array(32);if(!window.crypto||!window.crypto.getRandomValues)throw Error("Trình duyệt không hỗ trợ tạo mã bảo mật.");window.crypto.getRandomValues(a);return Array.from(a).map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");}
