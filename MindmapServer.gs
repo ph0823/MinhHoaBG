@@ -4,7 +4,7 @@
  * MINDMAP_SPREADSHEET_ID, MINDMAP_FOLDER_ID (private Drive folder).
  * Do not reuse the script of other teaching apps.
  */
-function doGet() { return output_({ok:true,service:"Mindmap V3.6.5"}); }
+function doGet() { return output_({ok:true,service:"Mindmap V3.7"}); }
 function output_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 function fail_(message){throw new Error(message);}
 function props_(){return PropertiesService.getScriptProperties();}
@@ -125,7 +125,8 @@ function doPost(e){
     if(["teacherList","createAssignment","teacherGet","teacherMedia","teacherMediaBatch","review","teacherEdit","teacherDelete","teacherPurge"].indexOf(a)>=0)teacher_(p.password,p.token);
     // Serialize sheet initialization, submission and assessment. No public listing of students.
     lock=LockService.getScriptLock();if(!lock.tryLock(15000))fail_("Hệ thống đang bận. Hãy thử lại.");
-    var ash=assignments_(), ar=rows_(ash), sh=submissions_(), sr=rows_(sh);
+    var ash=assignments_(), ar=rows_(ash), sh=null,sr=[];
+    if(a!=="uploadMedia"&&a!=="uploadMediaBatch"&&a!=="assignment"&&a!=="createAssignment"){sh=submissions_();sr=rows_(sh);}
     if(!find_(ar,0,"TIN9_B7")){var defaultRow=["TIN9_B7","Tin học 9 – Bài 7: Sơ đồ tư duy","Tạo sơ đồ tư duy theo yêu cầu của giáo viên.",0,0,0,new Date()];ash.appendRow(defaultRow);ar.push(defaultRow);}
     if(a==="assignment"){
       var found=find_(ar,0,str_(p.id,64,true));if(!found)fail_("Không tìm thấy nhiệm vụ.");return output_({ok:true,assignment:assignmentView_(found.row)});
@@ -133,6 +134,19 @@ function doPost(e){
     if(a==="createAssignment"){
       var row=["MM-"+id_().slice(0,12),str_(p.title,150,true),str_(p.instructions,4000,true),integer_(p.minBranches,0,500),integer_(p.minImages,0,500),integer_(p.minLinks,0,500),new Date()];
       ash.appendRow(row.map(function(v,i){return i===1||i===2?safeCell_(v):v;}));return output_({ok:true,assignment:assignmentView_(row)});
+    }
+    if(a==="uploadMediaBatch"){
+      var req=str_(p.requestId,120,true),secret=str_(p.clientSecret,128,true),aid=str_(p.id,64,true);
+      if(!/^[a-zA-Z0-9_-]{16,120}$/.test(req)||!/^[a-zA-Z0-9_-]{24,128}$/.test(secret)||!find_(ar,0,aid)||!Array.isArray(p.items)||!p.items.length||p.items.length>8)fail_("Tài nguyên không hợp lệ.");
+      if(deletedRequest_(req))fail_("Bài đã được giáo viên xóa. Hãy tạo lượt nộp mới.");
+      var prepared=[],seen=Object.create(null);
+      p.items.forEach(function(x){if(!x||typeof x.hash!=="string"||!/^[a-f0-9]{64}$/.test(x.hash)||seen[x.hash]||!dataMedia_(x.data,false)||x.data.length>4*1024*1024+100||mediaHash_(x.data)!==x.hash)fail_("Tài nguyên không hợp lệ.");seen[x.hash]=true;prepared.push({hash:x.hash,mime:x.data.slice(5,x.data.indexOf(";")),bytes:Utilities.base64Decode(x.data.slice(x.data.indexOf(",")+1))});});
+      var folder=stageFolder_(req,secret,true),files=folder.getFiles(),existing=Object.create(null),count=0,total=0;
+      while(files.hasNext()){var f=files.next();existing[f.getName()]=true;count++;total+=f.getSize();}
+      prepared.forEach(function(x){if(!existing[x.hash]){count++;total+=x.bytes.length;}});
+      if(count>100||total>12*1024*1024)fail_("Quá giới hạn tài nguyên của bài.");
+      prepared.forEach(function(x){if(!existing[x.hash])folder.createFile(Utilities.newBlob(x.bytes,x.mime,x.hash));assetData_(folder,x.hash,x.mime);});
+      return output_({ok:true,hashes:prepared.map(function(x){return x.hash;})});
     }
     if(a==="uploadMedia"){
       var req=str_(p.requestId,120,true),secret=str_(p.clientSecret,128,true),aid=str_(p.id,64,true),hash=str_(p.hash,64,true),data=p.data;
